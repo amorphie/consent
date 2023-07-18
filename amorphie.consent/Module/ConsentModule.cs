@@ -1,28 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using amorphie.template.core.Model;
-using amorphie.template.Validator;
 using amorphie.core.Module.minimal_api;
-using amorphie.template.data;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.template.core.Search;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using amorphie.core.Swagger;
 using Microsoft.OpenApi.Models;
+using amorphie.consent.data;
+using amorphie.consent.core.Model;
 
-namespace amorphie.template.Module;
+namespace amorphie.consent.Module;
 
-public class StudentModule : BaseBBTRoute<StudentDTO, Student, TemplateDbContext>
+public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
 {
-    public StudentModule(WebApplication app)
+    public ConsentModule(WebApplication app)
         : base(app) { }
 
-    public override string[]? PropertyCheckList => new string[] { "FirstMidName", "LastName" };
+    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
 
-    public override string? UrlFragment => "student";
+    public override string? UrlFragment => "consent";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
@@ -45,27 +40,27 @@ public class StudentModule : BaseBBTRoute<StudentDTO, Student, TemplateDbContext
     }
 
     protected async ValueTask<IResult> SearchMethod(
-        [FromServices] TemplateDbContext context,
+        [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [AsParameters] StudentSearch userSearch,
+        [AsParameters] ConsentSearch consentSearch,
         HttpContext httpContext,
         CancellationToken token
     )
     {
-        IList<Student> resultList = await context
-            .Set<Student>()
+        IList<Consent> resultList = await context
+            .Set<Consent>()
             .AsNoTracking()
             .Where(
                 x =>
-                    x.FirstMidName.Contains(userSearch.Keyword!)
-                    || x.LastName.Contains(userSearch.Keyword!)
+                    x.AdditionalData.Contains(consentSearch.Keyword!)
+                    || x.AdditionalData.Contains(consentSearch.Keyword!)
             )
-            .Skip(userSearch.Page)
-            .Take(userSearch.PageSize)
+            .Skip(consentSearch.Page)
+            .Take(consentSearch.PageSize)
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<StudentDTO>>(resultList))
+            ? Results.Ok(mapper.Map<IList<ConsentDTO>>(resultList))
             : Results.NoContent();
     }
 }

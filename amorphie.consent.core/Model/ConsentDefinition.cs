@@ -1,3 +1,5 @@
+using amorphie.core.Base;
+
 public class ConsentDefinition:EntityBase
 {
     public string Name { get; set; }

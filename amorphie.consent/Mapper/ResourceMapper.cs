@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using amorphie.template.core.Model;
+using amorphie.consent.core.Model;
 using AutoMapper;
 
-namespace amorphie.template.Mapper
+namespace amorphie.consent.Mapper
 {
     public sealed class ResourceMapper : Profile
     {
         public ResourceMapper()
         {
-            CreateMap<Student, StudentDTO>().ReverseMap();
+            CreateMap<Consent, ConsentDTO>().ReverseMap();
         }
     }
 }

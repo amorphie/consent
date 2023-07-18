@@ -1,9 +1,9 @@
+using amorphie.consent.data;
+using amorphie.consent.Validator;
 using amorphie.core.Extension;
 using amorphie.core.HealthCheck;
 using amorphie.core.Swagger;
-using amorphie.template.data;
 using amorphie.template.HealthCheck;
-using amorphie.template.Validator;
 using FluentValidation;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -23,20 +23,20 @@ builder.Services.AddSwaggerGen(options=>
     options.OperationFilter<AddSwaggerParameterFilter>();
 });
 
-builder.Services.AddValidatorsFromAssemblyContaining<StudentValidator>(includeInternalTypes: true);
+builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 
-builder.Services.AddDbContext<TemplateDbContext>
+builder.Services.AddDbContext<ConsentDbContext>
     // (options => options.UseInMemoryDatabase("TemplateDbContext"));
-    (options => options.UseNpgsql("Host=localhost:5432;Database=TemplateDb;Username=postgres;Password=postgres", b => b.MigrationsAssembly("amorphie.template.data")));
+    (options => options.UseNpgsql("Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres", b => b.MigrationsAssembly("amorphie.consent.data")));
 
 
 var app = builder.Build();
 
 
 using var scope = app.Services.CreateScope();
-var db = scope.ServiceProvider.GetRequiredService<TemplateDbContext>();
+var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
 
 db.Database.Migrate();
 DbInitializer.Initialize(db);

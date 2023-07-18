@@ -2,194 +2,99 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using amorphie.template.core.Model;
-
-namespace amorphie.template.data;
+namespace amorphie.consent.data;
 
 public static class DbInitializer
 {
-    public static void Initialize(TemplateDbContext context)
+    public static void Initialize(ConsentDbContext context)
     {
         context.Database.EnsureCreated();
 
         // Look for any students.
-        if (context.Students.Any())
+        if (context.Consents.Any())
         {
             return; // DB has been seeded
         }
-
-        var students = new Student[]
+        var consentDefinition = new ConsentDefinition[]{
+            new ConsentDefinition{
+                Id = Guid.NewGuid(),
+                Name = "Consent 1",
+                RoleAssignment = "Role 1",
+                Scope = new string[]{"Scope 1"},
+                ClientId = new string[]{"Client 1"}
+            },
+            new ConsentDefinition{
+                Id = Guid.NewGuid(),
+                Name = "Consent 2",
+                RoleAssignment = "Role 2",
+                Scope = new string[]{"Scope 2"},
+                ClientId = new string[]{"Client 2"}
+            },
+        };
+        foreach (ConsentDefinition c in consentDefinition)
         {
-            new Student
-            {
-                FirstMidName = "Carson",
-                LastName = "Alexander",
-                EnrollmentDate = DateTime.Parse("2005-09-01").ToUniversalTime()
+            context.ConsentDefinitions.Add(c);
+        }
+        context.SaveChanges();
+
+        var consent = new Consent[]{
+            new Consent{
+                // Id = Guid.NewGuid(),
+                ConsentDefinitionId = consentDefinition[0].Id,
+                UserId = Guid.NewGuid(),
+                State = 1,
+                ConsentType = 1,
+                AdditionalData = "Additional Data 1"
             },
-            new Student
-            {
-                FirstMidName = "Meredith",
-                LastName = "Alonso",
-                EnrollmentDate = DateTime.Parse("2002-09-01").ToUniversalTime()
+            new Consent{
+                // Id = Guid.NewGuid(),
+                ConsentDefinitionId = consentDefinition[1].Id,
+                UserId = Guid.NewGuid(),
+                State = 2,
+                ConsentType = 2,
+                AdditionalData = "Additional Data 2"
             },
-            new Student
-            {
-                FirstMidName = "Arturo",
-                LastName = "Anand",
-                EnrollmentDate = DateTime.Parse("2003-09-01").ToUniversalTime()
+        };
+
+        foreach (Consent c in consent)
+        {
+            context.Consents.Add(c);
+        }
+        context.SaveChanges();
+
+        var consentPermission = new ConsentPermission[]{
+            new ConsentPermission{
+                ConsentId = consent[0].Id,
+                Permission = "Permission 1"
             },
-            new Student
-            {
-                FirstMidName = "Gytis",
-                LastName = "Barzdukas",
-                EnrollmentDate = DateTime.Parse("2002-09-01").ToUniversalTime()
+            new ConsentPermission{
+                ConsentId = consent[1].Id,
+                Permission = "Permission 2"
             },
-            new Student
-            {
-                FirstMidName = "Yan",
-                LastName = "Li",
-                EnrollmentDate = DateTime.Parse("2002-09-01").ToUniversalTime()
-            },
-            new Student
-            {
-                FirstMidName = "Peggy",
-                LastName = "Justice",
-                EnrollmentDate = DateTime.Parse("2001-09-01").ToUniversalTime()
-            },
-            new Student
-            {
-                FirstMidName = "Laura",
-                LastName = "Norman",
-                EnrollmentDate = DateTime.Parse("2003-09-01").ToUniversalTime()
-            },
-            new Student
-            {
-                FirstMidName = "Nino",
-                LastName = "Olivetto",
-                EnrollmentDate = DateTime.Parse("2005-09-01").ToUniversalTime()
+        };
+
+        foreach (ConsentPermission c in consentPermission)
+        {
+            context.ConsentPermissions.Add(c);
+        }
+        context.SaveChanges();
+
+        var token = new Token[]{
+            new Token{
+                ConsentId = consent[0].Id,
+                TokenValue = "Token Value 1",
+                TokenType = 1,
+                ExpireTime = 5
+
             }
         };
-        foreach (Student s in students)
+
+        foreach (Token t in token)
         {
-            context.Students.Add(s);
+            context.Tokens.Add(t);
         }
         context.SaveChanges();
 
-        var courses = new Course[]
-        {
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Chemistry",
-                Credits = 3
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Microeconomics",
-                Credits = 3
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Macroeconomics",
-                Credits = 3
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Calculus",
-                Credits = 4
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Trigonometry",
-                Credits = 4
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Composition",
-                Credits = 3
-            },
-            new Course
-            {
-                Id = Guid.NewGuid(),
-                Title = "Literature",
-                Credits = 4
-            }
-        };
-        foreach (Course c in courses)
-        {
-            context.Courses.Add(c);
-        }
-        context.SaveChanges();
 
-        var enrollments = new Enrollment[]
-        {
-            new Enrollment
-            {
-                Student = students[0],
-                Course = courses[0],
-                Grade = Grade.A
-            },
-            new Enrollment
-            {
-                Student = students[0],
-                Course = courses[2],
-                Grade = Grade.C
-            },
-            new Enrollment
-            {
-                Student = students[0],
-                Course = courses[3],
-                Grade = Grade.B
-            },
-            new Enrollment
-            {
-                Student = students[1],
-                Course = courses[1],
-                Grade = Grade.B
-            },
-            new Enrollment
-            {
-                Student = students[1],
-                Course = courses[4],
-                Grade = Grade.F
-            },
-            new Enrollment
-            {
-                Student = students[1],
-                Course = courses[4],
-                Grade = Grade.F
-            },
-            new Enrollment { Student = students[2], Course = courses[0] },
-            new Enrollment { Student = students[3], Course = courses[0] },
-            new Enrollment
-            {
-                Student = students[3],
-                Course = courses[2],
-                Grade = Grade.F
-            },
-            new Enrollment
-            {
-                Student = students[4],
-                Course = courses[3],
-                Grade = Grade.C
-            },
-            new Enrollment { Student = students[5], Course = courses[1] },
-            new Enrollment
-            {
-                Student = students[6],
-                Course = courses[4],
-                Grade = Grade.A
-            },
-        };
-        foreach (Enrollment e in enrollments)
-        {
-            context.Enrollments.Add(e);
-        }
-        context.SaveChanges();
     }
 }

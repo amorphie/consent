@@ -6,4 +6,4 @@ using amorphie.core.Base;
 
 namespace amorphie.template.core.Search;
 
-public class StudentSearch : DtoSearchBase { }
+public class ConsentSearch : DtoSearchBase { }
