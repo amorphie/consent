@@ -2,13 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "amorphie-template",
+            "name": "amorphie-consent",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "dapr-debug-amorphie-template",
-            "program": "${workspaceFolder}/amorphie.template/bin/Debug/net7.0/amorphie.template.dll",
+            "preLaunchTask": "dapr-debug-amorphie-consent",
+            "program": "${workspaceFolder}/amorphie.consent/bin/Debug/net7.0/amorphie.consent.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/amorphie.template",
+            "cwd": "${workspaceFolder}/amorphie.consent",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
@@ -18,7 +18,7 @@
                 "DAPR_SECRET_STORE_NAME": "transaction-secretstore",
                 "DAPR_STATE_STORE_NAME": "transaction-cache"
             },
-            "postDebugTask": "daprd-down-amorphie-template",
+            "postDebugTask": "daprd-down-amorphie-consent",
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
@@ -26,13 +26,13 @@
             }
         },
         {
-            "name": "amorphie-template-hub",
+            "name": "amorphie-consent-hub",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "dapr-debug-amorphie-template-hub",
-            "program": "${workspaceFolder}/amorphie.template.hub/bin/Debug/net7.0/amorphie.template.hub.dll",
+            "preLaunchTask": "dapr-debug-amorphie-consent-hub",
+            "program": "${workspaceFolder}/amorphie.consent.hub/bin/Debug/net7.0/amorphie.consent.hub.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/amorphie.template.hub",
+            "cwd": "${workspaceFolder}/amorphie.consent.hub",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
@@ -42,7 +42,7 @@
                 "DAPR_SECRET_STORE_NAME": "transaction-secretstore",
                 "DAPR_STATE_STORE_NAME": "transaction-cache"
             },
-            "postDebugTask": "daprd-down-amorphie-template-hub",
+            "postDebugTask": "daprd-down-amorphie-consent-hub",
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
@@ -50,13 +50,13 @@
             }
         },
         {
-            "name": "amorphie-template-worker",
+            "name": "amorphie-consent-worker",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "dapr-debug-amorphie-template-worker",
-            "program": "${workspaceFolder}/amorphie.template.worker/bin/Debug/net7.0/amorphie.template.worker.dll",
+            "preLaunchTask": "dapr-debug-amorphie-consent-worker",
+            "program": "${workspaceFolder}/amorphie.consent.worker/bin/Debug/net7.0/amorphie.consent.worker.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/amorphie.template.worker",
+            "cwd": "${workspaceFolder}/amorphie.consent.worker",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
@@ -66,7 +66,7 @@
                 "DAPR_SECRET_STORE_NAME": "transaction-secretstore",
                 "DAPR_STATE_STORE_NAME": "transaction-cache"
             },
-            "postDebugTask": "daprd-down-amorphie-template-worker",
+            "postDebugTask": "daprd-down-amorphie-consent-worker",
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
@@ -78,9 +78,9 @@
         {
             "name": "Halay Mode",
             "configurations": [
-                "amorphie-template",
-                "amorphie-template-hub",
-                "amorphie-template-worker"
+                "amorphie-consent",
+                "amorphie-consent-hub",
+                "amorphie-consent-worker"
             ],
             "stopAll": true
         }

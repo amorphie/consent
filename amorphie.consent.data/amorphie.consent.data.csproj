@@ -17,6 +17,6 @@
     <PackageReference Include="Dapr.AspNetCore" Version="1.11.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\amorphie.template.core\amorphie.template.core.csproj" />
+    <ProjectReference Include="..\amorphie.consent.core\amorphie.consent.core.csproj" />
   </ItemGroup>
 </Project>

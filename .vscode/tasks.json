@@ -2,86 +2,86 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-amorphie-template",
+            "label": "build-amorphie-consent",
             "dependsOn": "init-mocks",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/amorphie.template/amorphie.template.csproj",
+                "${workspaceFolder}/amorphie.consent/amorphie.consent.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "build-amorphie-template-hub",
+            "label": "build-amorphie-consent-hub",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/amorphie.template.hub/amorphie.template.hub.csproj",
+                "${workspaceFolder}/amorphie.consent.hub/amorphie.consent.hub.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "build-amorphie-template-worker",
+            "label": "build-amorphie-consent-worker",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/amorphie.template.worker/amorphie.template.worker.csproj",
+                "${workspaceFolder}/amorphie.consent.worker/amorphie.consent.worker.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
-            "appId": "amorphie-template",
+            "appId": "amorphie-consent",
             "appPort": 4200,
             "httpPort": 42010,
             "grpcPort": 42011,
-            "label": "dapr-debug-amorphie-template",
+            "label": "dapr-debug-amorphie-consent",
             "type": "dapr",
-            "dependsOn": "build-amorphie-template",
+            "dependsOn": "build-amorphie-consent",
             "componentsPath": "Dapr/Components"
         },
         {
-            "appId": "amorphie-template-hub",
+            "appId": "amorphie-consent-hub",
             "appPort": 4201,
             "httpPort": 42020,
             "grpcPort": 42021,
-            "label": "dapr-debug-amorphie-template-hub",
+            "label": "dapr-debug-amorphie-consent-hub",
             "type": "dapr",
-            "dependsOn": "build-amorphie-template-hub",
+            "dependsOn": "build-amorphie-consent-hub",
             "componentsPath": "Dapr/Components",
         },
         {
-            "appId": "amorphie-template-worker",
+            "appId": "amorphie-consent-worker",
             "appPort": 4202,
             "httpPort": 42030,
             "grpcPort": 42031,
-            "label": "dapr-debug-amorphie-template-worker",
+            "label": "dapr-debug-amorphie-consent-worker",
             "type": "dapr",
-            "dependsOn": "build-amorphie-template-worker",
+            "dependsOn": "build-amorphie-consent-worker",
             "componentsPath": "Dapr/Components"
         },
         {
-            "appId": "amorphie-template",
-            "label": "daprd-down-amorphie-template",
+            "appId": "amorphie-consent",
+            "label": "daprd-down-amorphie-consent",
             "type": "daprd-down",
             "dependsOn": "stop-mocks",
         },
         {
-            "appId": "amorphie-template-hub",
-            "label": "daprd-down-amorphie-template-hub",
+            "appId": "amorphie-consent-hub",
+            "label": "daprd-down-amorphie-consent-hub",
             "type": "daprd-down"
         },
         {
-            "appId": "amorphie-template-worker",
-            "label": "daprd-down-amorphie-template-worker",
+            "appId": "amorphie-consent-worker",
+            "label": "daprd-down-amorphie-consent-worker",
             "type": "daprd-down"
         }
     ]

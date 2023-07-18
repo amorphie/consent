@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.001.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template", "amorphie.template\amorphie.template.csproj", "{6F70799F-9DC5-4A27-A018-74F94DAC4495}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent", "amorphie.consent\amorphie.consent.csproj", "{6F70799F-9DC5-4A27-A018-74F94DAC4495}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template.core", "amorphie.template.core\amorphie.template.core.csproj", "{4F22DAAF-2DF7-49D5-9794-CFD7D0830C71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent.core", "amorphie.consent.core\amorphie.consent.core.csproj", "{4F22DAAF-2DF7-49D5-9794-CFD7D0830C71}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template.data", "amorphie.template.data\amorphie.template.data.csproj", "{F5537A5B-4B4B-4533-BC2F-8C0D87ED70B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent.data", "amorphie.consent.data\amorphie.consent.data.csproj", "{F5537A5B-4B4B-4533-BC2F-8C0D87ED70B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template.hub", "amorphie.template.hub\amorphie.template.hub.csproj", "{27158190-3CC4-4AAC-B57F-37BA6D7671E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent.hub", "amorphie.consent.hub\amorphie.consent.hub.csproj", "{27158190-3CC4-4AAC-B57F-37BA6D7671E5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template.test", "amorphie.template.test\amorphie.template.test.csproj", "{336C2ABE-D5FD-40D8-B3F1-F572E4DCAD6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent.test", "amorphie.consent.test\amorphie.consent.test.csproj", "{336C2ABE-D5FD-40D8-B3F1-F572E4DCAD6F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.template.worker", "amorphie.template.worker\amorphie.template.worker.csproj", "{272D933D-2463-4F9B-9F07-228557A08368}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amorphie.consent.worker", "amorphie.consent.worker\amorphie.consent.worker.csproj", "{272D933D-2463-4F9B-9F07-228557A08368}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

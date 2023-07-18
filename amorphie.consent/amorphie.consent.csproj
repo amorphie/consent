@@ -29,8 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\amorphie.template.data\amorphie.template.data.csproj" />
-    <ProjectReference Include="..\amorphie.template.core\amorphie.template.core.csproj" />
+    <ProjectReference Include="..\amorphie.consent.data\amorphie.consent.data.csproj" />
+    <ProjectReference Include="..\amorphie.consent.core\amorphie.consent.core.csproj" />
   </ItemGroup>
 
 </Project>

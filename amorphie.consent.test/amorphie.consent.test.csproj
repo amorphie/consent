@@ -24,11 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\amorphie.template.zeebe\amorphie.template.zeebe.csproj" />
-    <ProjectReference Include="..\amorphie.template.hub\amorphie.template.hub.csproj" />
-    <ProjectReference Include="..\amorphie.template.core\amorphie.template.core.csproj" />
-    <ProjectReference Include="..\amorphie.template\amorphie.template.csproj" />
-    <ProjectReference Include="..\amorphie.template.data\amorphie.template.data.csproj" />
+    <ProjectReference Include="..\amorphie.consent.zeebe\amorphie.consent.zeebe.csproj" />
+    <ProjectReference Include="..\amorphie.consent.hub\amorphie.consent.hub.csproj" />
+    <ProjectReference Include="..\amorphie.consent.core\amorphie.consent.core.csproj" />
+    <ProjectReference Include="..\amorphie.consent\amorphie.consent.csproj" />
+    <ProjectReference Include="..\amorphie.consent.data\amorphie.consent.data.csproj" />
   </ItemGroup>
 
 </Project>
