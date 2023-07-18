@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using amorphie.core.Base;
+namespace amorphie.consent.core.Model;
 
 public class Token:EntityBase
 {

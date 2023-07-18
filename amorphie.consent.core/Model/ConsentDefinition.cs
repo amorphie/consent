@@ -1,4 +1,5 @@
 using amorphie.core.Base;
+namespace amorphie.consent.core.Model;
 
 public class ConsentDefinition:EntityBase
 {

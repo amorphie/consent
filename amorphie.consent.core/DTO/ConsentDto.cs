@@ -11,6 +11,4 @@ public class ConsentDTO : DtoBase
     public int State { get; set; }
     public int ConsentType { get; set; }
     public string AdditionalData { get; set; }
-    public ConsentDefinition ConsentDefinition { get; set; }
-    public List<ConsentPermission> ConsentPermissions { get; set; }
 }

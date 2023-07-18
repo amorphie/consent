@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using amorphie.core.Base;
 
-public class ConsentPermission:EntityBase
+namespace amorphie.consent.core.Model;
+public class ConsentPermission : EntityBase
 {
     [ForeignKey("Consent")]
     public Guid ConsentId { get; set; }

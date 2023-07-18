@@ -28,10 +28,6 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         routeGroupBuilder.MapGet("/custom-method", CustomMethod);
     }
 
-    protected override async void Upsert(RouteGroupBuilder routeGroupBuilder)
-    {
-        routeGroupBuilder.MapPost("/", () => { }).Produces<string>(StatusCodes.Status200OK);
-    }
 
     [AddSwaggerParameter("Test Required", ParameterLocation.Header, true)]
     protected async ValueTask<IResult> CustomMethod()
