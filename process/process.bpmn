@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_0z68obe" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.7.0">
+  <bpmn:process id="zeebe-test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_calc">
+      <bpmn:outgoing>Flow_1ie08zg</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_calc">
+      <bpmn:incoming>Flow_1o9zfqu</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1ie08zg" sourceRef="StartEvent_calc" targetRef="change-state" />
+    <bpmn:serviceTask id="change-state" name="change-state">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="change-state" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ie08zg</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ky5dp1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1hvm12k" name="change-state">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="change-state" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0z7und2</bpmn:incoming>
+      <bpmn:outgoing>Flow_1o9zfqu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1rxfb8o" name="change-state">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="change-state" retries="1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ky5dp1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0z7und2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0ky5dp1" sourceRef="change-state" targetRef="Activity_1rxfb8o" />
+    <bpmn:sequenceFlow id="Flow_0z7und2" sourceRef="Activity_1rxfb8o" targetRef="Activity_1hvm12k" />
+    <bpmn:sequenceFlow id="Flow_1o9zfqu" sourceRef="Activity_1hvm12k" targetRef="EndEvent_calc" />
+  </bpmn:process>
+  <bpmn:message id="Message_143id7o" name="start-calc" />
+  <bpmn:message id="Message_04nrwno" name="wait-calc">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=correlationKey" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_1k3cqpd" name="finish-calc">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=correlationKey" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="zeebe-test">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_calc">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1eoj541_di" bpmnElement="change-state">
+        <dc:Bounds x="340" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1h25wd9" bpmnElement="Activity_1hvm12k">
+        <dc:Bounds x="800" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0a2axbm" bpmnElement="Activity_1rxfb8o">
+        <dc:Bounds x="570" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1uulfg3_di" bpmnElement="EndEvent_calc">
+        <dc:Bounds x="1092" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1ie08zg_di" bpmnElement="Flow_1ie08zg">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="340" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ky5dp1_di" bpmnElement="Flow_0ky5dp1">
+        <di:waypoint x="440" y="117" />
+        <di:waypoint x="570" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z7und2_di" bpmnElement="Flow_0z7und2">
+        <di:waypoint x="670" y="117" />
+        <di:waypoint x="800" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1o9zfqu_di" bpmnElement="Flow_1o9zfqu">
+        <di:waypoint x="900" y="117" />
+        <di:waypoint x="1092" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

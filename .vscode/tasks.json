@@ -1,0 +1,88 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-amorphie-template",
+            "dependsOn": "init-mocks",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/amorphie.template/amorphie.template.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-amorphie-template-hub",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/amorphie.template.hub/amorphie.template.hub.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-amorphie-template-worker",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/amorphie.template.worker/amorphie.template.worker.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "appId": "amorphie-template",
+            "appPort": 4200,
+            "httpPort": 42010,
+            "grpcPort": 42011,
+            "label": "dapr-debug-amorphie-template",
+            "type": "dapr",
+            "dependsOn": "build-amorphie-template",
+            "componentsPath": "Dapr/Components"
+        },
+        {
+            "appId": "amorphie-template-hub",
+            "appPort": 4201,
+            "httpPort": 42020,
+            "grpcPort": 42021,
+            "label": "dapr-debug-amorphie-template-hub",
+            "type": "dapr",
+            "dependsOn": "build-amorphie-template-hub",
+            "componentsPath": "Dapr/Components",
+        },
+        {
+            "appId": "amorphie-template-worker",
+            "appPort": 4202,
+            "httpPort": 42030,
+            "grpcPort": 42031,
+            "label": "dapr-debug-amorphie-template-worker",
+            "type": "dapr",
+            "dependsOn": "build-amorphie-template-worker",
+            "componentsPath": "Dapr/Components"
+        },
+        {
+            "appId": "amorphie-template",
+            "label": "daprd-down-amorphie-template",
+            "type": "daprd-down",
+            "dependsOn": "stop-mocks",
+        },
+        {
+            "appId": "amorphie-template-hub",
+            "label": "daprd-down-amorphie-template-hub",
+            "type": "daprd-down"
+        },
+        {
+            "appId": "amorphie-template-worker",
+            "label": "daprd-down-amorphie-template-worker",
+            "type": "daprd-down"
+        }
+    ]
+}

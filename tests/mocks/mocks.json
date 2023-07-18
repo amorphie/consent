@@ -1,0 +1,332 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "amorphie.template",
+    "version": "1.0"
+  },
+  "paths": {
+    "/student/{id}": {
+      "get": {
+        "tags": [
+          "student"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "student"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/student": {
+      "get": {
+        "tags": [
+          "student"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "maximum": 100,
+              "minimum": 5,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Student"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "student"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Student"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Course": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modifiedByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "credits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enrollments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Enrollment"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Enrollment": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modifiedByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grade": {
+            "$ref": "#/components/schemas/Grade"
+          },
+          "course": {
+            "$ref": "#/components/schemas/Course"
+          },
+          "student": {
+            "$ref": "#/components/schemas/Student"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Grade": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Student": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modifiedByBehalfOf": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstMidName": {
+            "type": "string",
+            "nullable": true
+          },
+          "enrollmentDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "enrollments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Enrollment"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
