@@ -2,6 +2,7 @@ using amorphie.consent.data;
 using amorphie.consent.Validator;
 using amorphie.core.Extension;
 using amorphie.core.HealthCheck;
+using amorphie.core.Identity;
 using amorphie.core.Swagger;
 using amorphie.template.HealthCheck;
 using FluentValidation;
@@ -15,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
 builder.Services.AddHealthChecks().AddBBTHealthCheck();
+builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

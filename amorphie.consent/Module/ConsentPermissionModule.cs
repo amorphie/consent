@@ -10,14 +10,14 @@ using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Module;
 
-public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
+public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, ConsentPermission, ConsentDbContext>
 {
-    public ConsentModule(WebApplication app)
+    public ConsentPermissionModule(WebApplication app)
         : base(app) { }
 
-    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
+    public override string[]? PropertyCheckList => new string[] { "Permission" };
 
-    public override string? UrlFragment => "consent";
+    public override string? UrlFragment => "consentPermission";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
@@ -38,25 +38,24 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     protected async ValueTask<IResult> SearchMethod(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [AsParameters] ConsentSearch consentSearch,
+        [AsParameters] ConsentPermissionSearch consentSearch,
         HttpContext httpContext,
         CancellationToken token
     )
     {
-        IList<Consent> resultList = await context
-            .Set<Consent>()
+        IList<ConsentPermission> resultList = await context
+            .Set<ConsentPermission>()
             .AsNoTracking()
             .Where(
                 x =>
-                    x.AdditionalData.Contains(consentSearch.Keyword!)
-                    || x.AdditionalData.Contains(consentSearch.Keyword!)
+                    x.Permission.Contains(consentSearch.Keyword!)
             )
             .Skip(consentSearch.Page)
             .Take(consentSearch.PageSize)
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<ConsentDTO>>(resultList))
+            ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
             : Results.NoContent();
     }
 }

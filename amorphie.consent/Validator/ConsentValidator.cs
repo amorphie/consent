@@ -1,3 +1,4 @@
+using amorphie.consent.core.Model;
 using FluentValidation;
 
 namespace amorphie.consent.Validator;

@@ -10,14 +10,14 @@ using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Module;
 
-public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
+public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
 {
-    public ConsentModule(WebApplication app)
+    public TokenModule(WebApplication app)
         : base(app) { }
 
-    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
+    public override string[]? PropertyCheckList => new string[] { "TokenType", "TokenValue" };
 
-    public override string? UrlFragment => "consent";
+    public override string? UrlFragment => "token";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
@@ -38,25 +38,25 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     protected async ValueTask<IResult> SearchMethod(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [AsParameters] ConsentSearch consentSearch,
+        [AsParameters] TokenSearch consentSearch,
         HttpContext httpContext,
         CancellationToken token
     )
     {
-        IList<Consent> resultList = await context
-            .Set<Consent>()
+        IList<Token> resultList = await context
+            .Set<Token>()
             .AsNoTracking()
             .Where(
                 x =>
-                    x.AdditionalData.Contains(consentSearch.Keyword!)
-                    || x.AdditionalData.Contains(consentSearch.Keyword!)
+                    x.TokenValue.Contains(consentSearch.Keyword!)
+                    || x.TokenValue.Contains(consentSearch.Keyword!)
             )
             .Skip(consentSearch.Page)
             .Take(consentSearch.PageSize)
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<ConsentDTO>>(resultList))
+            ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
             : Results.NoContent();
     }
 }
