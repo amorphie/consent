@@ -36,22 +36,21 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     }
 
     protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] ConsentSearch consentSearch,
-        HttpContext httpContext,
-        CancellationToken token
-    )
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper,
+     [AsParameters] ConsentSearch consentSearch,
+     HttpContext httpContext,
+     CancellationToken token
+ )
     {
+        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
+
         IList<Consent> resultList = await context
             .Set<Consent>()
             .AsNoTracking()
-            .Where(
-                x =>
-                    x.AdditionalData.Contains(consentSearch.Keyword!)
-                    || x.AdditionalData.Contains(consentSearch.Keyword!)
-            )
-            .Skip(consentSearch.Page)
+            .Where(x => string.IsNullOrEmpty(consentSearch.Keyword) || x.AdditionalData.ToLower().Contains(consentSearch.Keyword.ToLower()))
+            .OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
             .Take(consentSearch.PageSize)
             .ToListAsync(token);
 

@@ -35,28 +35,29 @@ public class ConsentDefinitionModule : BaseBBTRoute<ConsentDefinitionDTO, Consen
         return Results.Ok();
     }
 
-    protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] ConsentDefinitionSearch consentSearch,
-        HttpContext httpContext,
-        CancellationToken token
-    )
-    {
-        IList<ConsentDefinition> resultList = await context
-            .Set<ConsentDefinition>()
-            .AsNoTracking()
-            .Where(
-                x =>
-                    x.Name.Contains(consentSearch.Keyword!)
-                    || x.RoleAssignment.Contains(consentSearch.Keyword!)
-            )
-            .Skip(consentSearch.Page)
-            .Take(consentSearch.PageSize)
-            .ToListAsync(token);
+protected async ValueTask<IResult> SearchMethod(
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper,
+    [AsParameters] ConsentDefinitionSearch consentDefinitionSearch,
+    HttpContext httpContext,
+    CancellationToken token
+)
+{
+    int skipRecords = (consentDefinitionSearch.Page - 1) * consentDefinitionSearch.PageSize;
 
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<ConsentDefinitionDTO>>(resultList))
-            : Results.NoContent();
-    }
+    IList<ConsentDefinition> resultList = await context
+        .Set<ConsentDefinition>()
+        .AsNoTracking()
+        .Where(x => string.IsNullOrEmpty(consentDefinitionSearch.Keyword) || x.Name.ToLower().Contains(consentDefinitionSearch.Keyword.ToLower()))
+        .OrderBy(x => x.CreatedAt)
+        .Skip(skipRecords)
+        .Take(consentDefinitionSearch.PageSize)
+        .ToListAsync(token);
+        
+    IList<ConsentDefinitionDTO> resultDTOList = mapper.Map<IList<ConsentDefinitionDTO>>(resultList);
+
+    return (resultDTOList != null && resultDTOList.Count > 0)
+        ? Results.Ok(resultDTOList)
+        : Results.NoContent();
+}
 }

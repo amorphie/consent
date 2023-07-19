@@ -14,6 +14,7 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, ConsentDTO>().ReverseMap();
             CreateMap<ConsentPermission, ConsentPermissionDto>().ReverseMap();
             CreateMap<ConsentDefinition, ConsentDefinitionDTO>().ReverseMap();
+            CreateMap<Token,TokenDto>().ReverseMap();
         }
     }
 }

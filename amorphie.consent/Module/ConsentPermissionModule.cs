@@ -35,23 +35,23 @@ public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, Consen
         return Results.Ok();
     }
 
-    protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] ConsentPermissionSearch consentSearch,
-        HttpContext httpContext,
-        CancellationToken token
-    )
+  protected async ValueTask<IResult> SearchMethod(
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper,
+     [AsParameters] ConsentPermissionSearch consentPermissionSearch,
+     HttpContext httpContext,
+     CancellationToken token
+ )
     {
+        int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
+
         IList<ConsentPermission> resultList = await context
             .Set<ConsentPermission>()
             .AsNoTracking()
-            .Where(
-                x =>
-                    x.Permission.Contains(consentSearch.Keyword!)
-            )
-            .Skip(consentSearch.Page)
-            .Take(consentSearch.PageSize)
+            .Where(x => string.IsNullOrEmpty(consentPermissionSearch.Keyword) || x.Permission.ToLower().Contains(consentPermissionSearch.Keyword.ToLower()))
+            .OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(consentPermissionSearch.PageSize)
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)

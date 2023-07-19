@@ -35,24 +35,23 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
         return Results.Ok();
     }
 
-    protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] TokenSearch consentSearch,
-        HttpContext httpContext,
-        CancellationToken token
-    )
+     protected async ValueTask<IResult> SearchMethod(
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper,
+     [AsParameters] TokenSearch tokenSearch,
+     HttpContext httpContext,
+     CancellationToken token
+ )
     {
+        int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
+
         IList<Token> resultList = await context
             .Set<Token>()
             .AsNoTracking()
-            .Where(
-                x =>
-                    x.TokenValue.Contains(consentSearch.Keyword!)
-                    || x.TokenValue.Contains(consentSearch.Keyword!)
-            )
-            .Skip(consentSearch.Page)
-            .Take(consentSearch.PageSize)
+            .Where(x => string.IsNullOrEmpty(tokenSearch.Keyword) || x.TokenValue.ToLower().Contains(tokenSearch.Keyword.ToLower()))
+            .OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(tokenSearch.PageSize)
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
