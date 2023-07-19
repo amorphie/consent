@@ -10,25 +10,22 @@ table(token){
     column(tokenValue): CHARACTER VARYING
     column(tokenType):INTEGER
     column(expireTime):INTEGER
-    column(consent):Consent
 }
 
 table(consent){
     primary_key( id ): UUID
     foreign_key(consentDefinitionId ): UUID <<FK>> NULL
     column(userId):UUID
-    column(state) : INTEGER
-    column(consentType) : INTEGER
+    column(state) : CHARACTER VARYING
+    column(consentType) : CHARACTER VARYING
     column(additionalData) : CHARACTER VARYING
-    column(consentDefinition) : ConsentDefinition
-    column(consentPermissions) : ConsentPermission []
+    column(expireDate) : DateTime
 }
 
 table(consentPermission){
     primary_key( id ): UUID
     foreign_key(consentId ): UUID <<FK>>
-    column(permission) : CHARACTER VARYINGö
-    column(consent) : Consent
+    column(permission) : CHARACTER VARYING
 }
 
 consentPermission }|--|| consent
