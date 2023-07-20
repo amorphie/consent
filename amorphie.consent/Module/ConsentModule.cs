@@ -62,7 +62,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
             await transaction.CommitAsync();
 
 
-            var resultDTO = new ConsentDataDto
+            var resultDto = new ConsentDataDto
             {
                 ConsentType = consent.ConsentType,
                 State = consent.State,
@@ -74,7 +74,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
                 Permission = consentPermission.Permission
             };
 
-            return Results.Ok(resultDTO);
+            return Results.Ok(resultDto);
         }
         catch (Exception e)
         {
