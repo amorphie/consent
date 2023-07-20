@@ -22,7 +22,7 @@ namespace amorphie.consent.data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Consent", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,8 +36,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("ConsentType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ConsentType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -57,8 +58,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -70,7 +72,7 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("Consents");
                 });
 
-            modelBuilder.Entity("ConsentDefinition", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.ConsentDefinition", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -115,7 +117,7 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("ConsentDefinitions");
                 });
 
-            modelBuilder.Entity("ConsentPermission", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.ConsentPermission", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -153,7 +155,7 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("ConsentPermissions");
                 });
 
-            modelBuilder.Entity("Token", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -197,9 +199,9 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("Consent", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
-                    b.HasOne("ConsentDefinition", "ConsentDefinition")
+                    b.HasOne("amorphie.consent.core.Model.ConsentDefinition", "ConsentDefinition")
                         .WithMany()
                         .HasForeignKey("ConsentDefinitionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -208,9 +210,9 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("ConsentDefinition");
                 });
 
-            modelBuilder.Entity("ConsentPermission", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.ConsentPermission", b =>
                 {
-                    b.HasOne("Consent", "Consent")
+                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
                         .WithMany("ConsentPermissions")
                         .HasForeignKey("ConsentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -219,9 +221,9 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("Consent");
                 });
 
-            modelBuilder.Entity("Token", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
                 {
-                    b.HasOne("Consent", "Consent")
+                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
                         .WithMany()
                         .HasForeignKey("ConsentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -230,7 +232,7 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("Consent");
                 });
 
-            modelBuilder.Entity("Consent", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
                     b.Navigation("ConsentPermissions");
                 });

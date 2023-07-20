@@ -44,16 +44,16 @@ public static class DbInitializer
                 // Id = Guid.NewGuid(),
                 ConsentDefinitionId = consentDefinition[0].Id,
                 UserId = Guid.NewGuid(),
-                State = 1,
-                ConsentType = 1,
+                State = "Waiting",
+                ConsentType = "Open Banking",
                 AdditionalData = "Additional Data 1"
             },
             new Consent{
                 // Id = Guid.NewGuid(),
                 ConsentDefinitionId = consentDefinition[1].Id,
                 UserId = Guid.NewGuid(),
-                State = 2,
-                ConsentType = 2,
+                State = "Approval",
+                ConsentType = "BKM",
                 AdditionalData = "Additional Data 2"
             },
         };
