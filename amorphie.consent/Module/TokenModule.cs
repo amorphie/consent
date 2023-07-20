@@ -25,14 +25,6 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
 
         routeGroupBuilder.MapGet("/search", SearchMethod);
 
-        routeGroupBuilder.MapGet("/custom-method", CustomMethod);
-    }
-
-
-    [AddSwaggerParameter("Test Required", ParameterLocation.Header, true)]
-    protected async ValueTask<IResult> CustomMethod()
-    {
-        return Results.Ok();
     }
 
      protected async ValueTask<IResult> SearchMethod(

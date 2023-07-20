@@ -22,18 +22,67 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-
+        routeGroupBuilder.MapPost("/saveConsentData", SaveConsentDataToDatabase);
         routeGroupBuilder.MapGet("/search", SearchMethod);
 
-        routeGroupBuilder.MapGet("/custom-method", CustomMethod);
     }
-
-
-    [AddSwaggerParameter("Test Required", ParameterLocation.Header, true)]
-    protected async ValueTask<IResult> CustomMethod()
+    protected async Task<IResult> SaveConsentDataToDatabase(ConsentDataDto consentData, [FromServices] ConsentDbContext context, [FromServices] IMapper mapper)
     {
-        return Results.Ok();
+        using var transaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            var consentDefinition = new ConsentDefinition
+            {
+
+                Name = consentData.ConsentDefinitionName,
+                RoleAssignment = consentData.RoleAssignment,
+                Scope = consentData.Scope,
+                ClientId = consentData.ClientId
+            };
+            var consent = new Consent
+            {
+                ConsentDefinitionId = consentDefinition.Id,
+                ConsentType = consentData.ConsentType,
+                State = consentData.State,
+                AdditionalData = consentData.AdditionalData,
+                UserId = Guid.NewGuid()
+            };
+
+            var consentPermission = new ConsentPermission
+            {
+                ConsentId = consent.Id,
+                Permission = consentData.Permission
+            };
+
+            context.Set<ConsentDefinition>().Add(consentDefinition);
+            context.Set<Consent>().Add(consent);
+            context.Set<ConsentPermission>().Add(consentPermission);
+
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+
+            var resultDTO = new ConsentDataDto
+            {
+                ConsentType = consent.ConsentType,
+                State = consent.State,
+                AdditionalData = consent.AdditionalData,
+                ConsentDefinitionName = consentDefinition.Name,
+                RoleAssignment = consentDefinition.RoleAssignment,
+                Scope = consentDefinition.Scope,
+                ClientId = consentDefinition.ClientId,
+                Permission = consentPermission.Permission
+            };
+
+            return Results.Ok(resultDTO);
+        }
+        catch (Exception e)
+        {
+            await transaction.RollbackAsync();
+            return Results.BadRequest($"Veri kaydedilirken bir hata oluştu.${e.StackTrace}");
+        }
     }
+
 
     protected async ValueTask<IResult> SearchMethod(
      [FromServices] ConsentDbContext context,
