@@ -24,8 +24,15 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapPost("/saveConsentData", SaveConsentDataToDatabase);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-
+        routeGroupBuilder.MapGet("/user/{userId}/consentType/{consentType}", GetUserConsent);
     }
+
+    protected async Task<IResult> GetUserConsent(HttpContext context)
+    {
+        // TODO : Get user consent with id and consent type
+        return Results.Ok();
+    }
+
     protected async Task<IResult> SaveConsentDataToDatabase(ConsentDataDto consentData, [FromServices] ConsentDbContext context, [FromServices] IMapper mapper)
     {
         using var transaction = await context.Database.BeginTransactionAsync();
@@ -54,9 +61,9 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
                 Permission = consentData.Permission
             };
 
-            context.Set<ConsentDefinition>().Add(consentDefinition);
-            context.Set<Consent>().Add(consent);
-            context.Set<ConsentPermission>().Add(consentPermission);
+            context.Add<ConsentDefinition>(consentDefinition);
+            context.Add<Consent>(consent);
+            context.Add<ConsentPermission>(consentPermission);
 
             await context.SaveChangesAsync();
             await transaction.CommitAsync();

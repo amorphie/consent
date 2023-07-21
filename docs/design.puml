@@ -39,8 +39,18 @@ table(consentDefinition){
     column(scope):CHARACTER VARYING []
     column(clientId):CHARACTER VARYING []
 }
-
 consent }|--|| consentDefinition
+
+' TODO : Will we check account privileges with scope?
+
+table(consentDefinitionPermission){
+    primary_key( id ): UUID
+    foreign_key(consentDefinitionId ): UUID <<FK>>
+    column(name):CHARACTER VARYING
+    column(permission):CHARACTER VARYING
+}
+consentDefinitionPermission }|--|| consentDefinition
+
 
 
 @enduml
