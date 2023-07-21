@@ -26,7 +26,9 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         routeGroupBuilder.MapGet("/search", SearchMethod);
 
     }
-    protected async Task<IResult> SaveConsentDataToDatabase(ConsentDataDto consentData, [FromServices] ConsentDbContext context, [FromServices] IMapper mapper)
+    protected async Task<IResult> SaveConsentDataToDatabase(ConsentDataDto consentData, 
+    [FromServices] ConsentDbContext context, 
+    [FromServices] IMapper mapper)
     {
         using var transaction = await context.Database.BeginTransactionAsync();
         try
