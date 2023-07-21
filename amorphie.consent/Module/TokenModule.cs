@@ -27,13 +27,18 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
 
     }
 
-     protected async ValueTask<IResult> SearchMethod(
-     [FromServices] ConsentDbContext context,
-     [FromServices] IMapper mapper,
-     [AsParameters] TokenSearch tokenSearch,
-     HttpContext httpContext,
-     CancellationToken token
- )
+    #region TokenModule SearchMethod
+    // This method retrieves a list of tokens from the database based on the provided search criteria.
+    // It performs filtering and pagination in the database using the search criteria.
+    // If there are results, it returns them as a successful result with a list of TokenDto objects.
+    // If there are no results, it returns a no content result.
+    protected async ValueTask<IResult> SearchMethod(
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper,
+    [AsParameters] TokenSearch tokenSearch,
+    HttpContext httpContext,
+    CancellationToken token
+)
     {
         int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
 
@@ -50,4 +55,5 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
             ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
             : Results.NoContent();
     }
+    #endregion
 }

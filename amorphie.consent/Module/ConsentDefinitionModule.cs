@@ -25,32 +25,87 @@ public class ConsentDefinitionModule : BaseBBTRoute<ConsentDefinitionDTO, Consen
 
         routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/consentName/{consentName}", GetConsentDefinitionByName);
-
         routeGroupBuilder.MapGet("/clientId/{clientId}/consentName/{consentName}", GetConsentDefinitionByClientIdName);
     }
-    protected async ValueTask<IResult> GetConsentDefinitionByName()
-    {
-        // TODO : Get consent definition by consentName
-        return Results.Ok();
 
-    }
-    protected async ValueTask<IResult> GetConsentDefinitionByClientIdName()
-    {
-        // TODO : Get consent definition by consentName
-        return Results.Ok();
-
-    }
-    
-    protected async ValueTask<IResult> SearchMethod(
+    #region  ConsentDefinitionModule GetConsentDefinitionByName Method
+    // This method retrieves a consent definition from the database based on the provided consent definition name.
+    // It performs a case-insensitive search in the database to find the consent definition with the given name.
+    // If the consent definition is found, it maps it to a ConsentDefinitionDTO and returns it as a successful result.
+    // If the consent definition is not found, it returns a not found result with an appropriate message.
+    protected async ValueTask<IResult> GetConsentDefinitionByName(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [AsParameters] ConsentDefinitionSearch consentDefinitionSearch,
-        HttpContext httpContext,
-        CancellationToken token
+        string consentDefinitionName
     )
     {
+        // Retrieve the consent definition from the database based on the given consent definition name.
+        var consentDefinition = await context.Set<ConsentDefinition>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Name.ToLower() == consentDefinitionName.ToLower());
+
+        // If the consent definition is found, map it to a ConsentDefinitionDTO and return it as a successful result.
+        if (consentDefinition != null)
+        {
+            var resultDTO = mapper.Map<ConsentDefinitionDTO>(consentDefinition);
+            return Results.Ok(resultDTO);
+        }
+        else
+        {
+            // If the consent definition is not found, return a not found result with an appropriate message.
+            return Results.NotFound($"ConsentDefinition '{consentDefinitionName}' is not found.");
+        }
+    }
+    #endregion
+
+    #region ConsentDefinitionModule GetConsentDefinitionByClientIdName Method
+    // This method retrieves a consent definition from the database based on the provided client ID and consent definition name.
+    // It performs a case-insensitive search in the database to find the consent definition with the given client ID and name.
+    // If the consent definition is found, it maps it to a ConsentDefinitionDTO and returns it as a successful result.
+    // If the consent definition is not found, it returns a not found result with an appropriate message.
+    protected async ValueTask<IResult> GetConsentDefinitionByClientIdName(
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        string clientId,
+        string consentDefinitionName //Maybe optional ??
+    )
+    {
+        // Retrieve the consent definition from the database based on the given client ID and consent definition name.
+        var consentDefinition = await context.Set<ConsentDefinition>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ClientId.Contains(clientId) && x.Name.ToLower() == consentDefinitionName.ToLower());
+
+        // If the consent definition is found, map it to a ConsentDefinitionDTO and return it as a successful result.
+        if (consentDefinition != null)
+        {
+            var resultDTO = mapper.Map<ConsentDefinitionDTO>(consentDefinition);
+            return Results.Ok(resultDTO);
+        }
+        else
+        {
+            // If the consent definition is not found, return a not found result with an appropriate message.
+            return Results.NotFound($"Client ID '{clientId}' or ConsentDefinitionName '{consentDefinitionName}' is not found");
+        }
+    }
+    #endregion
+
+    #region ConsentDefinitionModule SearchMethod
+    // This method retrieves a list of consent definitions from the database based on the provided search criteria.
+    // It performs filtering and pagination in the database using the search criteria.
+    // If there are results, it returns them as a successful result with a list of ConsentDefinitionDTO objects.
+    // If there are no results, it returns a no content result.
+    protected async ValueTask<IResult> SearchMethod(
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper,
+     [AsParameters] ConsentDefinitionSearch consentDefinitionSearch,
+     HttpContext httpContext,
+     CancellationToken token
+ )
+    {
+        // Calculate the number of records to skip based on the requested page number and page size.
         int skipRecords = (consentDefinitionSearch.Page - 1) * consentDefinitionSearch.PageSize;
 
+        // Retrieve a list of consent definitions from the database based on the provided search criteria.
         IList<ConsentDefinition> resultList = await context
             .Set<ConsentDefinition>()
             .AsNoTracking()
@@ -60,10 +115,13 @@ public class ConsentDefinitionModule : BaseBBTRoute<ConsentDefinitionDTO, Consen
             .Take(consentDefinitionSearch.PageSize)
             .ToListAsync(token);
 
+        // Map the list of consent definitions to a list of ConsentDefinitionDTO objects.
         IList<ConsentDefinitionDTO> resultDTOList = mapper.Map<IList<ConsentDefinitionDTO>>(resultList);
 
+        // If there are results, return them as a successful result, otherwise return a no content result.
         return (resultDTOList != null && resultDTOList.Count > 0)
             ? Results.Ok(resultDTOList)
             : Results.NoContent();
     }
+    #endregion
 }

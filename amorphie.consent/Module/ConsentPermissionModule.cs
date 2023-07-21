@@ -27,13 +27,18 @@ public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, Consen
 
     }
 
-  protected async ValueTask<IResult> SearchMethod(
-     [FromServices] ConsentDbContext context,
-     [FromServices] IMapper mapper,
-     [AsParameters] ConsentPermissionSearch consentPermissionSearch,
-     HttpContext httpContext,
-     CancellationToken token
- )
+    #region ConsentPermissionModule SearchMethod
+    // This method retrieves a list of consent permissions from the database based on the provided search criteria.
+    // It performs filtering and pagination in the database using the search criteria.
+    // If there are results, it returns them as a successful result with a list of ConsentPermissionDto objects.
+    // If there are no results, it returns a no content result.
+    protected async ValueTask<IResult> SearchMethod(
+       [FromServices] ConsentDbContext context,
+       [FromServices] IMapper mapper,
+       [AsParameters] ConsentPermissionSearch consentPermissionSearch,
+       HttpContext httpContext,
+       CancellationToken token
+   )
     {
         int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
 
@@ -50,4 +55,5 @@ public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, Consen
             ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
             : Results.NoContent();
     }
+    #endregion
 }
