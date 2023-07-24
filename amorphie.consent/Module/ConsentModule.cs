@@ -25,6 +25,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         routeGroupBuilder.MapPost("/saveConsentData", SaveConsentDataToDatabase);
         routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/user/{userId}/consentType/{consentType}", GetUserConsent);
+        routeGroupBuilder.MapGet("/user/{userId}", GetUserConsentByUserId);
     }
 
 
@@ -47,7 +48,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
 
         var userConsents = await context.Set<Consent>()
             .AsNoTracking()
-            .Where(x => x.UserId == userId && x.ConsentType == consentType || x.UserId == userId)
+            .Where(x => x.UserId == userId && x.ConsentType == consentType)
             .ToListAsync();
 
         if (userConsents.Count > 0)
@@ -58,6 +59,37 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         else
         {
             // User Consent Not Found
+            return Results.NotFound("Kullanıcının rızası bulunamadı.");
+        }
+    }
+    #endregion
+
+
+    #region GetUserConsentByUserId Method
+    // This method retrieves the consent of a specific user from the database. It is used to query the relevant user's consent
+    // using the user identity (userId). For example, filtering can be performed in the database based on the userId parameter.
+    protected async Task<IResult> GetUserConsentByUserId(
+        [FromServices] ConsentDbContext context,
+        Guid userId
+    )
+    {
+        // By querying the "Consent" table in the database, we retrieve the consents that match the UserId field with the userId value.
+        // The AsNoTracking method disables the tracking of objects returned by the query. As a result, any changes made to the
+        // data in the database will not be tracked and won't be reflected in real-time.
+        // Using the Where method, we select consents that have the UserId field matching the userId value, and use the ToListAsync method
+        // to asynchronously send the query to the database.
+
+        var userConsents = await context.Set<Consent>()
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .ToListAsync();
+
+        if (userConsents.Count > 0)
+        {
+            return Results.Ok(userConsents);
+        }
+        else
+        {
             return Results.NotFound("Kullanıcının rızası bulunamadı.");
         }
     }
