@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Prometheus;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
@@ -21,7 +20,7 @@ builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-await builder.Configuration.AddVaultSecrets("PostgreSql", new string[] { "PostgreSql" });
+await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
 builder.Services.AddSwaggerGen(options=>
 {
