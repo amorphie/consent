@@ -22,6 +22,7 @@ builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
+Console.WriteLine($"PostgreSql: {postgreSql}");
 builder.Services.AddSwaggerGen(options=>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
