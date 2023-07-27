@@ -15,7 +15,7 @@ using Prometheus;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
-builder.Services.AddHealthChecks().AddBBTHealthCheck();
+//builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
