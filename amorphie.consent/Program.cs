@@ -23,10 +23,10 @@ builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
 Console.WriteLine($"PostgreSql: {postgreSql}");
-builder.Services.AddSwaggerGen(options=>
+builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
-    
+
 });
 
 builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
@@ -50,11 +50,9 @@ DbInitializer.Initialize(db);
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
