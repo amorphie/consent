@@ -60,10 +60,10 @@ app.UseHttpsRedirection();
 
 app.AddRoutes();
 
-app.MapHealthChecks("/healthz", new HealthCheckOptions
-{
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
+// app.MapHealthChecks("/healthz", new HealthCheckOptions
+// {
+//     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+// });
 app.MapMetrics();
 
 app.Run();
