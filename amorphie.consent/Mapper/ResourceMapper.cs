@@ -12,9 +12,12 @@ namespace amorphie.consent.Mapper
         public ResourceMapper()
         {
             CreateMap<Consent, ConsentDTO>().ReverseMap();
+            CreateMap<Consent, OpenBankingConsentDTO>()
+                .ForMember(dest => dest.ConsentPermission, opt => opt.MapFrom(src => src.ConsentPermission)) // Handle ConsentPermission mapping
+                .ReverseMap();
             CreateMap<ConsentPermission, ConsentPermissionDto>().ReverseMap();
             CreateMap<ConsentDefinition, ConsentDefinitionDTO>().ReverseMap();
-            CreateMap<Token,TokenDto>().ReverseMap();
+            CreateMap<Token, TokenDto>().ReverseMap();
         }
     }
 }

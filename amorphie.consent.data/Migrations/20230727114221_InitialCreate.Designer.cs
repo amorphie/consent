@@ -12,8 +12,8 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    [Migration("20230720101310_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20230727114221_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -151,6 +151,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("PermissionLastDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConsentId");
@@ -188,8 +191,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("TokenType")
-                        .HasColumnType("integer");
+                    b.Property<string>("TokenType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("TokenValue")
                         .IsRequired()

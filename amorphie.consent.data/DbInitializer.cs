@@ -46,7 +46,7 @@ public static class DbInitializer
                 UserId = Guid.NewGuid(),
                 State = "Waiting",
                 ConsentType = "Open Banking",
-                AdditionalData = "Additional Data 1"
+                AdditionalData = "Additional Data 1",
             },
             new Consent{
                 // Id = Guid.NewGuid(),
@@ -67,11 +67,15 @@ public static class DbInitializer
         var consentPermission = new ConsentPermission[]{
             new ConsentPermission{
                 ConsentId = consent[0].Id,
-                Permission = "Permission 1"
+                Permission = "Permission 1",
+                PermissionLastDate = DateTime.Now.ToUniversalTime()
             },
             new ConsentPermission{
                 ConsentId = consent[1].Id,
-                Permission = "Permission 2"
+                Permission = "Permission 2",
+                TransactionStartDate = DateTime.Now.ToUniversalTime(),
+                TransactionEndDate = DateTime.Now.ToUniversalTime(),
+                PermissionLastDate = DateTime.Now.ToUniversalTime()
             },
         };
 
@@ -85,9 +89,15 @@ public static class DbInitializer
             new Token{
                 ConsentId = consent[0].Id,
                 TokenValue = "Token Value 1",
-                TokenType = 1,
+                TokenType = "Access Token",
                 ExpireTime = 5
 
+            },
+            new Token{
+                ConsentId= consent[1].Id,
+                TokenValue= "Token Value 2",
+                TokenType= "Refresh Token",
+                ExpireTime= 10
             }
         };
 

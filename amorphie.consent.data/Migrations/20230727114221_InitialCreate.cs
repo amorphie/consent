@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace amorphie.consent.data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,6 +67,7 @@ namespace amorphie.consent.data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ConsentId = table.Column<Guid>(type: "uuid", nullable: false),
                     Permission = table.Column<string>(type: "text", nullable: false),
+                    PermissionLastDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedByBehalfOf = table.Column<Guid>(type: "uuid", nullable: true),
@@ -92,7 +93,7 @@ namespace amorphie.consent.data.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ConsentId = table.Column<Guid>(type: "uuid", nullable: false),
                     TokenValue = table.Column<string>(type: "text", nullable: false),
-                    TokenType = table.Column<int>(type: "integer", nullable: false),
+                    TokenType = table.Column<string>(type: "text", nullable: false),
                     ExpireTime = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),

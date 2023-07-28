@@ -28,9 +28,9 @@ class ConsentDbContextFactory : IDesignTimeDbContextFactory<ConsentDbContext>
         var builder = new DbContextOptionsBuilder<ConsentDbContext>();
         // var test = _configuration["STATE_STORE"];
         // System.Console.WriteLine("Test: " + test);
-        var connStr = _configuration["PostgreSql"];
+        // var connStr = _configuration["PostgreSql"];
 
-        // var connStr = "Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres";
+        var connStr = "Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres";
         builder.UseNpgsql(connStr);
         builder.EnableSensitiveDataLogging();
         return new ConsentDbContext(builder.Options);

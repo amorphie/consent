@@ -148,6 +148,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("PermissionLastDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConsentId");
@@ -185,8 +188,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("TokenType")
-                        .HasColumnType("integer");
+                    b.Property<string>("TokenType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("TokenValue")
                         .IsRequired()
