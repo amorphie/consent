@@ -92,6 +92,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     {
         try
         {
+            
             var consent = await context.Consents
                 .Include(c => c.ConsentPermission)
                 .Include(c => c.Token)
