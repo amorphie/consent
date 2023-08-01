@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using amorphie.core.Base;
+using NpgsqlTypes;
 
 namespace amorphie.consent.core.Model;
 public class ConsentPermission : EntityBase
@@ -13,4 +14,6 @@ public class ConsentPermission : EntityBase
     public DateTime? TransactionEndDate;
     [JsonIgnore]
     public Consent Consent { get; set; }
+    [NotMapped]
+    public virtual NpgsqlTsVector SearchVector { get; set; }
 }

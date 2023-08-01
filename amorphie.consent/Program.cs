@@ -6,6 +6,7 @@ using amorphie.core.Identity;
 using amorphie.core.security.Extensions;
 using amorphie.core.Swagger;
 using amorphie.template.HealthCheck;
+using AutoMapper;
 using FluentValidation;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;

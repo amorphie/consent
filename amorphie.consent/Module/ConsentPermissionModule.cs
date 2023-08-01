@@ -33,27 +33,31 @@ public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, Consen
     // If there are results, it returns them as a successful result with a list of ConsentPermissionDto objects.
     // If there are no results, it returns a no content result.
     protected async ValueTask<IResult> SearchMethod(
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper,
-       [AsParameters] ConsentPermissionSearch consentPermissionSearch,
-       HttpContext httpContext,
-       CancellationToken token
-   )
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper,
+    [AsParameters] ConsentPermissionSearch consentPermissionSearch,
+    CancellationToken token
+)
+{
+    int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
+
+    IQueryable<ConsentPermission> query = context.ConsentPermissions.AsNoTracking();
+
+    if (!string.IsNullOrEmpty(consentPermissionSearch.Keyword))
     {
-        int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
-
-        IList<ConsentPermission> resultList = await context
-            .Set<ConsentPermission>()
-            .AsNoTracking()
-            .Where(x => string.IsNullOrEmpty(consentPermissionSearch.Keyword) || x.Permission.ToLower().Contains(consentPermissionSearch.Keyword.ToLower()))
-            .OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(consentPermissionSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
-            : Results.NoContent();
+        string keyword = consentPermissionSearch.Keyword.ToLower();
+          query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.Permission))
+           .Matches(EF.Functions.PlainToTsQuery("english", consentPermissionSearch.Keyword)));
     }
+
+    IList<ConsentPermission> resultList = await query.OrderBy(x => x.CreatedAt)
+        .Skip(skipRecords)
+        .Take(consentPermissionSearch.PageSize)
+        .ToListAsync(token);
+
+    return (resultList != null && resultList.Count > 0)
+        ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
+        : Results.NoContent();
+}
     #endregion
 }
