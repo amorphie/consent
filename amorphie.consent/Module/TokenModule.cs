@@ -36,24 +36,28 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper,
     [AsParameters] TokenSearch tokenSearch,
-    HttpContext httpContext,
     CancellationToken token
 )
+{
+    int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
+
+    IQueryable<Token> query = context.Tokens.AsNoTracking();
+
+    if (!string.IsNullOrEmpty(tokenSearch.Keyword))
     {
-        int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
-
-        IList<Token> resultList = await context
-            .Set<Token>()
-            .AsNoTracking()
-            .Where(x => string.IsNullOrEmpty(tokenSearch.Keyword) || x.TokenValue.ToLower().Contains(tokenSearch.Keyword.ToLower()))
-            .OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(tokenSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
-            : Results.NoContent();
+        string keyword = tokenSearch.Keyword.ToLower();
+          query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.TokenValue, x.TokenType))
+           .Matches(EF.Functions.PlainToTsQuery("english", tokenSearch.Keyword)));
     }
+
+    IList<Token> resultList = await query.OrderBy(x => x.CreatedAt)
+        .Skip(skipRecords)
+        .Take(tokenSearch.PageSize)
+        .ToListAsync(token);
+
+    return (resultList != null && resultList.Count > 0)
+        ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
+        : Results.NoContent();
+}
     #endregion
 }

@@ -26,58 +26,21 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapPost("/saveConsentData", CustomPost);
         routeGroupBuilder.MapGet("/get", GetConsentWithPermissionsAndToken);
+        routeGroupBuilder.MapGet("/search", SearchMethod);
+        routeGroupBuilder.MapGet("/getByUserId/{userId}", GetConsentWithPermissionsAndTokenByUserId);
     }
 
 
 
-    protected async Task<IResult> CustomPost([FromBody] OpenBankingConsentDTO dto, [FromServices] ConsentDbContext context, [FromServices] IMapper mapper)
+    protected async Task<IResult> CustomPost([FromBody] OpenBankingConsentDTO dto,
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper)
     {
         try
         {
-            var consent = new Consent
-            {
-                ConsentDefinitionId = dto.ConsentDefinitionId,
-                UserId = dto.UserId,
-                State = dto.State,
-                ConsentType = dto.ConsentType,
-                AdditionalData = dto.AdditionalData,
-            };
+            var consent = mapper.Map<Consent>(dto);
             context.Consents.Add(consent);
             await context.SaveChangesAsync();
-
-            if (dto.ConsentPermission != null)
-            {
-                var consentPermission = new ConsentPermission
-                {
-                    ConsentId = consent.Id,
-                    Permission = dto.ConsentPermission.Permission,
-                    PermissionLastDate = dto.ConsentPermission.PermissionLastDate,
-                    TransactionStartDate = dto.ConsentPermission.TransactionStartDate,
-                    TransactionEndDate = dto.ConsentPermission.TransactionEndDate,
-                };
-
-                context.ConsentPermissions.Add(consentPermission);
-            }
-
-            await context.SaveChangesAsync();
-
-
-            if (dto.Token != null)
-            {
-                var tokens = dto.Token.Select(token => new Token
-                {
-                    ConsentId = consent.Id,
-                    TokenType = token.TokenType,
-                    TokenValue = token.TokenValue,
-                    ExpireTime = token.ExpireTime,
-                }).ToList();
-
-                context.Tokens.AddRange(tokens);
-            }
-
-            await context.SaveChangesAsync();
-
-
             return Results.Ok(consent);
         }
         catch (Exception ex)
@@ -92,7 +55,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     {
         try
         {
-            
+
             var consent = await context.Consents
                 .Include(c => c.ConsentPermission)
                 .Include(c => c.Token)
@@ -110,5 +73,64 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         {
             return Results.Problem($"An error occurred: {ex.Message}");
         }
+    }
+
+    protected async Task<IResult> GetConsentWithPermissionsAndTokenByUserId(Guid userId,
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var consents = await context.Consents
+                .Where(c => c.UserId == userId)
+                .Include(c => c.ConsentPermission)
+                .Include(c => c.Token)
+                .ToListAsync();
+
+            if (consents == null || consents.Count == 0)
+            {
+                return Results.NotFound("Consents not found for the specified user.");
+            }
+            
+            //Can there be more than one consent for a userId? Therefore, would it be more sensible to return the data in a list format?
+            var consentDTOs = mapper.Map<IList<OpenBankingConsentDTO>>(consents);
+            return Results.Ok(consentDTOs);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    protected async ValueTask<IResult> SearchMethod(
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper,
+      [AsParameters] ConsentSearch consentSearch,
+      CancellationToken token
+  )
+    {
+        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
+
+        IQueryable<Consent> query = context.Consents
+            .Include(c => c.Token)
+            .Include(c => c.ConsentPermission)
+            .AsNoTracking();
+
+        if (!string.IsNullOrEmpty(consentSearch.Keyword))
+        {
+            string keyword = consentSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
+             .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
+        }
+
+        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(consentSearch.PageSize)
+            .ToListAsync(token);
+
+        return (resultList != null && resultList.Count > 0)
+            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
+            : Results.NoContent();
     }
 }

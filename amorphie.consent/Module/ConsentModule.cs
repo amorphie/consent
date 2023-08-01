@@ -53,12 +53,10 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
 
         if (userConsents.Count > 0)
         {
-            // User Consent Found
             return Results.Ok(userConsents);
         }
         else
         {
-            // User Consent Not Found
             return Results.NotFound("Kullanıcının rızası bulunamadı.");
         }
     }
@@ -103,6 +101,8 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     // If the data is successfully saved, it returns a successful result with the ConsentDataDto containing
     // the saved data. If any error occurs during the process, it rolls back the transaction and returns
     // a bad request result with an error message.
+
+    //Fixme: use Mapper
     protected async Task<IResult> SaveConsentDataToDatabase(ConsentDataDto consentData,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper)
@@ -158,7 +158,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         catch (Exception e)
         {
             await transaction.RollbackAsync();
-            return Results.BadRequest($"Veri kaydedilirken bir hata oluştu.${e.StackTrace}");
+            return Results.BadRequest($"An error occurred: ${e.StackTrace}");
         }
     }
     #endregion
@@ -174,17 +174,21 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
      [FromServices] ConsentDbContext context,
      [FromServices] IMapper mapper,
      [AsParameters] ConsentSearch consentSearch,
-     HttpContext httpContext,
      CancellationToken token
  )
     {
         int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
 
-        IList<Consent> resultList = await context
-            .Set<Consent>()
-            .AsNoTracking()
-            .Where(x => string.IsNullOrEmpty(consentSearch.Keyword) || x.AdditionalData.ToLower().Contains(consentSearch.Keyword.ToLower()))
-            .OrderBy(x => x.CreatedAt)
+        IQueryable<Consent> query = context.Consents.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(consentSearch.Keyword))
+        {
+            string keyword = consentSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
+                .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
+        }
+
+        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
             .Skip(skipRecords)
             .Take(consentSearch.PageSize)
             .ToListAsync(token);
@@ -193,6 +197,5 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
             ? Results.Ok(mapper.Map<IList<ConsentDTO>>(resultList))
             : Results.NoContent();
     }
-
     #endregion
 }

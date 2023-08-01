@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using amorphie.core.Base;
+using NpgsqlTypes;
+
 namespace amorphie.consent.core.Model;
 
-public class Token:EntityBase
+public class Token : EntityBase
 {
     [ForeignKey("Consent")]
     public Guid ConsentId { get; set; }
@@ -12,4 +14,6 @@ public class Token:EntityBase
     public int ExpireTime { get; set; }
     [JsonIgnore]
     public Consent Consent { get; set; }
+    [NotMapped]
+    public virtual NpgsqlTsVector SearchVector { get; set; }
 }
