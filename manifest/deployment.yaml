@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amorphie-consent
+  namespace: amorphie-consent
+spec:
+  selector:
+    matchLabels:
+      app: amorphie-consent
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: amorphie-consent
+      annotations:
+        dapr.io/app-id: amorphie-consent
+        dapr.io/enabled: 'true'
+        dapr.io/app-port: '5000'
+    spec:
+      serviceAccountName: amorphie-consentuser
+      containers:
+        - name: amorphie-consent
+          image: burganbank/amorphie.fact-user:latest
+          ports:
+            - containerPort: 5000
+          env:
+          - name: TZ
+            value: Europe/Istanbul
+          - name: DAPR_STATE_STORE_NAME
+            value: consent-cache
+          - name: DAPR_SECRET_STORE_NAME
+            value: amorphie-consent
+          resources:
+            limits:
+              cpu: "1"
+              memory: "4096Mi"
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
