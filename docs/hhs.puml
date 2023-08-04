@@ -1,0 +1,70 @@
+@startuml
+!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
+!define foreign_key(x) <color:#aaaaaa><&key></color> x
+!define column(x) <color:#efefef><&media-record></color> x
+!define table(x) entity x << (T, white) >>
+
+table(HesapHizmetiSağlayıcı) {
+    column(HhsKod): CHARACTER VARYING
+    column(YosKod): CHARACTER VARYING
+}
+
+table(GucLuKimlikDogrulama) {
+    column(YetYntm): CHARACTER VARYING
+    column(YonAdr): CHARACTER VARYING
+    column(BldAdr): CHARACTER VARYING
+    column(HhsYonAdr): CHARACTER VARYING
+    column(YetTmmZmn): DateTime
+}
+
+table(IzinBilgisi) {
+    column(IzinTur): CHARACTER VARYING []
+    column(ErisimIzniSonTrh): DateTime
+    column(HesapIslemBslZmn): DateTime
+    column(HesapIslemBtsZmn): DateTime
+}
+
+table(HesapBilgisiRizaBilgisi) {
+    column(RizaNo): CHARACTER VARYING
+    column(OlusZmn): DateTime
+    column(GnclZmn): DateTime
+    column(RizaDrm): CHARACTER VARYING
+    column(RizaIptDtyKod): CHARACTER VARYING
+}
+
+table(Kimlik) {
+    column(OhkTur): CHARACTER VARYING
+    column(KimlikTur): CHARACTER VARYING
+    column(KimlikVrs): CHARACTER VARYING
+}
+
+table(KatilimciBilgisi) {
+    column(HhsKod): CHARACTER VARYING
+    column(YosKod): CHARACTER VARYING
+}
+
+table(AyrintiBilgi) {
+    column(OhkMsj): CHARACTER VARYING
+}
+
+table(HesapBilgisiRizaIstegi) {
+    column(RzBlg): HesapBilgisiRizaBilgisi
+    column(Kmlk): Kimlik
+    column(KatilimciBlg): KatilimciBilgisi
+    column(Gkd): GucLuKimlikDogrulama
+    column(HspBlg): HesapHizmetiSağlayıcı
+    column(IznBlg): IzinBilgisi
+    column(AyrBlg)?: AyrintiBilgi
+}
+
+table(HesapBilgisiRizaIstegiResponse) {
+    column(RzBlg): HesapBilgisiRizaBilgisi
+    column(Kmlk): Kimlik
+    column(KatilimciBlg): KatilimciBilgisi
+    column(Gkd): GucLuKimlikDogrulama
+    column(HspBlg): HesapHizmetiSağlayıcı
+    column(IznBlg): IzinBilgisi
+    column(AyrBlg): AyrintiBilgi
+}
+
+@enduml
