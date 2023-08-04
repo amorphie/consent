@@ -1,4 +1,4 @@
-public class HesapHizmetiSağlayıcı
+public class HesapHizmetiSağlayici
 {
     public string HhsKod { get; set; }
     public string YosKod { get; set; }
@@ -53,7 +53,7 @@ public class HesapBilgisiRizaIstegi
     public Kimlik Kmlk { get; set; }
     public KatilimciBilgisi KatilimciBlg { get; set; }
     public GucLuKimlikDogrulama Gkd { get; set; }
-    public HesapHizmetiSağlayıcı HspBlg { get; set; }
+    public HesapHizmetiSağlayici HspBlg { get; set; }
     public IzinBilgisi IznBlg { get; set; }
 }
 
@@ -63,7 +63,7 @@ public class HesapBilgisiRizaIstegiResponse
     public Kimlik Kmlk { get; set; }
     public KatilimciBilgisi KatilimciBlg { get; set; }
     public GucLuKimlikDogrulama Gkd { get; set; }
-    public HesapHizmetiSağlayıcı HspBlg { get; set; }
+    public HesapHizmetiSağlayici HspBlg { get; set; }
     public IzinBilgisi IznBlg { get; set; }
     public AyrintiBilgi AyrintiBlg { get; set; }
 }
