@@ -15,4 +15,6 @@ public class Consent : EntityBase
     public ConsentPermission ConsentPermission { get; set; }
     [NotMapped]
     public virtual NpgsqlTsVector SearchVector { get; set; }
+
+    
 }

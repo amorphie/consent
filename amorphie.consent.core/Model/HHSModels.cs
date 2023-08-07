@@ -1,14 +1,14 @@
 public class HesapHizmetiSağlayici
 {
-    public string HhsKod { get; set; }
-    public string YosKod { get; set; }
+    public IzinBilgisi iznBlg { get; set; }
+
 }
 
 public class GucLuKimlikDogrulama
 {
     public string YetYntm { get; set; }
     public string YonAdr { get; set; }
-    public string BldAdr { get; set; }
+    // public string BldAdr { get; set; }
     public string HhsYonAdr { get; set; }
     public DateTime YetTmmZmn { get; set; }
 }
@@ -27,14 +27,14 @@ public class HesapBilgisiRizaBilgisi
     public DateTime OlusZmn { get; set; }
     public DateTime GnclZmn { get; set; }
     public string RizaDrm { get; set; }
-    public string RizaIptDtyKod { get; set; }
+    // public string RizaIptDtyKod { get; set; }
 }
 
 public class Kimlik
 {
-    public string OhkTur { get; set; }
     public string KimlikTur { get; set; }
     public string KimlikVrs { get; set; }
+    public string ohkTur { get; set; }
 }
 
 public class KatilimciBilgisi
@@ -64,7 +64,6 @@ public class HesapBilgisiRizaIstegiResponse
     public KatilimciBilgisi KatilimciBlg { get; set; }
     public GucLuKimlikDogrulama Gkd { get; set; }
     public HesapHizmetiSağlayici HspBlg { get; set; }
-    public IzinBilgisi IznBlg { get; set; }
     public AyrintiBilgi AyrintiBlg { get; set; }
 }
 

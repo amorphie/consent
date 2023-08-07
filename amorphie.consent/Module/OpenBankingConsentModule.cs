@@ -28,6 +28,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapGet("/get", GetConsentWithPermissionsAndToken);
         routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/getByUserId/{userId}", GetConsentWithPermissionsAndTokenByUserId);
+        routeGroupBuilder.MapPost("/hhs", HhsPost);
     }
 
 
@@ -102,7 +103,41 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
+  protected async Task<IResult> HhsPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper)
+{
+    try
+    {
+        var consent = mapper.Map<Consent>(dto);
 
+        var additionalData = new
+        {
+            dto.RzBlg,
+            dto.Kmlk,
+            dto.KatilimciBlg,
+            dto.Gkd,
+            dto.HspBlg,
+            dto.AyrintiBlg
+        };
+
+        consent.AdditionalData = JsonSerializer.Serialize(additionalData);
+
+        if (dto.RzBlg?.RizaDrm != null)
+        {
+            consent.State = dto.RzBlg?.RizaDrm!;
+            consent.ConsentType = "AccountInfoConsent";
+        }
+
+        context.Consents.Add(consent);
+        await context.SaveChangesAsync();
+        return Results.Ok(consent);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"An error occurred: {ex.Message}");
+    }
+}
     protected async ValueTask<IResult> SearchMethod(
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper,
