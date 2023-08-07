@@ -20,7 +20,7 @@ spec:
       serviceAccountName: amorphie-consentuser
       containers:
         - name: amorphie-consent
-          image: burganbank/amorphie.fact-user:latest
+          image: burganbank/amorphie.consent:latest
           ports:
             - containerPort: 5000
           env:
