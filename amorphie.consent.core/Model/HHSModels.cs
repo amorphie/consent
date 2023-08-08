@@ -1,3 +1,5 @@
+using amorphie.core.Base;
+
 public class HesapHizmetiSağlayici
 {
     public IzinBilgisi iznBlg { get; set; }
@@ -65,6 +67,15 @@ public class HesapBilgisiRizaIstegiResponse
     public GucLuKimlikDogrulama Gkd { get; set; }
     public HesapHizmetiSağlayici HspBlg { get; set; }
     public AyrintiBilgi AyrintiBlg { get; set; }
+}
+
+public class TokenModel
+{
+    public Guid Id { get; set; }
+    public string erisimBelirteci { get; set; }
+    public int gecerlilikSuresi { get; set; }
+    public string yenilemeBelirteci { get; set; }
+    public int yenilemeBelirteciGecerlilikSuresi { get; set; }
 }
 
 // public class HesapBilgisiRizaBilgisiDto
