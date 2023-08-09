@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: consent-secretstore
+  name: amorphie-consent
   namespace: amorphie-consent
 spec:
   type: secretstores.hashicorp.vault
