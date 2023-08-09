@@ -20,4 +20,4 @@ spec:
   - name: keyPrefix
     value: none
 auth:
-  secretStore: consent-secretstore
+  secretStore: amorphie-consent
