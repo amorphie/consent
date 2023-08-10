@@ -61,7 +61,9 @@ public class HesapBilgisiRizaIstegi
 
 public class HesapBilgisiRizaIstegiResponse
 {
+    public Guid UserId { get; set; }
     public HesapBilgisiRizaBilgisi RzBlg { get; set; }
+    public string Description { get; set; }
     public Kimlik Kmlk { get; set; }
     public KatilimciBilgisi KatilimciBlg { get; set; }
     public GucLuKimlikDogrulama Gkd { get; set; }
@@ -72,6 +74,7 @@ public class HesapBilgisiRizaIstegiResponse
 public class TokenModel
 {
     public Guid Id { get; set; }
+    public Guid ConsentId { get; set; }
     public string erisimBelirteci { get; set; }
     public int gecerlilikSuresi { get; set; }
     public string yenilemeBelirteci { get; set; }

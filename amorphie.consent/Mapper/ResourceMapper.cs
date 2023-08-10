@@ -31,7 +31,7 @@ namespace amorphie.consent.Mapper
                     TokenValue = src.erisimBelirteci,
                     TokenType = "Access Token",
                     ExpireTime = src.gecerlilikSuresi,
-                    ConsentId = src.Id
+                    ConsentId = src.ConsentId
                 };
 
                 var yenilemeToken = new Token
@@ -39,7 +39,7 @@ namespace amorphie.consent.Mapper
                     TokenValue = src.yenilemeBelirteci,
                     TokenType = "Refresh Token",
                     ExpireTime = src.yenilemeBelirteciGecerlilikSuresi,
-                    ConsentId = src.Id
+                    ConsentId = src.ConsentId
                 };
 
                 return (erisimToken, yenilemeToken);
@@ -58,7 +58,7 @@ namespace amorphie.consent.Mapper
                 TokenValue = src.erisimBelirteci,
                 TokenType = "Access Token",
                 ExpireTime = src.gecerlilikSuresi,
-                ConsentId = src.Id
+                ConsentId = src.ConsentId
             };
         }
 
@@ -69,7 +69,7 @@ namespace amorphie.consent.Mapper
                 TokenValue = src.yenilemeBelirteci,
                 TokenType = "Refresh Token",
                 ExpireTime = src.yenilemeBelirteciGecerlilikSuresi,
-                ConsentId = src.Id
+                ConsentId = src.ConsentId
             };
         }
 
