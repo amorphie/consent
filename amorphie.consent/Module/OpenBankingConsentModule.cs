@@ -31,7 +31,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapPost("/hhs/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/hhs/paymentInformationConsent", PaymentInformationConsentPost);
         routeGroupBuilder.MapPost("/hhs/token", HhsToken);
-        routeGroupBuilder.MapGet("/hhs/userId/{userId}", GetHhsConsentWithTokensByUserId);
+        routeGroupBuilder.MapGet("/hhs/userId/{userId}", GetAllHhsConsentWithTokensByUserId);
         routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);
         routeGroupBuilder.MapGet("/hhs/{consentId}", GetHhsConsentWithTokensById);
         routeGroupBuilder.MapGet("/hhs/consentType/{consentType}", GetHhsConsentWithTokensByType);
@@ -196,11 +196,11 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     }
 }
 
-   public async Task<IResult> GetHhsConsentWithTokensByUserId(
-       Guid userId,
-       string? consentType,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
+  public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
+    Guid userId,
+    string? consentType,
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper)
 {
     try
     {
@@ -213,41 +213,43 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             query = query.Where(c => c.ConsentType == consentType);
         }
 
-        var consentWithTokens = await query.FirstOrDefaultAsync();
+        var consentsWithTokens = await query.ToListAsync();
 
-        if (consentWithTokens == null)
+        if (consentsWithTokens == null || consentsWithTokens.Count == 0)
         {
-            return Results.NotFound("Consent not found.");
+            return Results.NotFound("Consents not found.");
         }
 
-        var accessTokens = consentWithTokens.Token
-            .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-            .ToList();
+        var hhsConsentDTOs = new List<HhsConsentDto>();
 
-        var refreshTokens = consentWithTokens.Token
-            .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-            .ToList();
-
-        // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-        // {
-        //     return Results.Problem("Both access and refresh tokens are required.");
-        // }
-
-        var hhsConsentDTO = new HhsConsentDto
+        foreach (var consentWithTokens in consentsWithTokens)
         {
-            Id = consentWithTokens.Id,
-            AdditionalData = consentWithTokens.AdditionalData,
-            Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
-            {
-                Id = access.ConsentId,
-                erisimBelirteci = access.TokenValue,
-                gecerlilikSuresi = access.ExpireTime,
-                yenilemeBelirteci = refresh.TokenValue,
-                yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
-            }).ToList()
-        };
+            var accessTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .ToList();
 
-        return Results.Ok(hhsConsentDTO);
+            var refreshTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .ToList();
+
+            var hhsConsentDTO = new HhsConsentDto
+            {
+                Id = consentWithTokens.Id,
+                AdditionalData = consentWithTokens.AdditionalData,
+                Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
+                {
+                    Id = access.ConsentId,
+                    erisimBelirteci = access.TokenValue,
+                    gecerlilikSuresi = access.ExpireTime,
+                    yenilemeBelirteci = refresh.TokenValue,
+                    yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
+                }).ToList()
+            };
+
+            hhsConsentDTOs.Add(hhsConsentDTO);
+        }
+
+        return Results.Ok(hhsConsentDTOs);
     }
     catch (Exception ex)
     {
