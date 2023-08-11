@@ -106,10 +106,10 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
                 .ToList();
 
-            if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-            {
-                return Results.Problem("Both access and refresh tokens are required.");
-            }
+            // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
+            // {
+            //     return Results.Problem("Both access and refresh tokens are required.");
+            // }
 
             var hhsConsentDTO = new HhsConsentDto
             {
@@ -166,10 +166,10 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
             .LastOrDefault(); // Get the most recent Refresh Token
 
-        if (accessTokens == null || refreshTokens == null)
-        {
-            return Results.Problem("Both access and refresh tokens are required.");
-        }
+        // if (accessTokens == null || refreshTokens == null)
+        // {
+        //     return Results.Problem("Both access and refresh tokens are required.");
+        // }
 
         var hhsConsentDTO = new HhsConsentDto
         {
@@ -228,10 +228,10 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
             .ToList();
 
-        if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-        {
-            return Results.Problem("Both access and refresh tokens are required.");
-        }
+        // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
+        // {
+        //     return Results.Problem("Both access and refresh tokens are required.");
+        // }
 
         var hhsConsentDTO = new HhsConsentDto
         {
@@ -280,10 +280,10 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
                 .ToList();
 
-            if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-            {
-                return Results.Problem("Both access and refresh tokens are required.");
-            }
+            // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
+            // {
+            //     return Results.Problem("Both access and refresh tokens are required.");
+            // }
 
             var hhsConsentDTO = new HhsConsentDto
             {
