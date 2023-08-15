@@ -47,6 +47,7 @@ public static class DbInitializer
                 State = "Waiting",
                 ConsentType = "Open Banking",
                 AdditionalData = "Additional Data 1",
+                Description = "Description 1"
             },
             new Consent{
                 // Id = Guid.NewGuid(),
@@ -54,7 +55,8 @@ public static class DbInitializer
                 UserId = Guid.NewGuid(),
                 State = "Approval",
                 ConsentType = "BKM",
-                AdditionalData = "Additional Data 2"
+                AdditionalData = "Additional Data 2",
+                Description = "Description 2"
             },
         };
 
