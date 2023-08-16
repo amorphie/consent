@@ -13,9 +13,13 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Prometheus;
+using Dapr.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
+builder.Services.AddScoped<ITranslationService, TranslationService>();
+builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
+
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
@@ -24,6 +28,8 @@ builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
 Console.WriteLine($"PostgreSql: {postgreSql}");
+string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
@@ -42,7 +48,10 @@ builder.Services.AddDbContext<ConsentDbContext>
 
 var app = builder.Build();
 
-
+var jsonData = await File.ReadAllTextAsync(jsonFilePath);
+using var client = new DaprClientBuilder().Build();
+        await client.SaveStateAsync("amorphie-state", "messages", jsonData);
+var storedData = await client.GetStateAsync<string>("amorphie-state", "messages");
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
 

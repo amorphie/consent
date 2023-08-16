@@ -17,7 +17,7 @@ public class GucLuKimlikDogrulama
 
 public class IzinBilgisi
 {
-    public string[] izinTur { get; set; }
+    public string[] iznTur { get; set; }
     public DateTime erisimIzniSonTrh { get; set; }
     public DateTime? hesapIslemBslZmn { get; set; }
     public DateTime? hesapIslemBtsZmn { get; set; }
@@ -34,8 +34,8 @@ public class HesapBilgisiRizaBilgisi
 
 public class Kimlik
 {
-    public string kimlikTur { get; set; }
-    public string kimlikVrs { get; set; }
+    public string kmlkTur { get; set; }
+    public string kmlkVrs { get; set; }
     public string ohkTur { get; set; }
 }
 
@@ -62,13 +62,15 @@ public class HesapBilgisiRizaIstegi
 public class HesapBilgisiRizaIstegiResponse
 {
     public Guid UserId { get; set; }
-    public HesapBilgisiRizaBilgisi RzBlg { get; set; }
+    public HesapBilgisiRizaBilgisi rzBlg { get; set; }
+
+    public Kimlik kmlk { get; set; }
+    public KatilimciBilgisi katilimciBlg { get; set; }
+    public GucLuKimlikDogrulama gkd { get; set; }
+    public HesapHizmetiSağlayici hspBlg { get; set; }
+    public AyrintiBilgi ayrintiBlg { get; set; }
     public string Description { get; set; }
-    public Kimlik Kmlk { get; set; }
-    public KatilimciBilgisi KatilimciBlg { get; set; }
-    public GucLuKimlikDogrulama Gkd { get; set; }
-    public HesapHizmetiSağlayici HspBlg { get; set; }
-    public AyrintiBilgi AyrintiBlg { get; set; }
+    public string xGroupId { get; set; }
 }
 
 public class TokenModel
