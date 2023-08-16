@@ -10,4 +10,6 @@ public class HhsConsentDto : DtoBase
 {   
     public string AdditionalData { get; set; }
     public List<TokenModel> Token { get; set; }
+    public string description { get; set; }
+    public string xGroupId { get; set; }
 }

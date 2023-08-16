@@ -115,6 +115,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             {
                 Id = consentWithTokens.Id,
                 AdditionalData = consentWithTokens.AdditionalData,
+                description = consentWithTokens.Description,
+                xGroupId = consentWithTokens.xGroupId,
                 Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
                 {
                     Id = access.ConsentId,
@@ -137,45 +139,47 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
        string? consentType,
        [FromServices] ConsentDbContext context,
        [FromServices] IMapper mapper)
-{
-    try
     {
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Token)
-            .Where(c => c.UserId == userId);
-
-        if (!string.IsNullOrEmpty(consentType))
+        try
         {
-            query = query.Where(c => c.ConsentType == consentType);
-        }
+            IQueryable<Consent> query = context.Consents
+                .Include(c => c.Token)
+                .Where(c => c.UserId == userId);
 
-        var consentWithTokens = await query
-            .OrderByDescending(c => c.CreatedAt) // Get the most recent consent
-            .FirstOrDefaultAsync();
+            if (!string.IsNullOrEmpty(consentType))
+            {
+                query = query.Where(c => c.ConsentType == consentType);
+            }
 
-        if (consentWithTokens == null)
-        {
-            return Results.NotFound("Consent not found.");
-        }
+            var consentWithTokens = await query
+                .OrderByDescending(c => c.CreatedAt) // Get the most recent consent
+                .FirstOrDefaultAsync();
 
-        var accessTokens = consentWithTokens.Token
-            .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-            .LastOrDefault(); // Get the most recent Access Token
+            if (consentWithTokens == null)
+            {
+                return Results.NotFound("Consent not found.");
+            }
 
-        var refreshTokens = consentWithTokens.Token
-            .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-            .LastOrDefault(); // Get the most recent Refresh Token
+            var accessTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .LastOrDefault(); // Get the most recent Access Token
 
-        // if (accessTokens == null || refreshTokens == null)
-        // {
-        //     return Results.Problem("Both access and refresh tokens are required.");
-        // }
+            var refreshTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .LastOrDefault(); // Get the most recent Refresh Token
 
-        var hhsConsentDTO = new HhsConsentDto
-        {
-            Id = consentWithTokens.Id,
-            AdditionalData = consentWithTokens.AdditionalData,
-            Token = new List<TokenModel>
+            // if (accessTokens == null || refreshTokens == null)
+            // {
+            //     return Results.Problem("Both access and refresh tokens are required.");
+            // }
+
+            var hhsConsentDTO = new HhsConsentDto
+            {
+                Id = consentWithTokens.Id,
+                AdditionalData = consentWithTokens.AdditionalData,
+                description = consentWithTokens.Description,
+                xGroupId = consentWithTokens.xGroupId,
+                Token = new List<TokenModel>
             {
                 new TokenModel
                 {
@@ -186,77 +190,86 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime
                 }
             }
-        };
-
-        return Results.Ok(hhsConsentDTO);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"An error occurred: {ex.Message}");
-    }
-}
-
-  public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
-    Guid userId,
-    string? consentType,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper)
-{
-    try
-    {
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Token)
-            .Where(c => c.UserId == userId);
-
-        if (!string.IsNullOrEmpty(consentType))
-        {
-            query = query.Where(c => c.ConsentType == consentType);
-        }
-
-        var consentsWithTokens = await query.ToListAsync();
-
-        if (consentsWithTokens == null || consentsWithTokens.Count == 0)
-        {
-            return Results.NotFound("Consents not found.");
-        }
-
-        var hhsConsentDTOs = new List<HhsConsentDto>();
-
-        foreach (var consentWithTokens in consentsWithTokens)
-        {
-            var accessTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            var refreshTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            var hhsConsentDTO = new HhsConsentDto
-            {
-                Id = consentWithTokens.Id,
-                AdditionalData = consentWithTokens.AdditionalData,
-                Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
-                {
-                    Id = access.ConsentId,
-                    erisimBelirteci = access.TokenValue,
-                    gecerlilikSuresi = access.ExpireTime,
-                    yenilemeBelirteci = refresh.TokenValue,
-                    yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
-                }).ToList()
             };
 
-            hhsConsentDTOs.Add(hhsConsentDTO);
+            return Results.Ok(hhsConsentDTO);
         }
-
-        return Results.Ok(hhsConsentDTOs);
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
     }
-    catch (Exception ex)
+
+    public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
+        Guid userId,
+        string? consentType,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITranslationService translationService,
+        [FromServices] ILanguageService languageService,
+        HttpContext httpContext)
     {
-        return Results.Problem($"An error occurred: {ex.Message}");
-    }
-}
+        string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
 
+        try
+        {
+
+            IQueryable<Consent> query = context.Consents
+                .Include(c => c.Token)
+                .Where(c => c.UserId == userId);
+
+            if (!string.IsNullOrEmpty(consentType))
+            {
+                query = query.Where(c => c.ConsentType == consentType);
+            }
+
+            var consentsWithTokens = await query.ToListAsync();
+
+            if (consentsWithTokens == null || consentsWithTokens.Count == 0)
+            {
+                var notFoundMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.ConsentsNotFound");
+                return Results.NotFound(notFoundMessage);
+            }
+
+            var hhsConsentDTOs = new List<HhsConsentDto>();
+
+            foreach (var consentWithTokens in consentsWithTokens)
+            {
+                var accessTokens = consentWithTokens.Token
+                    .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
+                    .ToList();
+
+                var refreshTokens = consentWithTokens.Token
+                    .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
+                    .ToList();
+
+                var hhsConsentDTO = new HhsConsentDto
+                {
+                    Id = consentWithTokens.Id,
+                    AdditionalData = consentWithTokens.AdditionalData,
+                    description = consentWithTokens.Description,
+                    xGroupId = consentWithTokens.xGroupId,
+                    Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
+                    {
+                        Id = access.ConsentId,
+                        erisimBelirteci = access.TokenValue,
+                        gecerlilikSuresi = access.ExpireTime,
+                        yenilemeBelirteci = refresh.TokenValue,
+                        yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
+                    }).ToList()
+                };
+
+                hhsConsentDTOs.Add(hhsConsentDTO);
+            }
+
+            return Results.Ok(hhsConsentDTOs);
+        }
+        catch (Exception ex)
+        {
+            var errorMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.Problem");
+            return Results.Problem(errorMessage);
+        }
+    }
 
     public async Task<IResult> GetHhsConsentWithTokensByType(
         string consentType,
@@ -291,6 +304,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             {
                 Id = consentWithTokens.Id,
                 AdditionalData = consentWithTokens.AdditionalData,
+                description = consentWithTokens.Description,
+                xGroupId = consentWithTokens.xGroupId,
                 Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
                 {
                     Id = access.ConsentId,
@@ -308,7 +323,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-   
+
     protected async Task<IResult> GetConsentWithPermissionsAndTokenByUserId(Guid userId,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper)
@@ -335,117 +350,118 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
 
-   protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper)
-{
-    try
+
+    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IMapper mapper)
     {
-        var existingConsent = await context.Consents
-            .FirstOrDefaultAsync(c => c.UserId == dto.UserId && 
-                                       c.AdditionalData.Contains($"\"RizaNo\":\"{dto.RzBlg.rizaNo}\""));
-
-        if (existingConsent != null)
+        try
         {
-            existingConsent.AdditionalData = JsonSerializer.Serialize(new
-            {
-                dto.RzBlg,
-                dto.Kmlk,
-                dto.KatilimciBlg,
-                dto.Gkd,
-                dto.HspBlg,
-                dto.AyrintiBlg,
-            });
-            existingConsent.Description = dto.Description;
-            existingConsent.ModifiedAt = DateTime.UtcNow;
-            existingConsent.State = dto.RzBlg?.rizaDrm;
-            existingConsent.ConsentType = "Account Information Consent";
+            var existingConsent = await context.Consents
+                .FirstOrDefaultAsync(c => c.UserId == dto.UserId &&
+                                           c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
 
-            context.Consents.Update(existingConsent);
+            if (existingConsent != null)
+            {
+                existingConsent.AdditionalData = JsonSerializer.Serialize(new
+                {
+                    dto.rzBlg,
+                    dto.kmlk,
+                    dto.katilimciBlg,
+                    dto.gkd,
+                    dto.hspBlg,
+                    dto.ayrintiBlg,
+                });
+                existingConsent.Description = dto.Description;
+                existingConsent.ModifiedAt = DateTime.UtcNow;
+                existingConsent.State = dto.rzBlg?.rizaDrm;
+                existingConsent.ConsentType = "Account Information Consent";
+
+
+                context.Consents.Update(existingConsent);
+            }
+            else
+            {
+                var consent = mapper.Map<Consent>(dto);
+                consent.AdditionalData = JsonSerializer.Serialize(new
+                {
+                    dto.rzBlg,
+                    dto.kmlk,
+                    dto.katilimciBlg,
+                    dto.gkd,
+                    dto.hspBlg,
+                    dto.ayrintiBlg,
+                });
+
+                consent.State = dto.rzBlg?.rizaDrm;
+                consent.ConsentType = "Account Information Consent";
+
+                context.Consents.Add(consent);
+            }
+
+            await context.SaveChangesAsync();
+            return Results.Ok();
         }
-        else
+        catch (Exception ex)
         {
-            var consent = mapper.Map<Consent>(dto);
-            consent.AdditionalData = JsonSerializer.Serialize(new
-            {
-                dto.RzBlg,
-                dto.Kmlk,
-                dto.KatilimciBlg,
-                dto.Gkd,
-                dto.HspBlg,
-                dto.AyrintiBlg,
-            });
-
-            consent.State = dto.RzBlg?.rizaDrm;
-            consent.ConsentType = "Account Information Consent";
-
-            context.Consents.Add(consent);
+            return Results.Problem($"An error occurred: {ex.Message}");
         }
-
-        await context.SaveChangesAsync();
-        return Results.Ok();
     }
-    catch (Exception ex)
-    {
-        return Results.Problem($"An error occurred: {ex.Message}");
-    }
-}
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
         try
-    {
-        var existingConsent = await context.Consents
-            .FirstOrDefaultAsync(c => c.UserId == dto.UserId && 
-                                       c.AdditionalData.Contains($"\"RizaNo\":\"{dto.RzBlg.rizaNo}\""));
-
-        if (existingConsent != null)
         {
-            existingConsent.AdditionalData = JsonSerializer.Serialize(new
-            {
-                dto.RzBlg,
-                dto.Kmlk,
-                dto.KatilimciBlg,
-                dto.Gkd,
-                dto.HspBlg,
-                dto.AyrintiBlg,
-            });
-            existingConsent.Description = dto.Description;
-            existingConsent.ModifiedAt = DateTime.UtcNow;
-            existingConsent.State = dto.RzBlg?.rizaDrm;
-            existingConsent.ConsentType = "Account Information Consent";
+            var existingConsent = await context.Consents
+                .FirstOrDefaultAsync(c => c.UserId == dto.UserId &&
+                                           c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
 
-            context.Consents.Update(existingConsent);
+            if (existingConsent != null)
+            {
+                existingConsent.AdditionalData = JsonSerializer.Serialize(new
+                {
+                    dto.rzBlg,
+                    dto.kmlk,
+                    dto.katilimciBlg,
+                    dto.gkd,
+                    dto.hspBlg,
+                    dto.ayrintiBlg,
+                });
+                existingConsent.Description = dto.Description;
+                existingConsent.ModifiedAt = DateTime.UtcNow;
+                existingConsent.State = dto.rzBlg?.rizaDrm;
+                existingConsent.ConsentType = "Account Information Consent";
+
+                context.Consents.Update(existingConsent);
+            }
+            else
+            {
+                var consent = mapper.Map<Consent>(dto);
+                consent.AdditionalData = JsonSerializer.Serialize(new
+                {
+                    dto.rzBlg,
+                    dto.kmlk,
+                    dto.katilimciBlg,
+                    dto.gkd,
+                    dto.hspBlg,
+                    dto.ayrintiBlg,
+                });
+
+                consent.State = dto.rzBlg?.rizaDrm;
+                consent.ConsentType = "Payment Information Consent";
+
+                context.Consents.Add(consent);
+            }
+
+            await context.SaveChangesAsync();
+            return Results.Ok();
         }
-        else
+        catch (Exception ex)
         {
-            var consent = mapper.Map<Consent>(dto);
-            consent.AdditionalData = JsonSerializer.Serialize(new
-            {
-                dto.RzBlg,
-                dto.Kmlk,
-                dto.KatilimciBlg,
-                dto.Gkd,
-                dto.HspBlg,
-                dto.AyrintiBlg,
-            });
-
-            consent.State = dto.RzBlg?.rizaDrm;
-            consent.ConsentType = "Payment Information Consent";
-
-            context.Consents.Add(consent);
+            return Results.Problem($"An error occurred: {ex.Message}");
         }
-
-        await context.SaveChangesAsync();
-        return Results.Ok();
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"An error occurred: {ex.Message}");
-    }
     }
     protected async Task<IResult> HhsToken([FromBody] TokenModel tokenModel,
     [FromServices] ConsentDbContext context,

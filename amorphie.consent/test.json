@@ -1,0 +1,10 @@
+{
+    "en-EN": {
+      "Errors.ConsentsNotFound": "Consents not found.",
+      "Errors.Problem": "An error occurred."
+    },
+    "tr-TR": {
+      "Errors.ConsentsNotFound": "Rızalar bulunamadı.",
+      "Errors.Problem": "Bir hata oluştu."
+    }
+  }
