@@ -50,7 +50,7 @@ var app = builder.Build();
 
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
-        await client.SaveStateAsync("amorphie-state", "messages", jsonData);
+        await client.SaveStateAsync("amorphie-state", "messages", "jsonData");
 var storedData = await client.GetStateAsync<string>("amorphie-state", "messages");
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
