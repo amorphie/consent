@@ -74,7 +74,7 @@ public class HesapBilgisiRizaIstegiResponse
     public string xGroupId { get; set; }
 }
 
-public class TokenModel
+public class TokenModel:EntityBase
 {
     public Guid Id { get; set; }
     public Guid ConsentId { get; set; }
