@@ -358,9 +358,11 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     {
         try
         {
-            var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId &&
-                                           c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
+            var existingConsent=await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == dto.id);
+            // var existingConsent = await context.Consents
+            //     .FirstOrDefaultAsync(c => c.Id == dto.Id &&
+            //                                c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
 
             if (existingConsent != null)
             {
@@ -371,7 +373,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.katilimciBlg,
                     dto.gkd,
                     dto.hspBlg,
-                    dto.ayrintiBlg,
+                    dto.ayrBlg,
                 });
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
@@ -391,7 +393,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.katilimciBlg,
                     dto.gkd,
                     dto.hspBlg,
-                    dto.ayrintiBlg,
+                    dto.ayrBlg,
                 });
 
                 consent.State = dto.rzBlg?.rizaDrm;
@@ -415,8 +417,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         try
         {
             var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId &&
-                                           c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
+                .FirstOrDefaultAsync(c => c.Id == dto.id);
 
             if (existingConsent != null)
             {
@@ -427,12 +428,12 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.katilimciBlg,
                     dto.gkd,
                     dto.hspBlg,
-                    dto.ayrintiBlg,
+                    dto.ayrBlg,
                 });
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "Account Information Consent";
+                existingConsent.ConsentType = "Payment Information Consent";
 
                 context.Consents.Update(existingConsent);
             }
@@ -446,7 +447,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.katilimciBlg,
                     dto.gkd,
                     dto.hspBlg,
-                    dto.ayrintiBlg,
+                    dto.ayrBlg,
                 });
 
                 consent.State = dto.rzBlg?.rizaDrm;
