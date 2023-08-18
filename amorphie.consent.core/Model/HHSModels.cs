@@ -61,6 +61,7 @@ public class HesapBilgisiRizaIstegi
 
 public class HesapBilgisiRizaIstegiResponse
 {
+    public Guid id { get; set; }
     public Guid UserId { get; set; }
     public HesapBilgisiRizaBilgisi rzBlg { get; set; }
 
@@ -68,7 +69,7 @@ public class HesapBilgisiRizaIstegiResponse
     public KatilimciBilgisi katilimciBlg { get; set; }
     public GucLuKimlikDogrulama gkd { get; set; }
     public HesapHizmetiSağlayici hspBlg { get; set; }
-    public AyrintiBilgi ayrintiBlg { get; set; }
+    public AyrintiBilgi ayrBlg { get; set; }
     public string Description { get; set; }
     public string xGroupId { get; set; }
 }
