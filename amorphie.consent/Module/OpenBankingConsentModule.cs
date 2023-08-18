@@ -187,7 +187,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     erisimBelirteci = accessTokens.TokenValue,
                     gecerlilikSuresi = accessTokens.ExpireTime,
                     yenilemeBelirteci = refreshTokens.TokenValue,
-                    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime
+                    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
+                    
                 }
             }
             };
@@ -356,6 +357,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
        [FromServices] ConsentDbContext context,
        [FromServices] IMapper mapper)
     {
+        var returnData=new Consent();
         try
         {
             var existingConsent=await context.Consents
@@ -385,8 +387,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             }
             else
             {
-                var consent = mapper.Map<Consent>(dto);
-                consent.AdditionalData = JsonSerializer.Serialize(new
+                var consentData = mapper.Map<Consent>(dto);
+                consentData.AdditionalData = JsonSerializer.Serialize(new
                 {
                     dto.rzBlg,
                     dto.kmlk,
@@ -396,14 +398,14 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.ayrBlg,
                 });
 
-                consent.State = dto.rzBlg?.rizaDrm;
-                consent.ConsentType = "Account Information Consent";
+                consentData.State = dto.rzBlg?.rizaDrm;
+                consentData.ConsentType = "Account Information Consent";
 
-                context.Consents.Add(consent);
+                context.Consents.Add(consentData);
+                returnData = consentData;
             }
-
             await context.SaveChangesAsync();
-            return Results.Ok();
+            return Results.Ok(returnData);
         }
         catch (Exception ex)
         {
@@ -414,6 +416,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
+        var resultData = new Consent();
         try
         {
             var existingConsent = await context.Consents
@@ -454,10 +457,11 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 consent.ConsentType = "Payment Information Consent";
 
                 context.Consents.Add(consent);
+                resultData=consent;
             }
 
             await context.SaveChangesAsync();
-            return Results.Ok();
+            return Results.Ok(resultData);
         }
         catch (Exception ex)
         {
