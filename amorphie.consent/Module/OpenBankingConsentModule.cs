@@ -256,7 +256,9 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                         erisimBelirteci = access.TokenValue,
                         gecerlilikSuresi = access.ExpireTime,
                         yenilemeBelirteci = refresh.TokenValue,
-                        yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
+                        yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime,
+                        CreatedAt=access.CreatedAt
+                        ModifiedAt=access.ModifiedAt
                     }).ToList()
                 };
 
