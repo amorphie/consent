@@ -36,6 +36,18 @@ builder.Services.AddSwaggerGen(options =>
 
 });
 
+builder.Services.AddCors(options =>
+
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.WithOrigins("*")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
