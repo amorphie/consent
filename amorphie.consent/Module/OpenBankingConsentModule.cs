@@ -188,7 +188,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     gecerlilikSuresi = accessTokens.ExpireTime,
                     yenilemeBelirteci = refreshTokens.TokenValue,
                     yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-                    
+
                 }
             }
             };
@@ -257,8 +257,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                         gecerlilikSuresi = access.ExpireTime,
                         yenilemeBelirteci = refresh.TokenValue,
                         yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime,
-                        CreatedAt=access.CreatedAt,
-                        ModifiedAt=access.ModifiedAt
+                        CreatedAt = access.CreatedAt,
+                        ModifiedAt = access.ModifiedAt
                     }).ToList()
                 };
 
@@ -359,10 +359,10 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
        [FromServices] ConsentDbContext context,
        [FromServices] IMapper mapper)
     {
-        var returnData=new Consent();
+        var returnData = new Consent();
         try
         {
-            var existingConsent=await context.Consents
+            var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.id);
             // var existingConsent = await context.Consents
             //     .FirstOrDefaultAsync(c => c.Id == dto.Id &&
@@ -459,7 +459,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 consent.ConsentType = "Payment Information Consent";
 
                 context.Consents.Add(consent);
-                resultData=consent;
+                resultData = consent;
             }
 
             await context.SaveChangesAsync();

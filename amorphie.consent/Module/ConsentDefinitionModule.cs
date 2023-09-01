@@ -127,35 +127,35 @@ public class ConsentDefinitionModule : BaseBBTRoute<ConsentDefinitionDTO, Consen
     // It performs filtering and pagination in the database using the search criteria.
     // If there are results, it returns them as a successful result with a list of ConsentDefinitionDTO objects.
     // If there are no results, it returns a no content result.
-   protected async ValueTask<IResult> SearchMethod(
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper,
-    [AsParameters] ConsentDefinitionSearch consentDefinitionSearch,
-    CancellationToken token
-)
-{
-    int skipRecords = (consentDefinitionSearch.Page - 1) * consentDefinitionSearch.PageSize;
-
-    IQueryable<ConsentDefinition> query = context.ConsentDefinitions.AsNoTracking();
-
-    if (!string.IsNullOrEmpty(consentDefinitionSearch.Keyword))
+    protected async ValueTask<IResult> SearchMethod(
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper,
+     [AsParameters] ConsentDefinitionSearch consentDefinitionSearch,
+     CancellationToken token
+ )
     {
-        string keyword = consentDefinitionSearch.Keyword.ToLower();
-       query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.Name, x.RoleAssignment))
-           .Matches(EF.Functions.PlainToTsQuery("english", consentDefinitionSearch.Keyword)));
+        int skipRecords = (consentDefinitionSearch.Page - 1) * consentDefinitionSearch.PageSize;
+
+        IQueryable<ConsentDefinition> query = context.ConsentDefinitions.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(consentDefinitionSearch.Keyword))
+        {
+            string keyword = consentDefinitionSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.Name, x.RoleAssignment))
+                .Matches(EF.Functions.PlainToTsQuery("english", consentDefinitionSearch.Keyword)));
+        }
+
+        IList<ConsentDefinition> resultList = await query
+            .OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(consentDefinitionSearch.PageSize)
+            .ToListAsync(token);
+
+        IList<ConsentDefinitionDTO> resultDTOList = mapper.Map<IList<ConsentDefinitionDTO>>(resultList);
+
+        return (resultDTOList != null && resultDTOList.Count > 0)
+            ? Results.Ok(resultDTOList)
+            : Results.NoContent();
     }
-
-    IList<ConsentDefinition> resultList = await query
-        .OrderBy(x => x.CreatedAt)
-        .Skip(skipRecords)
-        .Take(consentDefinitionSearch.PageSize)
-        .ToListAsync(token);
-
-    IList<ConsentDefinitionDTO> resultDTOList = mapper.Map<IList<ConsentDefinitionDTO>>(resultList);
-
-    return (resultDTOList != null && resultDTOList.Count > 0)
-        ? Results.Ok(resultDTOList)
-        : Results.NoContent();
-}
     #endregion
 }

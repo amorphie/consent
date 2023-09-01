@@ -38,26 +38,26 @@ public class ConsentPermissionModule : BaseBBTRoute<ConsentPermissionDto, Consen
     [AsParameters] ConsentPermissionSearch consentPermissionSearch,
     CancellationToken token
 )
-{
-    int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
-
-    IQueryable<ConsentPermission> query = context.ConsentPermissions.AsNoTracking();
-
-    if (!string.IsNullOrEmpty(consentPermissionSearch.Keyword))
     {
-        string keyword = consentPermissionSearch.Keyword.ToLower();
-          query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.Permission))
-           .Matches(EF.Functions.PlainToTsQuery("english", consentPermissionSearch.Keyword)));
+        int skipRecords = (consentPermissionSearch.Page - 1) * consentPermissionSearch.PageSize;
+
+        IQueryable<ConsentPermission> query = context.ConsentPermissions.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(consentPermissionSearch.Keyword))
+        {
+            string keyword = consentPermissionSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.Permission))
+             .Matches(EF.Functions.PlainToTsQuery("english", consentPermissionSearch.Keyword)));
+        }
+
+        IList<ConsentPermission> resultList = await query.OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(consentPermissionSearch.PageSize)
+            .ToListAsync(token);
+
+        return (resultList != null && resultList.Count > 0)
+            ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
+            : Results.NoContent();
     }
-
-    IList<ConsentPermission> resultList = await query.OrderBy(x => x.CreatedAt)
-        .Skip(skipRecords)
-        .Take(consentPermissionSearch.PageSize)
-        .ToListAsync(token);
-
-    return (resultList != null && resultList.Count > 0)
-        ? Results.Ok(mapper.Map<IList<ConsentPermissionDto>>(resultList))
-        : Results.NoContent();
-}
     #endregion
 }

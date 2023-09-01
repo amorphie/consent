@@ -53,7 +53,7 @@ public class ConsentDbContext : DbContext
         modelBuilder.Entity<ConsentPermission>().HasIndex(c => c.SearchVector).HasMethod("GIN");
         modelBuilder.Entity<ConsentPermission>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
-        .GetTsVectorComputedColumnSql("english", new string[] { "Permission"}), true);
+        .GetTsVectorComputedColumnSql("english", new string[] { "Permission" }), true);
 
         modelBuilder.Entity<ConsentDefinition>().HasIndex(c => c.SearchVector).HasMethod("GIN");
         modelBuilder.Entity<ConsentDefinition>().Property(item => item.SearchVector)

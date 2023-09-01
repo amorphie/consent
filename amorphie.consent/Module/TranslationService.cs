@@ -28,12 +28,12 @@ public class TranslationService : ITranslationService
         {
             var jsonData = await _daprClient.GetStateAsync<string>("amorphie-state", "messages");
             var translations = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(jsonData);
-            
+
             if (translations.TryGetValue(language, out var translatedMessages))
             {
                 return translatedMessages;
             }
-            
+
             return new Dictionary<string, string>();
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public class TranslationService : ITranslationService
             {
                 return message;
             }
-            
+
             return $"Translation for key '{key}' not found.";
         }
         catch (Exception ex)
