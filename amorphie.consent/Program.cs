@@ -20,6 +20,7 @@ builder.Services.AddDaprClient();
 builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
 
+
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.

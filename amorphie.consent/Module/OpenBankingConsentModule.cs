@@ -9,6 +9,7 @@ using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using amorphie.core.Base;
 
 namespace amorphie.consent.Module;
 
@@ -35,6 +36,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);
         routeGroupBuilder.MapGet("/hhs/{consentId}", GetHhsConsentWithTokensById);
         routeGroupBuilder.MapGet("/hhs/consentType/{consentType}", GetHhsConsentWithTokensByType);
+        routeGroupBuilder.MapGet("/hhs/hhsAccount/{consentId}", GetHhsConsentById);
+        routeGroupBuilder.MapGet("hhs/hhsPayment/{consentId}", GetPaymentConsentById);
     }
 
 
@@ -134,6 +137,49 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+    public async Task<IResult> GetHhsConsentById(
+       Guid consentId,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var consentWithTokens = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == consentId);
+            var serializedData=JsonSerializer.Deserialize<HesapBilgisiRizaIstegiResponse>(consentWithTokens.AdditionalData);
+            serializedData!.id=consentWithTokens.Id;
+            serializedData.UserId=consentWithTokens.UserId;
+            // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
+
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+        public async Task<IResult> GetPaymentConsentById(
+       Guid consentId,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var consentWithTokens = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == consentId);
+            var serializedData=JsonSerializer.Deserialize<OdemeBilgisiRızaİsteği>(consentWithTokens.AdditionalData);
+            serializedData!.id=consentWithTokens.Id;
+            serializedData.UserId=consentWithTokens.UserId;
+            // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
+
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
     public async Task<IResult> GetHhsConsentWithLatestTokensByUserId(
        Guid userId,
        string? consentType,
@@ -414,13 +460,14 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    protected async Task<IResult> PaymentInformationConsentPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
+    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeBilgisiRızaİsteği dto,
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
         var resultData = new Consent();
         try
         {
+          
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.id);
 
@@ -429,11 +476,12 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
                 {
                     dto.rzBlg,
-                    dto.kmlk,
                     dto.katilimciBlg,
                     dto.gkd,
-                    dto.hspBlg,
-                    dto.ayrBlg,
+                    dto.odmBsltm,
+                    dto.alc,
+                    dto.odmAyr,
+                    dto.gon
                 });
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
@@ -445,19 +493,27 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             else
             {
                 var consent = mapper.Map<Consent>(dto);
+                var riza= new HesapBilgisiRizaBilgisi{
+                    rizaNo=dto.id.ToString(),
+                    rizaDrm="Yetki Bekleniyor",
+                    olusZmn=DateTime.UtcNow,
+                    gnclZmn=DateTime.UtcNow,
+                };
                 consent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.kmlk,
+                    riza,
                     dto.katilimciBlg,
                     dto.gkd,
-                    dto.hspBlg,
-                    dto.ayrBlg,
+                    dto.odmBsltm,
+                    dto.alc,
+                    dto.odmAyr,
+                    dto.gon
                 });
 
-                consent.State = dto.rzBlg?.rizaDrm;
+                consent.State = riza.rizaDrm;
+                dto.gkd.yetTmmZmn=DateTime.UtcNow.AddMinutes(5);
                 consent.ConsentType = "Payment Information Consent";
-
+                consent.xGroupId="1234567890";
                 context.Consents.Add(consent);
                 resultData=consent;
             }
