@@ -18,7 +18,8 @@ public class Gkd
     public DateTime yetTmmZmn { get; set; }
 }
 
-public class hsapRef{
+public class hsapRef
+{
     public string[] hspRef { get; set; }
 }
 
@@ -157,7 +158,8 @@ public class HesapBilgisiRizaIstegiResponse
     public string xGroupId { get; set; }
 }
 
-public class  OdemeBilgisiRızaİsteği{
+public class OdemeBilgisiRızaİsteği
+{
     public Guid id { get; set; }
     public Guid UserId { get; set; }
     [JsonIgnore]
@@ -170,7 +172,7 @@ public class  OdemeBilgisiRızaİsteği{
     public string? Description { get; set; }
 
 }
-public class TokenModel:EntityBase
+public class TokenModel : EntityBase
 {
     public Guid Id { get; set; }
     public Guid ConsentId { get; set; }
