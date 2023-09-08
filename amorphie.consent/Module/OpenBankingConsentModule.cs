@@ -422,6 +422,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     dto.kmlk,
                     dto.katilimciBlg,
                     dto.gkd,
+                    dto.hspBlg
 
                 });
                 existingConsent.Description = dto.Description;
