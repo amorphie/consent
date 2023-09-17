@@ -10,6 +10,7 @@ using amorphie.consent.core.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using amorphie.core.Base;
+using amorphie.consent.core.DTO.OpenBanking;
 
 namespace amorphie.consent.Module;
 
@@ -137,6 +138,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
+    //Changed
     public async Task<IResult> GetHhsConsentById(
        Guid consentId,
        [FromServices] ConsentDbContext context,
@@ -146,8 +149,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         {
             var consentWithTokens = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == consentId);
-            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiResponse>(consentWithTokens.AdditionalData);
-            serializedData!.id = consentWithTokens.Id;
+            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiDto>(consentWithTokens.AdditionalData);
+            serializedData!.Id = consentWithTokens.Id;
             serializedData.UserId = consentWithTokens.UserId;
             // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
 
@@ -167,8 +170,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         {
             var consentWithTokens = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == consentId);
-            var serializedData = JsonSerializer.Deserialize<OdemeBilgisiRızaİsteği>(consentWithTokens.AdditionalData);
-            serializedData!.id = consentWithTokens.Id;
+            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(consentWithTokens.AdditionalData);
+            serializedData!.Id = consentWithTokens.Id;
             serializedData.UserId = consentWithTokens.UserId;
             // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
 
@@ -401,7 +404,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     }
 
 
-    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiResponse dto,
+    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
        [FromServices] ConsentDbContext context,
        [FromServices] IMapper mapper)
     {
@@ -409,7 +412,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         try
         {
             var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == dto.id);
+                .FirstOrDefaultAsync(c => c.Id == dto.Id);
             // var existingConsent = await context.Consents
             //     .FirstOrDefaultAsync(c => c.Id == dto.Id &&
             //                                c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
@@ -459,7 +462,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeBilgisiRızaİsteği dto,
+    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
@@ -468,7 +471,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         {
 
             var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == dto.id);
+                .FirstOrDefaultAsync(c => c.Id == dto.Id);
 
             if (existingConsent != null)
             {
@@ -496,7 +499,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                 consent.ConsentType = "Payment Information Consent";
                 consent.xGroupId = "1234567890";
                 context.Consents.Add(consent);
-                var riza = new RizaBilgileri
+                var riza = new RizaBilgileriDto
                 {
                     rizaNo = consent.Id.ToString(),
                     rizaDrm = consent.State,
