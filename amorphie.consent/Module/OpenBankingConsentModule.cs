@@ -36,13 +36,11 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
         routeGroupBuilder.MapPost("/yos/token", HhsToken);
-        routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerýn sadece sonuncusu gelecek
-        //TODO:MehmetAkbaba
-        routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);//Bu metod silinecek
-      
+        routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerï¿½n sadece sonuncusu gelecek
+
     }
-    //hhs bizim bankamýzý açacaklar. UI web ekranlarýmýz.
-    //yos burgan uygulamasý.
+    //hhs bizim bankamï¿½zï¿½ aï¿½acaklar. UI web ekranlarï¿½mï¿½z.
+    //yos burgan uygulamasï¿½.
 
     public async Task<IResult> GetHhsConsentById(
        Guid consentId,
@@ -87,99 +85,25 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
-    public async Task<IResult> GetHhsConsentWithLatestTokensByUserId(
-       Guid userId,
-       string? consentType,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
-    {
-        try
-        {
-            IQueryable<Consent> query = context.Consents
-                .Include(c => c.Token)
-                .Where(c => c.UserId == userId);
-
-            if (!string.IsNullOrEmpty(consentType))
-            {
-                query = query.Where(c => c.ConsentType == consentType);
-            }
-
-            var consentWithTokens = await query
-                .OrderByDescending(c => c.CreatedAt) // Get the most recent consent
-                .FirstOrDefaultAsync();
-
-            if (consentWithTokens == null)
-            {
-                return Results.NotFound("Consent not found.");
-            }
-
-            var accessTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .LastOrDefault(); // Get the most recent Access Token
-
-            var refreshTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .LastOrDefault(); // Get the most recent Refresh Token
-
-            // if (accessTokens == null || refreshTokens == null)
-            // {
-            //     return Results.Problem("Both access and refresh tokens are required.");
-            // }
-
-            var hhsConsentDTO = new HhsConsentDto
-            {
-                Id = consentWithTokens.Id,
-                AdditionalData = consentWithTokens.AdditionalData,
-                description = consentWithTokens.Description,
-                xGroupId = consentWithTokens.xGroupId,
-                Token = new List<TokenModel>
-            {
-                new TokenModel
-                {
-                    Id = accessTokens.ConsentId,
-                    erisimBelirteci = accessTokens.TokenValue,
-                    gecerlilikSuresi = accessTokens.ExpireTime,
-                    yenilemeBelirteci = refreshTokens.TokenValue,
-                    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-
-                }
-            }
-            };
-
-            return Results.Ok(hhsConsentDTO);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
     public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
-        Guid userId,
-        string? consentType,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] ITranslationService translationService,
-        [FromServices] ILanguageService languageService,
-        HttpContext httpContext)
+    Guid userId,
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper,
+    [FromServices] ITranslationService translationService,
+    [FromServices] ILanguageService languageService,
+    HttpContext httpContext)
     {
         string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
 
         try
         {
-
-            IQueryable<Consent> query = context.Consents
+            var consentsWithTokens = await context.Consents
                 .Include(c => c.Token)
-                .Where(c => c.UserId == userId);
+                .Where(c => c.UserId == userId)
+                .ToListAsync();
 
-            if (!string.IsNullOrEmpty(consentType))
-            {
-                query = query.Where(c => c.ConsentType == consentType);
-            }
-
-            var consentsWithTokens = await query.ToListAsync();
-
-            if (consentsWithTokens == null || consentsWithTokens.Count == 0)
+            if (consentsWithTokens == null || !consentsWithTokens.Any())
             {
                 var notFoundMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.ConsentsNotFound");
                 return Results.NotFound(notFoundMessage);
@@ -191,11 +115,13 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             {
                 var accessTokens = consentWithTokens.Token
                     .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .ToList();
+                    .OrderByDescending(token => token.CreatedAt)
+                    .FirstOrDefault();
 
                 var refreshTokens = consentWithTokens.Token
                     .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .ToList();
+                    .OrderByDescending(token => token.CreatedAt)
+                    .FirstOrDefault();
 
                 var hhsConsentDTO = new HhsConsentDto
                 {
@@ -203,16 +129,19 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
                     AdditionalData = consentWithTokens.AdditionalData,
                     description = consentWithTokens.Description,
                     xGroupId = consentWithTokens.xGroupId,
-                    Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
-                    {
-                        Id = access.ConsentId,
-                        erisimBelirteci = access.TokenValue,
-                        gecerlilikSuresi = access.ExpireTime,
-                        yenilemeBelirteci = refresh.TokenValue,
-                        yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime,
-                        CreatedAt = access.CreatedAt,
-                        ModifiedAt = access.ModifiedAt
-                    }).ToList()
+                    Token = new List<TokenModel>
+                {
+            new TokenModel
+{
+    Id = accessTokens.ConsentId,
+    erisimBelirteci = accessTokens.TokenValue,
+    gecerlilikSuresi = accessTokens.ExpireTime,
+    yenilemeBelirteci = refreshTokens.TokenValue,
+    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
+    CreatedAt = accessTokens.CreatedAt,
+    ModifiedAt = accessTokens.ModifiedAt
+}
+                }
                 };
 
                 hhsConsentDTOs.Add(hhsConsentDTO);
