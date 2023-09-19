@@ -11,7 +11,6 @@ namespace amorphie.consent.core.DTO.OpenBanking
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
-        [JsonIgnore]
         public RizaBilgileriDto rzBlg { get; set; }
         public KatilimciBilgisiDto katilimciBlg { get; set; }
         public GkdDto gkd { get; set; }

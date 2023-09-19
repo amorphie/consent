@@ -30,22 +30,19 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
 
         routeGroupBuilder.MapPost("/hhs/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/hhs/paymentInformationConsent", PaymentInformationConsentPost);
+        routeGroupBuilder.MapGet("/hhs/hhsAccount/{consentId}", GetHhsConsentById);
+        routeGroupBuilder.MapGet("hhs/hhsPayment/{consentId}", GetPaymentConsentById);
 
         routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
         routeGroupBuilder.MapPost("/yos/token", HhsToken);
         routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerýn sadece sonuncusu gelecek
-
+        //TODO:MehmetAkbaba
         routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);//Bu metod silinecek
-        routeGroupBuilder.MapGet("/hhs/hhsAccount/{consentId}", GetHhsConsentById);
-        routeGroupBuilder.MapGet("hhs/hhsPayment/{consentId}", GetPaymentConsentById);
+      
     }
-    //hhs bizim bankamýzý açacaklar
-    //yos burgan mobil uygulamasý. paymentpost da rýza bilgisi olmasý zorunlu. Get de de olmalý
-
-
-
-
+    //hhs bizim bankamýzý açacaklar. UI web ekranlarýmýz.
+    //yos burgan uygulamasý.
 
     public async Task<IResult> GetHhsConsentById(
        Guid consentId,
@@ -229,7 +226,6 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem(errorMessage);
         }
     }
-
 
 
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
