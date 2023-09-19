@@ -26,120 +26,27 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapPost("/saveConsentData", CustomPost);
-        routeGroupBuilder.MapGet("/get", GetConsentWithPermissionsAndToken);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-        routeGroupBuilder.MapGet("/getByUserId/{userId}", GetConsentWithPermissionsAndTokenByUserId);
+
         routeGroupBuilder.MapPost("/hhs/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/hhs/paymentInformationConsent", PaymentInformationConsentPost);
-        routeGroupBuilder.MapPost("/hhs/token", HhsToken);
-        routeGroupBuilder.MapGet("/hhs/userId/{userId}", GetAllHhsConsentWithTokensByUserId);
-        routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);
-        routeGroupBuilder.MapGet("/hhs/{consentId}", GetHhsConsentWithTokensById);
-        routeGroupBuilder.MapGet("/hhs/consentType/{consentType}", GetHhsConsentWithTokensByType);
+
+        routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
+        routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
+        routeGroupBuilder.MapPost("/yos/token", HhsToken);
+        routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerýn sadece sonuncusu gelecek
+
+        routeGroupBuilder.MapGet("/hhsGetLatestToken/userId/{userId}", GetHhsConsentWithLatestTokensByUserId);//Bu metod silinecek
         routeGroupBuilder.MapGet("/hhs/hhsAccount/{consentId}", GetHhsConsentById);
         routeGroupBuilder.MapGet("hhs/hhsPayment/{consentId}", GetPaymentConsentById);
     }
+    //hhs bizim bankamýzý açacaklar
+    //yos burgan mobil uygulamasý. paymentpost da rýza bilgisi olmasý zorunlu. Get de de olmalý
 
 
 
-    protected async Task<IResult> CustomPost([FromBody] OpenBankingConsentDTO dto,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var consent = mapper.Map<Consent>(dto);
-            context.Consents.Add(consent);
-            await context.SaveChangesAsync();
-            return Results.Ok(consent);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
-    protected async Task<IResult> GetConsentWithPermissionsAndToken(Guid consentId,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
-    {
-        try
-        {
 
-            var consent = await context.Consents
-                .Include(c => c.ConsentPermission)
-                .Include(c => c.Token)
-                .FirstOrDefaultAsync(c => c.Id == consentId);
-
-            if (consent == null)
-            {
-                return Results.NotFound("Consent not found.");
-            }
-
-            var consentDTO = mapper.Map<OpenBankingConsentDTO>(consent);
-            return Results.Ok(consentDTO);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-    public async Task<IResult> GetHhsConsentWithTokensById(
-       Guid consentId,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var consentWithTokens = await context.Consents
-                .Include(c => c.Token)
-                .FirstOrDefaultAsync(c => c.Id == consentId);
-
-            if (consentWithTokens == null)
-            {
-                return Results.NotFound("Consent not found.");
-            }
-
-            var accessTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            var refreshTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-            // {
-            //     return Results.Problem("Both access and refresh tokens are required.");
-            // }
-
-            var hhsConsentDTO = new HhsConsentDto
-            {
-                Id = consentWithTokens.Id,
-                AdditionalData = consentWithTokens.AdditionalData,
-                description = consentWithTokens.Description,
-                xGroupId = consentWithTokens.xGroupId,
-                Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
-                {
-                    Id = access.ConsentId,
-                    erisimBelirteci = access.TokenValue,
-                    gecerlilikSuresi = access.ExpireTime,
-                    yenilemeBelirteci = refresh.TokenValue,
-                    yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
-                }).ToList()
-            };
-
-            return Results.Ok(hhsConsentDTO);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-    //Changed
     public async Task<IResult> GetHhsConsentById(
        Guid consentId,
        [FromServices] ConsentDbContext context,
@@ -323,85 +230,6 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
-    public async Task<IResult> GetHhsConsentWithTokensByType(
-        string consentType,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var consentWithTokens = await context.Consents
-                .Include(c => c.Token)
-                .FirstOrDefaultAsync(c => c.ConsentType == consentType);
-
-            if (consentWithTokens == null)
-            {
-                return Results.NotFound("Consent not found.");
-            }
-
-            var accessTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            var refreshTokens = consentWithTokens.Token
-                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                .ToList();
-
-            // if (accessTokens.Count == 0 || refreshTokens.Count == 0)
-            // {
-            //     return Results.Problem("Both access and refresh tokens are required.");
-            // }
-
-            var hhsConsentDTO = new HhsConsentDto
-            {
-                Id = consentWithTokens.Id,
-                AdditionalData = consentWithTokens.AdditionalData,
-                description = consentWithTokens.Description,
-                xGroupId = consentWithTokens.xGroupId,
-                Token = accessTokens.Zip(refreshTokens, (access, refresh) => new TokenModel
-                {
-                    Id = access.ConsentId,
-                    erisimBelirteci = access.TokenValue,
-                    gecerlilikSuresi = access.ExpireTime,
-                    yenilemeBelirteci = refresh.TokenValue,
-                    yenilemeBelirteciGecerlilikSuresi = refresh.ExpireTime
-                }).ToList()
-            };
-
-            return Results.Ok(hhsConsentDTO);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-    protected async Task<IResult> GetConsentWithPermissionsAndTokenByUserId(Guid userId,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var consents = await context.Consents
-                .Where(c => c.UserId == userId)
-                .Include(c => c.ConsentPermission)
-                .Include(c => c.Token)
-                .ToListAsync();
-
-            if (consents == null || consents.Count == 0)
-            {
-                return Results.NotFound("Consents not found for the specified user.");
-            }
-
-            //Can there be more than one consent for a userId? Therefore, would it be more sensible to return the data in a list format?
-            var consentDTOs = mapper.Map<IList<OpenBankingConsentDTO>>(consents);
-            return Results.Ok(consentDTOs);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
 
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
@@ -462,6 +290,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
@@ -524,6 +353,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
     protected async Task<IResult> HhsToken([FromBody] TokenModel tokenModel,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper)
@@ -546,6 +376,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
     protected async ValueTask<IResult> SearchMethod(
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper,
@@ -576,6 +407,7 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
             : Results.NoContent();
     }
+
     private (TokenModel erisimToken, TokenModel yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
     {
         var erisimToken = mapper.Map<TokenModel>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
