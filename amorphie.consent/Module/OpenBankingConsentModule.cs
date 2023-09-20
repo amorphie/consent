@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.HHS;
 
 namespace amorphie.consent.Module;
 
@@ -29,9 +30,11 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapGet("/search", SearchMethod);
 
         routeGroupBuilder.MapPost("/hhs/accountInformationConsent", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/hhs/paymentInformationConsent", PaymentInformationConsentPost);
-        routeGroupBuilder.MapGet("/hhs/hhsAccount/{consentId}", GetHhsConsentById);
-        routeGroupBuilder.MapGet("hhs/hhsPayment/{consentId}", GetPaymentConsentById);
+        routeGroupBuilder.MapPost("/hhs/UpdatePaymentConsentStatus/{consentId}/{status}", UpdatePaymentConsentStatus);
+        routeGroupBuilder.MapPost("/hhs/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
+        routeGroupBuilder.MapPost("/hhs/PaymentInformationConsent", PaymentInformationConsentPost);
+        routeGroupBuilder.MapGet("/hhs/GetAccountConsent/{consentId}", GetAccountConsentById);
+        routeGroupBuilder.MapGet("/hhs/GetPaymentConsent/{consentId}", GetPaymentConsentById);
 
         routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
@@ -39,42 +42,31 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenler�n sadece sonuncusu gelecek
 
     }
-    //hhs bizim bankam�z� a�acaklar. UI web ekranlar�m�z.
-    //yos burgan uygulamas�.
+    //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
+    //yos burgan uygulamasi.
 
-    public async Task<IResult> GetHhsConsentById(
-       Guid consentId,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
+
+    #region HHS
+
+    /// <summary>
+    /// Get consent additional data by Id casting to HesapBilgisiRizaIstegiDto type of object
+    /// </summary>
+    /// <param name="consentId"></param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <returns>HesapBilgisiRizaIstegiDto type of object</returns>
+    public async Task<IResult> GetAccountConsentById(
+     Guid consentId,
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper)
     {
         try
         {
-            var consentWithTokens = await context.Consents
+            var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == consentId);
-            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiDto>(consentWithTokens.AdditionalData);
-            serializedData!.Id = consentWithTokens.Id;
-            serializedData.UserId = consentWithTokens.UserId;
-            // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
-
-            return Results.Ok(serializedData);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-    public async Task<IResult> GetPaymentConsentById(
-   Guid consentId,
-   [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var consentWithTokens = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == consentId);
-            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(consentWithTokens.AdditionalData);
-            serializedData!.Id = consentWithTokens.Id;
-            serializedData.UserId = consentWithTokens.UserId;
+            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiDto>(entity.AdditionalData);
+            serializedData!.Id = entity.Id;
+            serializedData.UserId = entity.UserId;
             // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
 
             return Results.Ok(serializedData);
@@ -85,6 +77,112 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
+    /// <summary>
+    /// Get consent additional data by Id casting to OdemeEmriRizaIstegiDto type of object
+    /// </summary>
+    /// <param name="consentId"></param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <returns>OdemeEmriRizaIstegiDto type of object</returns>
+    public async Task<IResult> GetPaymentConsentById(Guid consentId,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == consentId);
+            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(entity.AdditionalData);
+            serializedData!.Id = entity.Id;
+            serializedData.UserId = entity.UserId;
+
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    protected async Task<IResult> UpdatePaymentConsentStatus(Guid id,
+        string state,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        var resultData = new Consent();
+        try
+        {
+
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == id);
+            if (entity == null)
+            {
+                return Results.BadRequest();
+            }
+
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(entity.AdditionalData);
+            additionalData.rzBlg.rizaDrm = state;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.State = state;
+
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            return Results.Ok(resultData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    protected async Task<IResult> UpdatePaymentConsentForAuthorization([FromBody] UpdatePCForAuthorizationDto savePCStatusSenderAccount,
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper)
+    {
+        var resultData = new Consent();
+        try
+        {
+
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id);
+            if (entity == null)
+            {
+                return Results.BadRequest();
+            }
+
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(entity.AdditionalData);
+            //Check if sender account is already selected
+            bool isSenderAccountSet = string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) || string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef);
+            if (!isSenderAccountSet
+                && savePCStatusSenderAccount.SenderAccount == null)
+            {
+                return Results.BadRequest();
+            }
+            additionalData.rzBlg.rizaDrm = savePCStatusSenderAccount.State;
+            if (!isSenderAccountSet)
+            {
+                additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
+            }
+
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.State = savePCStatusSenderAccount.State;
+
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            return Results.Ok(resultData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region YOS
 
     public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
     Guid userId,
@@ -156,10 +254,9 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
-
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
-       [FromServices] ConsentDbContext context,
-       [FromServices] IMapper mapper)
+     [FromServices] ConsentDbContext context,
+     [FromServices] IMapper mapper)
     {
         var returnData = new Consent();
         try
@@ -301,6 +398,9 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
+    #endregion
+
 
     protected async ValueTask<IResult> SearchMethod(
       [FromServices] ConsentDbContext context,
