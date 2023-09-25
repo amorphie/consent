@@ -52,7 +52,13 @@
             "label": "dapr-debug-amorphie-consent",
             "type": "dapr",
             "dependsOn": "build-amorphie-consent",
-            "componentsPath": "Dapr/Components"
+            "componentsPath": "Dapr/Components",
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "close": true,
+                "focus": true
+           }
         },
         {
             "appId": "amorphie-consent-hub",
@@ -78,7 +84,7 @@
                 "clear": true,
                 "close": true,
                 "focus": true,
-                
+
            }
         },
         {
@@ -96,7 +102,8 @@
         {
             "appId": "amorphie-consent-hub",
             "label": "daprd-down-amorphie-consent-hub",
-            "type": "daprd-down"
+            "type": "daprd-down",
+            
         },
         {
             "appId": "amorphie-consent-worker",
