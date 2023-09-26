@@ -116,7 +116,7 @@ services:
 
   vault:
     container_name: bbt-consent-vault
-    image: vault:1.13.3
+    image: vault:latest
     restart: on-failure:10
     ports:
       - "8200:8200"
@@ -141,7 +141,7 @@ services:
       - vault
     volumes:
       - ./vault.sh:/usr/local/bin/prepopulate_vault.sh
-    command: ["sh", "-c", "chmod +x /usr/local/bin/prepopulate_vault.sh && /usr/local/bin/prepopulate_vault.sh"]
+    command: ["sh", "-c", "/usr/local/bin/prepopulate_vault.sh && /usr/local/bin/prepopulate_vault.sh"]
     networks:
        - bbt-development
 
