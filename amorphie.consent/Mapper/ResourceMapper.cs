@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.Model;
 using AutoMapper;
 
@@ -12,8 +13,8 @@ namespace amorphie.consent.Mapper
         public ResourceMapper()
         {
             CreateMap<Consent, ConsentDTO>().ReverseMap();
-            CreateMap<Consent, HesapBilgisiRizaIstegiResponse>().ReverseMap();
-            CreateMap<Consent, OdemeBilgisiRızaİsteği>().ReverseMap();
+            CreateMap<Consent, HesapBilgisiRizaIstegiDto>().ReverseMap();
+            CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDTO>()
                 .ForMember(dest => dest.ConsentPermission, opt => opt.MapFrom(src => src.ConsentPermission)) // Handle ConsentPermission mapping
                 .ReverseMap();
