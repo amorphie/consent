@@ -22,20 +22,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
 
-    public override string? UrlFragment => "OpenBankingConsent";
+    public override string? UrlFragment => "OpenBankingConsentHHS";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-
-        routeGroupBuilder.MapPost("/hhs/accountInformationConsent", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/hhs/UpdatePaymentConsentStatus/{consentId}/{status}", UpdatePaymentConsentStatus);
-        routeGroupBuilder.MapPost("/hhs/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
-        routeGroupBuilder.MapPost("/hhs/PaymentInformationConsent", PaymentInformationConsentPost);
-        routeGroupBuilder.MapGet("/hhs/GetAccountConsent/{consentId}", GetAccountConsentById);
-        routeGroupBuilder.MapGet("/hhs/GetPaymentConsent/{consentId}", GetPaymentConsentById);
-
+        routeGroupBuilder.MapPost("/UpdatePaymentConsentStatus/{consentId}/{status}", UpdatePaymentConsentStatus);
+        routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
+        routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
+        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
+        routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{consentId}", GetAccountConsentById);
+        routeGroupBuilder.MapGet("/odeme-emri-rizasi/{consentId}", GetPaymentConsentById);
+        //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
     }
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
 

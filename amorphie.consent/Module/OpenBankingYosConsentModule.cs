@@ -22,16 +22,15 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
 
-    public override string? UrlFragment => "OpenBankingConsent";
+    public override string? UrlFragment => "OpenBankingConsentYOS";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/search", SearchMethod);
-        routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
-        routeGroupBuilder.MapPost("/yos/token", HhsToken);
-        routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerın sadece sonuncusu gelecek
+        routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
+        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
+        routeGroupBuilder.MapPost("/token", HhsToken);
+        routeGroupBuilder.MapGet("/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerın sadece sonuncusu gelecek
 
     }
 
@@ -118,10 +117,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
-            // var existingConsent = await context.Consents
-            //     .FirstOrDefaultAsync(c => c.Id == dto.Id &&
-            //                                c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
-
+         
             if (existingConsent != null)
             {
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
@@ -136,8 +132,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "Account Information Consent";
-
+                existingConsent.ConsentType = "H";
 
                 context.Consents.Update(existingConsent);
             }
@@ -172,6 +167,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
+        //TODO:Ozlem Update olmayacak. UpdateStatus olacak, Odeme-Emri post metodu eklenecek. EmirBilgileri içerisinde olacak.
         var resultData = new Consent();
         try
         {
@@ -191,7 +187,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "Payment Information Consent";
+                existingConsent.ConsentType = "O";
 
                 context.Consents.Update(existingConsent);
             }
@@ -202,7 +198,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
                 consent.State = "Yetki Bekleniyor";
                 dto.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
-                consent.ConsentType = "Payment Information Consent";
+                consent.ConsentType = "O";
                 consent.xGroupId = "1234567890";
                 context.Consents.Add(consent);
                 var riza = new RizaBilgileriDto
@@ -256,37 +252,6 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     #endregion
 
-
-    protected async ValueTask<IResult> SearchMethod(
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper,
-      [AsParameters] ConsentSearch consentSearch,
-      CancellationToken token
-  )
-    {
-        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
-
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Token)
-            .Include(c => c.ConsentPermission)
-            .AsNoTracking();
-
-        if (!string.IsNullOrEmpty(consentSearch.Keyword))
-        {
-            string keyword = consentSearch.Keyword.ToLower();
-            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
-             .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
-        }
-
-        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(consentSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
-            : Results.NoContent();
-    }
 
     private (TokenModel erisimToken, TokenModel yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
     {
