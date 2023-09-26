@@ -28,12 +28,12 @@ public class TranslationService : ITranslationService
         {
             var jsonData = await _daprClient.GetStateAsync<string>("amorphie-state", "messages");
             var translations = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(jsonData);
-            
+
             if (translations.TryGetValue(language, out var translatedMessages))
             {
                 return translatedMessages;
             }
-            
+
             return new Dictionary<string, string>();
         }
         catch (Exception ex)
@@ -44,31 +44,31 @@ public class TranslationService : ITranslationService
     }
 
     public async Task<string> GetTranslatedMessageAsync(string language, string key)
-{
-    try
     {
-        if (string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(key))
+        try
         {
-            return "Invalid language or key.";
-        }
+            if (string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(key))
+            {
+                return "Invalid language or key.";
+            }
 
-        if (string.Equals(language, "en-EN", StringComparison.OrdinalIgnoreCase))
-        {
-            language = "en-EN";
-        }
+            if (string.Equals(language, "en-EN", StringComparison.OrdinalIgnoreCase))
+            {
+                language = "en-EN";
+            }
 
-        var translations = await GetTranslationsForLanguageAsync(language);
-        if (translations.TryGetValue(key, out var message))
-        {
-            return message;
+            var translations = await GetTranslationsForLanguageAsync(language);
+            if (translations.TryGetValue(key, out var message))
+            {
+                return message;
+            }
+
+            return $"Translation for key '{key}' not found.";
         }
-        
-        return $"Translation for key '{key}' not found.";
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while retrieving the translated message for language {language} and key {key}", language, key);
+            return "An error occurred while retrieving the translated message.";
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "An error occurred while retrieving the translated message for language {language} and key {key}", language, key);
-        return "An error occurred while retrieving the translated message.";
-    }
-}
 }

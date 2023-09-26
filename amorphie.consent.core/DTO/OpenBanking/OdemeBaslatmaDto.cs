@@ -14,9 +14,9 @@ namespace amorphie.consent.core.DTO.OpenBanking
         public AliciHesapDto alc { get; set; }
         public KarekodDto? kkod { get; set; }
         public OdemeAyrintilariDto odmAyr { get; set; }
-        
+
         public TutarDto? hhsMsrfTtr { get; set; }
         public TutarDto? obhsMsrfTtr { get; set; }
-        
+
     }
 }
