@@ -26,7 +26,7 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, HhsConsentDto>().ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
             CreateMap<Consent, HhsConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Token)).ReverseMap();
-            CreateMap<TokenModel, (Token erisimToken, Token yenilemeToken)>()
+            CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
           .ConstructUsing((src, ctx) =>
           {
               var erisimToken = new Token
@@ -48,7 +48,7 @@ namespace amorphie.consent.Mapper
               return (erisimToken, yenilemeToken);
           }).ReverseMap();
 
-            CreateMap<TokenModel, (Token erisimToken, Token yenilemeToken)>()
+            CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
     .ConstructUsing((src, ctx) =>
     {
         Token? erisimToken = null;
@@ -78,7 +78,7 @@ namespace amorphie.consent.Mapper
 
         return (erisimToken, yenilemeToken);
     }).ReverseMap();
-            CreateMap<Token, TokenModel>()
+            CreateMap<Token, OpenBankingTokenDto>()
              .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
              .ForMember(dest => dest.erisimBelirteci, opt => opt.MapFrom(src => src.TokenValue))
              .ForMember(dest => dest.gecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime))

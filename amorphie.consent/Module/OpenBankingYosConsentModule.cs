@@ -81,9 +81,9 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                     AdditionalData = consentWithTokens.AdditionalData,
                     description = consentWithTokens.Description,
                     xGroupId = consentWithTokens.xGroupId,
-                    Token = new List<TokenModel>
+                    Token = new List<OpenBankingTokenDto>
                 {
-            new TokenModel
+            new OpenBankingTokenDto
 {
     Id = accessTokens.ConsentId,
     erisimBelirteci = accessTokens.TokenValue,
@@ -227,7 +227,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
     }
 
-    protected async Task<IResult> HhsToken([FromBody] TokenModel tokenModel,
+    protected async Task<IResult> HhsToken([FromBody] OpenBankingTokenDto tokenModel,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper)
     {
@@ -253,10 +253,10 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     #endregion
 
 
-    private (TokenModel erisimToken, TokenModel yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
+    private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
     {
-        var erisimToken = mapper.Map<TokenModel>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
-        var yenilemeToken = mapper.Map<TokenModel>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
+        var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
+        var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
 
         return (erisimToken, yenilemeToken);
     }
