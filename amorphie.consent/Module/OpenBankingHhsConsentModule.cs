@@ -15,9 +15,9 @@ using amorphie.consent.core.DTO.OpenBanking.HHS;
 
 namespace amorphie.consent.Module;
 
-public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
+public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
 {
-    public OpenBankingConsentModule(WebApplication app)
+    public OpenBankingHHSConsentModule(WebApplication app)
         : base(app) { }
 
     public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
@@ -36,14 +36,8 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         routeGroupBuilder.MapGet("/hhs/GetAccountConsent/{consentId}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/hhs/GetPaymentConsent/{consentId}", GetPaymentConsentById);
 
-        routeGroupBuilder.MapPost("/yos/accountInformationConsent", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/yos/paymentInformationConsent", PaymentInformationConsentPost);
-        routeGroupBuilder.MapPost("/yos/token", HhsToken);
-        routeGroupBuilder.MapGet("/yos/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenler�n sadece sonuncusu gelecek
-
     }
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
-    //yos burgan uygulamasi.
 
 
     #region HHS
@@ -180,83 +174,9 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
-    #endregion
-
-    #region YOS
-
-    public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
-    Guid userId,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper,
-    [FromServices] ITranslationService translationService,
-    [FromServices] ILanguageService languageService,
-    HttpContext httpContext)
-    {
-        string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
-
-        try
-        {
-            var consentsWithTokens = await context.Consents
-                .Include(c => c.Token)
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-
-            if (consentsWithTokens == null || !consentsWithTokens.Any())
-            {
-                var notFoundMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.ConsentsNotFound");
-                return Results.NotFound(notFoundMessage);
-            }
-
-            var hhsConsentDTOs = new List<HhsConsentDto>();
-
-            foreach (var consentWithTokens in consentsWithTokens)
-            {
-                var accessTokens = consentWithTokens.Token
-                    .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .OrderByDescending(token => token.CreatedAt)
-                    .FirstOrDefault();
-
-                var refreshTokens = consentWithTokens.Token
-                    .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .OrderByDescending(token => token.CreatedAt)
-                    .FirstOrDefault();
-
-                var hhsConsentDTO = new HhsConsentDto
-                {
-                    Id = consentWithTokens.Id,
-                    AdditionalData = consentWithTokens.AdditionalData,
-                    description = consentWithTokens.Description,
-                    xGroupId = consentWithTokens.xGroupId,
-                    Token = new List<TokenModel>
-                {
-            new TokenModel
-{
-    Id = accessTokens.ConsentId,
-    erisimBelirteci = accessTokens.TokenValue,
-    gecerlilikSuresi = accessTokens.ExpireTime,
-    yenilemeBelirteci = refreshTokens.TokenValue,
-    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-    CreatedAt = accessTokens.CreatedAt,
-    ModifiedAt = accessTokens.ModifiedAt
-}
-                }
-                };
-
-                hhsConsentDTOs.Add(hhsConsentDTO);
-            }
-
-            return Results.Ok(hhsConsentDTOs);
-        }
-        catch (Exception ex)
-        {
-            var errorMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.Problem");
-            return Results.Problem(errorMessage);
-        }
-    }
-
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
-     [FromServices] ConsentDbContext context,
-     [FromServices] IMapper mapper)
+   [FromServices] ConsentDbContext context,
+   [FromServices] IMapper mapper)
     {
         var returnData = new Consent();
         try
@@ -376,28 +296,6 @@ public class OpenBankingConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Cons
         }
     }
 
-    protected async Task<IResult> HhsToken([FromBody] TokenModel tokenModel,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper)
-    {
-        try
-        {
-            var (erisimToken, yenilemeToken) = mapper.Map<(Token, Token)>(tokenModel);
-
-            context.Tokens.Add(erisimToken);
-            context.Tokens.Add(yenilemeToken);
-            await context.SaveChangesAsync();
-            var tokenList = new[] { erisimToken, yenilemeToken }
-                .Select(mapper.Map<Token>)
-                .ToList();
-
-            return Results.Ok(tokenList);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
     #endregion
 
