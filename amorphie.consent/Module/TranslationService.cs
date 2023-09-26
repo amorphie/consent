@@ -44,26 +44,31 @@ public class TranslationService : ITranslationService
     }
 
     public async Task<string> GetTranslatedMessageAsync(string language, string key)
+{
+    try
     {
-        try
+        if (string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(key))
         {
-            if (string.IsNullOrWhiteSpace(language) || string.IsNullOrWhiteSpace(key))
-            {
-                return "Invalid language or key.";
-            }
+            return "Invalid language or key.";
+        }
 
-            var translations = await GetTranslationsForLanguageAsync(language);
-            if (translations.TryGetValue(key, out var message))
-            {
-                return message;
-            }
-            
-            return $"Translation for key '{key}' not found.";
-        }
-        catch (Exception ex)
+        if (string.Equals(language, "en-EN", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogError(ex, "An error occurred while retrieving the translated message for language {language} and key {key}", language, key);
-            return "An error occurred while retrieving the translated message.";
+            language = "en-EN";
         }
+
+        var translations = await GetTranslationsForLanguageAsync(language);
+        if (translations.TryGetValue(key, out var message))
+        {
+            return message;
+        }
+        
+        return $"Translation for key '{key}' not found.";
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "An error occurred while retrieving the translated message for language {language} and key {key}", language, key);
+        return "An error occurred while retrieving the translated message.";
+    }
+}
 }

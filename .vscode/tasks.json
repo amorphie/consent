@@ -12,7 +12,13 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "close": true,
+                "focus": true
+           }
         },
         {
             "label": "build-amorphie-consent-hub",
@@ -46,7 +52,13 @@
             "label": "dapr-debug-amorphie-consent",
             "type": "dapr",
             "dependsOn": "build-amorphie-consent",
-            "componentsPath": "Dapr/Components"
+            "componentsPath": "Dapr/Components",
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "close": true,
+                "focus": true
+           }
         },
         {
             "appId": "amorphie-consent-hub",
@@ -66,18 +78,32 @@
             "label": "dapr-debug-amorphie-consent-worker",
             "type": "dapr",
             "dependsOn": "build-amorphie-consent-worker",
-            "componentsPath": "Dapr/Components"
+            "componentsPath": "Dapr/Components",
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "close": true,
+                "focus": true,
+
+           }
         },
         {
             "appId": "amorphie-consent",
             "label": "daprd-down-amorphie-consent",
             "type": "daprd-down",
             "dependsOn": "stop-mocks",
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "close": true,
+                "focus": true
+           }
         },
         {
             "appId": "amorphie-consent-hub",
             "label": "daprd-down-amorphie-consent-hub",
-            "type": "daprd-down"
+            "type": "daprd-down",
+            
         },
         {
             "appId": "amorphie-consent-worker",
