@@ -5,6 +5,8 @@ namespace amorphie.consent.core.DTO.OpenBanking
 {
     public class OpenBankingTokenDto : EntityBaseWithOutId
     {
+        //TODO:Ekip DTOBaseWithOutId class could not be used. The codes inside is commented.
+        //If it is open, that class will be used.
         public Guid Id { get; set; }
         public Guid ConsentId { get; set; }
         public string erisimBelirteci { get; set; }
