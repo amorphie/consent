@@ -32,8 +32,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
-        routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{consentId}", GetAccountConsentById);
-        routeGroupBuilder.MapGet("/odeme-emri-rizasi/{consentId}", GetPaymentConsentById);
+        routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
+        routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
     }
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -44,19 +44,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <summary>
     /// Get consent additional data by Id casting to HesapBilgisiRizaIstegiDto type of object
     /// </summary>
-    /// <param name="consentId"></param>
+    /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns>HesapBilgisiRizaIstegiDto type of object</returns>
     public async Task<IResult> GetAccountConsentById(
-     Guid consentId,
+     Guid rizaNo,
      [FromServices] ConsentDbContext context,
      [FromServices] IMapper mapper)
     {
         try
         {
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == consentId);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo);
             var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiDto>(entity.AdditionalData);
             serializedData!.Id = entity.Id;
             serializedData.UserId = entity.UserId;
@@ -73,18 +73,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <summary>
     /// Get consent additional data by Id casting to OdemeEmriRizaIstegiDto type of object
     /// </summary>
-    /// <param name="consentId"></param>
+    /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns>OdemeEmriRizaIstegiDto type of object</returns>
-    public async Task<IResult> GetPaymentConsentById(Guid consentId,
+    public async Task<IResult> GetPaymentConsentById(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper)
     {
         try
         {
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == consentId);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo);
             var serializedData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(entity.AdditionalData);
             serializedData!.Id = entity.Id;
             serializedData.UserId = entity.UserId;
@@ -330,12 +330,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             : Results.NoContent();
     }
 
-    private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
-    {
-        var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
-        var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
+    // private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
+    // {
+    //     var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
+    //     var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
 
-        return (erisimToken, yenilemeToken);
-    }
+    //     return (erisimToken, yenilemeToken);
+    // }
 
 }
