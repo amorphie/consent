@@ -12,6 +12,8 @@ using System.Text.Json.Serialization;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
@@ -32,6 +34,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
+         routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentSave);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
@@ -173,9 +176,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
     }
 
-    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
-   [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper)
+    protected async Task<IResult> AccountInformationConsentSave([FromBody] HesapBilgisiRizaIstegiDto dto,
+[FromServices] ConsentDbContext context,
+[FromServices] IMapper mapper)
     {
         var returnData = new Consent();
         try
@@ -230,6 +233,98 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             return Results.Problem($"An error occurred: {ex.Message}");
         }
+    }
+
+    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+   [FromServices] ConsentDbContext context,
+   [FromServices] IMapper mapper)
+    {
+        try
+        {
+            IsDataValidToAccountConsentPost(rizaIstegi);
+            var consentEntity = mapper.Map<Consent>(rizaIstegi);
+            context.Consents.Add(consentEntity);
+            //Generate response object
+            HesapBilgisiRizasiHHSDto hesapBilgisiRizasi = mapper.Map<HesapBilgisiRizasiHHSDto>(rizaIstegi);
+            hesapBilgisiRizasi.Id = consentEntity.Id;
+            //Set consent data
+            hesapBilgisiRizasi.rzBlg = new RizaBilgileriDto()
+            {
+                rizaNo = consentEntity.Id.ToString(),
+                olusZmn = DateTime.Now,
+                rizaDrm = "B"
+            };
+            //Set gkd data
+            hesapBilgisiRizasi.gkd.hhsYonAdr = "";
+            hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.Now.AddMinutes(5);
+            consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
+            consentEntity.State = "B: Yetki Bekleniyor";
+            consentEntity.ConsentType = "Account Information Consent";
+
+            context.Consents.Add(consentEntity);
+
+            await context.SaveChangesAsync();
+            return Results.Ok(hesapBilgisiRizasi);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Checks if data is valid for account consent post process
+    /// </summary>
+    /// <param name="rizaIstegi">To be checked data</param>
+    /// <exception cref="NotImplementedException"></exception>
+    private void IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi)
+    {
+        //TODO:Ozlem update metod
+       //Check izinbilgisi properties
+       if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
+       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.Now.AddMonths(6)
+       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.Now.AddDays(1))
+       {
+           //BadRequest
+           return;
+       }
+       var selectedPermissions = rizaIstegi.hspBlg.iznBlg.iznTur;
+       if (!selectedPermissions.Any())
+       {
+           //Badrequest
+           return;
+       }
+       if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
+       {
+           //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
+           if (!(selectedPermissions.Any(p => p == "01" || p == "02")))
+           {
+               //Badrequest
+               return;
+           }
+
+           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.Now.AddMonths(-12))
+           {
+               //Badrequest
+               return;
+           }
+       }
+       if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
+       {
+           //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
+           if (!(selectedPermissions.Any(p => p == "T" || p == "A")))
+           {
+               //Badrequest
+               return;
+           }
+
+           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.Now.AddMonths(12))
+           {
+               //Badrequest
+               return;
+           }
+       }
+      
     }
 
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
