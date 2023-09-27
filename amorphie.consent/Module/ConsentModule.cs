@@ -7,6 +7,7 @@ using amorphie.core.Swagger;
 using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
+using amorphie.consent.core.DTO;
 
 namespace amorphie.consent.Module;
 
@@ -199,5 +200,5 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
     }
     #endregion
 
-    
+
 }
