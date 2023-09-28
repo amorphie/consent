@@ -251,12 +251,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             hesapBilgisiRizasi.rzBlg = new RizaBilgileriDto()
             {
                 rizaNo = consentEntity.Id.ToString(),
-                olusZmn = DateTime.Now,
+                olusZmn = DateTime.UtcNow,
                 rizaDrm = "B"
             };
             //Set gkd data
             hesapBilgisiRizasi.gkd.hhsYonAdr = "";
-            hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.Now.AddMinutes(5);
+            hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = "B: Yetki Bekleniyor";
             consentEntity.ConsentType = "Account Information Consent";
@@ -282,8 +282,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         //TODO:Ozlem update metod
        //Check izinbilgisi properties
        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.Now.AddMonths(6)
-       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.Now.AddDays(1))
+       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
+       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
        {
            //BadRequest
            return;
@@ -303,7 +303,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                return;
            }
 
-           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.Now.AddMonths(-12))
+           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))
            {
                //Badrequest
                return;
@@ -318,7 +318,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                return;
            }
 
-           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.Now.AddMonths(12))
+           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))
            {
                //Badrequest
                return;
