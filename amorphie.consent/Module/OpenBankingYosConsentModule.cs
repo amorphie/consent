@@ -39,12 +39,12 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     #region YOS
 
     public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
-    Guid userId,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper,
-    [FromServices] ITranslationService translationService,
-    [FromServices] ILanguageService languageService,
-    HttpContext httpContext)
+   Guid userId,
+   [FromServices] ConsentDbContext context,
+   [FromServices] IMapper mapper,
+   [FromServices] ITranslationService translationService,
+   [FromServices] ILanguageService languageService,
+   HttpContext httpContext)
     {
         string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
 
@@ -54,12 +54,6 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 .Include(c => c.Token)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
-
-            if (consentsWithTokens == null || !consentsWithTokens.Any())
-            {
-                var notFoundMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.ConsentsNotFound");
-                return Results.NotFound(notFoundMessage);
-            }
 
             var hhsConsentDTOs = new List<HhsConsentDto>();
 
@@ -81,23 +75,36 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                     AdditionalData = consentWithTokens.AdditionalData,
                     description = consentWithTokens.Description,
                     xGroupId = consentWithTokens.xGroupId,
-                    Token = new List<OpenBankingTokenDto>
+                    Token = accessTokens != null && refreshTokens != null ? new List<OpenBankingTokenDto>
                 {
-            new OpenBankingTokenDto
-{
-    Id = accessTokens.ConsentId,
-    erisimBelirteci = accessTokens.TokenValue,
-    gecerlilikSuresi = accessTokens.ExpireTime,
-    yenilemeBelirteci = refreshTokens.TokenValue,
-    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-    CreatedAt = accessTokens.CreatedAt,
-    ModifiedAt = accessTokens.ModifiedAt
-}
-                }
+                    new OpenBankingTokenDto
+                    {
+                        Id = accessTokens.ConsentId,
+                        erisimBelirteci = accessTokens.TokenValue,
+                        gecerlilikSuresi = accessTokens.ExpireTime,
+                        yenilemeBelirteci = refreshTokens.TokenValue,
+                        yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
+                        CreatedAt = accessTokens.CreatedAt,
+                        ModifiedAt = accessTokens.ModifiedAt
+                    }
+                } : null
                 };
 
                 hhsConsentDTOs.Add(hhsConsentDTO);
             }
+
+            var consentsWithoutTokens = consentsWithTokens
+                .Where(c => hhsConsentDTOs.All(dto => dto.Id != c.Id))
+                .Select(consent => new HhsConsentDto
+                {
+                    Id = consent.Id,
+                    AdditionalData = consent.AdditionalData,
+                    description = consent.Description,
+                    xGroupId = consent.xGroupId,
+                    Token = null // Tokenlar yok
+                });
+
+            hhsConsentDTOs.AddRange(consentsWithoutTokens);
 
             return Results.Ok(hhsConsentDTOs);
         }
@@ -107,7 +114,6 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem(errorMessage);
         }
     }
-
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
      [FromServices] ConsentDbContext context,
      [FromServices] IMapper mapper)
@@ -117,6 +123,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
+
 
             if (existingConsent != null)
             {
@@ -133,7 +140,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
                 existingConsent.ConsentType = "H";
-
+                existingConsent.xGroupId = dto.xGroupId;
                 context.Consents.Update(existingConsent);
             }
             else
@@ -149,8 +156,8 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 });
 
                 consentData.State = dto.rzBlg?.rizaDrm;
-                consentData.ConsentType = "Account Information Consent";
-
+                consentData.ConsentType = "H";
+                consentData.xGroupId = dto.xGroupId;
                 context.Consents.Add(consentData);
                 returnData = consentData;
             }
@@ -167,11 +174,14 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper)
     {
-        //TODO:Ozlem Update olmayacak. UpdateStatus olacak, Odeme-Emri post metodu eklenecek. EmirBilgileri içerisinde olacak.
+
         var resultData = new Consent();
         try
         {
-
+            if (dto == null)
+            {
+                return Results.BadRequest();
+            }
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
 
@@ -184,6 +194,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                     dto.gkd,
                     dto.odmBsltm,
                 });
+                existingConsent.xGroupId = dto.xGroupId ?? Guid.NewGuid().ToString();
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
@@ -194,27 +205,18 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             else
             {
                 var consent = mapper.Map<Consent>(dto);
-
-
-                consent.State = "Yetki Bekleniyor";
-                dto.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
+                consent.State = dto.rzBlg?.rizaDrm;
                 consent.ConsentType = "O";
-                consent.xGroupId = "1234567890";
-                context.Consents.Add(consent);
-                var riza = new RizaBilgileriDto
-                {
-                    rizaNo = consent.Id.ToString(),
-                    rizaDrm = consent.State,
-                    olusZmn = DateTime.UtcNow,
-                    gnclZmn = DateTime.UtcNow,
-                };
+                consent.xGroupId = dto.xGroupId;
+                consent.Description = dto.Description;
                 consent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    riza,
+                    dto.rzBlg,
                     dto.katilimciBlg,
                     dto.gkd,
                     dto.odmBsltm,
                 });
+                context.Consents.Add(consent);
                 resultData = consent;
             }
 

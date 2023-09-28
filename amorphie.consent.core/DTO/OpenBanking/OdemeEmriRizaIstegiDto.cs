@@ -17,5 +17,6 @@ namespace amorphie.consent.core.DTO.OpenBanking
         public OdemeBaslatmaDto odmBsltm { get; set; }
         public IsyeriOdemeBilgileriDto isyOdmBlg { get; set; }
         public string? Description { get; set; }
+        public string xGroupId { get; set; }
     }
 }
