@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.Enum;
 using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -252,7 +253,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 rizaNo = consentEntity.Id.ToString(),
                 olusZmn = DateTime.UtcNow,
-                rizaDrm = "B"
+                rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
             };
             //Set gkd data
             hesapBilgisiRizasi.gkd.hhsYonAdr = "";
@@ -279,31 +280,77 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <exception cref="NotImplementedException"></exception>
     private void IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi)
     {
-        //TODO:Ozlem update metod
-        //Check izinbilgisi properties
-        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-        || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-        || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
+        //TODO:Ozlem Check Header
+        //TODO:Ozlem Check fields length and necessity
+        //TODO:Ozlem Check if user is customer
+        //TODO:Ozlem Check fields length and necessity
+        
+        //Check KatılımcıBilgisi
+        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
+            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod))
         {
-            //BadRequest
+            //Badreqeust
             return;
         }
-        var selectedPermissions = rizaIstegi.hspBlg.iznBlg.iznTur;
-        if (!selectedPermissions.Any())
+        //TODO:Ozlem hhskod, yoskod check validaty
+       
+        //Check GKD
+        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm))
         {
-            //Badrequest
-            return;
-        }
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!(selectedPermissions.Any(p => p == "01" || p == "02")))
+            if ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli 
+                && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
+                || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik 
+                    && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr)))
             {
                 //Badrequest
                 return;
             }
+        }
+        
+        //Check Kimlik
+        if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur)//Check required fields
+            || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
+            || !(string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) && string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs) )
+            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur))
+        {
+            //Badrequest
+            return;
+        }
 
-            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))
+        //Check field constraints
+        if ( (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurTCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
+            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurMNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
+             || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurYKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11) 
+            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurPNO && (rizaIstegi.kmlk.kmlkVrs.Trim().Length <7 || rizaIstegi.kmlk.kmlkVrs.Length >9))
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurTCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurMNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurVKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10) )
+        {
+            //Badrequest
+            return;
+        }
+        
+        
+        //Check HesapBilgisi
+        //Check izinbilgisi properties
+        if (rizaIstegi.hspBlg.iznBlg.iznTur?.Any() == false 
+            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
+            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
+            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
+        {
+            //BadRequest
+            return;
+        }
+       
+        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
+        {
+            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
+            if (!(rizaIstegi.hspBlg.iznBlg.iznTur?.Any(p => p == OpenBankingConstants.IzinTurTemelIslem || p == OpenBankingConstants.IzinTurAyrintiliIslem) ?? false))
+            {
+                //Badrequest
+                return;
+            }
+            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))//Data constraints
             {
                 //Badrequest
                 return;
@@ -312,13 +359,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!(selectedPermissions.Any(p => p == "T" || p == "A")))
+            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTurTemelIslem || p == OpenBankingConstants.IzinTurAyrintiliIslem))
             {
                 //Badrequest
                 return;
             }
-
-            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))
+            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))//Data constraints
             {
                 //Badrequest
                 return;
