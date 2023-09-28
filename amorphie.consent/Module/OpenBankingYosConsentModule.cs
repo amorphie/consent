@@ -124,7 +124,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
 
-            
+
             if (existingConsent != null)
             {
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
