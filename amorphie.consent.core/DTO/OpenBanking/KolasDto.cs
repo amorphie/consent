@@ -10,7 +10,7 @@ namespace amorphie.consent.core.DTO.OpenBanking
     {
         public string kolasTur { get; set; }
         public string kolasDgr { get; set; }
-        public string kolasRefNo { get; set; }
+        public long kolasRefNo { get; set; }
         public string kolasHspTur { get; set; }
     }
 }
