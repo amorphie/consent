@@ -280,51 +280,51 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     private void IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi)
     {
         //TODO:Ozlem update metod
-       //Check izinbilgisi properties
-       if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-       || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
-       {
-           //BadRequest
-           return;
-       }
-       var selectedPermissions = rizaIstegi.hspBlg.iznBlg.iznTur;
-       if (!selectedPermissions.Any())
-       {
-           //Badrequest
-           return;
-       }
-       if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
-       {
-           //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-           if (!(selectedPermissions.Any(p => p == "01" || p == "02")))
-           {
-               //Badrequest
-               return;
-           }
+        //Check izinbilgisi properties
+        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
+        || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
+        || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
+        {
+            //BadRequest
+            return;
+        }
+        var selectedPermissions = rizaIstegi.hspBlg.iznBlg.iznTur;
+        if (!selectedPermissions.Any())
+        {
+            //Badrequest
+            return;
+        }
+        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
+        {
+            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
+            if (!(selectedPermissions.Any(p => p == "01" || p == "02")))
+            {
+                //Badrequest
+                return;
+            }
 
-           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))
-           {
-               //Badrequest
-               return;
-           }
-       }
-       if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
-       {
-           //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-           if (!(selectedPermissions.Any(p => p == "T" || p == "A")))
-           {
-               //Badrequest
-               return;
-           }
+            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))
+            {
+                //Badrequest
+                return;
+            }
+        }
+        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
+        {
+            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
+            if (!(selectedPermissions.Any(p => p == "T" || p == "A")))
+            {
+                //Badrequest
+                return;
+            }
 
-           if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))
-           {
-               //Badrequest
-               return;
-           }
-       }
-      
+            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))
+            {
+                //Badrequest
+                return;
+            }
+        }
+
     }
 
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
