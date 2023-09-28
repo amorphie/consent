@@ -38,76 +38,82 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     #region YOS
 
-    public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
+     public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
     Guid userId,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper,
     [FromServices] ITranslationService translationService,
     [FromServices] ILanguageService languageService,
     HttpContext httpContext)
-    {
-        string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
-
-        try
-        {
-            var consentsWithTokens = await context.Consents
-                .Include(c => c.Token)
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-
-            if (consentsWithTokens == null || !consentsWithTokens.Any())
-            {
-                var notFoundMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.ConsentsNotFound");
-                return Results.NotFound(notFoundMessage);
-            }
-
-            var hhsConsentDTOs = new List<HhsConsentDto>();
-
-            foreach (var consentWithTokens in consentsWithTokens)
-            {
-                var accessTokens = consentWithTokens.Token
-                    .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .OrderByDescending(token => token.CreatedAt)
-                    .FirstOrDefault();
-
-                var refreshTokens = consentWithTokens.Token
-                    .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
-                    .OrderByDescending(token => token.CreatedAt)
-                    .FirstOrDefault();
-
-                var hhsConsentDTO = new HhsConsentDto
-                {
-                    Id = consentWithTokens.Id,
-                    AdditionalData = consentWithTokens.AdditionalData,
-                    description = consentWithTokens.Description,
-                    xGroupId = consentWithTokens.xGroupId,
-                    Token = new List<OpenBankingTokenDto>
-                {
-            new OpenBankingTokenDto
 {
-    Id = accessTokens.ConsentId,
-    erisimBelirteci = accessTokens.TokenValue,
-    gecerlilikSuresi = accessTokens.ExpireTime,
-    yenilemeBelirteci = refreshTokens.TokenValue,
-    yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-    CreatedAt = accessTokens.CreatedAt,
-    ModifiedAt = accessTokens.ModifiedAt
-}
-                }
-                };
+    string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
 
-                hhsConsentDTOs.Add(hhsConsentDTO);
-            }
+    try
+    {
+        var consentsWithTokens = await context.Consents
+            .Include(c => c.Token)
+            .Where(c => c.UserId == userId)
+            .ToListAsync();
 
-            return Results.Ok(hhsConsentDTOs);
-        }
-        catch (Exception ex)
+        var hhsConsentDTOs = new List<HhsConsentDto>();
+
+        foreach (var consentWithTokens in consentsWithTokens)
         {
-            var errorMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.Problem");
-            return Results.Problem(errorMessage);
-        }
-    }
+            var accessTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .OrderByDescending(token => token.CreatedAt)
+                .FirstOrDefault();
 
+            var refreshTokens = consentWithTokens.Token
+                .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
+                .OrderByDescending(token => token.CreatedAt)
+                .FirstOrDefault();
+
+            var hhsConsentDTO = new HhsConsentDto
+            {
+                Id = consentWithTokens.Id,
+                AdditionalData = consentWithTokens.AdditionalData,
+                description = consentWithTokens.Description,
+                xGroupId = consentWithTokens.xGroupId,
+                Token = accessTokens != null && refreshTokens != null ? new List<OpenBankingTokenDto>
+                {
+                    new OpenBankingTokenDto
+                    {
+                        Id = accessTokens.ConsentId,
+                        erisimBelirteci = accessTokens.TokenValue,
+                        gecerlilikSuresi = accessTokens.ExpireTime,
+                        yenilemeBelirteci = refreshTokens.TokenValue,
+                        yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
+                        CreatedAt = accessTokens.CreatedAt,
+                        ModifiedAt = accessTokens.ModifiedAt
+                    }
+                } : null
+            };
+
+            hhsConsentDTOs.Add(hhsConsentDTO);
+        }
+
+        var consentsWithoutTokens = consentsWithTokens
+            .Where(c => hhsConsentDTOs.All(dto => dto.Id != c.Id))
+            .Select(consent => new HhsConsentDto
+            {
+                Id = consent.Id,
+                AdditionalData = consent.AdditionalData,
+                description = consent.Description,
+                xGroupId = consent.xGroupId,
+                Token = null // Tokenlar yok
+            });
+
+        hhsConsentDTOs.AddRange(consentsWithoutTokens);
+
+        return Results.Ok(hhsConsentDTOs);
+    }
+    catch (Exception ex)
+    {
+        var errorMessage = await translationService.GetTranslatedMessageAsync(selectedLanguage, "Errors.Problem");
+        return Results.Problem(errorMessage);
+    }
+}
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
      [FromServices] ConsentDbContext context,
      [FromServices] IMapper mapper)
