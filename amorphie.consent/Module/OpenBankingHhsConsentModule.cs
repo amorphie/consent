@@ -34,7 +34,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
-         routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentSave);
+        routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentSave);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
