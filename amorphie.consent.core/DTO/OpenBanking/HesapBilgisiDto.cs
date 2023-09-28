@@ -10,6 +10,5 @@ namespace amorphie.consent.core.DTO.OpenBanking
     {
         public IzinBilgisiDto iznBlg { get; set; }
         public AyrintiBilgiDto ayrBlg { get; set; }
-        public string ohkMsj { get; set; }
     }
 }
