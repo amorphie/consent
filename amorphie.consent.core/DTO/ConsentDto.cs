@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using amorphie.core.Base;
 
-namespace amorphie.consent.core.Model;
+namespace amorphie.consent.core.DTO;
 
 public class ConsentDTO : DtoBase
 {
