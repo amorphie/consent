@@ -264,7 +264,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
             };
             //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["OpenBankingDefinitions:HHSForwardingAddress"];
+            hesapBilgisiRizasi.gkd.hhsYonAdr = "";//configuration["OpenBankingDefinitions:HHSForwardingAddress"];
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = "B: Yetki Bekleniyor";
