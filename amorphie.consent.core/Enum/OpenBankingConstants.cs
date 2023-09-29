@@ -33,7 +33,5 @@ public static class OpenBankingConstants
     public static readonly string RizaDurumuYetkiOdemeEmrineDonustu = "E";
     public static readonly string RizaDurumuYetkiSonlandirildi = "S";
     public static readonly string RizaDurumuYetkiIptal = "I";
-
-
-}
+    
 }
