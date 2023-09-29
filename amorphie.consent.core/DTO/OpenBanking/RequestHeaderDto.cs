@@ -1,4 +1,4 @@
-namespace  amorphie.consent.core.DTO.OpenBanking
+namespace amorphie.consent.core.DTO.OpenBanking
 {
     public class RequestHeaderDto
     {
@@ -10,5 +10,5 @@ namespace  amorphie.consent.core.DTO.OpenBanking
         public string PSUInitiated { get; set; }
 
     }
-    
+
 }

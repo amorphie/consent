@@ -245,7 +245,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns></returns>
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
    [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper, 
+   [FromServices] IMapper mapper,
    [FromServices] IConfiguration configuration)
     {
         try
