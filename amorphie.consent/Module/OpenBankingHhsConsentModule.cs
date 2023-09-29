@@ -245,7 +245,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns></returns>
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
    [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper, 
+   [FromServices] IMapper mapper,
    [FromServices] IConfiguration configuration)
     {
         try
@@ -264,7 +264,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
             };
             //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = "";//configuration["OpenBankingDefinitions:HHSForwardingAddress"];
+            hesapBilgisiRizasi.gkd.hhsYonAdr = string.Empty;//configuration["OpenBankingDefinitions:HHSForwardingAddress"];
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = "B: Yetki Bekleniyor";
@@ -303,16 +303,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         //TODO:Ozlem hhskod, yoskod check validaty
 
         //Check GKD
-        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm))
-        {
-            if ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli
+        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
+            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli
                 && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
-                || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik
-                    && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr)))
-            {
-                //Badrequest
-                return;
-            }
+               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik
+                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))))
+        {
+            //Badrequest
+            return;
         }
 
         //Check Kimlik
@@ -353,7 +351,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!(rizaIstegi.hspBlg.iznBlg.iznTur?.Any(p => p == OpenBankingConstants.IzinTurTemelIslem || p == OpenBankingConstants.IzinTurAyrintiliIslem) ?? false))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTurTemelIslem || p != OpenBankingConstants.IzinTurAyrintiliIslem))
             {
                 //Badrequest
                 return;
@@ -367,7 +365,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTurTemelIslem || p == OpenBankingConstants.IzinTurAyrintiliIslem))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTurTemelIslem || p != OpenBankingConstants.IzinTurAyrintiliIslem))
             {
                 //Badrequest
                 return;
