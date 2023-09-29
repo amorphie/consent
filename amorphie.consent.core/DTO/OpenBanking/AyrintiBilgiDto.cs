@@ -8,5 +8,6 @@ namespace amorphie.consent.core.DTO.OpenBanking
 {
     public class AyrintiBilgiDto
     {
+        public string ohkMsj { get; set; }
     }
 }

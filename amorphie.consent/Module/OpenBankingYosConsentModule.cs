@@ -201,6 +201,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.ConsentType = "O";
 
                 context.Consents.Update(existingConsent);
+                resultData = existingConsent;
             }
             else
             {
@@ -219,7 +220,6 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 context.Consents.Add(consent);
                 resultData = consent;
             }
-
             await context.SaveChangesAsync();
             return Results.Ok(resultData);
         }
