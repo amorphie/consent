@@ -26,11 +26,13 @@ public static class OpenBankingConstants
         public static readonly string IzinTurTemelIslem = "04";
         public static readonly string IzinTurAyrintiliIslem = "05";
 
-        public static readonly string RizaDurumuYetkiBekleniyor = "B";
-        public static readonly string RizaDurumuYetkilendirildi = "Y";
-        public static readonly string RizaDurumuYetkiKullanildi = "K";
-        public static readonly string RizaDurumuYetkiOdemeEmrineDonustu = "E";
-        public static readonly string RizaDurumuYetkiSonlandirildi = "S";
-        public static readonly string RizaDurumuYetkiIptal = "I";
-
+                public static readonly string RizaDurumuYetkiBekleniyor ="B";
+                public static readonly string RizaDurumuYetkilendirildi ="Y";
+                public static readonly string RizaDurumuYetkiKullanildi ="K";
+                public static readonly string RizaDurumuYetkiOdemeEmrineDonustu ="E";
+                public static readonly string RizaDurumuYetkiSonlandirildi ="S";
+                public static readonly string RizaDurumuYetkiIptal ="I";
+                
+               
+        }
 }
