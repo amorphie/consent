@@ -7,9 +7,9 @@ public class Consent : EntityBase
     [ForeignKey("ConsentDefinition")]
     public Guid? ConsentDefinitionId { get; set; }
 
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public string State { get; set; }
-    public string Description { get; set; }
+    public string? Description { get; set; }
     public string? xGroupId { get; set; }
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }

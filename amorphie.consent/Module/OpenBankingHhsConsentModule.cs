@@ -254,7 +254,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi);
+            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi,configuration);
             if (checkValidationResult != Results.Ok())//Not valid
             {
                 return checkValidationResult;
@@ -272,7 +272,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
             };
             //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = string.Empty;//configuration["OpenBankingDefinitions:HHSForwardingAddress"];
+            hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = "B: Yetki Bekleniyor";
@@ -294,7 +294,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// </summary>
     /// <param name="rizaIstegi">To be checked data</param>
     /// <exception cref="NotImplementedException"></exception>
-    private IResult IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi)
+    private IResult IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+    IConfiguration configuration)
     {
         //TODO:Ozlem check status, if any other consent.
         //TODO:Ozlem Check Header
@@ -304,11 +305,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         //Check KatılımcıBilgisi
         if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
-            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod))
+            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
+            || configuration["HHSCode"]  != rizaIstegi.katilimciBlg.hhsKod)
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required");
         }
         //TODO:Ozlem hhskod, yoskod check validaty
+       
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
@@ -323,7 +326,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         //Check Kimlik
         if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur)//Check required fields
             || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
-            || !(string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) && string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
+            || (string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) != string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
             || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kmlk data is not valid");
@@ -352,10 +355,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. IznBld data check failed.");
         }
 
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)//Check işlem sorgulama başlangıç zamanı
+        //Check işlem sorgulama başlangıç zamanı
+        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTurTemelIslem || p != OpenBankingConstants.IzinTurAyrintiliIslem))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTurTemelIslem && p != OpenBankingConstants.IzinTurAyrintiliIslem))
             {
                 return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn related iznTur not valid.");
             }
@@ -367,7 +371,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTurTemelIslem || p != OpenBankingConstants.IzinTurAyrintiliIslem))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTurTemelIslem && p != OpenBankingConstants.IzinTurAyrintiliIslem))
             {
                 return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat hesapIslemBtsZmn related iznTur not valid.");
             }
