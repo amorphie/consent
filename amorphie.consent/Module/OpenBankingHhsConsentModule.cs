@@ -20,7 +20,7 @@ namespace amorphie.consent.Module;
 
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
 {
-    
+
     public OpenBankingHHSConsentModule(WebApplication app)
         : base(app)
     {
@@ -254,7 +254,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi,configuration);
+            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi, configuration);
             if (checkValidationResult != Results.Ok())//Not valid
             {
                 return checkValidationResult;
@@ -306,12 +306,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         //Check KatılımcıBilgisi
         if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
             || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"]  != rizaIstegi.katilimciBlg.hhsKod)
+            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required");
         }
         //TODO:Ozlem hhskod, yoskod check validaty
-       
+
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
