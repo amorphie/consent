@@ -9,7 +9,7 @@ namespace amorphie.consent.core.DTO.OpenBanking
     public class HesapBilgisiRizaIstegiDto
     {
         public Guid Id { get; set; }
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; }
         public RizaBilgileriDto rzBlg { get; set; }
         public KimlikDto kmlk { get; set; }
         public KatilimciBilgisiDto katilimciBlg { get; set; }
