@@ -195,9 +195,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
                 var additionalData = JsonSerializer.Deserialize<AdditionalDataDto>(existingConsent.AdditionalData);
 
-                additionalData!.hspBlg.iznBlg.hspRef=dto.hspBlg.iznBlg.hspRef;
+                additionalData!.hspBlg.iznBlg.hspRef = dto.hspBlg.iznBlg.hspRef;
                 existingConsent.AdditionalData = JsonSerializer.Serialize(additionalData);
-                
+
                 existingConsent.ModifiedAt = DateTime.UtcNow;
 
                 context.Consents.Update(existingConsent);
