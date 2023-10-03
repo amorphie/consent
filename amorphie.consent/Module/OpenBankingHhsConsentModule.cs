@@ -185,7 +185,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
-                
+
             if (existingConsent != null)
             {
                 if (dto.rzBlg != null)
