@@ -33,5 +33,15 @@ public static class OpenBankingConstants
     public static readonly string RizaDurumuYetkiOdemeEmrineDonustu = "E";
     public static readonly string RizaDurumuYetkiSonlandirildi = "S";
     public static readonly string RizaDurumuYetkiIptal = "I";
+    
+    public static readonly string KolasTurTelefonNumarasi = "T";
+    public static readonly string KolasTurEPosta = "E";
+    public static readonly string KolasTurTCKN = "K";
+    public static readonly string KolasTurVKN = "V";
+    public static readonly string KolasTurYKN = "Y";
+    public static readonly string KolasTurPasaportNumarasi = "P";
 
+    public static readonly string KareKodAksTurFastDinamik = "01";
+    public static readonly string KareKodAksTurFastStatik = "02";
+    public static readonly string KareKodAksTurKisidenKisiye = "03";
 }
