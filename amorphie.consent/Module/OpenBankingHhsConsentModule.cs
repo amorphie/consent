@@ -34,7 +34,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
-        routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentSave);
+        routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentUpdate);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
@@ -176,58 +176,37 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
     }
 
-    protected async Task<IResult> AccountInformationConsentSave([FromBody] HesapBilgisiRizaIstegiDto dto,
-[FromServices] ConsentDbContext context,
-[FromServices] IMapper mapper)
+    protected async Task<IResult> AccountInformationConsentUpdate([FromBody] HesapBilgisiRizaIstegiDto dto,
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper)
     {
         var returnData = new Consent();
         try
         {
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == dto.Id);
-            // var existingConsent = await context.Consents
-            //     .FirstOrDefaultAsync(c => c.Id == dto.Id &&
-            //                                c.AdditionalData.Contains($"\"RizaNo\":\"{dto.rzBlg.rizaNo}\""));
-
+                
             if (existingConsent != null)
             {
+                if (dto.rzBlg != null)
+                {
+                    existingConsent.State = dto.rzBlg.rizaDrm;
+                }
+
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.kmlk,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.hspBlg
-
+                    dto.hspBlg.iznBlg.hspRef
                 });
-                existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
-                existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "Account Information Consent";
-
 
                 context.Consents.Update(existingConsent);
+                await context.SaveChangesAsync();
+                return Results.Ok(existingConsent);
             }
             else
             {
-                var consentData = mapper.Map<Consent>(dto);
-                consentData.AdditionalData = JsonSerializer.Serialize(new
-                {
-                    dto.rzBlg,
-                    dto.kmlk,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.hspBlg
-                });
-
-                consentData.State = dto.rzBlg?.rizaDrm;
-                consentData.ConsentType = "Account Information Consent";
-
-                context.Consents.Add(consentData);
-                returnData = consentData;
+                return Results.NotFound("Consent not found");
             }
-            await context.SaveChangesAsync();
-            return Results.Ok(returnData);
         }
         catch (Exception ex)
         {
