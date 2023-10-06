@@ -1,0 +1,13 @@
+using amorphie.consent.core.DTO.OpenBanking.HHS;
+
+namespace amorphie.consent.Service.Interface;
+
+public interface IPaymentService
+{
+    /// <summary>
+    /// Send OdemeEmriRizasi object to service to check odeme-emri-rizasi post process
+    /// </summary>
+    /// <param name="odemeEmriRizaIstegi">Object to be checked</param>
+    /// <returns>odeme-emri-rizasi post process result</returns>
+    Task<OdemeEmriRizasiServiceResponseDto> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi);
+}

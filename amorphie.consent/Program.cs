@@ -1,4 +1,7 @@
 using amorphie.consent.data;
+using amorphie.consent.Service;
+using amorphie.consent.Service.Interface;
+using amorphie.consent.Service.Refit;
 using amorphie.consent.Validator;
 using amorphie.core.Extension;
 using amorphie.core.HealthCheck;
@@ -14,12 +17,18 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Prometheus;
 using Dapr.Client;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Retry;
+using Polly.Timeout;
+using Refit;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
 builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
-
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -37,8 +46,23 @@ builder.Services.AddSwaggerGen(options =>
 
 });
 
-builder.Services.AddCors(options =>
 
+//wait 1s and retry again 3 times when get timeout
+AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
+    .HandleTransientHttpError()
+    .Or<TimeoutRejectedException>()
+    .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(1000));
+
+builder.Services
+    .AddRefitClient<IPaymentClientService>()
+    .ConfigureHttpClient(c =>
+        c.BaseAddress = new Uri("http://svtstr3app01.ebt.bank/fora/DigitalServices/EftService.svc" ??
+                                throw new ArgumentNullException("Parameter is not suplied as enviroment variable",
+                                    "STRAPI_URL")))
+    .AddPolicyHandler(retryPolicy);
+
+
+builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
         builder =>

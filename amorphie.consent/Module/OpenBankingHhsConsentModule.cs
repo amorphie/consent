@@ -13,6 +13,8 @@ using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
+using amorphie.consent.Service;
+using amorphie.consent.Service.Interface;
 using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -300,17 +302,23 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <param name="configuration"></param>
+    /// <param name="paymentClientService"/>
     /// <returns>OdemeEmriRizasi object</returns>
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
       [FromServices] ConsentDbContext context,
       [FromServices] IMapper mapper,
-        [FromServices] IConfiguration configuration)
+        [FromServices] IConfiguration configuration,
+        [FromServices] IPaymentService paymentService)
     {
 
         try
         {
+            IResult paymentServiceResponse = await SendOdemeEmriRizasiToPaymentService(rizaIstegi, paymentService);
+            if (paymentServiceResponse != Results.Ok())
+                return paymentServiceResponse;
+
             //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration);
+            var checkValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, paymentService);
             if (checkValidationResult != Results.Ok())//Not valid
             {
                 return checkValidationResult;
@@ -481,18 +489,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return Results.Ok();
     }
-    
+
     /// <summary>
     ///  Checks if data is valid for payment information consent post process
     /// </summary>
     /// <param name="rizaIstegi">To be checked data</param>
     /// <param name="configuration">Config file</param>
     /// <returns></returns>
-    private IResult IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi, IConfiguration configuration)
+    private async Task<IResult> IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+     IConfiguration configuration,
+     IPaymentService paymentService)
     {
-        
-        //TODO:Ozlem update method
 
+        //TODO:Ozlem update method
         //Check KatılımcıBilgisi
         if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
             || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
@@ -501,7 +510,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required");
         }
         //TODO:Ozlem hhskod, yoskod check validaty
-
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
@@ -514,41 +522,53 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         //Check odmBsltm  Kimlik
         if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)//Check required fields
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurBireysel 
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurBireysel
                 && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkVrs)))
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurKurumsal 
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurKurumsal
                 && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkVrs))))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. odmBsltm => Kmlk data is not valid");
         }
-//Check odmBsltma Islem Tutarı
+        //Check odmBsltma Islem Tutarı
         if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.ttr)//Check required fields
             || string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.prBrm))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. odmBsltm => islTtr required fields empty");
         }
-   //TODO:Ozlem check gönderen hesap If different than system record. Do not accept consent
+        //TODO:Ozlem check gönderen hesap If different than system record. Do not accept consent
 
-   //Check odmBsltma Alıcı
-   if (rizaIstegi.odmBsltm.alc.kolas == null 
-       && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.unv) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.hspNo)))
-   {
-       return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required");
-   }
-   
-   if ((rizaIstegi.odmBsltm.alc.kolas == null) == (rizaIstegi.odmBsltm.kkod == null) )
-   {
-       return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time");
-   }
+        //Check odmBsltma Alıcı
+        if (rizaIstegi.odmBsltm.alc.kolas == null
+            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.unv) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.hspNo)))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required");
+        }
 
-   if (rizaIstegi.odmBsltm.kkod != null 
-       && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.aksTur) 
-       || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.kkodUrtcKod)))
-   {
-       return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. aksTur, kkodUrtcKod required fields.");
-   }
-      
+        if ((rizaIstegi.odmBsltm.alc.kolas == null) == (rizaIstegi.odmBsltm.kkod == null))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time");
+        }
+
+        if (rizaIstegi.odmBsltm.kkod != null
+            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.aksTur)
+            || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.kkodUrtcKod)))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. aksTur, kkodUrtcKod required fields.");
+        }
+
         return Results.Ok();
     }
 
+    private async Task<IResult> SendOdemeEmriRizasiToPaymentService(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+        IPaymentService paymentService)
+    {
+        //Send odemeemririzasi object to service
+        var response = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
+        if (!string.IsNullOrEmpty(response.Error))
+        {
+            return Results.BadRequest($"Odeme Service Error. Detail:{response.Error}");
+        }
+        return Results.Ok();
+        //return Results.Ok(response.OdemeEmriRizaIstegi);
+    }
 }
