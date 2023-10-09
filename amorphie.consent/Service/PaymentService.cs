@@ -5,14 +5,14 @@ using amorphie.consent.Service.Refit;
 
 namespace amorphie.consent.Service;
 
-public class PaymentService:IPaymentService
+public class PaymentService : IPaymentService
 {
     private readonly IPaymentClientService _paymentClientService;
 
     public PaymentService(IPaymentClientService paymentClientService)
     {
         _paymentClientService = paymentClientService;
-    } 
+    }
 
     public async Task<ApiResult> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi)
     {

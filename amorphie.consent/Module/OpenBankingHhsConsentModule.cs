@@ -524,7 +524,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required");
         }
 
-        if (rizaIstegi.odmBsltm.alc.kolas != null 
+        if (rizaIstegi.odmBsltm.alc.kolas != null
         && rizaIstegi.odmBsltm.kkod != null)
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time");
