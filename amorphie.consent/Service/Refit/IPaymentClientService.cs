@@ -11,5 +11,5 @@ public interface IPaymentClientService
 {
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Post("/transfers/odeme-emri-rizasi")]
-    Task<JsonObject> SendOdemeEmriRizasi([Body] OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi);
+    Task<OdemeEmriRizasiServiceResponseDto> SendOdemeEmriRizasi([Body] OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi);
 }

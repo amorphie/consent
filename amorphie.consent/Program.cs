@@ -56,11 +56,9 @@ AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
 builder.Services
     .AddRefitClient<IPaymentClientService>()
     .ConfigureHttpClient(c =>
-        c.BaseAddress = new Uri("http://svtstr3app01.ebt.bank/fora/DigitalServices/EftService.svc" ??
-                                throw new ArgumentNullException("Parameter is not suplied as enviroment variable",
-                                    "STRAPI_URL")))
+        c.BaseAddress = new Uri(builder.Configuration["PaymentServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied as vault variable", "PaymentServiceURL")))
     .AddPolicyHandler(retryPolicy);
-
 
 builder.Services.AddCors(options =>
 {

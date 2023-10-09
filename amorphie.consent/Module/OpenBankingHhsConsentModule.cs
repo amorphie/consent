@@ -9,6 +9,7 @@ using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using amorphie.consent.core.DTO;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -299,10 +300,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// Checks OdemeEmriRizaIstegi object data and generates OdemeEmriRizasi object and insert.
     /// </summary>
     /// <param name="rizaIstegi">Request object</param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="paymentClientService"/>
+    /// <param name="context">DB Context</param>
+    /// <param name="mapper">Mapping object</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="paymentService"/>
     /// <returns>OdemeEmriRizasi object</returns>
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
       [FromServices] ConsentDbContext context,
@@ -310,12 +311,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService)
     {
-
         try
         {
-            IResult paymentServiceResponse = await SendOdemeEmriRizasiToPaymentService(rizaIstegi, paymentService);
-            if (paymentServiceResponse != Results.Ok())
-                return paymentServiceResponse;
+            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
+            if (!paymentServiceResponse.Result)//Error in service
+                return Results.BadRequest(paymentServiceResponse.Message);
 
             //Check if post data is valid to process.
             var checkValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, paymentService);
@@ -544,7 +544,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required");
         }
 
-        if ((rizaIstegi.odmBsltm.alc.kolas == null) == (rizaIstegi.odmBsltm.kkod == null))
+        if (rizaIstegi.odmBsltm.alc.kolas != null 
+        && rizaIstegi.odmBsltm.kkod != null)
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time");
         }
@@ -557,18 +558,5 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
 
         return Results.Ok();
-    }
-
-    private async Task<IResult> SendOdemeEmriRizasiToPaymentService(OdemeEmriRizaIstegiHHSDto rizaIstegi,
-        IPaymentService paymentService)
-    {
-        //Send odemeemririzasi object to service
-        var response = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
-        if (!string.IsNullOrEmpty(response.Error))
-        {
-            return Results.BadRequest($"Odeme Service Error. Detail:{response.Error}");
-        }
-        return Results.Ok();
-        //return Results.Ok(response.OdemeEmriRizaIstegi);
     }
 }

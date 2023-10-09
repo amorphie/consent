@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
@@ -13,24 +14,27 @@ public class PaymentService:IPaymentService
         _paymentClientService = paymentClientService;
     } 
 
-    public async Task<OdemeEmriRizasiServiceResponseDto> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi)
+    public async Task<ApiResult> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi)
     {
-        OdemeEmriRizasiServiceResponseDto result = new OdemeEmriRizasiServiceResponseDto();
+        ApiResult result = new ApiResult();
         try
         {
-            var serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
-            if(serviceResponse["error"] != null)
+            //Send odemeemririzasi to servie
+            OdemeEmriRizasiServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
+            if (string.IsNullOrEmpty(serviceResponse.Error))//Success
             {
-                result.Error = serviceResponse["error"].ToString();
+                result.Data = serviceResponse.OdemeEmriRizaIstegi;
             }
             else
-            {
-                result.OdemeEmriRizaIstegi = Newtonsoft.Json.JsonConvert.DeserializeObject<OdemeEmriRizaIstegiHHSDto>(serviceResponse.ToString());
+            {//Error in service
+                result.Result = false;
+                result.Message = serviceResponse.Error;
             }
         }
         catch (Exception e)
         {
-            result.Error = e.Message;
+            result.Result = false;
+            result.Message = e.Message;
         }
         return result;
     }
