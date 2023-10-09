@@ -33,7 +33,7 @@ public static class OpenBankingConstants
     public static readonly string RizaDurumuYetkiOdemeEmrineDonustu = "E";
     public static readonly string RizaDurumuYetkiSonlandirildi = "S";
     public static readonly string RizaDurumuYetkiIptal = "I";
-    
+
     public static readonly string KolasTurTelefonNumarasi = "T";
     public static readonly string KolasTurEPosta = "E";
     public static readonly string KolasTurTCKN = "K";
