@@ -40,6 +40,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
    Guid userId,
+   string? consentType,
    [FromServices] ConsentDbContext context,
    [FromServices] IMapper mapper,
    [FromServices] ITranslationService translationService,
@@ -54,7 +55,10 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 .Include(c => c.Token)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
-
+            if (!string.IsNullOrEmpty(consentType))
+            {
+                consentsWithTokens = consentsWithTokens.Where(c => c.ConsentType == consentType).ToList();
+            }
             var hhsConsentDTOs = new List<HhsConsentDto>();
 
             foreach (var consentWithTokens in consentsWithTokens)
