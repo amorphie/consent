@@ -16,7 +16,7 @@ public class PaymentService:IPaymentService
 
     public async Task<ApiResult> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         try
         {
             //Send odemeemririzasi to servie
