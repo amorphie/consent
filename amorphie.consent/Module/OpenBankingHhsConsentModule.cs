@@ -9,10 +9,13 @@ using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using amorphie.consent.core.DTO;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
+using amorphie.consent.Service;
+using amorphie.consent.Service.Interface;
 using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -269,6 +272,110 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
     }
 
+
+
+    /// <summary>
+    /// Does payment information consent post process.
+    /// odeme-emri-rizasi post method.
+    /// Checks OdemeEmriRizaIstegi object data and generates OdemeEmriRizasi object and insert.
+    /// </summary>
+    /// <param name="rizaIstegi">Request object</param>
+    /// <param name="context">DB Context</param>
+    /// <param name="mapper">Mapping object</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="paymentService"/>
+    /// <returns>OdemeEmriRizasi object</returns>
+    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IPaymentService paymentService)
+    {
+        try
+        {
+            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
+            if (!paymentServiceResponse.Result)//Error in service
+                return Results.BadRequest(paymentServiceResponse.Message);
+
+            //Check if post data is valid to process.
+            var checkValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, paymentService);
+            if (checkValidationResult != Results.Ok())//Not valid
+            {
+                return checkValidationResult;
+            }
+            var consentEntity = mapper.Map<Consent>(rizaIstegi);
+            context.Consents.Add(consentEntity);
+            //Generate response object
+            OdemeEmriRizasiHHSDto odemeEmriRizasi = mapper.Map<OdemeEmriRizasiHHSDto>(rizaIstegi);
+            //Set consent data
+            odemeEmriRizasi.rzBlg = new RizaBilgileriDto()
+            {
+                rizaNo = consentEntity.Id.ToString(),
+                olusZmn = DateTime.UtcNow,
+                rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
+            };
+            //Set gkd data
+            odemeEmriRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
+            odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
+            consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
+            consentEntity.State = "B: Yetki Bekleniyor";
+            consentEntity.ConsentType = "Payment Consent";
+
+            context.Consents.Add(consentEntity);
+
+            await context.SaveChangesAsync();
+            return Results.Ok(odemeEmriRizasi);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+
+    }
+
+    #endregion
+
+
+    protected async ValueTask<IResult> SearchMethod(
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper,
+      [AsParameters] ConsentSearch consentSearch,
+      CancellationToken token
+  )
+    {
+        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
+
+        IQueryable<Consent> query = context.Consents
+            .Include(c => c.Token)
+            .Include(c => c.ConsentPermission)
+            .AsNoTracking();
+
+        if (!string.IsNullOrEmpty(consentSearch.Keyword))
+        {
+            string keyword = consentSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
+             .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
+        }
+
+        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(consentSearch.PageSize)
+            .ToListAsync(token);
+
+        return (resultList != null && resultList.Count > 0)
+            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
+            : Results.NoContent();
+    }
+
+    // private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
+    // {
+    //     var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
+    //     var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
+
+    //     return (erisimToken, yenilemeToken);
+    // }
+
+
     /// <summary>
     /// Checks if data is valid for account consent post process
     /// </summary>
@@ -363,110 +470,73 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         return Results.Ok();
     }
 
-    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper)
+    /// <summary>
+    ///  Checks if data is valid for payment information consent post process
+    /// </summary>
+    /// <param name="rizaIstegi">To be checked data</param>
+    /// <param name="configuration">Config file</param>
+    /// <returns></returns>
+    private async Task<IResult> IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+     IConfiguration configuration,
+     IPaymentService paymentService)
     {
-        var resultData = new Consent();
-        try
+
+        //TODO:Ozlem update method
+        //Check KatılımcıBilgisi
+        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
+            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
+            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
         {
-
-            var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == dto.Id);
-
-            if (existingConsent != null)
-            {
-                existingConsent.AdditionalData = JsonSerializer.Serialize(new
-                {
-                    dto.rzBlg,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.odmBsltm,
-                });
-                existingConsent.Description = dto.Description;
-                existingConsent.ModifiedAt = DateTime.UtcNow;
-                existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "Payment Information Consent";
-
-                context.Consents.Update(existingConsent);
-            }
-            else
-            {
-                var consent = mapper.Map<Consent>(dto);
-
-
-                consent.State = "Yetki Bekleniyor";
-                dto.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
-                consent.ConsentType = "Payment Information Consent";
-                consent.xGroupId = "1234567890";
-                context.Consents.Add(consent);
-                var riza = new RizaBilgileriDto
-                {
-                    rizaNo = consent.Id.ToString(),
-                    rizaDrm = consent.State,
-                    olusZmn = DateTime.UtcNow,
-                    gnclZmn = DateTime.UtcNow,
-                };
-                consent.AdditionalData = JsonSerializer.Serialize(new
-                {
-                    riza,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.odmBsltm,
-                });
-                resultData = consent;
-            }
-
-            await context.SaveChangesAsync();
-            return Results.Ok(resultData);
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required");
         }
-        catch (Exception ex)
+        //TODO:Ozlem hhskod, yoskod check validaty
+
+        //Check GKD
+        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
+            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli
+                && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
+               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik
+                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))))
         {
-            return Results.Problem($"An error occurred: {ex.Message}");
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. GKD data not valid.");
         }
+        //Check odmBsltm  Kimlik
+        if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)//Check required fields
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurBireysel
+                && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkVrs)))
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurKurumsal
+                && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkVrs))))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. odmBsltm => Kmlk data is not valid");
+        }
+        //Check odmBsltma Islem Tutarı
+        if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.ttr)//Check required fields
+            || string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.prBrm))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. odmBsltm => islTtr required fields empty");
+        }
+        //TODO:Ozlem check gönderen hesap If different than system record. Do not accept consent
+
+        //Check odmBsltma Alıcı
+        if (rizaIstegi.odmBsltm.alc.kolas == null
+            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.unv) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.hspNo)))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required");
+        }
+
+        if (rizaIstegi.odmBsltm.alc.kolas != null
+        && rizaIstegi.odmBsltm.kkod != null)
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time");
+        }
+
+        if (rizaIstegi.odmBsltm.kkod != null
+            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.aksTur)
+            || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.kkodUrtcKod)))
+        {
+            return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. aksTur, kkodUrtcKod required fields.");
+        }
+
+        return Results.Ok();
     }
-
-
-    #endregion
-
-
-    protected async ValueTask<IResult> SearchMethod(
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper,
-      [AsParameters] ConsentSearch consentSearch,
-      CancellationToken token
-  )
-    {
-        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
-
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Token)
-            .Include(c => c.ConsentPermission)
-            .AsNoTracking();
-
-        if (!string.IsNullOrEmpty(consentSearch.Keyword))
-        {
-            string keyword = consentSearch.Keyword.ToLower();
-            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
-             .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
-        }
-
-        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(consentSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
-            : Results.NoContent();
-    }
-
-    // private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
-    // {
-    //     var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
-    //     var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
-
-    //     return (erisimToken, yenilemeToken);
-    // }
-
 }

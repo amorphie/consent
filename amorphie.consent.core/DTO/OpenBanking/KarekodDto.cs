@@ -9,7 +9,7 @@ namespace amorphie.consent.core.DTO.OpenBanking
     public class KarekodDto
     {
         public string aksTur { get; set; }
-        public string kkodRef { get; set; }
+        public string? kkodRef { get; set; }
         public string kkodUrtcKod { get; set; }
     }
 }
