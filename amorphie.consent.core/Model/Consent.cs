@@ -8,6 +8,14 @@ public class Consent : EntityBase
     public Guid? ConsentDefinitionId { get; set; }
 
     public Guid? UserId { get; set; }
+
+    public string Scope { get; set; }
+
+    public string Role { get; set; }
+
+    public string Client { get; set; }
+    public string Variant { get; set; }
+
     public string State { get; set; }
     public string? Description { get; set; }
     public string? xGroupId { get; set; }
