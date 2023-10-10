@@ -19,6 +19,8 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, HesapBilgisiRizaIstegiHHSDto>().ReverseMap();
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OdemeEmriRizaIstegiHHSDto>().ReverseMap();
+            CreateMap<Consent, HesapBilgisiRizasiHHSDto>();
+            CreateMap<Consent, OdemeEmriRizasiHHSDto>();
             CreateMap<Consent, OpenBankingConsentDTO>()
                 .ForMember(dest => dest.ConsentPermission, opt => opt.MapFrom(src => src.ConsentPermission)) // Handle ConsentPermission mapping
                 .ReverseMap();

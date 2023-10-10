@@ -44,6 +44,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapPost("/UpdateAccountConsent", AccountInformationConsentUpdate);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
+        routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
+        routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
     }
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -52,13 +54,43 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     #region HHS
 
     /// <summary>
+    /// Get account consent additional data by rizano- consentId casting to HesapBilgisiRizasiHHSDto type of object
+    /// </summary>
+    /// <param name="rizaNo">Riza No</param>
+    /// <param name="context">Context DB object</param>
+    /// <param name="mapper">Aoutomapper object</param>
+    /// <returns>HesapBilgisiRizasiHHSDto type of object</returns>
+    public async Task<IResult> GetAccountConsentById(
+        Guid rizaNo,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+            ApiResult isDataValidResult = IsDataValidToGetAccountConsent(entity);
+            if (!isDataValidResult.Result)//Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
+            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
     /// Get consent additional data by Id casting to HesapBilgisiRizaIstegiDto type of object
     /// </summary>
     /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns>HesapBilgisiRizaIstegiDto type of object</returns>
-    public async Task<IResult> GetAccountConsentById(
+    public async Task<IResult> GetAccountConsentByIdForUI(
      Guid rizaNo,
      [FromServices] ConsentDbContext context,
      [FromServices] IMapper mapper)
@@ -81,13 +113,43 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
     /// <summary>
+    /// Get consent additional data by Id casting to OdemeEmriRizasiHHSDto type of object
+    /// </summary>
+    /// <param name="rizaNo"></param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <returns>OdemeEmriRizasiHHSDto type of object</returns>
+    public async Task<IResult> GetPaymentConsentById(Guid rizaNo,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+            ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
+            if (!isDataValidResult.Result)//Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
+            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    /// <summary>
     /// Get consent additional data by Id casting to OdemeEmriRizaIstegiDto type of object
     /// </summary>
     /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns>OdemeEmriRizaIstegiDto type of object</returns>
-    public async Task<IResult> GetPaymentConsentById(Guid rizaNo,
+    public async Task<IResult> GetPaymentConsentByIdForUI(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper)
     {
@@ -108,6 +170,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
 
+    
     protected async Task<IResult> UpdatePaymentConsentStatus(Guid id,
         string state,
         [FromServices] ConsentDbContext context,
@@ -246,7 +309,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             context.Consents.Add(consentEntity);
             //Generate response object
             HesapBilgisiRizasiHHSDto hesapBilgisiRizasi = mapper.Map<HesapBilgisiRizasiHHSDto>(rizaIstegi);
-            hesapBilgisiRizasi.Id = consentEntity.Id;
             //Set consent data
             hesapBilgisiRizasi.rzBlg = new RizaBilgileriDto()
             {
@@ -538,5 +600,27 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
 
         return Results.Ok();
+    }
+
+    private ApiResult IsDataValidToGetAccountConsent(Consent entity)
+    {
+        ApiResult result = new ApiResult();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "BadRequest.";
+        }
+        return result;
+    }
+    
+    private ApiResult IsDataValidToGetPaymentConsent(Consent entity)
+    {
+        ApiResult result = new ApiResult();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "BadRequest.";
+        }
+        return result;
     }
 }
