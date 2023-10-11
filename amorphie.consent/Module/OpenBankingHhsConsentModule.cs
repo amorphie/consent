@@ -82,7 +82,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Get consent additional data by Id casting to HesapBilgisiRizaIstegiDto type of object
     /// </summary>
@@ -170,7 +170,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
 
-    
+
     protected async Task<IResult> UpdatePaymentConsentStatus(Guid id,
         string state,
         [FromServices] ConsentDbContext context,
@@ -612,7 +612,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
+
     private ApiResult IsDataValidToGetPaymentConsent(Consent entity)
     {
         ApiResult result = new ApiResult();
