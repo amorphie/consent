@@ -5,43 +5,98 @@ public static class OpenBankingConstants
     {
     }
 
-    public static readonly string KimlikTurTCKN = "K";
-    public static readonly string KimlikTurMNO = "M";
-    public static readonly string KimlikTurYKN = "Y";
-    public static readonly string KimlikTurPNO = "P";
+    public static class KimlikTur
+    {
+        public static readonly string TCKN = "K";
+        public static readonly string MNO = "M";
+        public static readonly string YKN = "Y";
+        public static readonly string PNO = "P";
+    }
 
-    public static readonly string KurumKimlikTurTCKN = "K";
-    public static readonly string KurumKimlikTurMNO = "M";
-    public static readonly string KurumKimlikTurVKN = "V";
+    public static class KurumKimlikTur
+    {
+        public static readonly string TCKN = "K";
+        public static readonly string MNO = "M";
+        public static readonly string VKN = "V";
+    }
 
-    public static readonly string OHKTurBireysel = "B";
-    public static readonly string OHKTurKurumsal = "K";
+
+    public static class OHKTur
+    {
+        public static readonly string Bireysel = "B";
+        public static readonly string Kurumsal = "K";
+    }
+
+    public static class GKDTur
+    {
+        public static readonly string Yonlendirmeli = "Y";
+        public static readonly string Ayrik = "A";
+    }
 
 
-    public static readonly string GKDTurYonlendirmeli = "Y";
-    public static readonly string GKDTurAyrik = "A";
+    public static class IzinTur
+    {
+        public static readonly string HesapBilgisi = "01";
+        public static readonly string AyrintiliHesapBilgisi = "02";
+        public static readonly string BakiyeBilgisi = "03";
+        public static readonly string TemelIslem = "04";
+        public static readonly string AyrintiliIslem = "05";
+    }
 
-    public static readonly string IzinTurHesapBilgisi = "01";
-    public static readonly string IzinTurAyrintiliHesapBilgisi = "02";
-    public static readonly string IzinTurBakiyeBilgisi = "03";
-    public static readonly string IzinTurTemelIslem = "04";
-    public static readonly string IzinTurAyrintiliIslem = "05";
+    public static class RizaDurumu
+    {
+        public static readonly string YetkiBekleniyor = "B";
+        public static readonly string Yetkilendirildi = "Y";
+        public static readonly string YetkiKullanildi = "K";
+        public static readonly string YetkiOdemeEmrineDonustu = "E";
+        public static readonly string YetkiSonlandirildi = "S";
+        public static readonly string YetkiIptal = "I";
+    }
 
-    public static readonly string RizaDurumuYetkiBekleniyor = "B";
-    public static readonly string RizaDurumuYetkilendirildi = "Y";
-    public static readonly string RizaDurumuYetkiKullanildi = "K";
-    public static readonly string RizaDurumuYetkiOdemeEmrineDonustu = "E";
-    public static readonly string RizaDurumuYetkiSonlandirildi = "S";
-    public static readonly string RizaDurumuYetkiIptal = "I";
+    public static class KolasTur
+    {
+        public static readonly string TelefonNumarasi = "T";
+        public static readonly string EPosta = "E";
+        public static readonly string TCKN = "K";
+        public static readonly string VKN = "V";
+        public static readonly string YKN = "Y";
+        public static readonly string PasaportNumarasi = "P";
+    }
 
-    public static readonly string KolasTurTelefonNumarasi = "T";
-    public static readonly string KolasTurEPosta = "E";
-    public static readonly string KolasTurTCKN = "K";
-    public static readonly string KolasTurVKN = "V";
-    public static readonly string KolasTurYKN = "Y";
-    public static readonly string KolasTurPasaportNumarasi = "P";
+    public static class KareKodAksTur
+    {
+        public static readonly string FastDinamik = "01";
+        public static readonly string FastStatik = "02";
+        public static readonly string KisidenKisiye = "03";
+    }
 
-    public static readonly string KareKodAksTurFastDinamik = "01";
-    public static readonly string KareKodAksTurFastStatik = "02";
-    public static readonly string KareKodAksTurKisidenKisiye = "03";
+    public static class RizaDurumuString
+    {
+        public static readonly string YetkiBekleniyor = "B:Yetki Bekleniyor";
+        public static readonly string Yetkilendirildi = "Y";
+        public static readonly string YetkiKullanildi = "K";
+        public static readonly string YetkiOdemeEmrineDonustu = "E";
+        public static readonly string YetkiSonlandirildi = "S";
+        public static readonly string YetkiIptal = "I";
+    }
+
+    public static class RizaIptalDetayKodu
+    {
+        public static readonly string YeniRizaTalebiIleIptal = "01";
+        public static readonly string KullaniciIstegiIleHHSUzerindenIptal = "02";
+        public static readonly string KullaniciIstegiIleYOSUzerindenIptal = "03";
+        public static readonly string SureAsimi_YetkiBekleniyor = "04";
+        public static readonly string SureAsimi_Yetkilendirildi = "05";
+        public static readonly string SureAsimi_YetkiOdemeyeDonusmedi = "06";
+        public static readonly string GKDIptali_AyniRizaNoIleMukerrerCagri = "07";
+        public static readonly string GKDIptali_RizaNoIleTCKNUyusmamasi = "08";
+        public static readonly string GKDIptali_UygunUrunBulunmuyor = "09";
+        public static readonly string GKDIptali_HHSAcikBankacilikKanaliIslemeKapali = "10";
+        public static readonly string GKDIptali_HesapYetkiSorunu = "11";
+        public static readonly string GKDIptali_OHKHHSKontrolleriniAsamadi = "12";
+        public static readonly string GKDIptali_OHKIstegiIleGKDdenVazgecildi = "13";
+        public static readonly string GKDIptali_FraudSuphesi = "14";
+        public static readonly string GKDIptali_Diger = "99";
+    }
+
 }

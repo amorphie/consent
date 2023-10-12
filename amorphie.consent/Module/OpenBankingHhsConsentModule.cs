@@ -14,6 +14,7 @@ using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
+using amorphie.consent.Helper;
 using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
@@ -46,8 +47,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
+        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
     }
+
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
 
 
@@ -314,13 +317,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 rizaNo = consentEntity.Id.ToString(),
                 olusZmn = DateTime.UtcNow,
-                rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
+                rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
             hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
-            consentEntity.State = "B: Yetki Bekleniyor";
+            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor; ;
             consentEntity.ConsentType = "Account Information Consent";
 
             context.Consents.Add(consentEntity);
@@ -333,6 +336,44 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
+
+    protected async Task<IResult> DeleteAccountConsent(Guid id,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        try
+        {
+            //get consent entity from db
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == id);
+            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity);//Check data validation
+            if (!dataValidationResult.Result)
+            {//Data not valid
+                return Results.BadRequest(dataValidationResult.Message);
+            }
+
+            //Update consent rıza bilgileri properties
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            additionalData.rzBlg.rizaIptDtyKod =
+                OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleHHSUzerindenIptal;
+            additionalData.rzBlg.gnclZmn = DateTime.Now;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.State = OpenBankingConstants.RizaDurumuString.YetkiIptal;
+
+            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
 
 
 
@@ -374,13 +415,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 rizaNo = consentEntity.Id.ToString(),
                 olusZmn = DateTime.UtcNow,
-                rizaDrm = OpenBankingConstants.RizaDurumuYetkiBekleniyor
+                rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
             odemeEmriRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
-            consentEntity.State = "B: Yetki Bekleniyor";
+            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor;
             consentEntity.ConsentType = "Payment Consent";
 
             context.Consents.Add(consentEntity);
@@ -429,14 +470,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             : Results.NoContent();
     }
 
-    // private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
-    // {
-    //     var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
-    //     var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
-
-    //     return (erisimToken, yenilemeToken);
-    // }
-
 
     /// <summary>
     /// Checks if data is valid for account consent post process
@@ -464,9 +497,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
-            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli
+            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
                 && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
-               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik
+               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
                    && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. GKD data not valid.");
@@ -482,13 +515,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
 
         //Check field constraints
-        if ((rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurTCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurMNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-             || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurYKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTurPNO && (rizaIstegi.kmlk.kmlkVrs.Trim().Length < 7 || rizaIstegi.kmlk.kmlkVrs.Length > 9))
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurTCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurMNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTurVKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10))
+        if ((rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
+            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.MNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
+             || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.YKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
+            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.PNO && (rizaIstegi.kmlk.kmlkVrs.Trim().Length < 7 || rizaIstegi.kmlk.kmlkVrs.Length > 9))
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.TCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.MNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
+            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.VKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. Kmlk data validation failed.");
         }
@@ -508,7 +541,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTurTemelIslem && p != OpenBankingConstants.IzinTurAyrintiliIslem))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTur.TemelIslem && p != OpenBankingConstants.IzinTur.AyrintiliIslem))
             {
                 return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn related iznTur not valid.");
             }
@@ -520,7 +553,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTurTemelIslem && p != OpenBankingConstants.IzinTurAyrintiliIslem))
+            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTur.TemelIslem && p != OpenBankingConstants.IzinTur.AyrintiliIslem))
             {
                 return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat hesapIslemBtsZmn related iznTur not valid.");
             }
@@ -555,18 +588,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
-            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurYonlendirmeli
+            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
                 && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
-               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTurAyrik
+               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
                    && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. GKD data not valid.");
         }
         //Check odmBsltm  Kimlik
         if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)//Check required fields
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurBireysel
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Bireysel
                 && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkVrs)))
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTurKurumsal
+            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
                 && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkTur) || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkVrs))))
         {
             return Results.BadRequest("TR.OHVPS.Resource.InvalidFormat. odmBsltm => Kmlk data is not valid");
@@ -620,6 +653,29 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             result.Result = false;
             result.Message = "BadRequest.";
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Check if consent is valid to be deleted
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <returns>Data validation result</returns>
+    private ApiResult IsDataValidToDeleteAccountConsent(Consent entity)
+    {
+        ApiResult result = new ApiResult();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "BadRequest.";
+        }
+
+        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusNameList().Contains(entity.State))
+        {
+            //State not valid to set as deleted
+            result.Result = false;
+            result.Message = "Account consent status not valid to marked as deleted";
         }
         return result;
     }
