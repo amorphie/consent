@@ -47,7 +47,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
-        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}",DeleteAccountConsent);
+        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
         //TODO:Ozlem /odeme-emri/{odemeEmriNo} bu metod eklenecek
     }
 
@@ -323,7 +323,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
-            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor;;
+            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor; ;
             consentEntity.ConsentType = "Account Information Consent";
 
             context.Consents.Add(consentEntity);
@@ -347,7 +347,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             //get consent entity from db
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == id);
-           ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity);//Check data validation
+            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity);//Check data validation
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -362,8 +362,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.ModifiedAt = DateTime.UtcNow;
             entity.State = OpenBankingConstants.RizaDurumuString.YetkiIptal;
-            
-//TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+
+            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok();
@@ -374,7 +374,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
     }
 
-  
+
 
 
     /// <summary>
@@ -656,7 +656,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
+
     /// <summary>
     /// Check if consent is valid to be deleted
     /// </summary>
