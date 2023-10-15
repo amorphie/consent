@@ -9,11 +9,11 @@ public interface IAccountClientService
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar?customerId[customerId]={customerId}")]
     Task<bool> IsCustomer(string customerId);
-    
+
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}?syfKytSayi=5&syfNo=1&srlmKrtr=hspRef&srlmYon=A")]
     Task<List<HesapBilgileriDto>> GetAccounts(string customerId);
-    
+
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/hspRef={hspRef}")]
     Task<HesapBilgileriDto?> GetAccountByHspRef(string customerId, string hspRef);

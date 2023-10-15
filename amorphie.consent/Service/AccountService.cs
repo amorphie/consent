@@ -13,7 +13,7 @@ public class AccountService : IAccountService
     {
         _accountClientService = accountClientService;
     }
-    
+
     public async Task<ApiResult> GetAccounts(string customerId)
     {
         ApiResult result = new();
@@ -36,7 +36,7 @@ public class AccountService : IAccountService
         try
         {
             //Get account of customer from service
-            result.Data = await _accountClientService.GetAccountByHspRef(customerId,hspRef);
+            result.Data = await _accountClientService.GetAccountByHspRef(customerId, hspRef);
         }
         catch (Exception e)
         {

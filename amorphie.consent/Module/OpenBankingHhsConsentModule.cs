@@ -116,7 +116,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Get account information from service with hspref 
     /// </summary>
@@ -130,11 +130,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         string hspRef,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [FromServices]IAccountService accountService)
+        [FromServices] IAccountService accountService)
     {
         try
         {
-            ApiResult accountApiResult= await accountService.GetAccountByHspRef(customerId,hspRef);
+            ApiResult accountApiResult = await accountService.GetAccountByHspRef(customerId, hspRef);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -146,7 +146,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Get all accounts from service 
     /// </summary>
@@ -161,7 +161,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     {
         try
         {
-            ApiResult accountApiResult= await accountService.GetAccounts(customerId);
+            ApiResult accountApiResult = await accountService.GetAccounts(customerId);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);

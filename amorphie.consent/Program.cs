@@ -29,7 +29,7 @@ builder.Services.AddDaprClient();
 builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IAccountService,AccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
