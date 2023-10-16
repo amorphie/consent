@@ -16,16 +16,4 @@ public static class ConstantHelper
             OpenBankingConstants.RizaDurumu.YetkiKullanildi
         };
     }
-
-    /// <summary>
-    /// Gets account consent status name list that consent can be marked as deleted
-    /// </summary>
-    /// <returns>Deletable account consent status name list</returns>
-    public static List<string> GetAccountConsentCanBeDeleteStatusNameList()
-    {
-        return new List<string>() { OpenBankingConstants.RizaDurumuString.Yetkilendirildi,
-            OpenBankingConstants.RizaDurumuString.YetkiBekleniyor,
-            OpenBankingConstants.RizaDurumuString.YetkiKullanildi
-        };
-    }
 }

@@ -478,8 +478,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
-            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor; ;
-            consentEntity.ConsentType = "Account Information Consent";
+            consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor; ;
+            consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
 
             context.Consents.Add(consentEntity);
 
@@ -516,7 +516,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.Now;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.ModifiedAt = DateTime.UtcNow;
-            entity.State = OpenBankingConstants.RizaDurumuString.YetkiIptal;
+            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
 
             //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             context.Consents.Update(entity);
@@ -576,8 +576,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             odemeEmriRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
-            consentEntity.State = OpenBankingConstants.RizaDurumuString.YetkiBekleniyor;
-            consentEntity.ConsentType = "Payment Consent";
+            consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+            consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
 
             context.Consents.Add(consentEntity);
 
@@ -826,7 +826,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             result.Message = "BadRequest.";
         }
 
-        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusNameList().Contains(entity.State))
+        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
         {
             //State not valid to set as deleted
             result.Result = false;
