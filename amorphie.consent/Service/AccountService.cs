@@ -77,4 +77,20 @@ public class AccountService : IAccountService
         }
         return result;
     }
+
+    public async Task<ApiResult> GetTransactionsByHspRef(string hspRef)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Get transactions by account reference number from service
+            result.Data = await _accountClientService.GetTransactionsByHspRef(hspRef);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
 }

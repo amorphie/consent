@@ -16,7 +16,7 @@ public interface IAccountService
     /// Get account of customer by account referenece number
     /// </summary>
     /// <param name="customerId">Customer Id</param>
-    /// <param name="hspRef">Hesap Referans Number</param>
+    /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference</returns>
     Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef);
 
@@ -31,7 +31,15 @@ public interface IAccountService
     /// Get balence of customer by account reference number
     /// </summary>
     /// <param name="customerId">Customer Id</param>
-    /// <param name="hspRef">Hesap Referans Number</param>
+    /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
     Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef);
+    
+    /// <summary>
+    /// Get transactions of account reference number
+    /// </summary>
+    /// <param name="hspRef">Account Referans Number</param>
+    /// <returns>Transactions of Given Account Reference</returns>
+    Task<ApiResult> GetTransactionsByHspRef(string hspRef);
+    
 }
