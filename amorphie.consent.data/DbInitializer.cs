@@ -17,32 +17,10 @@ public static class DbInitializer
         {
             return; // DB has been seeded
         }
-        var consentDefinition = new ConsentDefinition[]{
-            new ConsentDefinition{
-                Id = Guid.NewGuid(),
-                Name = "Consent 1",
-                RoleAssignment = "Role 1",
-                Scope = new string[]{"Scope 1"},
-                ClientId = new string[]{"Client 1"}
-            },
-            new ConsentDefinition{
-                Id = Guid.NewGuid(),
-                Name = "Consent 2",
-                RoleAssignment = "Role 2",
-                Scope = new string[]{"Scope 2"},
-                ClientId = new string[]{"Client 2"}
-            },
-        };
-        foreach (ConsentDefinition c in consentDefinition)
-        {
-            context.ConsentDefinitions.Add(c);
-        }
-        context.SaveChanges();
-
+     
         var consent = new Consent[]{
             new Consent{
                 // Id = Guid.NewGuid(),
-                ConsentDefinitionId = consentDefinition[0].Id,
                 UserId = Guid.NewGuid(),
                 State = "Waiting",
                 ConsentType = "Open Banking",
@@ -52,7 +30,6 @@ public static class DbInitializer
             },
             new Consent{
                 // Id = Guid.NewGuid(),
-                ConsentDefinitionId = consentDefinition[1].Id,
                 UserId = Guid.NewGuid(),
                 State = "Approval",
                 ConsentType = "BKM",
@@ -65,27 +42,6 @@ public static class DbInitializer
         foreach (Consent c in consent)
         {
             context.Consents.Add(c);
-        }
-        context.SaveChanges();
-
-        var consentPermission = new ConsentPermission[]{
-            new ConsentPermission{
-                ConsentId = consent[0].Id,
-                Permission = "Permission 1",
-                PermissionLastDate = DateTime.Now.ToUniversalTime()
-            },
-            new ConsentPermission{
-                ConsentId = consent[1].Id,
-                Permission = "Permission 2",
-                TransactionStartDate = DateTime.Now.ToUniversalTime(),
-                TransactionEndDate = DateTime.Now.ToUniversalTime(),
-                PermissionLastDate = DateTime.Now.ToUniversalTime()
-            },
-        };
-
-        foreach (ConsentPermission c in consentPermission)
-        {
-            context.ConsentPermissions.Add(c);
         }
         context.SaveChanges();
 
@@ -110,7 +66,6 @@ public static class DbInitializer
             context.Tokens.Add(t);
         }
         context.SaveChanges();
-
 
     }
 }

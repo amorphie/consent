@@ -605,7 +605,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         IQueryable<Consent> query = context.Consents
             .Include(c => c.Token)
-            .Include(c => c.ConsentPermission)
             .AsNoTracking();
 
         if (!string.IsNullOrEmpty(consentSearch.Keyword))

@@ -8,8 +8,7 @@ namespace amorphie.consent.core.DTO;
 
 public class ConsentDTO : DtoBase
 {
-    public Guid? ConsentDefinitionId { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public string Description { get; set; }
 
     public string State { get; set; }
