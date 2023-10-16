@@ -46,6 +46,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}", GetAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/bakiye", GetBalances);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}/bakiye", GetBalanceByHspRef);
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef);
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentStatus/{consentId}/{status}", UpdatePaymentConsentStatus);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
@@ -226,6 +227,35 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             ApiResult accountApiResult = await accountService.GetBalances(customerId);
+            if (!accountApiResult.Result)
+            {
+                return Results.BadRequest(accountApiResult.Message);
+            }
+            return Results.Ok(accountApiResult.Data);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get transactions from service with hspref 
+    /// </summary>
+    /// <param name="hspRef">Hesap ref</param>
+    /// <param name="context">Context DB object</param>
+    /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="accountService">Account service class</param>
+    /// <returns>account transactions- IslemBilgileriDto type of object</returns>
+    public async Task<IResult> GetTransactionsByHspRef(
+        string hspRef,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IAccountService accountService)
+    {
+        try
+        {
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(hspRef);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
