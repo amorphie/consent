@@ -44,6 +44,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}", GetAccounts);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}", GetAccountByHspRef);
+        routeGroupBuilder.MapGet("/hesaplar/{customerId}/bakiye", GetBalances);
+        routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}/bakiye", GetBalanceByHspRef);
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentStatus/{consentId}/{status}", UpdatePaymentConsentStatus);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
@@ -124,6 +126,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="hspRef">Hesap ref</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="accountService">Account service class</param>
     /// <returns>account information of hspref - HesapBilgileriDto type of object</returns>
     public async Task<IResult> GetAccountByHspRef(
         string customerId,
@@ -153,6 +156,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="customerId">Customer Id</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="accountService">Account service class</param>
     /// <returns>Account list of customer -  List of HesapBilgileriDto type of objects</returns>
     public async Task<IResult> GetAccounts(string customerId,
         [FromServices] ConsentDbContext context,
@@ -175,6 +179,67 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
 
+    /// <summary>
+    /// Get account's balance information from service with hspref 
+    /// </summary>
+    /// <param name="customerId">Customer Id</param>
+    /// <param name="hspRef">Hesap ref</param>
+    /// <param name="context">Context DB object</param>
+    /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="accountService">Account service class</param>
+    /// <returns>account balance information of hspref - BakiyeBilgileriDto type of object</returns>
+    public async Task<IResult> GetBalanceByHspRef(
+        string customerId,
+        string hspRef,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IAccountService accountService)
+    {
+        try
+        {
+            ApiResult accountApiResult = await accountService.GetBalanceByHspRef(customerId, hspRef);
+            if (!accountApiResult.Result)
+            {
+                return Results.BadRequest(accountApiResult.Message);
+            }
+            return Results.Ok(accountApiResult.Data);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get all balances from service 
+    /// </summary>
+    /// <param name="customerId">Customer Id</param>
+    /// <param name="context">Context DB object</param>
+    /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="accountService">Account service class</param>
+    /// <returns>Balance list of customer -  List of BakiyeBilgileriDto type of objects</returns>
+    public async Task<IResult> GetBalances(string customerId,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IAccountService accountService)
+    {
+        try
+        {
+            ApiResult accountApiResult = await accountService.GetBalances(customerId);
+            if (!accountApiResult.Result)
+            {
+                return Results.BadRequest(accountApiResult.Message);
+            }
+            return Results.Ok(accountApiResult.Data);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    
     /// <summary>
     /// Get consent additional data by Id casting to OdemeEmriRizasiHHSDto type of object
     /// </summary>

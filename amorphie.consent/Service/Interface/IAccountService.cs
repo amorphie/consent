@@ -13,10 +13,25 @@ public interface IAccountService
     Task<ApiResult> GetAccounts(string customerId);
 
     /// <summary>
-    /// Get accounts of customer
+    /// Get account of customer by account referenece number
     /// </summary>
     /// <param name="customerId">Customer Id</param>
     /// <param name="hspRef">Hesap Referans Number</param>
-    /// <returns>Customer Account of Given Referens</returns>
+    /// <returns>Customer Account of Given Reference</returns>
     Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef);
+    
+    /// <summary>
+    /// Get balances of customer
+    /// </summary>
+    /// <param name="customerId">Customer Id</param>
+    /// <returns>Balance list of customer</returns>
+    Task<ApiResult> GetBalances(string customerId);
+
+    /// <summary>
+    /// Get balence of customer by account reference number
+    /// </summary>
+    /// <param name="customerId">Customer Id</param>
+    /// <param name="hspRef">Hesap Referans Number</param>
+    /// <returns>Customer Account Balance of Given Account Reference</returns>
+    Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef);
 }
