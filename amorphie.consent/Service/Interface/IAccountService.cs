@@ -34,12 +34,12 @@ public interface IAccountService
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
     Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef);
-    
+
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Transactions of Given Account Reference</returns>
     Task<ApiResult> GetTransactionsByHspRef(string hspRef);
-    
+
 }

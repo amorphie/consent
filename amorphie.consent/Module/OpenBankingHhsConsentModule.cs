@@ -238,7 +238,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Get transactions from service with hspref 
     /// </summary>
