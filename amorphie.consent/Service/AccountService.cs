@@ -45,4 +45,36 @@ public class AccountService : IAccountService
         }
         return result;
     }
+
+    public async Task<ApiResult> GetBalances(string customerId)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Get balances of customer from service
+            result.Data = await _accountClientService.GetBalances(customerId);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
+
+    public async Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Get balance by account reference number of customer from service
+            result.Data = await _accountClientService.GetBalanceByHspRef(customerId, hspRef);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
 }
