@@ -17,7 +17,7 @@ public interface IAccountClientService
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
     Task<HesapBilgileriDto?> GetAccountByHspRef(string customerId, string hspRef);
-    
+
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye?syfKytSayi=5&syfNo=1&srlmKrtr=hspRef&srlmYon=A")]
     Task<List<BakiyeBilgileriDto>> GetBalances(string customerId);

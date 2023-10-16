@@ -19,7 +19,7 @@ public interface IAccountService
     /// <param name="hspRef">Hesap Referans Number</param>
     /// <returns>Customer Account of Given Reference</returns>
     Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef);
-    
+
     /// <summary>
     /// Get balances of customer
     /// </summary>
