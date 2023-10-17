@@ -7,6 +7,7 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Model;
 using AutoMapper;
+using Newtonsoft.Json;
 
 namespace amorphie.consent.Mapper
 {
@@ -23,6 +24,8 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OdemeEmriRizasiHHSDto>();
             CreateMap<Consent, OpenBankingConsentDTO>()
                 .ReverseMap();
+            CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
+                opt => opt.MapFrom(src =>JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData) ) );
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<ConsentDataDto, Consent>().ReverseMap();
             CreateMap<Consent, HhsConsentDto>().ReverseMap();
@@ -87,7 +90,7 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
             CreateMap<HesapBilgisiRequestDto, HesapBilgisiResponseDto>();
-
+            
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();

@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Module;
 
@@ -143,7 +144,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "H";
+                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
                 existingConsent.xGroupId = dto.xGroupId;
                 context.Consents.Update(existingConsent);
             }
@@ -160,7 +161,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 });
 
                 consentData.State = dto.rzBlg?.rizaDrm;
-                consentData.ConsentType = "H";
+                consentData.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
                 consentData.xGroupId = dto.xGroupId;
                 context.Consents.Add(consentData);
                 returnData = consentData;
@@ -202,7 +203,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 existingConsent.Description = dto.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = "O";
+                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
 
                 context.Consents.Update(existingConsent);
                 resultData = existingConsent;
@@ -211,7 +212,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 var consent = mapper.Map<Consent>(dto);
                 consent.State = dto.rzBlg?.rizaDrm;
-                consent.ConsentType = "O";
+                consent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
                 consent.xGroupId = dto.xGroupId;
                 consent.Description = dto.Description;
                 consent.AdditionalData = JsonSerializer.Serialize(new

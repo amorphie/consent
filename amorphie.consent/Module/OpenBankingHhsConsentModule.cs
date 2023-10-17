@@ -17,7 +17,6 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
-using HesapBilgisiRizaIstegiDto = amorphie.consent.core.DTO.OpenBanking.HesapBilgisiRizaIstegiDto;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
@@ -92,12 +91,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
     /// <summary>
-    /// Get consent additional data by Id casting to HesapBilgisiRizaIstegiDto type of object
+    /// Get account type consent by Id casting to HHSAccountConsentDto type of object
     /// </summary>
     /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
-    /// <returns>HesapBilgisiRizaIstegiDto type of object</returns>
+    /// <returns>HHSAccountConsentDto type of object</returns>
     public async Task<IResult> GetAccountConsentByIdForUI(
      Guid rizaNo,
      [FromServices] ConsentDbContext context,
@@ -105,14 +104,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     {
         try
         {
+            //Get data from db
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == rizaNo);
-            var serializedData = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiDto>(entity.AdditionalData);
-            serializedData!.Id = entity.Id;
-            serializedData.UserId = entity.UserId;
-            // var hhsConsentDTO = mapper.Map<HesapBilgisiRizaIstegiResponse>(serializedData);
-
-            return Results.Ok(serializedData);
+            var accountConsent= mapper.Map<HHSAccountConsentDto>(entity);
+            return Results.Ok(accountConsent);
         }
         catch (Exception ex)
         {

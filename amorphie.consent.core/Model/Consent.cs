@@ -11,6 +11,7 @@ public class Consent : EntityBase
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
     public List<Token> Token { get; set; }
+    public ICollection<OBAccountReference> OBAccountReferences { get; set; }
 
     [NotMapped]
     public virtual NpgsqlTsVector SearchVector { get; set; }
