@@ -89,7 +89,7 @@ namespace amorphie.consent.Mapper
             CreateMap<HesapBilgisiRizaIstegiHHSDto, HesapBilgisiRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
-            CreateMap<HesapBilgisiRequestDto, HesapBilgisiResponseDto>();
+            CreateMap<HesapBilgisiRequestDto, HesapBilgisiDto>();
             
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
