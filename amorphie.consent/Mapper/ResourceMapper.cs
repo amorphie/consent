@@ -96,6 +96,8 @@ namespace amorphie.consent.Mapper
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
+
+            CreateMap<OBAccountReference, OBAccountReferenceDto>();
         }
     }
 }

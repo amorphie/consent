@@ -106,6 +106,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             //Get data from db
             var entity = await context.Consents
+                .Include(c => c.OBAccountReferences)
                 .FirstOrDefaultAsync(c => c.Id == rizaNo);
             var accountConsent = mapper.Map<HHSAccountConsentDto>(entity);
             return Results.Ok(accountConsent);
@@ -429,18 +430,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             string permissionType = string.Join(",", additionalData.hspBlg.iznBlg.iznTur);//Seperate permissiontypes with comma
             foreach (var accountReference in saveAccountReference.AccountReferences)//Generate account reference entity for each account
             {
+                //Set account permission details
                 accountReferenceEntities.Add(new OBAccountReference()
                 {
                     ConsentId = consentEntity.Id,
                     AccountReference = accountReference,
-                    PermissionType = permissionType
+                    PermissionType = permissionType,
+                    LastValidAccessDate = additionalData.hspBlg.iznBlg.erisimIzniSonTrh,
+                    TransactionInquiryStartTime = additionalData.hspBlg.iznBlg.hesapIslemBslZmn,
+                    TransactionInquiryEndTime = additionalData.hspBlg.iznBlg.hesapIslemBtsZmn
                 });
             }
             context.OBAccountReferences.AddRange(accountReferenceEntities);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();
-            return Results.Ok(consentEntity);
-
+            return Results.Ok();
         }
         catch (Exception ex)
         {
