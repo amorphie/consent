@@ -17,7 +17,7 @@ public static class DbInitializer
         {
             return; // DB has been seeded
         }
-     
+
         var consent = new Consent[]{
             new Consent{
                 // Id = Guid.NewGuid(),

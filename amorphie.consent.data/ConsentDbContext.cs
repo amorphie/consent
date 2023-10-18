@@ -49,7 +49,7 @@ public class ConsentDbContext : DbContext
         modelBuilder.Entity<Consent>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
         .GetTsVectorComputedColumnSql("english", new string[] { "State", "ConsentType", "AdditionalData" }), true);
-        
+
         modelBuilder.Entity<Token>().HasIndex(c => c.SearchVector).HasMethod("GIN");
         modelBuilder.Entity<Token>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
@@ -59,5 +59,5 @@ public class ConsentDbContext : DbContext
     public DbSet<Consent> Consents { get; set; }
     public DbSet<Token> Tokens { get; set; }
     public DbSet<OBAccountReference> OBAccountReferences { get; set; }
-    
+
 }

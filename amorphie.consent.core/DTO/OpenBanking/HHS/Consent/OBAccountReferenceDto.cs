@@ -2,7 +2,7 @@ using amorphie.core.Base;
 
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
-public class OBAccountReferenceDto: DtoBase
+public class OBAccountReferenceDto : DtoBase
 {
     public Guid ConsentId { get; set; }
     public string AccountReference { get; set; }

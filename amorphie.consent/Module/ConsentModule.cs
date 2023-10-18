@@ -123,7 +123,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
 
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
-            
+
             var resultDto = new ConsentDataDto
             {
                 ConsentType = consent.ConsentType,

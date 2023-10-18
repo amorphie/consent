@@ -25,9 +25,9 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OpenBankingConsentDTO>()
                 .ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src =>JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData) ) );
+                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src =>JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData) ) );
+                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<ConsentDataDto, Consent>().ReverseMap();
             CreateMap<Consent, HhsConsentDto>().ReverseMap();
@@ -92,7 +92,7 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
             CreateMap<HesapBilgisiRequestDto, HesapBilgisiDto>();
-            
+
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();

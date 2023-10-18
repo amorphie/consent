@@ -1,6 +1,6 @@
 using amorphie.core.Base;
 
-public class ConsentDataDto:DtoBase
+public class ConsentDataDto : DtoBase
 {
     // Consent verileri
     public string ConsentType { get; set; }

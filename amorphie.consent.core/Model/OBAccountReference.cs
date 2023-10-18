@@ -17,5 +17,5 @@ public class OBAccountReference : EntityBase
     public DateTime? TransactionInquiryEndTime { get; set; }
     [ForeignKey("ConsentId")]
     public Consent Consent { get; set; }
-    
+
 }
