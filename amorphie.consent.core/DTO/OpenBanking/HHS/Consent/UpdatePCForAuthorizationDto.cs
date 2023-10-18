@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using amorphie.core.Base;
 
 namespace amorphie.consent.core.DTO.OpenBanking.HHS
 {
-    public class UpdatePCForAuthorizationDto
+    public class UpdatePCForAuthorizationDto :DtoBase
     {
-        public Guid Id { get; set; }
-        public string State { get; set; }
         public GonderenHesapDto? SenderAccount { get; set; }
     }
 }
