@@ -111,47 +111,24 @@ public class ConsentModule : BaseBBTRoute<ConsentDTO, Consent, ConsentDbContext>
         using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            var consentDefinition = new ConsentDefinition
-            {
-
-                Name = consentData.ConsentDefinitionName,
-                RoleAssignment = consentData.RoleAssignment,
-                Scope = consentData.Scope,
-                ClientId = consentData.ClientId
-            };
             var consent = new Consent
             {
-                ConsentDefinitionId = consentDefinition.Id,
                 ConsentType = consentData.ConsentType,
                 State = consentData.State,
                 AdditionalData = consentData.AdditionalData,
                 UserId = Guid.NewGuid()
             };
 
-            var consentPermission = new ConsentPermission
-            {
-                ConsentId = consent.Id,
-                Permission = consentData.Permission
-            };
-
-            context.Add<ConsentDefinition>(consentDefinition);
             context.Add<Consent>(consent);
-            context.Add<ConsentPermission>(consentPermission);
 
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
-
 
             var resultDto = new ConsentDataDto
             {
                 ConsentType = consent.ConsentType,
                 State = consent.State,
-                AdditionalData = consent.AdditionalData,
-                ConsentDefinitionName = consentDefinition.Name,
-                RoleAssignment = consentDefinition.RoleAssignment,
-                Scope = consentDefinition.Scope,
-                ClientId = consentDefinition.ClientId,
-                Permission = consentPermission.Permission
+                AdditionalData = consent.AdditionalData
             };
 
             return Results.Ok(resultDto);

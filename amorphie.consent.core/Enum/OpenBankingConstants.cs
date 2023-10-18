@@ -70,16 +70,6 @@ public static class OpenBankingConstants
         public static readonly string KisidenKisiye = "03";
     }
 
-    public static class RizaDurumuString
-    {
-        public static readonly string YetkiBekleniyor = "B:Yetki Bekleniyor";
-        public static readonly string Yetkilendirildi = "Y";
-        public static readonly string YetkiKullanildi = "K";
-        public static readonly string YetkiOdemeEmrineDonustu = "E";
-        public static readonly string YetkiSonlandirildi = "S";
-        public static readonly string YetkiIptal = "I";
-    }
-
     public static class RizaIptalDetayKodu
     {
         public static readonly string YeniRizaTalebiIleIptal = "01";
@@ -97,6 +87,13 @@ public static class OpenBankingConstants
         public static readonly string GKDIptali_OHKIstegiIleGKDdenVazgecildi = "13";
         public static readonly string GKDIptali_FraudSuphesi = "14";
         public static readonly string GKDIptali_Diger = "99";
+    }
+
+    public static class ConsentType
+    {
+        public static readonly string OpenBankingAccount = "OB_Account";
+        public static readonly string OpenBankingPayment = "OB_Payment";
+
     }
 
 }

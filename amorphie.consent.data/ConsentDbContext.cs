@@ -50,16 +50,6 @@ public class ConsentDbContext : DbContext
         .HasComputedColumnSql(FullTextSearchHelper
         .GetTsVectorComputedColumnSql("english", new string[] { "State", "ConsentType", "AdditionalData" }), true);
 
-        modelBuilder.Entity<ConsentPermission>().HasIndex(c => c.SearchVector).HasMethod("GIN");
-        modelBuilder.Entity<ConsentPermission>().Property(item => item.SearchVector)
-        .HasComputedColumnSql(FullTextSearchHelper
-        .GetTsVectorComputedColumnSql("english", new string[] { "Permission"}), true);
-
-        modelBuilder.Entity<ConsentDefinition>().HasIndex(c => c.SearchVector).HasMethod("GIN");
-        modelBuilder.Entity<ConsentDefinition>().Property(item => item.SearchVector)
-        .HasComputedColumnSql(FullTextSearchHelper
-        .GetTsVectorComputedColumnSql("english", new string[] { "Name", "RoleAssignment" }), true);
-
         modelBuilder.Entity<Token>().HasIndex(c => c.SearchVector).HasMethod("GIN");
         modelBuilder.Entity<Token>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
@@ -67,9 +57,7 @@ public class ConsentDbContext : DbContext
     }
 
     public DbSet<Consent> Consents { get; set; }
-    public DbSet<ConsentPermission> ConsentPermissions { get; set; }
-    public DbSet<ConsentDefinition> ConsentDefinitions { get; set; }
     public DbSet<Token> Tokens { get; set; }
-
+    public DbSet<OBAccountReference> OBAccountReferences { get; set; }
 
 }
