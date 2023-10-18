@@ -104,7 +104,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     {
         try
         {
-            //Get data from db
+            //Get entity from db
             var entity = await context.Consents
                 .Include(c => c.OBAccountReferences)
                 .FirstOrDefaultAsync(c => c.Id == rizaNo);
@@ -310,13 +310,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     {
         try
         {
+            //Get entity from db
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == rizaNo);
-            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizaIstegiDto>(entity.AdditionalData);
-            serializedData!.Id = entity.Id;
-            serializedData.UserId = entity.UserId;
-
-            return Results.Ok(serializedData);
+            var paymentConsent = mapper.Map<HHSPaymentConsentDto>(entity);
+            return Results.Ok(paymentConsent);
         }
         catch (Exception ex)
         {

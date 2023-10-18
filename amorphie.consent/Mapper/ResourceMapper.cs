@@ -26,6 +26,8 @@ namespace amorphie.consent.Mapper
                 .ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src =>JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData) ) );
+            CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
+                opt => opt.MapFrom(src =>JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData) ) );
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<ConsentDataDto, Consent>().ReverseMap();
             CreateMap<Consent, HhsConsentDto>().ReverseMap();
