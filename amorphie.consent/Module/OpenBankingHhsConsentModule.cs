@@ -388,10 +388,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 return Results.BadRequest(isDataValidResult.Message);
             }
-            
+
             var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
             //Check and set sender account
-            if (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) 
+            if (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
                 || string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef))
             {
                 additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
@@ -412,8 +412,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
-    
+
+
     /// <summary>
     /// Updates consent state for authorization usage
     /// </summary>
@@ -486,7 +486,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             consentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
             consentEntity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
-            
+
             List<OBAccountReference> accountReferenceEntities = new List<OBAccountReference>();//Open banking account reference entity list
             string permissionType = string.Join(",", additionalData.hspBlg.iznBlg.iznTur);//Seperate permissiontypes with comma
             foreach (var accountReference in saveAccountReference.AccountReferences)//Generate account reference entity for each account
@@ -927,7 +927,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         return result;
     }
-    
+
     /// <summary>
     ///  Check if consent is valid to be updated for usage
     /// </summary>
@@ -950,7 +950,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
+
     /// <summary>
     ///  Check if consent is valid to be updated for usage
     /// </summary>
@@ -973,7 +973,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
+
     /// <summary>
     /// Check if consent is valid to be updated for authorization
     /// </summary>
@@ -1005,6 +1005,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
-    
+
+
 }
