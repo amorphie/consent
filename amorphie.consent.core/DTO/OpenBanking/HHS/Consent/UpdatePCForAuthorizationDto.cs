@@ -5,10 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using amorphie.core.Base;
 
-namespace amorphie.consent.core.DTO.OpenBanking.HHS
+namespace amorphie.consent.core.DTO.OpenBanking.HHS;
+public class UpdatePCForAuthorizationDto : DtoBase
 {
-    public class UpdatePCForAuthorizationDto : DtoBase
-    {
-        public GonderenHesapDto? SenderAccount { get; set; }
-    }
+    public GonderenHesapDto? SenderAccount { get; set; }
 }

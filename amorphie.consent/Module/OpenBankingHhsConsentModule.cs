@@ -861,7 +861,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     private ApiResult IsDataValidToGetAccountConsent(Consent entity)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -872,7 +872,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
     private ApiResult IsDataValidToGetPaymentConsent(Consent entity)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -888,7 +888,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns>Data validation result</returns>
     private ApiResult IsDataValidToDeleteAccountConsent(Consent entity)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -912,7 +912,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns>Data validation result</returns>
     private ApiResult IsDataValidToUpdateAccountConsentForAuthorization(Consent entity, SaveAccountReferenceDto saveAccountReference)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -936,7 +936,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns></returns>
     private ApiResult IsDataValidToUpdatePaymentConsentStatusForUsage(Consent entity, UpdateConsentStateDto updateConsentState)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -959,7 +959,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns></returns>
     private ApiResult IsDataValidToUpdateAccountConsentStatusForUsage(Consent entity, UpdateConsentStateDto updateConsentState)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
@@ -982,7 +982,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <returns></returns>
     private ApiResult IsDataValidToUpdatePaymentConsentForAuth(Consent entity, UpdatePCForAuthorizationDto savePcStatusSenderAccount)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         if (entity == null)//No consent in db
         {
             result.Result = false;
