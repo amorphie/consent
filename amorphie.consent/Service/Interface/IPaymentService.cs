@@ -11,7 +11,7 @@ public interface IPaymentService
     /// <param name="odemeEmriRizaIstegi">Object to be checked</param>
     /// <returns>odeme-emri-rizasi post process result</returns>
     Task<ApiResult> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi);
-    
+
     /// <summary>
     /// Send OdemeEmri object to service to process odeme-emri post 
     /// </summary>
