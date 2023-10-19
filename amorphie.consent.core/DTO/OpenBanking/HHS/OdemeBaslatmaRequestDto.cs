@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
-    public class OdemeBaslatmaRequestDto
+public class OdemeBaslatmaRequestDto
 {
     public KimlikDto kmlk { get; set; }
     public TutarDto islTtr { get; set; }

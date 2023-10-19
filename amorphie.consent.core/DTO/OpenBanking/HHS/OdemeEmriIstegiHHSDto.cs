@@ -11,6 +11,6 @@ public class OdemeEmriIstegiHHSDto
     public RizaBilgileriRequestDto rzBlg { get; set; }
     public KatilimciBilgisiDto katilimciBlg { get; set; }
     public GkdDto gkd { get; set; }
-    public OdemeBaslatmaRequestOEDto odmBsltm { get; set; }
+    public OdemeBaslatmaDto odmBsltm { get; set; }
     public IsyeriOdemeBilgileriDto? isyOdmBlg { get; set; }
 }

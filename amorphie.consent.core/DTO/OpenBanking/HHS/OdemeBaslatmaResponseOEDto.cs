@@ -18,5 +18,4 @@ public class OdemeBaslatmaResponseOEDto
     public OdemeAyrintilariDetailedDto odmAyr { get; set; }
     public TutarDto? obhsMsrfTtr { get; set; }
     public TutarDto? hhsMsrfTtr { get; set; }
-    public IsyeriOdemeBilgileriDto? isyOdmBlg { get; set; }
 }
