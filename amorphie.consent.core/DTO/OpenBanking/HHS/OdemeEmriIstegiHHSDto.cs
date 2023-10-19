@@ -6,10 +6,11 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
-public class OdemeEmriRizaIstegiHHSDto
+public class OdemeEmriIstegiHHSDto
 {
+    public RizaBilgileriRequestDto rzBlg { get; set; }
     public KatilimciBilgisiDto katilimciBlg { get; set; }
-    public GkdRequestDto gkd { get; set; }
-    public OdemeBaslatmaRequestDto odmBsltm { get; set; }
+    public GkdDto gkd { get; set; }
+    public OdemeBaslatmaRequestOEDto odmBsltm { get; set; }
     public IsyeriOdemeBilgileriDto? isyOdmBlg { get; set; }
 }
