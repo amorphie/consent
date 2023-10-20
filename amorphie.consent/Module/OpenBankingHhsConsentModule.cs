@@ -660,7 +660,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 return Results.BadRequest(paymentServiceResponse.Message);
 
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, paymentService);
+            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -912,8 +912,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="configuration">Config file</param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
-     IConfiguration configuration,
-     IPaymentService paymentService)
+     IConfiguration configuration)
     {
 
         //TODO:Ozlem update method
@@ -1108,7 +1107,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (entity == null)
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No desired consent in system.";
             return result;
         }
 
