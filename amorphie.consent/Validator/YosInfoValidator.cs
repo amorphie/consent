@@ -3,10 +3,10 @@ using FluentValidation;
 
 namespace amorphie.consent.Validator;
 public sealed class YosInfoalidator : AbstractValidator<YosInfo>
+{
+    public YosInfoalidator()
     {
-        public YosInfoalidator()
-        {
-            RuleFor(x => x.marka).NotNull();
-            RuleFor(x => x.unv).NotNull();        
-        }
+        RuleFor(x => x.marka).NotNull();
+        RuleFor(x => x.unv).NotNull();
     }
+}

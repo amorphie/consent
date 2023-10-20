@@ -37,7 +37,7 @@ public class YosInfoModule : BaseBBTRoute<YosInfoDto, YosInfo, ConsentDbContext>
 
         if (yosInfo != null)
         {
-           var data= mapper.Map<YosInfoDto>(yosInfo);
+            var data = mapper.Map<YosInfoDto>(yosInfo);
             return Results.Ok(data);
         }
         else
