@@ -38,4 +38,20 @@ public class PaymentService : IPaymentService
         }
         return result;
     }
+
+    public async Task<ApiResult> SendOdemeEmri(OdemeEmriIstegiHHSDto odemeEmriIstegi)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Send odemeemri to servie
+            result.Data = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
 }
