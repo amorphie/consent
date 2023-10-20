@@ -1,2 +1,0 @@
-sleep 5 &&
-curl -X POST 'XXXVaultAdress' -H "Content-Type: application/json" -H "X-Vault-Token: admin" -d '{ "data": {"HHSCode": "0125", "HHSForwardingAddress":"XXXForwardingAdress","PaymentServiceURL":"XXXPaymentService","AccountServiceURL":"XXXAccountService", "PostgreSql":"Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres"} }'
