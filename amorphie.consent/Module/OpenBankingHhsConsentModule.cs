@@ -330,7 +330,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     }
 
 
-    
+
     /// <summary>
     /// Get consent additional data by Id casting to OdemeEmriRizaIstegiDto type of object
     /// </summary>
@@ -1052,7 +1052,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
+
     /// <summary>
     /// Checks if consent is valid to get
     /// </summary>
