@@ -39,6 +39,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
+        routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}", GetAccounts);
@@ -296,6 +297,38 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
+
+    /// <summary>
+    /// Get consent additional data by Id casting to OdemeEmriHHSDto type of object
+    /// </summary>
+    /// <param name="odemeEmriNo"></param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <returns>OdemeEmriHHSDto type of object</returns>
+    public async Task<IResult> GetPaymentOrderConsentById(Guid odemeEmriNo,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
+    {
+        try
+        {
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == odemeEmriNo
+                                     && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPaymentOrder);
+            ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
+            if (!isDataValidResult.Result)//Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
+            var serializedData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(entity.AdditionalData);
+            return Results.Ok(serializedData);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
 
 
     /// <summary>
@@ -627,7 +660,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 return Results.BadRequest(paymentServiceResponse.Message);
 
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, paymentService);
+            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -700,7 +733,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             OdemeEmriHHSDto odemeEmriDto = (OdemeEmriHHSDto)paymentServiceResponse.Data;
 
             var orderEntity = new Consent();
-            context.Consents.Add(orderEntity);
+            context.Consents.Add(orderEntity);//Add to get id
 
             //Set consent data
             odemeEmriDto.emrBlg = new EmirBilgileriDto()
@@ -711,7 +744,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             odemeEmriDto.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
             orderEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriDto);
             orderEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
-            orderEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
+            orderEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPaymentOrder;
             context.Consents.Add(orderEntity);
 
             await context.SaveChangesAsync();
@@ -879,8 +912,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="configuration">Config file</param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
-     IConfiguration configuration,
-     IPaymentService paymentService)
+     IConfiguration configuration)
     {
 
         //TODO:Ozlem update method
@@ -987,25 +1019,52 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         return result;
     }
 
+    /// <summary>
+    /// Checks if consent is valid to get
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <returns>Validation result</returns>
     private ApiResult IsDataValidToGetAccountConsent(Consent? entity)
     {
         ApiResult result = new();
-        if (entity == null)
+        if (entity == null)//No desired consent in system
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No desired consent in system";
             return result;
         }
         return result;
     }
 
+    /// <summary>
+    /// Checks if consent is valid to get
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <returns>Validation result</returns>
     private ApiResult IsDataValidToGetPaymentConsent(Consent? entity)
     {
         ApiResult result = new();
         if (entity == null)
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No desired consent in system";
+            return result;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if consent is valid to get
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <returns>Validation result</returns>
+    private ApiResult IsDataValidToGetPaymentOrderConsent(Consent? entity)
+    {
+        ApiResult result = new();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "No desired consent in system.";
             return result;
         }
         return result;
@@ -1022,7 +1081,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (entity == null)
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No desired consent in system.";
             return result;
         }
 
@@ -1048,7 +1107,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (entity == null)
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No desired consent in system.";
             return result;
         }
 
