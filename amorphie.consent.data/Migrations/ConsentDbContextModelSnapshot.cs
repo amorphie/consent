@@ -190,13 +190,53 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.YosInfo", b =>
                 {
-                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
-                        .WithMany("OBAccountReferences")
-                        .HasForeignKey("ConsentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("acikAnahtar")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("adresler")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("kod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("logoBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("marka")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("roller")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<string>("unv")
                         .IsRequired()
@@ -205,6 +245,17 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("YosInfos");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+                {
+                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
+                        .WithMany("OBAccountReferences")
+                        .HasForeignKey("ConsentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consent");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>

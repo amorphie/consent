@@ -14,7 +14,7 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    [Migration("20231019072149_yos")]
+    [Migration("20231024141136_yos")]
     partial class yos
     {
         /// <inheritdoc />
@@ -85,6 +85,57 @@ namespace amorphie.consent.data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.ToTable("Consents");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccountReference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ConsentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastValidAccessDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PermissionType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TransactionInquiryEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TransactionInquiryStartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsentId");
+
+                    b.ToTable("OBAccountReferences");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
@@ -199,6 +250,17 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("YosInfos");
                 });
 
+            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+                {
+                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
+                        .WithMany("OBAccountReferences")
+                        .HasForeignKey("ConsentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consent");
+                });
+
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
                 {
                     b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
@@ -212,6 +274,8 @@ namespace amorphie.consent.data.Migrations
 
             modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
+                    b.Navigation("OBAccountReferences");
+
                     b.Navigation("Token");
                 });
 #pragma warning restore 612, 618
