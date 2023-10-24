@@ -61,5 +61,4 @@ public class ConsentDbContext : DbContext
     public DbSet<OBAccountReference> OBAccountReferences { get; set; }
     public DbSet<YosInfo> YosInfos { get; set; }
 
-
 }

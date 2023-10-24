@@ -14,7 +14,7 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    [Migration("20231024141136_yos")]
+    [Migration("20231024142840_yos")]
     partial class yos
     {
         /// <inheritdoc />
