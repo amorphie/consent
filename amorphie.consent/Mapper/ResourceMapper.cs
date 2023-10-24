@@ -7,6 +7,7 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Model;
 using AutoMapper;
+using Newtonsoft.Json;
 
 namespace amorphie.consent.Mapper
 {
@@ -17,13 +18,13 @@ namespace amorphie.consent.Mapper
             CreateMap<YosInfo, YosInfoDto>().ReverseMap();
             CreateMap<Consent, ConsentDTO>().ReverseMap();
             CreateMap<Consent, HesapBilgisiRizaIstegiDto>().ReverseMap();
-            CreateMap<Consent, HesapBilgisiRizaIstegiHHSDto>().ReverseMap();
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
-            CreateMap<Consent, OdemeEmriRizaIstegiHHSDto>().ReverseMap();
-            CreateMap<Consent, HesapBilgisiRizasiHHSDto>();
-            CreateMap<Consent, OdemeEmriRizasiHHSDto>();
             CreateMap<Consent, OpenBankingConsentDTO>()
                 .ReverseMap();
+            CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
+                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
+            CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
+                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<ConsentDataDto, Consent>().ReverseMap();
             CreateMap<Consent, HhsConsentDto>().ReverseMap();
@@ -87,13 +88,15 @@ namespace amorphie.consent.Mapper
             CreateMap<HesapBilgisiRizaIstegiHHSDto, HesapBilgisiRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
-            CreateMap<HesapBilgisiRequestDto, HesapBilgisiResponseDto>();
+            CreateMap<HesapBilgisiRequestDto, HesapBilgisiDto>();
 
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
+
+            CreateMap<OBAccountReference, OBAccountReferenceDto>();
         }
     }
 }
