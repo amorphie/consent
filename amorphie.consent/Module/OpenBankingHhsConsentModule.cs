@@ -570,7 +570,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             var activeAccountConsents = await GetActiveAccountConsents(rizaIstegi, context);
             if (AnyAuthAndUsedConsents(activeAccountConsents))//Checks any authorized or authused state consent
             {
-                return Results.BadRequest("TR.OHVPS.Resource.ConsentMismatch");
+                return Results.BadRequest("TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
             }
             //Cancel Yetki Bekleniyor state consents.
             CancelWaitingApproveConsents(context, activeAccountConsents);
