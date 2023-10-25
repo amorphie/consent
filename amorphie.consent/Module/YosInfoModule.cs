@@ -5,7 +5,7 @@ using amorphie.core.Module.minimal_api;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+namespace amorphie.consent.Module;
 public class YosInfoModule : BaseBBTRoute<YosInfoDto, YosInfo, ConsentDbContext>
 {
     public YosInfoModule(WebApplication app)
