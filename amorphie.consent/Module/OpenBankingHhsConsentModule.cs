@@ -584,9 +584,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor; ;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
-
+            consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
+            {
+                new OBConsentIdentityInfo()
+                {//Get consent identity data to identity entity 
+                    IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
+                    IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
+                    InstitutionIdentityData = hesapBilgisiRizasi.kmlk.krmKmlkVrs,
+                    InstitutionIdentityType = hesapBilgisiRizasi.kmlk.krmKmlkTur,
+                    UserType = hesapBilgisiRizasi.kmlk.ohkTur
+                }
+            };
             context.Consents.Add(consentEntity);
-
             await context.SaveChangesAsync();
             return Results.Ok(hesapBilgisiRizasi);
         }
