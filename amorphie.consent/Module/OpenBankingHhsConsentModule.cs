@@ -1227,9 +1227,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         return result;
     }
-    
-    
-        /// <summary>
+
+
+    /// <summary>
     /// Cancel waiting approve state consents
     /// </summary>
     /// <param name="context"></param>
