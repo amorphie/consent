@@ -566,6 +566,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
             }
+            //Get user's active account consents from db
+            var activeAccountConsents = await GetActiveAccountConsents(rizaIstegi, context);
+            if (AnyAuthAndUsedConsents(activeAccountConsents))//Checks any authorized or authused state consent
+            {
+                return Results.BadRequest("TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
+            }
+            //Cancel Yetki Bekleniyor state consents.
+            CancelWaitingApproveConsents(context, activeAccountConsents);
 
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
@@ -1218,6 +1226,76 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return result;
         }
         return result;
+    }
+
+
+    /// <summary>
+    /// Cancel waiting approve state consents
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="activeAccountConsents">Consents to be checked</param>
+    private void CancelWaitingApproveConsents(ConsentDbContext context, List<Consent> activeAccountConsents)
+    {
+        //Waiting approve state consents
+        var waitingAporoves = activeAccountConsents
+            .Where(c => c.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor).ToList();
+        if (waitingAporoves?.Any() ?? false)
+        {//If any, cancel all of them
+            foreach (var waitingAporove in waitingAporoves)
+            {
+                //Update consent rıza bilgileri properties
+                var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(waitingAporove.AdditionalData);
+                additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData.rzBlg.rizaIptDtyKod =
+                    OpenBankingConstants.RizaIptalDetayKodu.YeniRizaTalebiIleIptal;
+                additionalData.rzBlg.gnclZmn = DateTime.Now;
+                waitingAporove.AdditionalData = JsonSerializer.Serialize(additionalData);
+                waitingAporove.ModifiedAt = DateTime.UtcNow;
+                waitingAporove.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            }
+            context.Consents.UpdateRange(waitingAporoves);
+        }
+    }
+
+    /// <summary>
+    /// Checks if any yetkilendirildi or yetkikullanildi state consents of user
+    /// </summary>
+    /// <param name="activeAccountConsents">Consents to be checked</param>
+    /// <returns>Any consent that yetkilendirildi or yetkikullanildi states</returns>
+    private bool AnyAuthAndUsedConsents(List<Consent> activeAccountConsents)
+    {
+        var authAndUsed = activeAccountConsents
+            .Any(c => c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
+                        || c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi);
+        if (authAndUsed)
+        {
+            //TODO:Ozlem yetki süresi dolmuş ise iptal edilmeli
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// Get active account consents of user
+    /// Checks identity with consent identity properties
+    /// </summary>
+    /// <param name="rizaIstegi"></param>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    private async Task<List<Consent>> GetActiveAccountConsents(HesapBilgisiRizaIstegiHHSDto rizaIstegi, ConsentDbContext context)
+    {
+        var activeAccountConsentStatusList = ConstantHelper.GetActiveAccountConsentStatusList(); //Get active status list
+        //Active account consents in db
+        var activeAccountConsents = await context.Consents.Where(c =>
+                c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount
+                && activeAccountConsentStatusList.Contains(c.State)
+                && c.ObConsentIdentityInfos.Any(i => i.IdentityData == rizaIstegi.kmlk.kmlkVrs
+                                                     && i.IdentityType == rizaIstegi.kmlk.kmlkTur
+                                                     && i.UserType == rizaIstegi.kmlk.ohkTur))
+            .ToListAsync();
+        return activeAccountConsents;
     }
 
 

@@ -16,4 +16,19 @@ public static class ConstantHelper
             OpenBankingConstants.RizaDurumu.YetkiKullanildi
         };
     }
+
+    /// <summary>
+    /// Get account consent status list that can be marked as active statuses.
+    /// In those statuses if new consent comes, it should be handled
+    /// </summary>
+    /// <returns>Active Consent Statuses</returns>
+    public static List<string> GetActiveAccountConsentStatusList()
+    {
+        return new List<string>()
+        {
+            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+            OpenBankingConstants.RizaDurumu.Yetkilendirildi,
+            OpenBankingConstants.RizaDurumu.YetkiKullanildi
+        };
+    }
 }
