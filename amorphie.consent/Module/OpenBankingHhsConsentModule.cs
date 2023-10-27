@@ -77,7 +77,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
+                                        && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
             ApiResult isDataValidResult = IsDataValidToGetAccountConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
             {
@@ -109,7 +110,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             //Get entity from db
             var entity = await context.Consents
                 .Include(c => c.OBAccountReferences)
-                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                                        && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
             var accountConsent = mapper.Map<HHSAccountConsentDto>(entity);
             return Results.Ok(accountConsent);
         }
@@ -283,7 +285,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
             {
@@ -346,7 +349,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             //Get entity from db
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == rizaNo);
+                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                                    && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             var paymentConsent = mapper.Map<HHSPaymentConsentDto>(entity);
             return Results.Ok(paymentConsent);
         }
@@ -556,10 +560,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
    [FromServices] ConsentDbContext context,
    [FromServices] IMapper mapper,
-   [FromServices] IConfiguration configuration)
+   [FromServices] IConfiguration configuration,
+    HttpContext httpContext)
     {
         try
         {
+            var headerXGroupId = string.Empty;
+            if (httpContext.Request.Headers.TryGetValue("X-Group-Id", out var traceValue))
+            { headerXGroupId = traceValue; }
             //Check if post data is valid to process.
             var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi, configuration);
             if (!checkValidationResult.Result)
