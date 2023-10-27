@@ -110,7 +110,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             //Get entity from db
             var entity = await context.Consents
                 .Include(c => c.OBAccountReferences)
-                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
                                         && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
             var accountConsent = mapper.Map<HHSAccountConsentDto>(entity);
             return Results.Ok(accountConsent);
@@ -285,7 +285,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
                 && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
@@ -349,7 +349,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             //Get entity from db
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == rizaNo 
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
                                     && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             var paymentConsent = mapper.Map<HHSPaymentConsentDto>(entity);
             return Results.Ok(paymentConsent);
@@ -559,16 +559,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="configuration"></param>
     /// <param name="httpContext"></param>
     /// <returns></returns>
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
    [FromServices] ConsentDbContext context,
    [FromServices] IMapper mapper,
-   [FromServices] IConfiguration configuration, 
+   [FromServices] IConfiguration configuration,
         HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi, configuration,httpContext);
+            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi, configuration, httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
@@ -672,12 +674,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="paymentService"/>
     /// <param name="httpContext">Httpcontext object to get header data</param>
     /// <returns>OdemeEmriRizasi object</returns>
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper,
-        [FromServices] IConfiguration configuration,
-        [FromServices] IPaymentService paymentService, 
-        HttpContext httpContext)
+    [FromServices] ConsentDbContext context,
+    [FromServices] IMapper mapper,
+    [FromServices] IConfiguration configuration,
+    [FromServices] IPaymentService paymentService,
+    HttpContext httpContext)
     {
         try
         {
@@ -686,7 +690,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 return Results.BadRequest(paymentServiceResponse.Message);
 
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration,httpContext);
+            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, httpContext);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -845,20 +849,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
             return result;
         }
-        
-       var header = ModuleHelper.GetHeader(httpContext);
-       if (header.XASPSPCode != rizaIstegi.katilimciBlg.hhsKod)
-       {//HHSCode must match with header x-aspsp-code
-           result.Result = false;
-           result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-           return result;
-       }
-       if (header.XTPPCode != rizaIstegi.katilimciBlg.yosKod)
-       {//YOSCode must match with header x-tpp-code
-           result.Result = false;
-           result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
-           return result;
-       }
+
+        var header = ModuleHelper.GetHeader(httpContext);
+        if (header.XASPSPCode != rizaIstegi.katilimciBlg.hhsKod)
+        {//HHSCode must match with header x-aspsp-code
+            result.Result = false;
+            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
+            return result;
+        }
+        if (header.XTPPCode != rizaIstegi.katilimciBlg.yosKod)
+        {//YOSCode must match with header x-tpp-code
+            result.Result = false;
+            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+            return result;
+        }
 
         //Check GKD
         if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
