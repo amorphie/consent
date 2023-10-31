@@ -42,7 +42,7 @@ public static class ModuleHelper
     /// <returns>If header required values are set</returns>
     public static bool IsHeaderRequiredValuesCheckSuccess(RequestHeaderDto header)
     {
-        
+
         if (string.IsNullOrEmpty(header.PSUInitiated)
             || string.IsNullOrEmpty(header.XGroupID)
             || string.IsNullOrEmpty(header.XASPSPCode)
