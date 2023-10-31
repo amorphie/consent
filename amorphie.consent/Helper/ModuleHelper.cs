@@ -28,11 +28,29 @@ public static class ModuleHelper
         {
             header.XTPPCode = traceValue;
         }
-
         if (httpContext.Request.Headers.TryGetValue("PSU-Initiated", out traceValue))
         {
             header.PSUInitiated = traceValue;
         }
         return header;
+    }
+
+    /// <summary>
+    /// Checks if header required values are set.
+    /// </summary>
+    /// <param name="header">Data to be checked</param>
+    /// <returns>If header required values are set</returns>
+    public static bool IsHeaderRequiredValuesCheckSuccess(RequestHeaderDto header)
+    {
+
+        if (string.IsNullOrEmpty(header.PSUInitiated)
+            || string.IsNullOrEmpty(header.XGroupID)
+            || string.IsNullOrEmpty(header.XASPSPCode)
+            || string.IsNullOrEmpty(header.XRequestID)
+            || string.IsNullOrEmpty(header.XTPPCode))
+        {
+            return false;
+        }
+        return true;
     }
 }
