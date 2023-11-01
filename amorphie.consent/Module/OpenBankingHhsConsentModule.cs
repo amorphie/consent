@@ -703,7 +703,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
+            hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor; ;
@@ -1051,32 +1051,32 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p != OpenBankingConstants.IzinTur.TemelIslem && p != OpenBankingConstants.IzinTur.AyrintiliIslem))
+            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem))
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn related iznTur not valid.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat. IzınTur temel islem should be selected.";
                 return result;
             }
             if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))//Data constraints
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid. Maximum 12 months before.";
                 return result;
             }
         }
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg.iznTur.All(p => p != OpenBankingConstants.IzinTur.TemelIslem && p != OpenBankingConstants.IzinTur.AyrintiliIslem))
+            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem))
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat hesapIslemBtsZmn related iznTur not valid.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat IzınTur temel islem should be selected.";
                 return result;
             }
             if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))//Data constraints
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid. Maximum 12 months later.";
                 return result;
             }
         }
