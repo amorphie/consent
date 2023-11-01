@@ -1045,9 +1045,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             return result;
         }
 
-          if ( rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
+        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
+          || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
+          || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld erisimIzniSonTrh data check failed. It should be between tomorrow and 6 months later ";
@@ -1058,8 +1058,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem 
-                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem ) == false)
+            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem
+                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem) == false)
             {
                 result.Result = false;
                 result.Message = "TR.OHVPS.Resource.InvalidFormat. IznTur temelislem or ayrintiliIslem should be selected.";
@@ -1076,7 +1076,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
             if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem
-                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem ) == false)
+                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem) == false)
             {
                 result.Result = false;
                 result.Message = "TR.OHVPS.Resource.InvalidFormat IznTur temelislem or ayrintiliIslem should be selected.";
