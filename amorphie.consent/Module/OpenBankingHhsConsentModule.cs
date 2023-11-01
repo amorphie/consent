@@ -1037,13 +1037,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         //Check HesapBilgisi
         //Check izinbilgisi properties
-        if (rizaIstegi.hspBlg.iznBlg.iznTur?.Any() == false
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
+        if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
+            || rizaIstegi.hspBlg.iznBlg.iznTur?.Contains(OpenBankingConstants.IzinTur.HesapBilgisi) == false)
+        {
+            result.Result = false;
+            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain HesapBilgisi permission.";
+            return result;
+        }
+
+          if ( rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
             || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
             || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
         {
             result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld data check failed.";
+            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld erisimIzniSonTrh data check failed. It should be between tomorrow and 6 months later ";
             return result;
         }
 
@@ -1051,13 +1058,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem))
+            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem 
+                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem ) == false)
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. IzınTur temel islem should be selected.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat. IznTur temelislem or ayrintiliIslem should be selected.";
                 return result;
             }
-            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))//Data constraints
+            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))//Data constraints
             {
                 result.Result = false;
                 result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid. Maximum 12 months before.";
@@ -1067,13 +1075,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
         {
             //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (!rizaIstegi.hspBlg.iznBlg.iznTur.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem))
+            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslem
+                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslem ) == false)
             {
                 result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat IzınTur temel islem should be selected.";
+                result.Message = "TR.OHVPS.Resource.InvalidFormat IznTur temelislem or ayrintiliIslem should be selected.";
                 return result;
             }
-            if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))//Data constraints
+            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))//Data constraints
             {
                 result.Result = false;
                 result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid. Maximum 12 months later.";
