@@ -48,6 +48,10 @@ Generated\ Files/
 TestResult.xml
 nunit-*.xml
 
+# Ignore Sh files,
+*.sh
+
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/

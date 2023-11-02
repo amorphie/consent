@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231024142840_yos")]
+    partial class yos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,58 +136,6 @@ namespace amorphie.consent.data.Migrations
                     b.HasIndex("ConsentId");
 
                     b.ToTable("OBAccountReferences");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBConsentIdentityInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ConsentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("IdentityData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("IdentityType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("InstitutionIdentityData")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InstitutionIdentityType")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UserType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConsentId");
-
-                    b.ToTable("OBConsentIdentityInfos");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
@@ -310,17 +261,6 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("Consent");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBConsentIdentityInfo", b =>
-                {
-                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
-                        .WithMany("ObConsentIdentityInfos")
-                        .HasForeignKey("ConsentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Consent");
-                });
-
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
                 {
                     b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
@@ -335,8 +275,6 @@ namespace amorphie.consent.data.Migrations
             modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
                     b.Navigation("OBAccountReferences");
-
-                    b.Navigation("ObConsentIdentityInfos");
 
                     b.Navigation("Token");
                 });

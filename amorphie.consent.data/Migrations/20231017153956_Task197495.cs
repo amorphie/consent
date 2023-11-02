@@ -12,15 +12,15 @@ namespace amorphie.consent.data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ConsentDefinitions");
+            // migrationBuilder.DropTable(
+            //     name: "ConsentDefinitions");
 
-            migrationBuilder.DropTable(
-                name: "ConsentPermissions");
+            // migrationBuilder.DropTable(
+            //     name: "ConsentPermissions");
 
-            migrationBuilder.DropColumn(
-                name: "ConsentDefinitionId",
-                table: "Consents");
+            // migrationBuilder.DropColumn(
+            //     name: "ConsentDefinitionId",
+            //     table: "Consents");
 
             migrationBuilder.CreateTable(
                 name: "OBAccountReferences",
