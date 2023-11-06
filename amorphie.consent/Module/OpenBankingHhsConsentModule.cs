@@ -1440,7 +1440,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (!ModuleHelper.IsHeaderRequiredValuesCheckSuccess(header))
         {
             result.Result = false;
-            result.Message = "Header required values missing.";
+            result.Message = "Problem is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
         return result;
