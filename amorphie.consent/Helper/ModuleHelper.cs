@@ -52,7 +52,7 @@ public static class ModuleHelper
         {
             return false;
         }
-        
+
         if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
         {//Check psu initiated value
             return false;
