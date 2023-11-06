@@ -31,4 +31,17 @@ public static class ConstantHelper
             OpenBankingConstants.RizaDurumu.YetkiKullanildi
         };
     }
+
+    /// <summary>
+    /// Get psu initiated values as a string list
+    /// </summary>
+    /// <returns>psu initiated values as a string list</returns>
+    public static List<string> GetPSUInitiatedValues()
+    {
+        return new List<string>()
+        {
+            OpenBankingConstants.PSUInitiated.OHKStarted,
+            OpenBankingConstants.PSUInitiated.SystemStarted
+        };
+    }
 }

@@ -97,4 +97,10 @@ public static class OpenBankingConstants
 
     }
 
+    public static class PSUInitiated
+    {
+        public static readonly string OHKStarted = "E";
+        public static readonly string SystemStarted = "H";
+    }
+
 }

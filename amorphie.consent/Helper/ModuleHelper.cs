@@ -37,6 +37,7 @@ public static class ModuleHelper
 
     /// <summary>
     /// Checks if header required values are set.
+    /// PSU Initiated value is correct
     /// </summary>
     /// <param name="header">Data to be checked</param>
     /// <returns>If header required values are set</returns>
@@ -49,6 +50,11 @@ public static class ModuleHelper
             || string.IsNullOrEmpty(header.XRequestID)
             || string.IsNullOrEmpty(header.XTPPCode))
         {
+            return false;
+        }
+
+        if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
+        {//Check psu initiated value
             return false;
         }
         return true;
