@@ -3,10 +3,10 @@ using FluentValidation;
 
 namespace amorphie.consent.Validator;
 public sealed class OpenBankingConsentValidator : AbstractValidator<Consent>
+{
+    public OpenBankingConsentValidator()
     {
-        public OpenBankingConsentValidator()
-        {
-            RuleFor(x => x.ConsentType).NotNull();
-            RuleFor(x => x.AdditionalData).MinimumLength(5);
-        }
+        RuleFor(x => x.ConsentType).NotNull();
+        RuleFor(x => x.AdditionalData).MinimumLength(5);
     }
+}

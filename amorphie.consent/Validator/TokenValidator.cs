@@ -3,9 +3,10 @@ using FluentValidation;
 
 namespace amorphie.consent.Validator;
 public sealed class TokenValidator : AbstractValidator<Token>
+{
+    public TokenValidator()
     {
-        public TokenValidator()
-        {
-            RuleFor(x => x.TokenValue).NotNull();
-            RuleFor(x => x.TokenType).NotNull();        }
+        RuleFor(x => x.TokenValue).NotNull();
+        RuleFor(x => x.TokenType).NotNull();
     }
+}
