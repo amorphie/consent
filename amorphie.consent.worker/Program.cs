@@ -21,14 +21,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/change-state", async void (
+app.MapPost("/change-state", async void(
             [FromBody] dynamic body,
             HttpRequest request,
             HttpContext httpContext)
             =>
 {
 
-        Console.WriteLine(request.Headers["X-Zeebe-Element-Instance-Key"].ToString());
+    Console.WriteLine(request.Headers["X-Zeebe-Element-Instance-Key"].ToString());
 })
 .WithOpenApi();
 
