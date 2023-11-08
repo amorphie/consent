@@ -520,9 +520,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         var resultData = new Consent();
         try
         {
-
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id);
+                .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
+                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             //Check consent validity
             ApiResult isDataValidResult = IsDataValidToUpdatePaymentConsentForAuth(entity, savePCStatusSenderAccount);
             if (!isDataValidResult.Result)//Error in data validation
@@ -532,8 +532,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
             var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
             //Check and set sender account
-            if (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
-                || string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef))
+            if (additionalData.odmBsltm.gon == null
+                || (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
+                    && string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef)))
             {
                 additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
             }
@@ -830,14 +831,23 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
-            odemeEmriRizasi.gkd.hhsYonAdr = configuration["HHSForwardingAddress"] ?? string.Empty;
+            odemeEmriRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
-
+            consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
+            {
+                new OBConsentIdentityInfo()
+                {//Get consent identity data to identity entity 
+                    IdentityData = odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs ?? string.Empty,
+                    IdentityType = odemeEmriRizasi.odmBsltm.kmlk.kmlkTur ?? string.Empty,
+                    InstitutionIdentityData = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs,
+                    InstitutionIdentityType = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur,
+                    UserType = odemeEmriRizasi.odmBsltm.kmlk.ohkTur
+                }
+            };
             context.Consents.Add(consentEntity);
-
             await context.SaveChangesAsync();
             return Results.Ok(odemeEmriRizasi);
         }
@@ -1448,14 +1458,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (entity == null)//No consent in db
         {
             result.Result = false;
-            result.Message = "BadRequest.";
+            result.Message = "No consent in the system.";
             return result;
         }
 
         if (entity.State != OpenBankingConstants.RizaDurumu.YetkiBekleniyor)//State must be yetki bekleniyor
         {
             result.Result = false;
-            result.Message = "Consent state not valid to process";
+            result.Message = "Consent state not valid to process. Only YetkiBekleniyor state consent can be authorized.";
             return result;
         }
         //Check if sender account is already selected in db
@@ -1463,11 +1473,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         bool isSenderAccountSet = string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) || string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef);
         if (!isSenderAccountSet
             && (savePcStatusSenderAccount.SenderAccount == null
-                || string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
-                || string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspNo)))
+                || (string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
+                && string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspNo))))
         {
             result.Result = false;
-            result.Message = "Sender account information should be sent";
+            result.Message = "Sender account information should be sent.";
             return result;
         }
         return result;
