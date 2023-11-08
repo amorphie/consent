@@ -44,4 +44,26 @@ public static class ConstantHelper
             OpenBankingConstants.PSUInitiated.SystemStarted
         };
     }
+    
+    /// <summary>
+    /// Get OdemeAmaci constants values list
+    /// </summary>
+    /// <returns>OdemeAmaci constants values list</returns>
+    public static List<string> GetOdemeAmaciList()
+    {
+        return new List<string>()
+        {
+            OpenBankingConstants.OdemeAmaci.BireyselOdeme,
+            OpenBankingConstants.OdemeAmaci.TicariOdeme,
+            OpenBankingConstants.OdemeAmaci.FinansalOdeme,
+            OpenBankingConstants.OdemeAmaci.AidatOdemesi,
+            OpenBankingConstants.OdemeAmaci.CalisanOdemesi,
+            OpenBankingConstants.OdemeAmaci.EgitimOdemesi,
+            OpenBankingConstants.OdemeAmaci.YatirimOdemesi,
+            OpenBankingConstants.OdemeAmaci.DigerKiraOdemesi,
+            OpenBankingConstants.OdemeAmaci.ETicaretOdemesi,
+            OpenBankingConstants.OdemeAmaci.KonutKirasiOdemesi,
+            OpenBankingConstants.OdemeAmaci.IsYeriKirasiOdemesi
+        };
+    }
 }

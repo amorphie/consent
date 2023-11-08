@@ -102,5 +102,32 @@ public static class OpenBankingConstants
         public static readonly string OHKStarted = "E";
         public static readonly string SystemStarted = "H";
     }
+    
+    public static class  OdemeKaynak
+    {
+        public static readonly string InternetBankaciligindanGonderilenOdemelerde ="I";
+        public static readonly string OtomatikParaMakineleriATMIleGonderilenOdemelerde="A";
+        public static readonly string TelefonBankaciligiIleGonderilenOdemelerde="T";
+        public static readonly string KiosklarAraciligiylaGonderilenOdemelerde="K";
+        public static readonly string SubedenGirilenOdemelerde="S";
+        public static readonly string MobilUygulamadanGonderilenOdemelerde="M";
+        public static readonly string YukarıdakilerDisindakiOdemeKaynaklarindenGonderilenOdemelerde="D";
+        public static readonly string AcikBankacilikAraciligiIleGonderilenOdemelerde="O";
+    }
+
+    public static class OdemeAmaci
+    {
+        public static readonly string KonutKirasiOdemesi = "01";
+        public static readonly string IsYeriKirasiOdemesi = "02";
+        public static readonly string DigerKiraOdemesi = "03";
+        public static readonly string ETicaretOdemesi = "04";
+        public static readonly string CalisanOdemesi = "05";
+        public static readonly string TicariOdeme = "06";
+        public static readonly string BireyselOdeme = "07";
+        public static readonly string YatirimOdemesi = "08";
+        public static readonly string FinansalOdeme = "09";
+        public static readonly string EgitimOdemesi = "10";
+        public static readonly string AidatOdemesi = "11";
+    }
 
 }
