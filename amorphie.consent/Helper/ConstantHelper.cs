@@ -44,7 +44,7 @@ public static class ConstantHelper
             OpenBankingConstants.PSUInitiated.SystemStarted
         };
     }
-    
+
     /// <summary>
     /// Get OdemeAmaci constants values list
     /// </summary>
