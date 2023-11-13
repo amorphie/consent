@@ -814,7 +814,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            
+
             ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
             if (!paymentServiceResponse.Result)//Error in service
                 return Results.BadRequest(paymentServiceResponse.Message);
