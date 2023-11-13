@@ -12,7 +12,7 @@ public class PaymentService : IPaymentService
 {
     private readonly IPaymentClientService _paymentClientService;
     private readonly IMapper _mapper;
-    
+
 
     public PaymentService(IPaymentClientService paymentClientService,
     IMapper mapper)
@@ -34,7 +34,7 @@ public class PaymentService : IPaymentService
                 {
                     isyOdmBlg = serviceResponse.isyOdmBlg,
                     rzBlg = serviceResponse.rzBlg,
-                    gkd =  _mapper.Map<GkdDto>(serviceResponse.gkd),
+                    gkd = _mapper.Map<GkdDto>(serviceResponse.gkd),
                     katilimciBlg = serviceResponse.katilimciBlg,
                     odmBsltm = serviceResponse.odmBsltm
                 };
