@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
     public class OdemeEmriRizasiHHSDto
 {
-    public RizaBilgileriDto rzBlg { get; set; }
+    public RizaBilgileriDto rzBlg { get; set; } = new();
     public KatilimciBilgisiDto katilimciBlg { get; set; }
     public GkdDto gkd { get; set; }
     public OdemeBaslatmaDto odmBsltm { get; set; }
-    public IsyeriOdemeBilgileriDto isyOdmBlg { get; set; }
+    public IsyeriOdemeBilgileriDto? isyOdmBlg { get; set; }
 }

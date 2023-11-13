@@ -1,17 +1,24 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 
 namespace amorphie.consent.Service;
 
 public class PaymentService : IPaymentService
 {
     private readonly IPaymentClientService _paymentClientService;
+    private readonly IMapper _mapper;
 
-    public PaymentService(IPaymentClientService paymentClientService)
+
+    public PaymentService(IPaymentClientService paymentClientService,
+    IMapper mapper)
     {
         _paymentClientService = paymentClientService;
+        _mapper = mapper;
     }
 
     public async Task<ApiResult> SendOdemeEmriRizasi(OdemeEmriRizaIstegiHHSDto odemeEmriRizaIstegi)
@@ -21,14 +28,22 @@ public class PaymentService : IPaymentService
         {
             //Send odemeemririzasi to servie
             OdemeEmriRizasiServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
-            if (string.IsNullOrEmpty(serviceResponse.Error))//Success
+            if (string.IsNullOrEmpty(serviceResponse.error))//Success
             {
-                result.Data = serviceResponse.OdemeEmriRizaIstegi;
+                OdemeEmriRizasiHHSDto odemeEmriRizasi = new OdemeEmriRizasiHHSDto()
+                {
+                    isyOdmBlg = serviceResponse.isyOdmBlg,
+                    rzBlg = serviceResponse.rzBlg,
+                    gkd = _mapper.Map<GkdDto>(serviceResponse.gkd),
+                    katilimciBlg = serviceResponse.katilimciBlg,
+                    odmBsltm = serviceResponse.odmBsltm
+                };
+                result.Data = odemeEmriRizasi;
             }
             else
             {//Error in service
                 result.Result = false;
-                result.Message = serviceResponse.Error;
+                result.Message = serviceResponse.error;
             }
         }
         catch (Exception e)
