@@ -807,21 +807,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     {
         try
         {
-            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
-            if (!paymentServiceResponse.Result)//Error in service
-                return Results.BadRequest(paymentServiceResponse.Message);
-
             //Check if post data is valid to process.
             var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, httpContext);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
+            
+            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
+            if (!paymentServiceResponse.Result)//Error in service
+                return Results.BadRequest(paymentServiceResponse.Message);
 
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
-            OdemeEmriRizasiHHSDto odemeEmriRizasi = mapper.Map<OdemeEmriRizasiHHSDto>(rizaIstegi);
+            OdemeEmriRizasiHHSDto odemeEmriRizasi = (OdemeEmriRizasiHHSDto)paymentServiceResponse.Data;
             //Set consent data
             odemeEmriRizasi.rzBlg = new RizaBilgileriDto()
             {
