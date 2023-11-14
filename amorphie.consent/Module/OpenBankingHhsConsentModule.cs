@@ -419,9 +419,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            var entity = await context.Consents
+            var entity = await context.ConsentDetails
                 .FirstOrDefaultAsync(c => c.Id == odemeEmriNo
-                                     && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPaymentOrder);
+                                     && c.ConsentDetailType == OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder);
             ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
             {
@@ -892,14 +892,25 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 return Results.BadRequest(dataValidationResult.Message);
             }
           
-            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmri(odemeEmriIstegi);//Send payment order to service
+            //Send payment order to payment service
+            ApiResult paymentServiceResponse = await paymentService.SendOdemeEmri(odemeEmriIstegi);
             if (!paymentServiceResponse.Result)//Error in service
                 return Results.BadRequest(paymentServiceResponse.Message);
 
             OdemeEmriHHSDto odemeEmriDto = (OdemeEmriHHSDto)paymentServiceResponse.Data;
+            //TODO:Ozlem check payment service response data validity
 
-            var orderEntity = new Consent();
-            context.Consents.Add(orderEntity);//Add to get id
+            //Update consent state
+            Consent paymentConsentEntity = (Consent)dataValidationResult.Data;//odemeemririzasi entity
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(paymentConsentEntity.AdditionalData);
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+            paymentConsentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            paymentConsentEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            context.Consents.Update(paymentConsentEntity);
+
+            var orderEntity = new ConsentDetail();
+            context.ConsentDetails.Add(orderEntity);//Add to get id
 
             //Set consent data
             odemeEmriDto.emrBlg = new EmirBilgileriDto()
@@ -908,10 +919,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 odmEmriZmn = DateTime.UtcNow
             };
             odemeEmriDto.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            orderEntity.ConsentId = paymentConsentEntity.Id;
             orderEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriDto);
             orderEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
-            orderEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPaymentOrder;
-            context.Consents.Add(orderEntity);
+            orderEntity.ConsentDetailType = OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder;
+            context.ConsentDetails.Add(orderEntity);
+            
+            
 
             await context.SaveChangesAsync();
             return Results.Ok(odemeEmriDto);
@@ -1326,7 +1340,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// </summary>
     /// <param name="entity">To be checked entity</param>
     /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetPaymentOrderConsent(Consent? entity)
+    private ApiResult IsDataValidToGetPaymentOrderConsent(ConsentDetail? entity)
     {
         ApiResult result = new();
         if (entity == null)
@@ -1468,7 +1482,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         //Check if sender account is already selected in db
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
-        bool isSenderAccountSet = string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) || string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef);
+        bool isSenderAccountSet = !string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) || !string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef);
         if (!isSenderAccountSet
             && (savePcStatusSenderAccount.SenderAccount == null
                 || (string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
