@@ -49,7 +49,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef);
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
+        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentConsentPost);
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentStatusForUsage", UpdatePaymentConsentStatusForUsage);
@@ -799,7 +799,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
+    protected async Task<IResult> PaymentConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
     [FromServices] ConsentDbContext context,
     [FromServices] IMapper mapper,
     [FromServices] IConfiguration configuration,
@@ -809,7 +809,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         try
         {
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentInformationConsentPost(rizaIstegi, configuration, httpContext);
+            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, httpContext);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -891,9 +891,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-
-            //Database consent entity
-            HHSPaymentConsentDto paymentConsent = (HHSPaymentConsentDto)dataValidationResult.Data;
+          
             ApiResult paymentServiceResponse = await paymentService.SendOdemeEmri(odemeEmriIstegi);//Send payment order to service
             if (!paymentServiceResponse.Result)//Error in service
                 return Results.BadRequest(paymentServiceResponse.Message);
@@ -1108,7 +1106,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
     /// <param name="configuration">Config file</param>
     /// <param name="httpContext">HttpContext httpContext</param>
     /// <returns></returns>
-    private async Task<ApiResult> IsDataValidToPaymentInformationConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+    private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
      IConfiguration configuration,
      HttpContext httpContext)
     {
@@ -1282,7 +1280,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         if (odemeEmriRizasiConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)//State must be yetki kullanıldı
         {
             result.Result = false;
-            result.Message = "Consent state not valid to process. Consent state have to be ";
+            result.Message = "Consent state not valid to process. Consent state have to be YetkiKullanildi";
             return result;
         }
         result.Data = odemeEmriRizasiConsent;

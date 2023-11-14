@@ -60,7 +60,24 @@ public class PaymentService : IPaymentService
         try
         {
             //Send odemeemri to servie
-            result.Data = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
+            OdemeEmriServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
+            if (string.IsNullOrEmpty(serviceResponse.error))//Success
+            {
+                OdemeEmriHHSDto odemeEmriRizasi = new OdemeEmriHHSDto()
+                {
+                    isyOdmBlg = serviceResponse.isyOdmBlg,
+                    rzBlg = serviceResponse.rzBlg,
+                    gkd = serviceResponse.gkd,
+                    katilimciBlg = serviceResponse.katilimciBlg,
+                    odmBsltm = serviceResponse.odmBsltm
+                };
+                result.Data = odemeEmriRizasi;
+            }
+            else
+            {//Error in service
+                result.Result = false;
+                result.Message = serviceResponse.error;
+            }
         }
         catch (Exception e)
         {
