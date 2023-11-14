@@ -9,5 +9,5 @@ public class OdemeAyrintilariDetailedDto
     public string ohkMsj { get; set; }
     public string odmStm { get; set; }
     public string odmStmNo { get; set; }
-    public DateTime bekOdmZmn { get; set; }
+    public DateTime? bekOdmZmn { get; set; }
 }

@@ -59,8 +59,8 @@ public class ConsentDbContext : DbContext
     public DbSet<Consent> Consents { get; set; }
     public DbSet<Token> Tokens { get; set; }
     public DbSet<OBAccountReference> OBAccountReferences { get; set; }
-    public DbSet<YosInfo> YosInfos { get; set; }
     public DbSet<OBConsentIdentityInfo> OBConsentIdentityInfos { get; set; }
-
+    public DbSet<ConsentDetail> ConsentDetails { get; set; }
+    public DbSet<YosInfo> YosInfos { get; set; }
 
 }
