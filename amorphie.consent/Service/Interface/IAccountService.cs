@@ -40,7 +40,7 @@ public interface IAccountService
     /// <param name="customerId">Customer Id</param>
     /// <returns>Balance list of customer</returns>
     Task<ApiResult> GetBalances(string customerId);
-    
+
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
@@ -55,7 +55,7 @@ public interface IAccountService
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
     Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef);
-    
+
     /// <summary>
     /// Get balence of customer by account reference number if authorized
     /// </summary>

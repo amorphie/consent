@@ -76,7 +76,7 @@ public class AccountService : IAccountService
         }
         return result;
     }
-    
+
 
     public async Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef)
     {
@@ -163,7 +163,7 @@ public class AccountService : IAccountService
         }
         return result;
     }
-    
+
     public async Task<ApiResult> GetBalances(string customerId)
     {
         ApiResult result = new();
@@ -196,7 +196,7 @@ public class AccountService : IAccountService
         }
         return result;
     }
-    
+
     public async Task<ApiResult> GetAuthorizedBalanceByHspRef(string customerId, string hspRef)
     {
         ApiResult result = new();
@@ -212,7 +212,7 @@ public class AccountService : IAccountService
             var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
             {   OpenBankingConstants.IzinTur.BakiyeBilgisi
             }); //Get account consent from db
-            if (activeConsent == null 
+            if (activeConsent == null
                 || activeConsent.OBAccountReferences.Any(r => r.AccountReference == balance.hspRef) == false)
             {//No authorized account for balance
                 balance = null;
@@ -242,7 +242,7 @@ public class AccountService : IAccountService
         }
         return result;
     }
-    
+
     private async Task<Consent?> GetActiveAccountConsent(string customerId, List<string> permissions)
     {
         var activeConsent = (await _context.Consents
