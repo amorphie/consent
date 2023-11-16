@@ -669,7 +669,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
-
+            entity.StateModifiedAt = DateTime.UtcNow;
+            entity.ModifiedAt = DateTime.UtcNow;
+            
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -718,7 +720,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
-
+            entity.StateModifiedAt = DateTime.UtcNow;
+            entity.ModifiedAt= DateTime.UtcNow;
+            
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(resultData);
@@ -759,7 +763,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
-
+            entity.StateModifiedAt = DateTime.UtcNow;
+            entity.ModifiedAt = DateTime.UtcNow;
+            
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -802,7 +808,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             consentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
             consentEntity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
-
+            consentEntity.StateModifiedAt = DateTime.UtcNow;
+            consentEntity.ModifiedAt = DateTime.UtcNow;
+            
             List<OBAccountReference> accountReferenceEntities = new List<OBAccountReference>();//Open banking account reference entity list
             string permissionType = string.Join(",", additionalData.hspBlg.iznBlg.iznTur);//Seperate permissiontypes with comma
             foreach (var accountReference in saveAccountReference.AccountReferences)//Generate account reference entity for each account
@@ -875,17 +883,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 rizaNo = consentEntity.Id.ToString(),
                 olusZmn = DateTime.UtcNow,
+                gnclZmn = DateTime.UtcNow,
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
             hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
-            consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor; ;
+            consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+            consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
-                new OBConsentIdentityInfo()
+                new()
                 {//Get consent identity data to identity entity 
                     IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
                     IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
@@ -937,10 +947,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
             additionalData.rzBlg.rizaIptDtyKod =
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleHHSUzerindenIptal;
-            additionalData.rzBlg.gnclZmn = DateTime.Now;
+            additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.ModifiedAt = DateTime.UtcNow;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            entity.StateModifiedAt = DateTime.UtcNow;
 
             //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             context.Consents.Update(entity);
@@ -1002,6 +1013,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 rizaNo = consentEntity.Id.ToString(),
                 olusZmn = DateTime.UtcNow,
+                gnclZmn = DateTime.UtcNow,
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
             //Set gkd data
@@ -1009,6 +1021,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+            consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
@@ -1081,6 +1094,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             paymentConsentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
             paymentConsentEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            paymentConsentEntity.StateModifiedAt = DateTime.UtcNow;
             context.Consents.Update(paymentConsentEntity);
 
             var orderEntity = new ConsentDetail();
@@ -1098,8 +1112,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             orderEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
             orderEntity.ConsentDetailType = OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder;
             context.ConsentDetails.Add(orderEntity);
-
-
 
             await context.SaveChangesAsync();
             return Results.Ok(odemeEmriDto);
@@ -1879,7 +1891,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
         }
         //Check if sender account is already selected in db
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
-        bool isSenderAccountSet = !string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo) || !string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef);
+        bool isSenderAccountSet = !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspNo) || !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspRef);
         if (!isSenderAccountSet
             && (savePcStatusSenderAccount.SenderAccount == null
                 || (string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
@@ -1935,10 +1947,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                 additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
                 additionalData.rzBlg.rizaIptDtyKod =
                     OpenBankingConstants.RizaIptalDetayKodu.YeniRizaTalebiIleIptal;
-                additionalData.rzBlg.gnclZmn = DateTime.Now;
+                additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
                 waitingAporove.AdditionalData = JsonSerializer.Serialize(additionalData);
                 waitingAporove.ModifiedAt = DateTime.UtcNow;
                 waitingAporove.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                waitingAporove.StateModifiedAt = DateTime.UtcNow;
             }
             context.Consents.UpdateRange(waitingAporoves);
         }

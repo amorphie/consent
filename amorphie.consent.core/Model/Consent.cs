@@ -10,6 +10,7 @@ public class Consent : EntityBase
     public string? xGroupId { get; set; }
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
+    public DateTime StateModifiedAt { get; set; }
     public List<Token> Token { get; set; }
     public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
     public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
