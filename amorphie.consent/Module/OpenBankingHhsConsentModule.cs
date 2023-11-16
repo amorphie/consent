@@ -671,7 +671,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-            
+
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -721,8 +721,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             entity.StateModifiedAt = DateTime.UtcNow;
-            entity.ModifiedAt= DateTime.UtcNow;
-            
+            entity.ModifiedAt = DateTime.UtcNow;
+
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(resultData);
@@ -765,7 +765,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-            
+
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -810,7 +810,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ModifiedAt = DateTime.UtcNow;
-            
+
             List<OBAccountReference> accountReferenceEntities = new List<OBAccountReference>();//Open banking account reference entity list
             string permissionType = string.Join(",", additionalData.hspBlg.iznBlg.iznTur);//Seperate permissiontypes with comma
             foreach (var accountReference in saveAccountReference.AccountReferences)//Generate account reference entity for each account
