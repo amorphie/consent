@@ -30,6 +30,7 @@ builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -66,6 +67,13 @@ builder.Services
     .ConfigureHttpClient(c =>
         c.BaseAddress = new Uri(builder.Configuration["AccountServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied as vault variable", "AccountServiceURL")))
+    .AddPolicyHandler(retryPolicy);
+
+builder.Services
+    .AddRefitClient<ICustomerClientService>()
+    .ConfigureHttpClient(c =>
+        c.BaseAddress = new Uri(builder.Configuration["CustomerServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied as vault variable", "CustomerServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
