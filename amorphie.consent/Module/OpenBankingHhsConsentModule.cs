@@ -893,6 +893,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
+            consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new()
@@ -1023,6 +1024,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
+            consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new OBConsentIdentityInfo()
