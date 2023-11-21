@@ -28,7 +28,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
         routeGroupBuilder.MapGet("/user/{userId}", GetUserConsentsByUserId);
     }
 
-    
+
     public async Task<IResult> GetUserConsents(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -48,7 +48,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             return Results.NotFound("Kullanıcının rızası bulunamadı.");
         }
     }
-    
+
     public async Task<IResult> GetUserConsentsByUserId(
         [FromServices] ConsentDbContext context,
         Guid userId
@@ -68,7 +68,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             return Results.NotFound("Kullanıcının rızası bulunamadı.");
         }
     }
-    
+
     public async ValueTask<IResult> SearchMethod(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
