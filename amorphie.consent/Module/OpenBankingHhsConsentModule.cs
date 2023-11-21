@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
-public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
+public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
 
     public OpenBankingHHSConsentModule(WebApplication app)
@@ -1153,7 +1153,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
+            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDto>>(resultList))
             : Results.NoContent();
     }
 

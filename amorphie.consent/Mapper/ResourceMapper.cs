@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.DTO.OpenBanking.YOS;
 using amorphie.consent.core.Model;
 using AutoMapper;
 using Newtonsoft.Json;
@@ -16,20 +17,19 @@ namespace amorphie.consent.Mapper
         public ResourceMapper()
         {
             CreateMap<YosInfo, YosInfoDto>().ReverseMap();
-            CreateMap<Consent, ConsentDTO>().ReverseMap();
+            CreateMap<Consent, ConsentDto>().ReverseMap();
             CreateMap<Consent, HesapBilgisiRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
-            CreateMap<Consent, OpenBankingConsentDTO>()
+            CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
-            CreateMap<ConsentDataDto, Consent>().ReverseMap();
-            CreateMap<Consent, HhsConsentDto>().ReverseMap();
+            CreateMap<Consent, YOSConsentDto>().ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
-            CreateMap<Consent, HhsConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Token)).ReverseMap();
+            CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Token)).ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
             .ConstructUsing((src, ctx) =>
             {

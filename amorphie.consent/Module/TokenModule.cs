@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO;
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.consent.core.Search;
