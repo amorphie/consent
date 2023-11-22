@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
-public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
+public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
 
     public OpenBankingHHSConsentModule(WebApplication app)
@@ -893,6 +893,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
+            consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new()
@@ -1023,6 +1024,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
+            consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new OBConsentIdentityInfo()
@@ -1153,7 +1155,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             .ToListAsync(token);
 
         return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDTO>>(resultList))
+            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDto>>(resultList))
             : Results.NoContent();
     }
 

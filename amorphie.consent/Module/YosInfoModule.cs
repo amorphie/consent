@@ -30,8 +30,7 @@ public class YosInfoModule : BaseBBTRoute<YosInfoDto, YosInfo, ConsentDbContext>
      string yosId
  )
     {
-        var yosInfo = await context.Set<YosInfo>()
-            .AsNoTracking()
+        var yosInfo = await context.YosInfos
             .Where(x => x.kod == yosId)
             .FirstOrDefaultAsync();
 

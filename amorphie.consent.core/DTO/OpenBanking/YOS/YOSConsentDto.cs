@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.core.Base;
 
-namespace amorphie.consent.core.Model;
+namespace amorphie.consent.core.DTO.OpenBanking.YOS;
 
-public class HhsConsentDto : DtoBase
+public class YOSConsentDto : DtoBase
 {
     public string AdditionalData { get; set; }
     public List<OpenBankingTokenDto> Token { get; set; }

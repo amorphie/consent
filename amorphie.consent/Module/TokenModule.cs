@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO;
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.consent.core.Search;
@@ -38,26 +39,26 @@ public class TokenModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
     [AsParameters] TokenSearch tokenSearch,
     CancellationToken token
 )
-{
-    int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
-
-    IQueryable<Token> query = context.Tokens.AsNoTracking();
-
-    if (!string.IsNullOrEmpty(tokenSearch.Keyword))
     {
-        string keyword = tokenSearch.Keyword.ToLower();
-          query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.TokenValue, x.TokenType))
-           .Matches(EF.Functions.PlainToTsQuery("english", tokenSearch.Keyword)));
+        int skipRecords = (tokenSearch.Page - 1) * tokenSearch.PageSize;
+
+        IQueryable<Token> query = context.Tokens.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(tokenSearch.Keyword))
+        {
+            string keyword = tokenSearch.Keyword.ToLower();
+            query = query.AsNoTracking().Where(x => EF.Functions.ToTsVector("english", string.Join(" ", x.TokenValue, x.TokenType))
+             .Matches(EF.Functions.PlainToTsQuery("english", tokenSearch.Keyword)));
+        }
+
+        IList<Token> resultList = await query.OrderBy(x => x.CreatedAt)
+            .Skip(skipRecords)
+            .Take(tokenSearch.PageSize)
+            .ToListAsync(token);
+
+        return (resultList != null && resultList.Count > 0)
+            ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
+            : Results.NoContent();
     }
-
-    IList<Token> resultList = await query.OrderBy(x => x.CreatedAt)
-        .Skip(skipRecords)
-        .Take(tokenSearch.PageSize)
-        .ToListAsync(token);
-
-    return (resultList != null && resultList.Count > 0)
-        ? Results.Ok(mapper.Map<IList<TokenDto>>(resultList))
-        : Results.NoContent();
-}
     #endregion
 }

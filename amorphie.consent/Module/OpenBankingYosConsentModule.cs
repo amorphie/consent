@@ -12,11 +12,12 @@ using System.Text.Json.Serialization;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.DTO.OpenBanking.YOS;
 using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Module;
 
-public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, Consent, ConsentDbContext>
+public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
     public OpenBankingYOSConsentModule(WebApplication app)
         : base(app) { }
@@ -52,7 +53,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
         try
         {
-            var consentsWithTokens = await context.Consents
+            var consentsWithTokens = await context.Consents.AsNoTracking()
                 .Include(c => c.Token)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
@@ -60,7 +61,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
             {
                 consentsWithTokens = consentsWithTokens.Where(c => c.ConsentType == consentType).ToList();
             }
-            var hhsConsentDTOs = new List<HhsConsentDto>();
+            var hhsConsentDTOs = new List<YOSConsentDto>();
 
             foreach (var consentWithTokens in consentsWithTokens)
             {
@@ -74,7 +75,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
 
-                var hhsConsentDTO = new HhsConsentDto
+                var hhsConsentDTO = new YOSConsentDto
                 {
                     Id = consentWithTokens.Id,
                     AdditionalData = consentWithTokens.AdditionalData,
@@ -100,7 +101,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDTO, C
 
             var consentsWithoutTokens = consentsWithTokens
                 .Where(c => hhsConsentDTOs.All(dto => dto.Id != c.Id))
-                .Select(consent => new HhsConsentDto
+                .Select(consent => new YOSConsentDto
                 {
                     Id = consent.Id,
                     AdditionalData = consent.AdditionalData,
