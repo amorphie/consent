@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.consent.Module;
 
-public class AuthorizationModule: BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
+public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
 {
     public AuthorizationModule(WebApplication app)
         : base(app)
@@ -20,7 +20,7 @@ public class AuthorizationModule: BaseBBTRoute<ConsentDto, Consent, ConsentDbCon
     }
     public override string[]? PropertyCheckList => null;
     public override string? UrlFragment => "Authorization";
-     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
+    public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
@@ -38,47 +38,47 @@ public class AuthorizationModule: BaseBBTRoute<ConsentDto, Consent, ConsentDbCon
     /// <param name="mapper"></param>
     /// <param name="httpContext"></param>
     /// <returns>If there is any valid consent with given parameters</returns>
-     public async Task<IResult> CheckAuthorization(
-         Guid clientId,
-         Guid userId,
-         Guid roleId,
-         Guid scopeId,
-         string consentType,
-         [FromServices] ConsentDbContext context,
-         [FromServices] IMapper mapper,
-         HttpContext httpContext)
-     {
-         try
-         {
-             var today = DateTime.UtcNow;
-             var authAccountConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list for account
-             var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
-             //Filter consent according to parameters
-             var consents = await context.Consents.AsNoTracking().Where(c =>
-                     c.ClientId == clientId
-                     && c.UserId == userId
-                     && c.RoleId == roleId
-                     && c.ScopeId == scopeId
-                     && c.ConsentType == consentType
-                     && ((c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount 
-                            && authAccountConsentStatusList.Contains(c.State) 
-                            && c.OBAccountReferences.Any(r => r.LastValidAccessDate>= today))
-                         || (c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment
-                             && authPaymentConsentStatusList.Contains(c.State))))
-                 .ToListAsync();
-             if (consents?.Any() ?? false)
-             {
-               return Results.Ok();
-             }
-             else
-             {//Not authorized
-                 return Results.Forbid();
-             }
-            
-         }
-         catch (Exception ex)
-         {
-             return Results.Problem($"An error occurred: {ex.Message}");
-         }
-     }
+    public async Task<IResult> CheckAuthorization(
+        Guid clientId,
+        Guid userId,
+        Guid roleId,
+        Guid scopeId,
+        string consentType,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var today = DateTime.UtcNow;
+            var authAccountConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list for account
+            var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
+                                                                                                          //Filter consent according to parameters
+            var consents = await context.Consents.AsNoTracking().Where(c =>
+                    c.ClientId == clientId
+                    && c.UserId == userId
+                    && c.RoleId == roleId
+                    && c.ScopeId == scopeId
+                    && c.ConsentType == consentType
+                    && ((c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount
+                           && authAccountConsentStatusList.Contains(c.State)
+                           && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
+                        || (c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment
+                            && authPaymentConsentStatusList.Contains(c.State))))
+                .ToListAsync();
+            if (consents?.Any() ?? false)
+            {
+                return Results.Ok();
+            }
+            else
+            {//Not authorized
+                return Results.Forbid();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
 }

@@ -810,7 +810,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ModifiedAt = DateTime.UtcNow;
-            
+
             //Open banking account reference entity
             OBAccountReference accountReferenceEntity = new OBAccountReference()
             {
@@ -821,7 +821,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 TransactionInquiryStartTime = additionalData.hspBlg.iznBlg.hesapIslemBslZmn,
                 TransactionInquiryEndTime = additionalData.hspBlg.iznBlg.hesapIslemBtsZmn
             };
-           
+
             context.OBAccountReferences.Add(accountReferenceEntity);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();

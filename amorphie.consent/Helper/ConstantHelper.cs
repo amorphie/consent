@@ -32,11 +32,11 @@ public static class ConstantHelper
         };
     }
 
-   
-   /// <summary>
-   /// Get authorized account consent status list 
-   /// </summary>
-   /// <returns>Authorized account consent status list</returns>
+
+    /// <summary>
+    /// Get authorized account consent status list 
+    /// </summary>
+    /// <returns>Authorized account consent status list</returns>
     public static List<string> GetAuthorizedConsentStatusListForAccount()
     {
         return new List<string>()
