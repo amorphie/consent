@@ -18,7 +18,7 @@ public class Consent : EntityBase
     public List<Token> Token { get; set; }
     public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
     public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
-    public virtual ICollection<ConsentDetail> ConsentDetails { get; set; }
+    public virtual ICollection<OBPaymentOrder> PaymentOrders { get; set; }
 
     [NotMapped]
     public virtual NpgsqlTsVector SearchVector { get; set; }

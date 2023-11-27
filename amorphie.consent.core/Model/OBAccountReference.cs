@@ -7,11 +7,8 @@ namespace amorphie.consent.core.Model;
 public class OBAccountReference : EntityBase
 {
     public Guid ConsentId { get; set; }
-    public string AccountReference { get; set; }
-    /// <summary>
-    /// Permission types joined by comma
-    /// </summary>
-    public string PermissionType { get; set; }
+    public List<string> AccountReferences { get; set; }
+    public List<string> PermissionTypes { get; set; }
     public DateTime LastValidAccessDate { get; set; }
     public DateTime? TransactionInquiryStartTime { get; set; }
     public DateTime? TransactionInquiryEndTime { get; set; }

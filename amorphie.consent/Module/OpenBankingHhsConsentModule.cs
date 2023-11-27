@@ -593,7 +593,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            var entity = await context.ConsentDetails
+            var entity = await context.OBPaymentOrders
                 .FirstOrDefaultAsync(c => c.Id == odemeEmriNo
                                      && c.ConsentDetailType == OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder);
             ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
@@ -810,23 +810,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ModifiedAt = DateTime.UtcNow;
-
-            List<OBAccountReference> accountReferenceEntities = new List<OBAccountReference>();//Open banking account reference entity list
-            string permissionType = string.Join(",", additionalData.hspBlg.iznBlg.iznTur);//Seperate permissiontypes with comma
-            foreach (var accountReference in saveAccountReference.AccountReferences)//Generate account reference entity for each account
+            
+            //Open banking account reference entity
+            OBAccountReference accountReferenceEntity = new OBAccountReference()
             {
-                //Set account permission details
-                accountReferenceEntities.Add(new OBAccountReference()
-                {
-                    ConsentId = consentEntity.Id,
-                    AccountReference = accountReference,
-                    PermissionType = permissionType,
-                    LastValidAccessDate = additionalData.hspBlg.iznBlg.erisimIzniSonTrh,
-                    TransactionInquiryStartTime = additionalData.hspBlg.iznBlg.hesapIslemBslZmn,
-                    TransactionInquiryEndTime = additionalData.hspBlg.iznBlg.hesapIslemBtsZmn
-                });
-            }
-            context.OBAccountReferences.AddRange(accountReferenceEntities);
+                ConsentId = consentEntity.Id,
+                AccountReferences = saveAccountReference.AccountReferences,
+                PermissionTypes = additionalData.hspBlg.iznBlg.iznTur.ToList(),
+                LastValidAccessDate = additionalData.hspBlg.iznBlg.erisimIzniSonTrh,
+                TransactionInquiryStartTime = additionalData.hspBlg.iznBlg.hesapIslemBslZmn,
+                TransactionInquiryEndTime = additionalData.hspBlg.iznBlg.hesapIslemBtsZmn
+            };
+           
+            context.OBAccountReferences.Add(accountReferenceEntity);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();
             return Results.Ok();
@@ -866,7 +862,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(checkValidationResult.Message);
             }
             //Get user's active account consents from db
-            var activeAccountConsents = await GetActiveAccountConsents(rizaIstegi, context);
+            var activeAccountConsents = await GetActiveAccountConsentsOfUser(rizaIstegi, context);
             if (AnyAuthAndUsedConsents(activeAccountConsents))//Checks any authorized or authused state consent
             {
                 return Results.BadRequest("TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
@@ -1099,8 +1095,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             paymentConsentEntity.StateModifiedAt = DateTime.UtcNow;
             context.Consents.Update(paymentConsentEntity);
 
-            var orderEntity = new ConsentDetail();
-            context.ConsentDetails.Add(orderEntity);//Add to get id
+            var orderEntity = new OBPaymentOrder();
+            context.OBPaymentOrders.Add(orderEntity);//Add to get id
 
             //Set consent data
             odemeEmriDto.emrBlg = new EmirBilgileriDto()
@@ -1113,7 +1109,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             orderEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriDto);
             orderEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
             orderEntity.ConsentDetailType = OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder;
-            context.ConsentDetails.Add(orderEntity);
+            context.OBPaymentOrders.Add(orderEntity);
 
             await context.SaveChangesAsync();
             return Results.Ok(odemeEmriDto);
@@ -1751,7 +1747,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="entity">To be checked entity</param>
     /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetPaymentOrderConsent(ConsentDetail? entity)
+    private ApiResult IsDataValidToGetPaymentOrderConsent(OBPaymentOrder? entity)
     {
         ApiResult result = new();
         if (entity == null)
@@ -1986,7 +1982,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaIstegi"></param>
     /// <param name="context"></param>
     /// <returns></returns>
-    private async Task<List<Consent>> GetActiveAccountConsents(HesapBilgisiRizaIstegiHHSDto rizaIstegi, ConsentDbContext context)
+    private async Task<List<Consent>> GetActiveAccountConsentsOfUser(HesapBilgisiRizaIstegiHHSDto rizaIstegi, ConsentDbContext context)
     {
         var activeAccountConsentStatusList = ConstantHelper.GetActiveAccountConsentStatusList(); //Get active status list
         //Active account consents in db
