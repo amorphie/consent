@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using amorphie.core.Base;
 namespace amorphie.consent.core.Model;
 using NpgsqlTypes;
-public class ConsentDetail : EntityBase
+public class OBPaymentOrder : EntityBase
 {
     public Guid ConsentId { get; set; }
     public Guid? UserId { get; set; }
