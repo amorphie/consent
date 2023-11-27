@@ -26,6 +26,18 @@ public class AuthorizationModule: BaseBBTRoute<ConsentDto, Consent, ConsentDbCon
         routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
     }
 
+    /// <summary>
+    /// Check if there is any valid consent with given parameters
+    /// </summary>
+    /// <param name="clientId">Client Id</param>
+    /// <param name="userId">User Id</param>
+    /// <param name="roleId">Role Id</param>
+    /// <param name="scopeId">Scope Id</param>
+    /// <param name="consentType">Consent Type</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="httpContext"></param>
+    /// <returns>If there is any valid consent with given parameters</returns>
      public async Task<IResult> CheckAuthorization(
          Guid clientId,
          Guid userId,
@@ -39,9 +51,9 @@ public class AuthorizationModule: BaseBBTRoute<ConsentDto, Consent, ConsentDbCon
          try
          {
              var today = DateTime.UtcNow;
-             var authAccountConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list
-             var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list
-             //Active account consents in db
+             var authAccountConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list for account
+             var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
+             //Filter consent according to parameters
              var consents = await context.Consents.AsNoTracking().Where(c =>
                      c.ClientId == clientId
                      && c.UserId == userId
