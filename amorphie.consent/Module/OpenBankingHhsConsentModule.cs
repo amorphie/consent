@@ -94,7 +94,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             //Check consent
-            await ProcessAccountConsentToCancelOrEnd(rizaNo,context);
+            await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -113,7 +113,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-   
+
     /// <summary>
     /// Get account type consent by Id casting to HHSAccountConsentDto type of object
     /// </summary>
@@ -129,7 +129,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check consent
-            await ProcessAccountConsentToCancelOrEnd(rizaNo,context);
+            await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
             //Get entity from db
             var entity = await context.Consents
                 .AsNoTracking()
@@ -1824,7 +1824,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Account reference not set";
             return result;
         }
-        
+
         return result;
     }
 
@@ -2008,7 +2008,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return activeAccountConsents;
     }
 
-     /// <summary>
+    /// <summary>
     /// Check account consent to end or cancel
     /// according to state, state modified date, last valid date
     /// If last valid date comes, end consent
@@ -2016,7 +2016,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="rizaNo">To be checked consent id</param>
     /// <param name="context">Context Object</param>
-    private async Task ProcessAccountConsentToCancelOrEnd(Guid rizaNo,ConsentDbContext context)
+    private async Task ProcessAccountConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context)
     {
         var entity = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -2032,7 +2032,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
         //comment from document
         //Erişimin Geçerli Olduğu Son Tarih geldiğinde Rıza durumu Yetki Kullanıldı’dan Yetki Sonlandırıldı durumuna çekilmelidir. K ⇨ S
-        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi 
+        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
             && additionalData.hspBlg.iznBlg.erisimIzniSonTrh < today)
         {//Consent given time is up. End the consent
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
@@ -2050,7 +2050,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //5 dakikadan uzun süredir “Yetki Bekleniyor” durumunda kalan kayıtların durumları güncellenir. 
         //Yetki Bekleniyor ⇨ Rıza İptal / Süre Aşımı : Yetki Bekleniyor B ⇨ I / 04 
         if (entity.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor
-            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today )
+            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
         {
             //Consent is in yetki bekleniyor state more than 5 minutes
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
@@ -2071,7 +2071,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //5 dakikadan uzun süredir “Yetkilendirildi” durumunda kalan kayıtlar güncellenir. 
         //Yetkilendirildi ⇨ Rıza İptal / Süre Aşımı: Yetkilendirildi B ⇨ I / 05
         if (entity.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
-            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today )
+            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
         {
             //Consent is in yetkilendirildi state more than 5 minutes
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
