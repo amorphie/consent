@@ -652,7 +652,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-    
+
     /// <summary>
     /// Updates consent state for authorization usage
     /// </summary>
@@ -2099,7 +2099,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
 
-     /// <summary>
+    /// <summary>
     /// Check payment consent to end or cancel
     /// If state waiting time passes, cancel consent
     /// </summary>
@@ -2119,7 +2119,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return;
         }
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
-       
+
         //comment from document
         //5 dakikadan uzun süredir Yetki Bekleniyor'da kalan kayıtların durumları güncellenir.
         //Yetki Bekleniyor ⇨ Rıza İptal / Süre Aşımı : Yetki Bekleniyor B ⇨ I / 04
@@ -2160,7 +2160,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             return;
         }
-        
+
         //comment from document
         //5 dakikadan uzun süredir Yetki kullanıldı'da kalan kayıtlar durumları güncellenir.
         //Yetki kullanıldı ⇨ Rıza İptal / Süre Aşımı : Yetki Ödemeye Dönüşmedi B ⇨ I / 06
@@ -2181,12 +2181,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             return;
         }
-        
+
         //comment from document
         //Yenileme belirteci Son Tarih geldiğinde rıza durumu Yetki ödeme emrine dönüştü’den Yetki Sonlandırıldı'ya güncellenir.
         // E ⇨ S
         //TODO:Özlem bu durum nasıl handle edilecek bilmiyorum
-        
+
     }
 
 
