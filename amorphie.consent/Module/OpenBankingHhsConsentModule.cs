@@ -556,7 +556,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
+            //Check consent
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context);
             var entity = await context.Consents
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                 && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
@@ -601,6 +604,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             var entity = await context.OBPaymentOrders
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == odemeEmriNo
                                      && c.ConsentDetailType == OpenBankingConstants.ConsentDetailType.OpenBankingPaymentOrder);
             ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
@@ -632,8 +636,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            //Check consent
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context);
             //Get entity from db
             var entity = await context.Consents
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                     && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
             var paymentConsent = mapper.Map<HHSPaymentConsentDto>(entity);
@@ -644,7 +651,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
 
 
     /// <summary>
@@ -660,6 +666,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            //Check consent
+            await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                 && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -703,6 +711,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var resultData = new Consent();
         try
         {
+            //Check consent
+            await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
                                           && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -2063,7 +2073,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateModifiedAt = today;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             return;
         }
 
@@ -2087,6 +2096,97 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             return;
         }
+    }
+
+
+    /// <summary>
+    /// Check payment consent to end or cancel
+    /// If state waiting time passes, cancel consent
+    /// </summary>
+    /// <param name="rizaNo">To be checked consent id</param>
+    /// <param name="context">Context Object</param>
+    private async Task ProcessPaymentConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context)
+    {
+        var entity = await context.Consents
+            .FirstOrDefaultAsync(c => c.Id == rizaNo
+                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+        var today = DateTime.UtcNow;
+        if (entity == null
+            || string.IsNullOrEmpty(entity.AdditionalData)
+            || entity.State == OpenBankingConstants.RizaDurumu.YetkiIptal
+            || entity.State == OpenBankingConstants.RizaDurumu.YetkiSonlandirildi)
+        {//Consent life ended. There is nothing to do.
+            return;
+        }
+        var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+
+        //comment from document
+        //5 dakikadan uzun süredir Yetki Bekleniyor'da kalan kayıtların durumları güncellenir.
+        //Yetki Bekleniyor ⇨ Rıza İptal / Süre Aşımı : Yetki Bekleniyor B ⇨ I / 04
+        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor
+            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+        {
+            //Consent is in yetki bekleniyor state more than 5 minutes
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            additionalData.rzBlg.rizaIptDtyKod =
+                OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_YetkiBekleniyor;
+            additionalData.rzBlg.gnclZmn = today;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = today;
+            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            entity.StateModifiedAt = today;
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            return;
+        }
+
+        //comment from document
+        //5 dakikadan uzun süredir Yetkilendirildi'de kalan kayıtlar durumları güncellenir.
+        //Yetkilendirildi ⇨ Rıza İptal / Süre Aşımı : Yetkilendirildi B ⇨ I / 05
+        if (entity.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
+            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+        {
+            //Consent is in yetkilendirildi state more than 5 minutes
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            additionalData.rzBlg.rizaIptDtyKod =
+                OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_Yetkilendirildi;
+            additionalData.rzBlg.gnclZmn = today;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = today;
+            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            entity.StateModifiedAt = today;
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            return;
+        }
+
+        //comment from document
+        //5 dakikadan uzun süredir Yetki kullanıldı'da kalan kayıtlar durumları güncellenir.
+        //Yetki kullanıldı ⇨ Rıza İptal / Süre Aşımı : Yetki Ödemeye Dönüşmedi B ⇨ I / 06
+        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+        {
+            //Consent is in yetkilendirildi state more than 5 minutes
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            additionalData.rzBlg.rizaIptDtyKod =
+                OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_YetkiOdemeyeDonusmedi;
+            additionalData.rzBlg.gnclZmn = today;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = today;
+            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            entity.StateModifiedAt = today;
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            return;
+        }
+
+        //comment from document
+        //Yenileme belirteci Son Tarih geldiğinde rıza durumu Yetki ödeme emrine dönüştü’den Yetki Sonlandırıldı'ya güncellenir.
+        // E ⇨ S
+        //TODO:Özlem bu durum nasıl handle edilecek bilmiyorum
+
     }
 
 
