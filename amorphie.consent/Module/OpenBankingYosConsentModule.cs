@@ -20,7 +20,9 @@ namespace amorphie.consent.Module;
 public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
     public OpenBankingYOSConsentModule(WebApplication app)
-        : base(app) { }
+        : base(app)
+    {
+    }
 
     public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
 
@@ -32,87 +34,69 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
         routeGroupBuilder.MapPost("/token", HhsToken);
-        routeGroupBuilder.MapGet("/userId/{userId}", GetAllHhsConsentWithTokensByUserId);//Tokenlerın sadece sonuncusu gelecek
-
+        routeGroupBuilder.MapGet("/GetUserConsents/userId/{userId}/consentType/{consentType}",
+            GetConsentsWithTokensByUserId); //Tokenlerın sadece sonuncusu gelecek
     }
 
     //yos burgan uygulamasi.
 
     #region YOS
 
-    public async Task<IResult> GetAllHhsConsentWithTokensByUserId(
-   Guid userId,
-   string? consentType,
-   [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper,
-   [FromServices] ITranslationService translationService,
-   [FromServices] ILanguageService languageService,
-   HttpContext httpContext)
+    public async Task<IResult> GetConsentsWithTokensByUserId(
+        Guid userId,
+        string consentType,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITranslationService translationService,
+        [FromServices] ILanguageService languageService,
+        HttpContext httpContext)
     {
         string selectedLanguage = await languageService.GetLanguageAsync(httpContext);
 
         try
         {
-            var consentsWithTokens = await context.Consents.AsNoTracking()
+            var consentEntities = await context.Consents.AsNoTracking()
                 .Include(c => c.Token)
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-            if (!string.IsNullOrEmpty(consentType))
-            {
-                consentsWithTokens = consentsWithTokens.Where(c => c.ConsentType == consentType).ToList();
-            }
-            var hhsConsentDTOs = new List<YOSConsentDto>();
+                .Where(c => c.UserId == userId
+                            && c.ConsentType == consentType).ToListAsync();
+            
+            var responseConsents = new List<YOSConsentDto>();
 
-            foreach (var consentWithTokens in consentsWithTokens)
+            foreach (var consentEntity in consentEntities)
             {
-                var accessTokens = consentWithTokens.Token
+                var accessTokens = consentEntity.Token
                     .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
 
-                var refreshTokens = consentWithTokens.Token
+                var refreshTokens = consentEntity.Token
                     .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
 
-                var hhsConsentDTO = new YOSConsentDto
+                responseConsents.Add( new YOSConsentDto
                 {
-                    Id = consentWithTokens.Id,
-                    AdditionalData = consentWithTokens.AdditionalData,
-                    description = consentWithTokens.Description,
-                    xGroupId = consentWithTokens.xGroupId,
-                    Token = accessTokens != null && refreshTokens != null ? new List<OpenBankingTokenDto>
-                {
-                    new OpenBankingTokenDto
-                    {
-                        Id = accessTokens.ConsentId,
-                        erisimBelirteci = accessTokens.TokenValue,
-                        gecerlilikSuresi = accessTokens.ExpireTime,
-                        yenilemeBelirteci = refreshTokens.TokenValue,
-                        yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
-                        CreatedAt = accessTokens.CreatedAt,
-                        ModifiedAt = accessTokens.ModifiedAt
-                    }
-                } : null
-                };
-
-                hhsConsentDTOs.Add(hhsConsentDTO);
+                    Id = consentEntity.Id,
+                    AdditionalData = consentEntity.AdditionalData,
+                    Description = consentEntity.Description,
+                    xGroupId = consentEntity.xGroupId,
+                    Token = accessTokens != null && refreshTokens != null
+                        ? 
+                            new()
+                            {
+                                Id = accessTokens.ConsentId,
+                                erisimBelirteci = accessTokens.TokenValue,
+                                gecerlilikSuresi = accessTokens.ExpireTime,
+                                yenilemeBelirteci = refreshTokens.TokenValue,
+                                yenilemeBelirteciGecerlilikSuresi = refreshTokens.ExpireTime,
+                                CreatedAt = accessTokens.CreatedAt,
+                                ModifiedAt = accessTokens.ModifiedAt
+                            }
+                        : null
+                });
             }
 
-            var consentsWithoutTokens = consentsWithTokens
-                .Where(c => hhsConsentDTOs.All(dto => dto.Id != c.Id))
-                .Select(consent => new YOSConsentDto
-                {
-                    Id = consent.Id,
-                    AdditionalData = consent.AdditionalData,
-                    description = consent.Description,
-                    xGroupId = consent.xGroupId,
-                    Token = null // Tokenlar yok
-                });
-
-            hhsConsentDTOs.AddRange(consentsWithoutTokens);
-
-            return Results.Ok(hhsConsentDTOs);
+            return Results.Ok(responseConsents);
         }
         catch (Exception ex)
         {
@@ -120,53 +104,55 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem(errorMessage);
         }
     }
-    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto dto,
-     [FromServices] ConsentDbContext context,
-     [FromServices] IMapper mapper)
+
+    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiDto rizaIstegi,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
     {
         var returnData = new Consent();
         try
         {
+            //Get consent in db
             var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == dto.Id);
-
-
+                .FirstOrDefaultAsync(c => c.Id == rizaIstegi.Id
+                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingYOSAccount);
+            
             if (existingConsent != null)
-            {
+            {//Update consent
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.kmlk,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.hspBlg
-
+                    rizaIstegi.rzBlg,
+                    rizaIstegi.kmlk,
+                    rizaIstegi.katilimciBlg,
+                    rizaIstegi.gkd,
+                    rizaIstegi.hspBlg
                 });
-                existingConsent.Description = dto.Description;
+                existingConsent.Description = rizaIstegi.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
-                existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
-                existingConsent.xGroupId = dto.xGroupId;
+                existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
+                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
+                existingConsent.xGroupId = rizaIstegi.xGroupId;
                 context.Consents.Update(existingConsent);
             }
             else
-            {
-                var consentData = mapper.Map<Consent>(dto);
+            {//Insert consent
+                var consentData = mapper.Map<Consent>(rizaIstegi);
                 consentData.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.kmlk,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.hspBlg
+                    rizaIstegi.rzBlg,
+                    rizaIstegi.kmlk,
+                    rizaIstegi.katilimciBlg,
+                    rizaIstegi.gkd,
+                    rizaIstegi.hspBlg
                 });
 
-                consentData.State = dto.rzBlg?.rizaDrm;
-                consentData.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
-                consentData.xGroupId = dto.xGroupId;
+                consentData.State = rizaIstegi.rzBlg?.rizaDrm;
+                consentData.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
+                consentData.xGroupId = rizaIstegi.xGroupId;
                 context.Consents.Add(consentData);
                 returnData = consentData;
             }
+
             await context.SaveChangesAsync();
             return Results.Ok(returnData);
         }
@@ -176,56 +162,58 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto dto,
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper)
+    protected async Task<IResult> PaymentInformationConsentPost([FromBody] OdemeEmriRizaIstegiDto rizaIstegi,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
     {
-
         var resultData = new Consent();
         try
         {
-            if (dto == null)
+            if (rizaIstegi == null)
             {
                 return Results.BadRequest();
             }
+
             var existingConsent = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == dto.Id);
+                .FirstOrDefaultAsync(c => c.Id == rizaIstegi.Id
+                                                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingYOSPayment);
 
             if (existingConsent != null)
-            {
+            {//Update consent
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.odmBsltm,
+                    rizaIstegi.rzBlg,
+                    rizaIstegi.katilimciBlg,
+                    rizaIstegi.gkd,
+                    rizaIstegi.odmBsltm,
                 });
-                existingConsent.xGroupId = dto.xGroupId ?? Guid.NewGuid().ToString();
-                existingConsent.Description = dto.Description;
+                existingConsent.xGroupId = rizaIstegi.xGroupId ?? Guid.NewGuid().ToString();
+                existingConsent.Description = rizaIstegi.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
-                existingConsent.State = dto.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
+                existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
+                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSPayment;
 
                 context.Consents.Update(existingConsent);
                 resultData = existingConsent;
             }
             else
-            {
-                var consent = mapper.Map<Consent>(dto);
-                consent.State = dto.rzBlg?.rizaDrm;
-                consent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
-                consent.xGroupId = dto.xGroupId;
-                consent.Description = dto.Description;
+            {//Insert consent
+                var consent = mapper.Map<Consent>(rizaIstegi);
+                consent.State = rizaIstegi.rzBlg?.rizaDrm;
+                consent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSPayment;
+                consent.xGroupId = rizaIstegi.xGroupId;
+                consent.Description = rizaIstegi.Description;
                 consent.AdditionalData = JsonSerializer.Serialize(new
                 {
-                    dto.rzBlg,
-                    dto.katilimciBlg,
-                    dto.gkd,
-                    dto.odmBsltm,
+                    rizaIstegi.rzBlg,
+                    rizaIstegi.katilimciBlg,
+                    rizaIstegi.gkd,
+                    rizaIstegi.odmBsltm,
                 });
                 context.Consents.Add(consent);
                 resultData = consent;
             }
+
             await context.SaveChangesAsync();
             return Results.Ok(resultData);
         }
@@ -236,8 +224,8 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
     protected async Task<IResult> HhsToken([FromBody] OpenBankingTokenDto tokenModel,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper)
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper)
     {
         try
         {
@@ -261,12 +249,12 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     #endregion
 
 
-    private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens, IMapper mapper)
+    private (OpenBankingTokenDto erisimToken, OpenBankingTokenDto yenilemeToken) MapTokens(List<Token> tokens,
+        IMapper mapper)
     {
         var erisimToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Access Token"));
         var yenilemeToken = mapper.Map<OpenBankingTokenDto>(tokens.FirstOrDefault(t => t.TokenType == "Refresh Token"));
 
         return (erisimToken, yenilemeToken);
     }
-
 }

@@ -93,6 +93,8 @@ public static class OpenBankingConstants
     {
         public static readonly string OpenBankingAccount = "OB_Account";
         public static readonly string OpenBankingPayment = "OB_Payment";
+        public static readonly string OpenBankingYOSAccount = "OB_YOSAccount";
+        public static readonly string OpenBankingYOSPayment = "OB_YOSPayment";
 
     }
     public static class ConsentDetailType

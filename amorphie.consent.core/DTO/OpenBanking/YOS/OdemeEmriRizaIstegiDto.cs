@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace amorphie.consent.core.DTO.OpenBanking
+namespace amorphie.consent.core.DTO.OpenBanking.YOS
 {
     public class OdemeEmriRizaIstegiDto
     {

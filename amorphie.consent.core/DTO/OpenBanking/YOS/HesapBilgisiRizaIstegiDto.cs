@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace amorphie.consent.core.DTO.OpenBanking
+﻿namespace amorphie.consent.core.DTO.OpenBanking.YOS
 {
     public class HesapBilgisiRizaIstegiDto
     {
