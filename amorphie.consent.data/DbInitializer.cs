@@ -53,7 +53,7 @@ public static class DbInitializer
                 ConsentType = "Open Banking",
                 AdditionalData = "Additional Data 1",
                 Description = "Description 1",
-                xGroupId = "xGroupId 1",
+                XGroupId = "xGroupId 1",
             },
             new Consent{
                 // Id = Guid.NewGuid(),
@@ -62,7 +62,7 @@ public static class DbInitializer
                 ConsentType = "BKM",
                 AdditionalData = "Additional Data 2",
                 Description = "Description 2",
-                xGroupId = "xGroupId 2",
+                XGroupId = "xGroupId 2",
             },
         };
 

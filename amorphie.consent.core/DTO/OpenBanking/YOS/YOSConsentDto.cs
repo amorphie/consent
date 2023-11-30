@@ -12,5 +12,5 @@ public class YOSConsentDto : DtoBase
     public string AdditionalData { get; set; }
     public OpenBankingTokenDto? Token { get; set; }
     public string Description { get; set; }
-    public string xGroupId { get; set; }
+    public string XGroupId { get; set; }
 }

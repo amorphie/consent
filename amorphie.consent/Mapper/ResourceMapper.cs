@@ -29,7 +29,7 @@ namespace amorphie.consent.Mapper
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
-            CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Token)).ReverseMap();
+            CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens)).ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
             .ConstructUsing((src, ctx) =>
             {

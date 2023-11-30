@@ -10,6 +10,6 @@
         public GkdDto gkd { get; set; }
         public HesapBilgisiDto hspBlg { get; set; }
         public string? Description { get; set; }
-        public string xGroupId { get; set; }
+        public string XGroupId { get; set; }
     }
 }

@@ -11,11 +11,11 @@ public class Consent : EntityBase
     public string? Variant { get; set; }
     public string State { get; set; }
     public string? Description { get; set; }
-    public string? xGroupId { get; set; }
+    public string? XGroupId { get; set; }
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
     public DateTime StateModifiedAt { get; set; }
-    public List<Token> Token { get; set; }
+    public virtual ICollection<Token> Tokens { get; set; }
     public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
     public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
     public virtual ICollection<OBPaymentOrder> PaymentOrders { get; set; }

@@ -35,14 +35,14 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentInformationConsentPost);
         routeGroupBuilder.MapPost("/token", HhsToken);
         routeGroupBuilder.MapGet("/GetUserConsents/userId/{userId}/consentType/{consentType}",
-            GetConsentsWithTokensByUserId); //Tokenlerın sadece sonuncusu gelecek
+            GetConsents); //Tokenlerın sadece sonuncusu gelecek
     }
 
     //yos burgan uygulamasi.
 
     #region YOS
 
-    public async Task<IResult> GetConsentsWithTokensByUserId(
+    public async Task<IResult> GetConsents(
         Guid userId,
         string consentType,
         [FromServices] ConsentDbContext context,
@@ -56,7 +56,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             var consentEntities = await context.Consents.AsNoTracking()
-                .Include(c => c.Token)
+                .Include(c => c.Tokens)
                 .Where(c => c.UserId == userId
                             && c.ConsentType == consentType).ToListAsync();
             
@@ -64,12 +64,12 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             foreach (var consentEntity in consentEntities)
             {
-                var accessTokens = consentEntity.Token
+                var accessTokens = consentEntity.Tokens
                     .Where(token => token.TokenType == "Access Token" && !string.IsNullOrEmpty(token.TokenValue))
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
 
-                var refreshTokens = consentEntity.Token
+                var refreshTokens = consentEntity.Tokens
                     .Where(token => token.TokenType == "Refresh Token" && !string.IsNullOrEmpty(token.TokenValue))
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
@@ -79,7 +79,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     Id = consentEntity.Id,
                     AdditionalData = consentEntity.AdditionalData,
                     Description = consentEntity.Description,
-                    xGroupId = consentEntity.xGroupId,
+                    XGroupId = consentEntity.XGroupId,
                     Token = accessTokens != null && refreshTokens != null
                         ? 
                             new()
@@ -131,7 +131,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
                 existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
-                existingConsent.xGroupId = rizaIstegi.xGroupId;
+                existingConsent.XGroupId = rizaIstegi.XGroupId;
                 context.Consents.Update(existingConsent);
             }
             else
@@ -148,7 +148,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
                 consentData.State = rizaIstegi.rzBlg?.rizaDrm;
                 consentData.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
-                consentData.xGroupId = rizaIstegi.xGroupId;
+                consentData.XGroupId = rizaIstegi.XGroupId;
                 context.Consents.Add(consentData);
                 returnData = consentData;
             }
@@ -187,7 +187,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     rizaIstegi.gkd,
                     rizaIstegi.odmBsltm,
                 });
-                existingConsent.xGroupId = rizaIstegi.xGroupId ?? Guid.NewGuid().ToString();
+                existingConsent.XGroupId = rizaIstegi.XGroupId ?? Guid.NewGuid().ToString();
                 existingConsent.Description = rizaIstegi.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
@@ -201,7 +201,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var consent = mapper.Map<Consent>(rizaIstegi);
                 consent.State = rizaIstegi.rzBlg?.rizaDrm;
                 consent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSPayment;
-                consent.xGroupId = rizaIstegi.xGroupId;
+                consent.XGroupId = rizaIstegi.XGroupId;
                 consent.Description = rizaIstegi.Description;
                 consent.AdditionalData = JsonSerializer.Serialize(new
                 {
