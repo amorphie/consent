@@ -10,7 +10,7 @@ namespace amorphie.consent.core.DTO.OpenBanking.YOS;
 public class YOSConsentDto : DtoBase
 {
     public string AdditionalData { get; set; }
-    public List<OpenBankingTokenDto> Token { get; set; }
-    public string description { get; set; }
-    public string xGroupId { get; set; }
+    public OpenBankingTokenDto? Token { get; set; }
+    public string Description { get; set; }
+    public string XGroupId { get; set; }
 }

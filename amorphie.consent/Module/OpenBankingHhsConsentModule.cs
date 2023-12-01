@@ -1156,7 +1156,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
 
         IQueryable<Consent> query = context.Consents
-            .Include(c => c.Token)
+            .Include(c => c.Tokens)
             .AsNoTracking();
 
         if (!string.IsNullOrEmpty(consentSearch.Keyword))

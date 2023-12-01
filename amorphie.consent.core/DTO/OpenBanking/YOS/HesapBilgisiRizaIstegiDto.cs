@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace amorphie.consent.core.DTO.OpenBanking
+﻿namespace amorphie.consent.core.DTO.OpenBanking.YOS
 {
     public class HesapBilgisiRizaIstegiDto
     {
@@ -16,6 +10,6 @@ namespace amorphie.consent.core.DTO.OpenBanking
         public GkdDto gkd { get; set; }
         public HesapBilgisiDto hspBlg { get; set; }
         public string? Description { get; set; }
-        public string xGroupId { get; set; }
+        public string XGroupId { get; set; }
     }
 }
