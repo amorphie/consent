@@ -59,7 +59,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .Include(c => c.Tokens)
                 .Where(c => c.UserId == userId
                             && c.ConsentType == consentType).ToListAsync();
-            
+
             var responseConsents = new List<YOSConsentDto>();
 
             foreach (var consentEntity in consentEntities)
@@ -74,14 +74,14 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     .OrderByDescending(token => token.CreatedAt)
                     .FirstOrDefault();
 
-                responseConsents.Add( new YOSConsentDto
+                responseConsents.Add(new YOSConsentDto
                 {
                     Id = consentEntity.Id,
                     AdditionalData = consentEntity.AdditionalData,
                     Description = consentEntity.Description,
                     XGroupId = consentEntity.XGroupId,
                     Token = accessTokens != null && refreshTokens != null
-                        ? 
+                        ?
                             new()
                             {
                                 Id = accessTokens.ConsentId,
@@ -116,7 +116,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == rizaIstegi.Id
                                           && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingYOSAccount);
-            
+
             if (existingConsent != null)
             {//Update consent
                 existingConsent.AdditionalData = JsonSerializer.Serialize(new
