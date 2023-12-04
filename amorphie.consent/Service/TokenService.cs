@@ -20,8 +20,8 @@ public class TokenService : ITokenService
         _tokenClientService = tokenClientService;
         _context = context;
     }
-    
- 
+
+
     public async Task<ApiResult> RevokeConsentToken(Guid consentId)
     {
         ApiResult result = new();

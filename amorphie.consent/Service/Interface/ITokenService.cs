@@ -11,5 +11,5 @@ public interface ITokenService
     /// <param name="consentId">Consent id whichs token will be revoked</param>
     /// <returns></returns>
     Task<ApiResult> RevokeConsentToken(Guid consentId);
-    
+
 }

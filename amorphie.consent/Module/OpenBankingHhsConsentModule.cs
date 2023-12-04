@@ -559,7 +559,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context,tokenService);
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context, tokenService);
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -641,7 +641,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context,tokenService);
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context, tokenService);
             //Get entity from db
             var entity = await context.Consents
                 .AsNoTracking()
@@ -673,7 +673,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context,tokenService);
+            await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                 && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -713,14 +713,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns></returns>
     protected async Task<IResult> UpdatePaymentConsentForAuthorization([FromBody] UpdatePCForAuthorizationDto savePCStatusSenderAccount,
       [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper, 
+      [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService)
     {
         var resultData = new Consent();
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context,tokenService);
+            await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
                                           && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -961,8 +961,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(id, context,tokenService);
-            
+            await ProcessPaymentConsentToCancelOrEnd(id, context, tokenService);
+
             //get consent entity from db
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -984,7 +984,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateModifiedAt = DateTime.UtcNow;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-            
+
             //Revoke token
             await tokenService.RevokeConsentToken(id);
             return Results.Ok();
@@ -2119,7 +2119,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaNo">To be checked consent id</param>
     /// <param name="context">Context Object</param>
     /// <param name="tokenService">Token service instance</param>
-    private async Task ProcessPaymentConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context,ITokenService tokenService)
+    private async Task ProcessPaymentConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context, ITokenService tokenService)
     {
         var entity = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == rizaNo
