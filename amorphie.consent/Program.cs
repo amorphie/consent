@@ -30,6 +30,7 @@ builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<ILanguageService, AcceptLanguageService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -57,15 +58,22 @@ AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
 builder.Services
     .AddRefitClient<IPaymentClientService>()
     .ConfigureHttpClient(c =>
-        c.BaseAddress = new Uri(builder.Configuration["PaymentServiceURL"] ??
-                                throw new ArgumentNullException("Parameter is not suplied as vault variable", "PaymentServiceURL")))
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:PaymentServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "PaymentServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
 builder.Services
     .AddRefitClient<IAccountClientService>()
     .ConfigureHttpClient(c =>
-        c.BaseAddress = new Uri(builder.Configuration["AccountServiceURL"] ??
-                                throw new ArgumentNullException("Parameter is not suplied as vault variable", "AccountServiceURL")))
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:AccountServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "AccountServiceURL")))
+    .AddPolicyHandler(retryPolicy);
+
+builder.Services
+    .AddRefitClient<ITokenClientService>()
+    .ConfigureHttpClient(c =>
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>

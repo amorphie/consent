@@ -536,6 +536,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
+    /// <param name="tokenService"></param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>OdemeEmriRizasiHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -546,6 +547,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     public async Task<IResult> GetPaymentConsentById(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService,
         HttpContext httpContext)
     {
         try
@@ -557,7 +559,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context);
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context, tokenService);
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -629,15 +631,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
+    /// <param name="tokenService"></param>
     /// <returns>OdemeEmriRizaIstegiDto type of object</returns>
     public async Task<IResult> GetPaymentConsentByIdForUI(Guid rizaNo,
         [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper)
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
     {
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context);
+            await ProcessPaymentConsentToCancelOrEnd(rizaNo, context, tokenService);
             //Get entity from db
             var entity = await context.Consents
                 .AsNoTracking()
@@ -659,15 +663,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="updateConsentState">To be updated consent data</param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
+    /// <param name="tokenService"></param>
     /// <returns></returns>
     public async Task<IResult> UpdatePaymentConsentStatusForUsage([FromBody] UpdateConsentStateDto updateConsentState,
         [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper)
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
     {
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context);
+            await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                 && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -703,16 +709,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="savePCStatusSenderAccount">To be updated consent data</param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
+    /// <param name="tokenService"></param>
     /// <returns></returns>
     protected async Task<IResult> UpdatePaymentConsentForAuthorization([FromBody] UpdatePCForAuthorizationDto savePCStatusSenderAccount,
       [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper)
+      [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
     {
         var resultData = new Consent();
         try
         {
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context);
+            await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
                                           && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
@@ -941,6 +949,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     protected async Task<IResult> DeleteAccountConsent(Guid id,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService,
         HttpContext httpContext)
     {
         try
@@ -951,6 +960,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
+            //Check consent
+            await ProcessPaymentConsentToCancelOrEnd(id, context, tokenService);
+
             //get consent entity from db
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -970,10 +982,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = DateTime.UtcNow;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = DateTime.UtcNow;
-
-            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
+
+            //Revoke token
+            await tokenService.RevokeConsentToken(id);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -2093,7 +2106,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateModifiedAt = today;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            //There is no access token, so no need to call revoke.
             return;
         }
     }
@@ -2105,7 +2118,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="rizaNo">To be checked consent id</param>
     /// <param name="context">Context Object</param>
-    private async Task ProcessPaymentConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context)
+    /// <param name="tokenService">Token service instance</param>
+    private async Task ProcessPaymentConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context, ITokenService tokenService)
     {
         var entity = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -2157,7 +2171,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateModifiedAt = today;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            //There is no access token, so no need to call revoke.
             return;
         }
 
@@ -2178,7 +2192,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateModifiedAt = today;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-            //TODO:Ozlem Erişim belirteci invalid hale getirilmeli
+            //There is a token, revoke the token
+            await tokenService.RevokeConsentToken(rizaNo);
             return;
         }
 
