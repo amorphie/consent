@@ -1213,6 +1213,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {//validation error in header fields
             return result;
         }
+        //Check message required basic properties
+        if (rizaIstegi.katilimciBlg is null
+            || rizaIstegi.gkd == null
+            || rizaIstegi.kmlk == null
+            || rizaIstegi.hspBlg == null
+            || rizaIstegi.hspBlg.iznBlg == null)
+        {
+            result.Result = false;
+            result.Message =
+                "katilimciBlg, gkd,odmBsltm, kmlk, hspBlg, spBlg.iznBlg should be in consent request message";
+            return result;
+        }
+
         //Check KatılımcıBilgisi
         if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
             || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
@@ -1241,7 +1254,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
                 && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
                || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))))
+                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))
+               || !ConstantHelper.GetGKDTurList().Contains(rizaIstegi.gkd.yetYntm)))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1252,7 +1266,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur)//Check required fields
             || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
             || (string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) != string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur))
+            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur)
+            || !ConstantHelper.GetKimlikTurList().Contains(rizaIstegi.kmlk.kmlkTur)
+            || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.kmlk.ohkTur)
+            || (!string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) && !ConstantHelper.GetKurumKimlikTurList().Contains(rizaIstegi.kmlk.krmKmlkTur)))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data is not valid";
@@ -1277,10 +1294,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check HesapBilgisi
         //Check izinbilgisi properties
         if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
-            || rizaIstegi.hspBlg.iznBlg.iznTur?.Contains(OpenBankingConstants.IzinTur.HesapBilgisi) == false)
+            || rizaIstegi.hspBlg.iznBlg.iznTur.Any(i => !ConstantHelper.GetIzinTurList().Contains(i))
+            || rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi) == false
+            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AyrintiliIslem) && !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelIslem)))
         {
             result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain HesapBilgisi permission.";
+            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain TemelHesapBilgisi permission.";
             return result;
         }
 

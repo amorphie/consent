@@ -1,3 +1,4 @@
+using System.Reflection;
 using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Helper;
@@ -71,6 +72,51 @@ public static class ConstantHelper
     }
 
     /// <summary>
+    /// Get GKDTur class items as string list
+    /// </summary>
+    /// <returns>GKDTur values list</returns>
+    public static List<string> GetGKDTurList()
+    {
+        return typeof(OpenBankingConstants.GKDTur).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
+    /// Get KimlikTur class items as string list
+    /// </summary>
+    /// <returns>KimlikTur values list</returns>
+    public static List<string> GetKimlikTurList()
+    {
+        return typeof(OpenBankingConstants.KimlikTur).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
+    /// Get KurumKimlikTur class items as string list
+    /// </summary>
+    /// <returns>KurumKimlikTur values list</returns>
+    public static List<string> GetKurumKimlikTurList()
+    {
+        return typeof(OpenBankingConstants.KurumKimlikTur).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
+    /// Get OHKTur class items as string list
+    /// </summary>
+    /// <returns>OHKTur values list</returns>
+    public static List<string> GetOHKTurList()
+    {
+        return typeof(OpenBankingConstants.OHKTur).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
+    /// Get IzinTur class items as string list
+    /// </summary>
+    /// <returns>IzinTur values list</returns>
+    public static List<string> GetIzinTurList()
+    {
+        return typeof(OpenBankingConstants.IzinTur).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
     /// Get OdemeAmaci constants values list
     /// </summary>
     /// <returns>OdemeAmaci constants values list</returns>
@@ -90,5 +136,14 @@ public static class ConstantHelper
             OpenBankingConstants.OdemeAmaci.KonutKirasiOdemesi,
             OpenBankingConstants.OdemeAmaci.IsYeriKirasiOdemesi
         };
+    }
+
+    public static List<T> GetAllPublicConstantValues<T>(this Type type)
+    {
+        return type
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(T))
+            .Select(x => (T)x.GetRawConstantValue())
+            .ToList();
     }
 }

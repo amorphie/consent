@@ -51,7 +51,7 @@ public class AccountService : IAccountService
             }
             //Get account consent from db
             var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
-                {OpenBankingConstants.IzinTur.HesapBilgisi,
+                {OpenBankingConstants.IzinTur.TemelHesapBilgisi,
                     OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi});
             if (activeConsent != null)
             {//filter accounts
@@ -107,7 +107,7 @@ public class AccountService : IAccountService
                 return result;
             }
             var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
-            {   OpenBankingConstants.IzinTur.HesapBilgisi,
+            {   OpenBankingConstants.IzinTur.TemelHesapBilgisi,
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             }); //Get account consent from db
             if (activeConsent != null && activeConsent.OBAccountReferences.Any(r => r.AccountReferences.Contains(account.hspTml.hspRef)))
