@@ -115,27 +115,42 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.IzinTur).GetAllPublicConstantValues<string>();
     }
+    
+    /// <summary>
+    /// Get KolasTur class items as string list
+    /// </summary>
+    /// <returns>KolasTur values list</returns>
+    public static List<string> GetKolasTurList()
+    {
+        return typeof(OpenBankingConstants.KolasTur).GetAllPublicConstantValues<string>();
+    }
+    
+    /// <summary>
+    /// Get KareKodAksTur class items as string list
+    /// </summary>
+    /// <returns>KareKodAksTur values list</returns>
+    public static List<string> GetKareKodAksTurList()
+    {
+        return typeof(OpenBankingConstants.KareKodAksTur).GetAllPublicConstantValues<string>();
+    }
 
+    
     /// <summary>
     /// Get OdemeAmaci constants values list
     /// </summary>
     /// <returns>OdemeAmaci constants values list</returns>
     public static List<string> GetOdemeAmaciList()
     {
-        return new List<string>()
-        {
-            OpenBankingConstants.OdemeAmaci.BireyselOdeme,
-            OpenBankingConstants.OdemeAmaci.TicariOdeme,
-            OpenBankingConstants.OdemeAmaci.FinansalOdeme,
-            OpenBankingConstants.OdemeAmaci.AidatOdemesi,
-            OpenBankingConstants.OdemeAmaci.CalisanOdemesi,
-            OpenBankingConstants.OdemeAmaci.EgitimOdemesi,
-            OpenBankingConstants.OdemeAmaci.YatirimOdemesi,
-            OpenBankingConstants.OdemeAmaci.DigerKiraOdemesi,
-            OpenBankingConstants.OdemeAmaci.ETicaretOdemesi,
-            OpenBankingConstants.OdemeAmaci.KonutKirasiOdemesi,
-            OpenBankingConstants.OdemeAmaci.IsYeriKirasiOdemesi
-        };
+        return typeof(OpenBankingConstants.OdemeAmaci).GetAllPublicConstantValues<string>();
+    }
+    
+    /// <summary>
+    /// Get OdemeKaynak constants values list
+    /// </summary>
+    /// <returns>OdemeKaynak constants values list</returns>
+    public static List<string> GetOdemeKaynakList()
+    {
+        return typeof(OpenBankingConstants.OdemeKaynak).GetAllPublicConstantValues<string>();
     }
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
