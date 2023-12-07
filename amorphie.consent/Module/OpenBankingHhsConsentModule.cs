@@ -1225,7 +1225,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 "katilimciBlg, gkd,odmBsltm, kmlk, hspBlg, spBlg.iznBlg should be in consent request message";
             return result;
         }
-        
+
         //Check KatılımcıBilgisi
         if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
             || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)

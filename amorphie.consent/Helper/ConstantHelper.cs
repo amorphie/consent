@@ -70,7 +70,7 @@ public static class ConstantHelper
             OpenBankingConstants.PSUInitiated.SystemStarted
         };
     }
-    
+
     /// <summary>
     /// Get GKDTur class items as string list
     /// </summary>
@@ -79,7 +79,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.GKDTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KimlikTur class items as string list
     /// </summary>
@@ -88,7 +88,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KimlikTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KurumKimlikTur class items as string list
     /// </summary>
@@ -97,7 +97,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KurumKimlikTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get OHKTur class items as string list
     /// </summary>
@@ -106,7 +106,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OHKTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get IzinTur class items as string list
     /// </summary>
@@ -137,7 +137,7 @@ public static class ConstantHelper
             OpenBankingConstants.OdemeAmaci.IsYeriKirasiOdemesi
         };
     }
-    
+
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {
         return type
