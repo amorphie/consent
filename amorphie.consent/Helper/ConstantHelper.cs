@@ -115,7 +115,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.IzinTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KolasTur class items as string list
     /// </summary>
@@ -124,7 +124,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KolasTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KareKodAksTur class items as string list
     /// </summary>
@@ -134,7 +134,7 @@ public static class ConstantHelper
         return typeof(OpenBankingConstants.KareKodAksTur).GetAllPublicConstantValues<string>();
     }
 
-    
+
     /// <summary>
     /// Get OdemeAmaci constants values list
     /// </summary>
@@ -143,7 +143,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OdemeAmaci).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get OdemeKaynak constants values list
     /// </summary>
@@ -161,7 +161,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.RizaDurumu).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KolasHspTur constants values list
     /// </summary>
@@ -170,7 +170,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KolasHspTur).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get OdemeSistemi constants values list
     /// </summary>
@@ -180,7 +180,7 @@ public static class ConstantHelper
         return typeof(OpenBankingConstants.OdemeSistemi).GetAllPublicConstantValues<string>();
     }
 
-    
+
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {
         return type
