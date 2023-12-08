@@ -36,12 +36,16 @@ public static class ModuleHelper
     }
 
     /// <summary>
-    /// Checks if header required values are set.
-    /// PSU Initiated value is correct
+    /// Checks if header is valid by controlling;
+    /// PSU Initiated value is in predefined values
+    /// Required fields are set
+    /// 
     /// </summary>
     /// <param name="header">Data to be checked</param>
-    /// <returns>If header required values are set</returns>
-    public static bool IsHeaderRequiredValuesCheckSuccess(RequestHeaderDto header)
+    /// <param name="configuration">Configuration instance</param>
+    /// <returns>If header is valid</returns>
+    public static bool IsHeaderValid(RequestHeaderDto header,
+        IConfiguration configuration)
     {
 
         if (string.IsNullOrEmpty(header.PSUInitiated)
@@ -50,6 +54,11 @@ public static class ModuleHelper
             || string.IsNullOrEmpty(header.XRequestID)
             || string.IsNullOrEmpty(header.XTPPCode))
         {
+            return false;
+        }
+
+        if (configuration["HHSCode"] != header.XASPSPCode)
+        {//XASPSPCode value should be BurganBanks hhscode value
             return false;
         }
 

@@ -2,7 +2,7 @@ using amorphie.consent.core.Model;
 using FluentValidation;
 
 namespace amorphie.consent.Validator;
-public sealed class YosInfoalidator : AbstractValidator<YosInfo>
+public sealed class YosInfoalidator : AbstractValidator<OBYosInfo>
 {
     public YosInfoalidator()
     {
