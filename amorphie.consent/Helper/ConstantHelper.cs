@@ -153,6 +153,34 @@ public static class ConstantHelper
         return typeof(OpenBankingConstants.OdemeKaynak).GetAllPublicConstantValues<string>();
     }
 
+    /// <summary>
+    /// Get RizaDurumu constants values list
+    /// </summary>
+    /// <returns>RizaDurumu constants values list</returns>
+    public static List<string> GetRizaDurumuList()
+    {
+        return typeof(OpenBankingConstants.RizaDurumu).GetAllPublicConstantValues<string>();
+    }
+    
+    /// <summary>
+    /// Get KolasHspTur constants values list
+    /// </summary>
+    /// <returns>KolasHspTur constants values list</returns>
+    public static List<string> GetKolasHspTurList()
+    {
+        return typeof(OpenBankingConstants.KolasHspTur).GetAllPublicConstantValues<string>();
+    }
+    
+    /// <summary>
+    /// Get OdemeSistemi constants values list
+    /// </summary>
+    /// <returns>OdemeSistemi constants values list</returns>
+    public static List<string> GetOdemeSistemiList()
+    {
+        return typeof(OpenBankingConstants.OdemeSistemi).GetAllPublicConstantValues<string>();
+    }
+
+    
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {
         return type

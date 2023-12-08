@@ -1507,12 +1507,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
-        if (!ConstantHelper.GetOdemeKaynakList().Contains(rizaIstegi.odmBsltm.odmAyr.odmKynk))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmKynk value is wrong.";
-            return result;
-        }
+
         if (rizaIstegi.odmBsltm.obhsMsrfTtr != null 
             && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.obhsMsrfTtr.ttr)
                 || string.IsNullOrEmpty(rizaIstegi.odmBsltm.obhsMsrfTtr.prBrm)))
@@ -1545,7 +1540,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check message required basic properties
-        if (odemeEmriIstegi.rzBlg == null
+        if (odemeEmriIstegi == null 
+            || odemeEmriIstegi.rzBlg == null
             || odemeEmriIstegi.katilimciBlg is null
             || odemeEmriIstegi.gkd == null
             || odemeEmriIstegi.odmBsltm == null
@@ -1564,10 +1560,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check rzBlg
         if (string.IsNullOrEmpty(odemeEmriIstegi.rzBlg.rizaDrm)//Required fields
             || string.IsNullOrEmpty(odemeEmriIstegi.rzBlg.rizaNo)
-            || odemeEmriIstegi.rzBlg.olusZmn == DateTime.MinValue || odemeEmriIstegi.rzBlg.olusZmn == null)
+            || odemeEmriIstegi.rzBlg.olusZmn == DateTime.MinValue || odemeEmriIstegi.rzBlg.olusZmn == null
+            || !ConstantHelper.GetRizaDurumuList().Contains(odemeEmriIstegi.rzBlg.rizaDrm))
         {
             result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. RZBlg rizaDrm, rizaNo, olusZmn values are required.";
+            result.Message = "TR.OHVPS.Resource.InvalidFormat. RZBlg rizaDrm, rizaNo, olusZmn values are required. rizaDrm should be in defined datas.";
             return result;
         }
 
@@ -1596,6 +1593,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check GKD
         if (string.IsNullOrEmpty(odemeEmriIstegi.gkd.yetYntm)
+            || !ConstantHelper.GetGKDTurList().Contains(odemeEmriIstegi.gkd.yetYntm)
             || (odemeEmriIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
                  && string.IsNullOrEmpty(odemeEmriIstegi.gkd.yonAdr))
             || (odemeEmriIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
@@ -1607,9 +1605,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
         //Check odmBsltm  Kimlik
-        if (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)//Check required fields
+        if (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
+            || !ConstantHelper.GetOHKTurList().Contains(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
             || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
-            || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs))
+            || !ConstantHelper.GetKimlikTurList().Contains(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
+            || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs)
+            || (odemeEmriIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
+                && (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.krmKmlkTur) 
+                    || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.krmKmlkVrs)
+                    || !ConstantHelper.GetKurumKimlikTurList().Contains(odemeEmriIstegi.odmBsltm.kmlk.krmKmlkTur))))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. ohkTur, kmlkTur, kmlkVrs required.";
@@ -1642,17 +1646,29 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (odemeEmriIstegi.odmBsltm.alc.kolas != null
             && (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.alc.kolas.kolasDgr)
                 || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.alc.kolas.kolasTur)
+                || !ConstantHelper.GetKolasTurList().Contains(odemeEmriIstegi.odmBsltm.alc.kolas.kolasTur)
                 || odemeEmriIstegi.odmBsltm.alc.kolas.kolasRefNo == 0
-                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.alc.kolas.kolasHspTur)))
+                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.alc.kolas.kolasHspTur)
+                || !ConstantHelper.GetKolasHspTurList().Contains(odemeEmriIstegi.odmBsltm.alc.kolas.kolasTur)))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. alc-kolas-kolasDgr, alc-kolas-kolasTur,alc-kolas-kolasRefNo, alc-kolas-kolasHspTur required fields.";
             return result;
         }
+        
+        if (odemeEmriIstegi.odmBsltm.alc.kolas != null
+            && odemeEmriIstegi.odmBsltm.kkod != null)
+        {
+            result.Result = false;
+            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time";
+            return result;
+        }
+        
         //Check odmBsltma karekod
         if (odemeEmriIstegi.odmBsltm.kkod != null
             && (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kkod.aksTur)
-                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kkod.kkodUrtcKod)))
+                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kkod.kkodUrtcKod)
+                || !ConstantHelper.GetKolasTurList().Contains(odemeEmriIstegi.odmBsltm.kkod.aksTur)))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. aksTur, kkodUrtcKod required fields.";
@@ -1662,10 +1678,25 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check odmBsltma odemeayrintilari
         if (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.odmAyr.odmKynk)
             || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.odmAyr.odmAcklm)
-            || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.odmAyr.odmStm))
+            || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.odmAyr.odmStm)
+            || !ConstantHelper.GetOdemeSistemiList().Contains(odemeEmriIstegi.odmBsltm.odmAyr.odmStm))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. odmBsltm-odmAyr-odmAcklm, odmBsltm-odmAyr-odmKynk, odmBsltm-odmAyr-odmStm required fields.";
+            return result;
+        }
+        
+        if (odemeEmriIstegi.odmBsltm.odmAyr.odmKynk != OpenBankingConstants.OdemeKaynak.AcikBankacilikAraciligiIleGonderilenOdemelerde)
+        {
+            result.Result = false;
+            result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmKynk must be O.";
+            return result;
+        }
+        
+        if (!ConstantHelper.GetOdemeAmaciList().Contains(odemeEmriIstegi.odmBsltm.odmAyr.odmAmc))
+        {
+            result.Result = false;
+            result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
 
