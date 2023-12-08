@@ -1560,6 +1560,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check rzBlg
         if (string.IsNullOrEmpty(odemeEmriIstegi.rzBlg.rizaDrm)//Required fields
             || string.IsNullOrEmpty(odemeEmriIstegi.rzBlg.rizaNo)
+            || !Guid.TryParse(odemeEmriIstegi.rzBlg.rizaNo, out Guid rizaNo)
             || odemeEmriIstegi.rzBlg.olusZmn == DateTime.MinValue || odemeEmriIstegi.rzBlg.olusZmn == null
             || !ConstantHelper.GetRizaDurumuList().Contains(odemeEmriIstegi.rzBlg.rizaDrm))
         {
@@ -1739,6 +1740,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         var odemeEmriRizasi = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(odemeEmriRizasiConsent.AdditionalData);
+        if (odemeEmriRizasi == null)
+        {
+            result.Result = false;
+            result.Message = $"Relational data is missing. No Payment Information consent additional data in system.";
+            return result;
+        }
         //odmBsltma Kmlk must be same
         if (odemeEmriRizasi.odmBsltm.kmlk.kmlkTur != odemeEmriIstegi.odmBsltm.kmlk.kmlkTur
             || odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs
@@ -1766,7 +1773,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
         //odmBsltma alc kolastur ve deger must be same
-        if (odemeEmriRizasi.odmBsltm.alc.kolas != null
+        if (odemeEmriRizasi.odmBsltm?.alc.kolas != null
             && (odemeEmriRizasi.odmBsltm.alc.kolas.kolasTur != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasTur
                 || odemeEmriRizasi.odmBsltm.alc.kolas.kolasDgr != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasDgr))
         {
@@ -1775,7 +1782,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
         //odmBsltma karekod akisturu ve referansı must be same
-        if (odemeEmriRizasi.odmBsltm.kkod != null
+        if (odemeEmriRizasi.odmBsltm?.kkod != null
                 && (odemeEmriRizasi.odmBsltm.kkod.aksTur != odemeEmriIstegi.odmBsltm.kkod?.aksTur
                     || odemeEmriRizasi.odmBsltm.kkod.kkodRef != odemeEmriIstegi.odmBsltm.kkod?.kkodRef))
         {
@@ -1784,7 +1791,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
         //OdmAyr odmKynk,odmAmc, refBlg,odmStm must be same
-        if (odemeEmriRizasi.odmBsltm.odmAyr.odmKynk != odemeEmriIstegi.odmBsltm.odmAyr.odmKynk
+        if (odemeEmriRizasi.odmBsltm?.odmAyr.odmKynk != odemeEmriIstegi.odmBsltm.odmAyr.odmKynk
             || odemeEmriRizasi.odmBsltm.odmAyr.odmAmc != odemeEmriIstegi.odmBsltm.odmAyr.odmAmc
             || odemeEmriRizasi.odmBsltm.odmAyr.refBlg != odemeEmriIstegi.odmBsltm.odmAyr.refBlg
             || odemeEmriRizasi.odmBsltm.odmAyr.odmStm != odemeEmriIstegi.odmBsltm.odmAyr.odmStm)
