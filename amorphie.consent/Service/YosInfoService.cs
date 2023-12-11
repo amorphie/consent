@@ -24,7 +24,7 @@ public class YosInfoService : IYosInfoService
     {
         ApiResult result = new();
         try
-        {  
+        {
             var anyYos = await _context.OBYosInfos
                 .AsNoTracking()
                 .AnyAsync(y => y.kod == yosCode);

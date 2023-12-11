@@ -21,7 +21,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/code/{code}", GetYosWithYosCode);
     }
-    
+
     public async Task<IResult> GetYosWithYosCode(
      [FromServices] ConsentDbContext context,
      IMapper mapper,

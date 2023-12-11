@@ -91,7 +91,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -178,7 +178,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -226,7 +226,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -271,7 +271,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -316,7 +316,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -365,7 +365,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -413,7 +413,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -458,7 +458,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -503,7 +503,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -549,7 +549,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -594,9 +594,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
-           var yosCheckResult= await yosInfoService.IsYosInApplication("sdfs");
+            var yosCheckResult = await yosInfoService.IsYosInApplication("sdfs");
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -647,7 +647,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -927,14 +927,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [FromServices] IConfiguration configuration, 
+        [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = await IsDataValidToAccountConsentPost(rizaIstegi, configuration,yosInfoService, httpContext);
+            var checkValidationResult = await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
@@ -1006,7 +1006,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation =await IsHeaderDataValid(httpContext,configuration,yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -1072,13 +1072,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
-        [FromServices] IYosInfoService yosInfoService, 
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration,yosInfoService, httpContext);
+            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -1264,7 +1264,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
-        result =await IsHeaderDataValid(httpContext,configuration,yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1424,7 +1424,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext,configuration,yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1596,7 +1596,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext,configuration,yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -2101,13 +2101,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             header = ModuleHelper.GetHeader(context);
         }
-        if (!await ModuleHelper.IsHeaderValid(header,configuration,yosInfoService))
+        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService))
         {
             result.Result = false;
             result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
-      
+
         return result;
     }
 
