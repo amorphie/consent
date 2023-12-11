@@ -1,7 +1,7 @@
 using amorphie.core.Base;
-namespace amorphie.consent.core.DTO;
+namespace amorphie.consent.core.Model;
 
-public class YosInfoDto : DtoBase
+public class OBYosInfo : EntityBase
 {
     public List<string> roller { get; set; }
     public string kod { get; set; }

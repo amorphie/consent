@@ -23,7 +23,6 @@ namespace amorphie.consent.Module;
 
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
-
     public OpenBankingHHSConsentModule(WebApplication app)
         : base(app)
     {
@@ -72,6 +71,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaNo">Riza No</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>HesapBilgisiRizasiHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -83,12 +84,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -153,6 +156,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>account information of hspref - HesapBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -166,12 +171,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -197,6 +204,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>account information of hspref - HesapBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -210,12 +219,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -240,6 +251,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>Account list of customer -  List of HesapBilgileriDto type of objects</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -251,12 +264,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -279,8 +294,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="customerId">Customer Id</param>
     /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
+    /// <param name="mapper">Automapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>Account list of customer -  List of HesapBilgileriDto type of objects</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -292,12 +309,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -324,6 +343,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>account balance information of hspref - BakiyeBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -337,12 +358,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -368,6 +391,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>account balance information of hspref - BakiyeBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -381,12 +406,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -411,6 +438,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>Balance list of customer -  List of BakiyeBilgileriDto type of objects</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -422,12 +451,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -452,6 +483,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>Balance list of customer -  List of BakiyeBilgileriDto type of objects</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -463,12 +496,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -493,6 +528,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>account transactions- IslemBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -505,12 +542,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -537,6 +576,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <param name="tokenService"></param>
+    /// <param name="configuration">Configuration instance</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>OdemeEmriRizasiHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -548,12 +588,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
+            var yosCheckResult = await yosInfoService.IsYosInApplication("sdfs");
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -585,6 +628,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="odemeEmriNo"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>OdemeEmriHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -595,12 +640,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     public async Task<IResult> GetPaymentOrderConsentById(Guid odemeEmriNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -869,6 +916,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">DBContext object</param>
     /// <param name="mapper">Mapper object</param>
     /// <param name="configuration"></param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext"></param>
     /// <returns></returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -877,15 +925,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
-   [FromServices] ConsentDbContext context,
-   [FromServices] IMapper mapper,
-   [FromServices] IConfiguration configuration,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToAccountConsentPost(rizaIstegi, configuration, httpContext);
+            var checkValidationResult = await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
@@ -950,12 +999,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check header fields
-            ApiResult headerValidation = IsHeaderDataValidForRequiredFields(httpContext);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -1007,7 +1058,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context">DB Context</param>
     /// <param name="mapper">Mapping object</param>
     /// <param name="configuration">Configuration instance</param>
-    /// <param name="paymentService"/>
+    /// <param name="paymentService">Payment service instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object to get header data</param>
     /// <returns>OdemeEmriRizasi object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -1016,16 +1068,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IMapper mapper,
-    [FromServices] IConfiguration configuration,
-    [FromServices] IPaymentService paymentService,
-    HttpContext httpContext)
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IPaymentService paymentService,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, httpContext);
+            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -1088,6 +1141,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="mapper">Mapping object</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="paymentService"/>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
     /// <returns>OdemeEmri object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
@@ -1100,12 +1154,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
       [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi, context, httpContext, configuration);
+            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi, context, yosInfoService, httpContext, configuration);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -1195,10 +1250,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="rizaIstegi">To be checked data</param>
     /// <param name="configuration">Config object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
-    private ApiResult IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+    private async Task<ApiResult> IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
     IConfiguration configuration,
+    IYosInfoService yosInfoService,
     HttpContext httpContext)
     {
         //TODO:Ozlem Check if user is customer
@@ -1207,7 +1264,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
-        result = IsHeaderDataValidForRequiredFields(httpContext, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1354,10 +1411,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="rizaIstegi">To be checked data</param>
     /// <param name="configuration">Config file</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">HttpContext httpContext</param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
      IConfiguration configuration,
+     IYosInfoService yosInfoService,
      HttpContext httpContext)
     {
 
@@ -1365,7 +1424,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = IsHeaderDataValidForRequiredFields(httpContext, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1522,18 +1581,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Check if consent is valid to payment order post
     /// </summary>
-    /// <param name="odemeEmriIstegi"></param>
-    /// <param name="httpContext"></param>
+    /// <param name="odemeEmriIstegi">request object</param>
+    /// <param name="context">Context object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="httpContext">Httpcontext instance</param>
+    /// <param name="configuration">Configuration instance</param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentOrderPost(OdemeEmriIstegiHHSDto odemeEmriIstegi,
         ConsentDbContext context,
+        IYosInfoService yosInfoService,
         HttpContext httpContext,
         IConfiguration configuration)
     {
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = IsHeaderDataValidForRequiredFields(httpContext, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -2019,24 +2082,32 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     /// <summary>
-    ///  Checks if header required values are set.
+    ///  Checks if header is varlid.
+    /// Checks required fields.
+    /// Checks 
     /// </summary>
     /// <param name="context">Context</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">Yos service instance</param>
     /// <param name="header">Header object</param>
     /// <returns>Validation result</returns>
-    private ApiResult IsHeaderDataValidForRequiredFields(HttpContext context, RequestHeaderDto header = null)
+    private async Task<ApiResult> IsHeaderDataValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto header = null)
     {
         ApiResult result = new();
         if (header is null)
         {
             header = ModuleHelper.GetHeader(context);
         }
-        if (!ModuleHelper.IsHeaderRequiredValuesCheckSuccess(header))
+        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService))
         {
             result.Result = false;
             result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
+
         return result;
     }
 

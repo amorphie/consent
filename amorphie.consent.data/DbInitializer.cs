@@ -18,8 +18,8 @@ public static class DbInitializer
             return; // DB has been seeded
         }
 
-        var yosInfo = new YosInfo[]{
-            new YosInfo{
+        var yosInfo = new OBYosInfo[]{
+            new OBYosInfo{
                 Id = Guid.NewGuid(),
                 marka = "İş Bankası",
                 unv = "unv 1",
@@ -29,7 +29,7 @@ public static class DbInitializer
                 adresler = new List<string> { "Adres 1", "Adres 2" },
                 logoBilgileri = new List<string> { "Logo 1", "Logo 2" }
             },
-                new YosInfo{
+                new OBYosInfo{
                 Id = Guid.NewGuid(),
                 marka = "Ziraat Bankası",
                 unv = "unv 1",
@@ -40,9 +40,9 @@ public static class DbInitializer
                 logoBilgileri = new List<string> { "Logo 1", "Logo 2" }
             }
         };
-        foreach (YosInfo c in yosInfo)
+        foreach (OBYosInfo c in yosInfo)
         {
-            context.YosInfos.Add(c);
+            context.OBYosInfos.Add(c);
         }
         context.SaveChanges();
         var consent = new Consent[]{
