@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.Service.Interface;
 
 namespace amorphie.consent.Helper;
 
@@ -38,14 +39,16 @@ public static class ModuleHelper
     /// <summary>
     /// Checks if header is valid by controlling;
     /// PSU Initiated value is in predefined values
-    /// Required fields are set
-    /// 
+    /// Required fields are checked
+    /// XASPSPCode is equal with BurganBank hhscode
     /// </summary>
     /// <param name="header">Data to be checked</param>
     /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
     /// <returns>If header is valid</returns>
-    public static bool IsHeaderValid(RequestHeaderDto header,
-        IConfiguration configuration)
+    public static async Task<bool> IsHeaderValid(RequestHeaderDto header,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService)
     {
 
         if (string.IsNullOrEmpty(header.PSUInitiated)
@@ -64,6 +67,15 @@ public static class ModuleHelper
 
         if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
         {//Check psu initiated value
+            return false;
+        }
+
+        //Check setted yos value
+        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
+        if (yosCheckResult.Result == false
+            || yosCheckResult.Data == null
+            || (bool)yosCheckResult.Data == false)
+        {//No yos data in the system
             return false;
         }
         return true;
