@@ -106,6 +106,15 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OHKTur).GetAllPublicConstantValues<string>();
     }
+    
+    /// <summary>
+    /// Get OhkTanimTip class items as string list
+    /// </summary>
+    /// <returns>OhkTanimTip values list</returns>
+    public static List<string> GetOhkTanimTipList()
+    {
+        return typeof(OpenBankingConstants.OhkTanimTip).GetAllPublicConstantValues<string>();
+    }
 
     /// <summary>
     /// Get IzinTur class items as string list

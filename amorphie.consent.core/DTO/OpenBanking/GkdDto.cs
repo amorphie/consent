@@ -10,7 +10,7 @@ namespace amorphie.consent.core.DTO.OpenBanking
     {
         public string yetYntm { get; set; }
         public string yonAdr { get; set; }
-        public string bldAdr { get; set; }
+        public AyrikGkdDto ayrikGkd { get; set; }
         public string hhsYonAdr { get; set; }
         public DateTime yetTmmZmn { get; set; }
     }

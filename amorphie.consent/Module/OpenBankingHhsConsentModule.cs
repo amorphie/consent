@@ -1306,12 +1306,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
-            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
-                && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
-               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr))
-               || !ConstantHelper.GetGKDTurList().Contains(rizaIstegi.gkd.yetYntm)))
+        if (!IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1407,6 +1402,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
+   
     /// <summary>
     ///  Checks if data is valid for payment information consent post process
     /// </summary>
@@ -1468,19 +1464,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
             return result;
         }
-
+        
         //Check GKD
-        if (!string.IsNullOrEmpty(rizaIstegi.gkd.yetYntm)
-            && ((rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
-                && string.IsNullOrEmpty(rizaIstegi.gkd.yonAdr))
-               || (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-                   && string.IsNullOrEmpty(rizaIstegi.gkd.bldAdr)))
-            || !ConstantHelper.GetGKDTurList().Contains(rizaIstegi.gkd.yetYntm))
+        if (!IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
+        
         //Check odmBsltm  Kimlik field validities
         if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)
             || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.odmBsltm.kmlk.ohkTur)
@@ -1657,18 +1649,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (string.IsNullOrEmpty(odemeEmriIstegi.gkd.yetYntm)
-            || !ConstantHelper.GetGKDTurList().Contains(odemeEmriIstegi.gkd.yetYntm)
-            || (odemeEmriIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
-                 && string.IsNullOrEmpty(odemeEmriIstegi.gkd.yonAdr))
-            || (odemeEmriIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-                    && string.IsNullOrEmpty(odemeEmriIstegi.gkd.bldAdr))
+        if (!IsGkdValid(new GkdRequestDto(){ ayrikGkd = odemeEmriIstegi.gkd.ayrikGkd, yetYntm = odemeEmriIstegi.gkd.yetYntm, yonAdr = odemeEmriIstegi.gkd.yonAdr})
             || odemeEmriIstegi.gkd.yetTmmZmn == DateTime.MinValue)
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
+        
+        
         //Check odmBsltm  Kimlik
         if (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
             || !ConstantHelper.GetOHKTurList().Contains(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
@@ -2355,6 +2344,71 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //TODO:Özlem bu durum nasıl handle edilecek bilmiyorum
 
     }
+    
+    /// <summary>
+    /// Checks if gkd data is valid
+    /// </summary>
+    /// <param name="gkd">To be checked data</param>
+    /// <returns>Is gkd data valid</returns>
+    private static bool IsGkdValid(GkdRequestDto gkd)
+    {
+        if (!string.IsNullOrEmpty(gkd.yetYntm))//YetYntm is set
+        {//Check data
+            if (!ConstantHelper.GetGKDTurList().Contains(gkd.yetYntm))
+            {//GDKTur value is not valid
+                return false;
+            }
+            if ((gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
+                 && string.IsNullOrEmpty(gkd.yonAdr)))
+            {//YonAdr should be set
+                return false;
+            }
+
+            if (gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
+            {
+                //AyrikGKD object should be set
+                if (gkd.ayrikGkd == null
+                    || string.IsNullOrEmpty(gkd.ayrikGkd.ohkTanimDeger)
+                    || string.IsNullOrEmpty(gkd.ayrikGkd.ohkTanimTip)
+                    || !ConstantHelper.GetOhkTanimTipList().Contains(gkd.ayrikGkd.ohkTanimTip))
+                    return false;
+                //Check GKDTanımDeger values
+                switch (gkd.ayrikGkd.ohkTanimTip)
+                {
+                    case OpenBankingConstants.OhkTanimTip.TCKN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 11
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                            return false;
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.MNO: 
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length >= 30)
+                            return false;
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.YKN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 11
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                            return false;
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.PNO:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length > 9)
+                            return false;
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.GSM:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 10
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                            return false;
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.IBAN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 26)
+                            return false;
+                        break;
+                }
+            }
+        }
+
+        return true;
+    }
+
 
 
 }
