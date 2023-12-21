@@ -152,8 +152,9 @@ public static class OpenBankingConstants
         public const string TemelHesapBilgisi = "01";
         public const string AyrintiliHesapBilgisi = "02";
         public const string BakiyeBilgisi = "03";
-        public const string TemelIslem = "04";
-        public const string AyrintiliIslem = "05";
+        public const string TemelIslemBilgisi = "04";
+        public const string AyrintiliIslemBilgisi = "05";
+        public const string AnlikBakiyeBildirimi = "06";
     }
 
     public static class OdemeSistemi
@@ -267,6 +268,22 @@ public static class OpenBankingConstants
         public const string GKDIptali_OHKIstegiIleGKDdenVazgecildi = "13";
         public const string GKDIptali_FraudSuphesi = "14";
         public const string GKDIptali_Diger = "99";
+    }
+
+    public static class SrlmYon
+    {
+        public const string Azalan = "A";
+        public const string Artan = "Y";
+    }
+
+    public static class ZmnAralik
+    {
+        public const int KayitYok = 0;
+        public const int Sifir2Saat = 1;
+        public const int Iki24Saat = 2;
+        public const int Bir3Gun = 3;
+        public const int Dort15Gun = 4;
+        public const int OnAltiGunVeUzeri = 5;
     }
 
     public static class PSUInitiated
