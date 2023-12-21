@@ -275,7 +275,7 @@ public static class OpenBankingConstants
         public const string Azalan = "A";
         public const string Artan = "Y";
     }
-    
+
     public static class ZmnAralik
     {
         public const int KayitYok = 0;
@@ -285,7 +285,7 @@ public static class OpenBankingConstants
         public const int Dort15Gun = 4;
         public const int OnAltiGunVeUzeri = 5;
     }
-    
+
     public static class PSUInitiated
     {
         public const string OHKStarted = "E";
