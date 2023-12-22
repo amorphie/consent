@@ -28,7 +28,7 @@ public static class OpenBankingConstants
         public const string Bireysel = "B";
         public const string Kurumsal = "K";
     }
-    
+
     public static class OhkTanimTip
     {
         public const string TCKN = "TCKN";

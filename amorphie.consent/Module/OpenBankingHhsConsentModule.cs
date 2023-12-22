@@ -1402,7 +1402,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
-   
+
     /// <summary>
     ///  Checks if data is valid for payment information consent post process
     /// </summary>
@@ -1464,7 +1464,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
             return result;
         }
-        
+
         //Check GKD
         if (!IsGkdValid(rizaIstegi.gkd))
         {
@@ -1472,7 +1472,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
-        
+
         //Check odmBsltm  Kimlik field validities
         if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)
             || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.odmBsltm.kmlk.ohkTur)
@@ -1655,8 +1655,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
-        
-        
+
+
         //Check odmBsltm  Kimlik
         if (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
             || !ConstantHelper.GetOHKTurList().Contains(odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
@@ -2390,7 +2390,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                             || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
                             return false;
                         break;
-                    case OpenBankingConstants.OhkTanimTip.MNO: 
+                    case OpenBankingConstants.OhkTanimTip.MNO:
                         if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length >= 30)
                             return false;
                         break;
