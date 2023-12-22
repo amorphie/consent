@@ -1,0 +1,41 @@
+using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.Contract;
+using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.Service.Interface;
+using amorphie.consent.Service.Refit;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+
+namespace amorphie.consent.Service;
+
+public class ContractService : IContractService
+{
+    private readonly IContractClientService _contractClientService;
+    private readonly IMapper _mapper;
+
+
+    public ContractService(IContractClientService contractClientService,
+    IMapper mapper)
+    {
+        _contractClientService = contractClientService;
+        _mapper = mapper;
+    }
+    
+    public async Task<ApiResult> ContractInstance(InstanceRequestDto instanceRequest)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Send contractrequest to servie
+            await _contractClientService.ContractInstance(instanceRequest);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
+
+}
