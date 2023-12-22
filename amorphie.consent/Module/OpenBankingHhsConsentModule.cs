@@ -1649,8 +1649,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(new GkdRequestDto(){ ayrikGkd = odemeEmriIstegi.gkd.ayrikGkd, yetYntm = odemeEmriIstegi.gkd.yetYntm, yonAdr = odemeEmriIstegi.gkd.yonAdr})
-            || odemeEmriIstegi.gkd.yetTmmZmn == DateTime.MinValue)
+        if (!IsGkdValid(odemeEmriIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -2344,7 +2343,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //TODO:Özlem bu durum nasıl handle edilecek bilmiyorum
 
     }
-    
+
+    /// <summary>
+    /// Checks if gkd data is valid
+    /// </summary>
+    /// <param name="gkd">To be checked data</param>
+    /// <returns>Is gkd data valid</returns>
+    private static bool IsGkdValid(GkdDto gkd)
+    {
+        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
+               && gkd.yetTmmZmn != DateTime.MinValue;
+    }
+
     /// <summary>
     /// Checks if gkd data is valid
     /// </summary>
