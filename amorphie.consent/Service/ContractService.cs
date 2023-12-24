@@ -1,5 +1,6 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Contract;
+using amorphie.consent.core.DTO.Contract.TemplateRender;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.Service.Interface;
@@ -38,4 +39,19 @@ public class ContractService : IContractService
         return result;
     }
 
+    public async Task<ApiResult> TemplateRender(TemplateRenderRequestDto templateRenderRequest)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Get file from service
+            result.Data = await _contractClientService.TemplateRender(templateRenderRequest);
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
 }
