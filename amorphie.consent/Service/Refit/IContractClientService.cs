@@ -8,5 +8,5 @@ namespace amorphie.consent.Service;
 public interface IContractClientService
 {
     [Post("/contract/Instance")]
-    Task ContractInstance([Body] InstanceRequestDto instanceRequest);
+    Task<InstanceResponseDto> ContractInstance([Body] InstanceRequestDto instanceRequest);
 }

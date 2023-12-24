@@ -21,7 +21,7 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
     {
     }
     public override string[]? PropertyCheckList => null;
-    public override string? UrlFragment => "Authorization";
+    public override string? UrlFragment => "Contract";
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);

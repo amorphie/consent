@@ -28,7 +28,7 @@ public class ContractService : IContractService
         try
         {
             //Send contractrequest to servie
-            await _contractClientService.ContractInstance(instanceRequest);
+           result.Data = await _contractClientService.ContractInstance(instanceRequest);
         }
         catch (Exception e)
         {
