@@ -1,5 +1,6 @@
 using amorphie.consent.core.DTO;
-using amorphie.consent.core.DTO.Contract;
+using amorphie.consent.core.DTO.Contract.ContractInstance;
+using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.Contract.TemplateRender;
 
 namespace amorphie.consent.Service.Interface;
@@ -21,4 +22,12 @@ public interface IContractService
     /// <param name="templateRenderRequest"></param>
     /// <returns>Template render post message response. File data in byte[] type</returns>
     Task<ApiResult> TemplateRender(TemplateRenderRequestDto templateRenderRequest);
+    
+    /// <summary>
+    /// Call documentinstance method of contract service and process the response
+    /// It sends the authorized document to service
+    /// </summary>
+    /// <param name="instanceRequest">Object to be send</param>
+    /// <returns>documentInstance post process result. Post response of authorized document</returns>
+    Task<ApiResult> DocumentInstance(DocumentInstanceRequestDto instanceRequest);
 }

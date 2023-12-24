@@ -1,5 +1,7 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Contract;
+using amorphie.consent.core.DTO.Contract.ContractInstance;
+using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.Contract.TemplateRender;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
@@ -28,6 +30,7 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapPost("/instance", ContractInstance);
         routeGroupBuilder.MapPost("/templateRender/render/pdf", TemplateRender);
+        routeGroupBuilder.MapPost("/documentInstance", DocumentInstance);
         
     }
     public async Task<IResult> ContractInstance([FromBody] InstanceRequestDto instanceRequest,
@@ -73,4 +76,26 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+     
+     public async Task<IResult> DocumentInstance([FromBody] DocumentInstanceRequestDto instanceRequest,
+         [FromServices] ConsentDbContext context,
+         [FromServices] IMapper mapper,
+         [FromServices] IContractService contractService,
+         [FromServices] IConfiguration configuration,
+         HttpContext httpContext)
+     {
+         try
+         {
+             ApiResult contractApiResult = await contractService.DocumentInstance(instanceRequest);
+             if (!contractApiResult.Result)
+             {
+                 return Results.BadRequest(contractApiResult.Message);
+             }
+             return Results.Ok(contractApiResult.Data);
+         }
+         catch (Exception ex)
+         {
+             return Results.Problem($"An error occurred: {ex.Message}");
+         }
+     }
 }

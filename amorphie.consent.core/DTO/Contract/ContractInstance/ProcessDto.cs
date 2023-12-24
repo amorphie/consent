@@ -1,4 +1,4 @@
-        namespace amorphie.consent.core.DTO.Contract;
+        namespace amorphie.consent.core.DTO.Contract.ContractInstance;
 
         public class ProcessDto
         {
