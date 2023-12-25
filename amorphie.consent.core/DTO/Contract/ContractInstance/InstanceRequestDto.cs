@@ -2,9 +2,9 @@ namespace amorphie.consent.core.DTO.Contract.ContractInstance;
 
 public class InstanceRequestDto
 {
-    public InstanceRequestDto(string userTCKN)
+    public InstanceRequestDto(string userTCKN,string contractName)
     {
-        contractName = "logindocs";
+        this.contractName = contractName;
         process = new ProcessDto();
         reference = userTCKN;
         owner = userTCKN;

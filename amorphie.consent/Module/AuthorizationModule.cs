@@ -140,7 +140,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 context.Consents.Add(consent);
             }
             //Get document list. Call constractinstance method
-            InstanceRequestDto instanceRequest = new InstanceRequestDto(userTCKN.ToString());
+            InstanceRequestDto instanceRequest = new InstanceRequestDto(userTCKN.ToString(),"logindocs");
             ApiResult contractApiResult = await contractService.ContractInstance(instanceRequest);//Get data from service
             if (!contractApiResult.Result)
             {//Error in getting documents info
