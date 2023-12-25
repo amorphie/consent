@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
 namespace amorphie.consent.core.DTO.Contract.ContractInstance;
@@ -10,6 +11,7 @@ public class DocumentInfoDto
     public bool required { get; set; }
     public bool render { get; set; }
     [JsonProperty("online-sign")]
+    [JsonPropertyName("online-sign")]
     public OnlineSignDto.OnlineSign onlineSign { get; set; } 
     public string version { get; set; }
 }

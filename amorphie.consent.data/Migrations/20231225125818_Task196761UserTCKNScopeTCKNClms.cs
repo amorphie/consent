@@ -10,16 +10,16 @@ namespace amorphie.consent.data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
+            migrationBuilder.AddColumn<long>(
                 name: "ScopeTCKN",
                 table: "Consents",
-                type: "text",
+                type: "bigint",
                 nullable: true);
 
-            migrationBuilder.AddColumn<string>(
+            migrationBuilder.AddColumn<long>(
                 name: "UserTCKN",
                 table: "Consents",
-                type: "text",
+                type: "bigint",
                 nullable: true);
         }
 

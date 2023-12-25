@@ -28,7 +28,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
-        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}",CheckAuthorizationForLogin);
+        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
     }
 
     /// <summary>
@@ -87,15 +87,15 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         }
     }
 
-      public async Task<IResult> CheckAuthorizationForLogin(
-        Guid clientId,
-        Guid roleId,
-        string userTCKN,
-        string scopeTCKN,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IContractService contractService,
-        [FromServices] IMapper mapper,
-        HttpContext httpContext)
+    public async Task<IResult> CheckAuthorizationForLogin(
+      Guid clientId,
+      Guid roleId,
+      long userTCKN,
+      long scopeTCKN,
+      [FromServices] ConsentDbContext context,
+      [FromServices] IContractService contractService,
+      [FromServices] IMapper mapper,
+      HttpContext httpContext)
     {
         try
         {
@@ -109,13 +109,38 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.ConsentType == OpenBankingConstants.ConsentType.IBLogin)
                 .ToListAsync();
 
-            if (consents.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi))
+            if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
             {//Authorized user
                 return Results.Ok(response);
             }
-            //If there is no consent in db, insert consent
+
+            Consent consent;
+            Boolean isNewConsent = false;
+            if (consents?.Any() ?? false)//Update consent
+            {
+                consent = consents.First();
+                consent.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+                consent.ModifiedAt = DateTime.UtcNow;
+                consent.StateModifiedAt = DateTime.UtcNow;
+                context.Consents.Update(consent);
+            }
+            else//If there is no consent in db, insert consent
+            {
+                isNewConsent = true;
+                consent = new Consent();
+                consent.ScopeTCKN = scopeTCKN;
+                consent.UserTCKN = userTCKN;
+                consent.ConsentType = OpenBankingConstants.ConsentType.IBLogin;
+                consent.RoleId = roleId;
+                consent.ClientId = clientId;
+                consent.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+                consent.AdditionalData = string.Empty;
+                consent.ModifiedAt = DateTime.UtcNow;
+                consent.StateModifiedAt = DateTime.UtcNow;
+                context.Consents.Add(consent);
+            }
             //Get document list. Call constractinstance method
-            InstanceRequestDto instanceRequest = new InstanceRequestDto(userTCKN);
+            InstanceRequestDto instanceRequest = new InstanceRequestDto(userTCKN.ToString());
             ApiResult contractApiResult = await contractService.ContractInstance(instanceRequest);//Get data from service
             if (!contractApiResult.Result)
             {//Error in getting documents info
@@ -124,7 +149,17 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
             if (contractApiResult.Data == null)
             {//All documents approved. Authorized user
-                //TODO:Ozlem update consent
+                consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+                if (isNewConsent)
+                {
+                    context.Consents.Add(consent);
+                }
+                else
+                {
+                    context.Consents.Update(consent);
+                }
+
+                await context.SaveChangesAsync();
                 return Results.Ok(response);
             }
             InstanceResponseDto instanceResponse = (InstanceResponseDto)contractApiResult.Data;
@@ -140,35 +175,45 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     if (documentInfo.onlineSign != null && (documentInfo.onlineSign.documentModelTemplate?.Any() ?? false))
                     {
                         var template = documentInfo.onlineSign.documentModelTemplate[0];
-                        TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(template.name,template.minVersion);
-                       renderResult = await contractService.TemplateRender(renderRequest);
-                       if (renderResult.Result && renderResult.Data != null)
-                       {
-                           response.Contracts.Add(new ContractDto()
-                           {
-                               FileContext = (string)renderResult.Data,
-                               FileType = "pdf",
-                               FileContextType = "base64",
-                               FileName = documentInfo.code,
-                               DocumentCode = documentInfo.code,
-                               DocumentVersion = template.minVersion,
-                               Reference = userTCKN,
-                               Owner = userTCKN
-                           });
-                       }
-                       else
-                       {//Error in getting file
-                           //TODO:Ozlem ask what to do
-                       }
+                        TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(template.name, template.minVersion);
+                        renderResult = await contractService.TemplateRender(renderRequest);
+                        if (renderResult.Result && renderResult.Data != null)
+                        {
+                            response.Contracts.Add(new ContractDto()
+                            {
+                                FileContext = (string)renderResult.Data,
+                                FileType = "application/pdf",
+                                FileContextType = "base64",
+                                FileName = $"{documentInfo.code}.pdf",
+                                DocumentCode = documentInfo.code,
+                                DocumentVersion = template.minVersion,
+                                Reference = userTCKN.ToString(),
+                                Owner = userTCKN.ToString()
+                            });
+                        }
+                        else
+                        {//Error in getting file
+                         //TODO:Ozlem ask what to do
+                        }
                     }
-                   
+
                 }
+                await context.SaveChangesAsync();
                 //Not authorized
                 return Results.Ok(response);
             }
             else
             {//No document. Authorized user
-                //TODO:Ozlem update consent
+                consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+                if (isNewConsent)
+                {
+                    context.Consents.Add(consent);
+                }
+                else
+                {
+                    context.Consents.Update(consent);
+                }
+                await context.SaveChangesAsync();
                 return Results.Ok(response);
             }
         }

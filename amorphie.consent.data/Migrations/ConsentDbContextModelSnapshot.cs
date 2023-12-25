@@ -68,8 +68,8 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ScopeId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ScopeTCKN")
-                        .HasColumnType("text");
+                    b.Property<long?>("ScopeTCKN")
+                        .HasColumnType("bigint");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
@@ -87,8 +87,8 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("UserTCKN")
-                        .HasColumnType("text");
+                    b.Property<long?>("UserTCKN")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Variant")
                         .HasColumnType("text");
