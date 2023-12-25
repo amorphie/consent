@@ -14,7 +14,7 @@ public interface IContractService
     /// <param name="instanceRequest">Object to be send</param>
     /// <returns>contractInstance post process result. Users unauthorized documents informations.</returns>
     Task<ApiResult> ContractInstance(InstanceRequestDto instanceRequest);
-    
+
     /// <summary>
     /// Call templaterender post method of contract service and process the response
     /// It gets the document in base64 
@@ -22,7 +22,7 @@ public interface IContractService
     /// <param name="templateRenderRequest"></param>
     /// <returns>Template render post message response. File data in base64</returns>
     Task<ApiResult> TemplateRender(TemplateRenderRequestDto templateRenderRequest);
-    
+
     /// <summary>
     /// Call documentinstance method of contract service and process the response
     /// It sends the authorized document to service

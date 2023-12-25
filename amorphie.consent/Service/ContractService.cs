@@ -21,14 +21,14 @@ public class ContractService : IContractService
         _contractClientService = contractClientService;
         _mapper = mapper;
     }
-    
+
     public async Task<ApiResult> ContractInstance(InstanceRequestDto instanceRequest)
     {
         ApiResult result = new();
         try
         {
             //Send contractrequest to servie
-           result.Data = await _contractClientService.ContractInstance(instanceRequest);
+            result.Data = await _contractClientService.ContractInstance(instanceRequest);
         }
         catch (Exception e)
         {

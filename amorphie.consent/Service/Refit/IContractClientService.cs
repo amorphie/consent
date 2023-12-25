@@ -9,10 +9,10 @@ public interface IContractClientService
 {
     [Post("/contract/Instance")]
     Task<InstanceResponseDto> ContractInstance([Body] InstanceRequestDto instanceRequest);
-    
+
     [Post("/template-render/render/pdf")]
     Task<string> TemplateRender([Body] TemplateRenderRequestDto templateRenderRequest);
-    
+
     [Post("/document/instance")]
     Task DocumentInstance([Body] DocumentInstanceRequestDto documentInstanceRequest);
 }

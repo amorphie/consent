@@ -5,7 +5,8 @@ namespace amorphie.consent.core.DTO.Contract.ContractInstance;
 
 public class OnlineSignDto
 {
-    public class OnlineSign {
+    public class OnlineSign
+    {
         [JsonProperty("sca-required")]
         [JsonPropertyName("sca-required")]
         public bool scaRequired { get; set; }
