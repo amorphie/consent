@@ -193,7 +193,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                         }
                         else
                         {//Error in getting file
-                         //TODO:Ozlem ask what to do
+                            return Results.BadRequest(renderResult.Message);
                         }
                     }
 
