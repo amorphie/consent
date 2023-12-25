@@ -17,10 +17,10 @@ public interface IContractService
     
     /// <summary>
     /// Call templaterender post method of contract service and process the response
-    /// It gets the document in byte[] type
+    /// It gets the document in base64 
     /// </summary>
     /// <param name="templateRenderRequest"></param>
-    /// <returns>Template render post message response. File data in byte[] type</returns>
+    /// <returns>Template render post message response. File data in base64</returns>
     Task<ApiResult> TemplateRender(TemplateRenderRequestDto templateRenderRequest);
     
     /// <summary>

@@ -6,7 +6,7 @@
                 {
                         client = "consent-application";
                         user = "34455667789";
-                        name = "ekyc-process";
+                        name = "consent-process";
                         state = "load-document";
                         action = "web-mobil-document-load";
                 }

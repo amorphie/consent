@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
@@ -5,10 +6,24 @@ namespace amorphie.consent.core.DTO.Contract.TemplateRender;
 
 public class TemplateRenderRequestDto
 {
+        public TemplateRenderRequestDto(string templateName, string minVersion)
+        {
+                name = templateName;
+                semanticVersion = minVersion;
+                renderId = Guid.NewGuid();
+                renderData = "{}";
+                renderDataForLog = string.Empty;
+                processName = string.Empty;
+                itemId = action = identity = customer = childrenName = string.Empty;
+                children = new Collection<string>()
+                {
+                        "string"
+                };
+        }
         public string name { get; set; }
         [JsonProperty("render-id")]
         [JsonPropertyName("render-id")]
-        public string renderId { get; set; }
+        public Guid renderId { get; set; }
         [JsonProperty("render-data")]
         [JsonPropertyName("render-data")]
         public string renderData { get; set; }

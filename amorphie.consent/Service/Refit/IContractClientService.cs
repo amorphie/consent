@@ -11,7 +11,7 @@ public interface IContractClientService
     Task<InstanceResponseDto> ContractInstance([Body] InstanceRequestDto instanceRequest);
     
     [Post("/template-render/render/pdf")]
-    Task<byte[]> TemplateRender([Body] TemplateRenderRequestDto templateRenderRequest);
+    Task<string> TemplateRender([Body] TemplateRenderRequestDto templateRenderRequest);
     
     [Post("/document/instance")]
     Task DocumentInstance([Body] DocumentInstanceRequestDto documentInstanceRequest);
