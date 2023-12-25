@@ -32,6 +32,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -75,6 +76,13 @@ builder.Services
     .ConfigureHttpClient(c =>
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
+    .AddPolicyHandler(retryPolicy);
+
+builder.Services
+    .AddRefitClient<IContractClientService>()
+    .ConfigureHttpClient(c =>
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:ContractServiceURL"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "ContractServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
