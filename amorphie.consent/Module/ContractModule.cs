@@ -31,7 +31,7 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
         routeGroupBuilder.MapPost("/instance", ContractInstance);
         routeGroupBuilder.MapPost("/templateRender/render/pdf", TemplateRender);
         routeGroupBuilder.MapPost("/documentInstance", DocumentInstance);
-        
+
     }
     public async Task<IResult> ContractInstance([FromBody] InstanceRequestDto instanceRequest,
         [FromServices] ConsentDbContext context,
@@ -55,12 +55,12 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
         }
     }
 
-     public async Task<IResult> TemplateRender([FromBody] TemplateRenderRequestDto templateRenderRequest,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IContractService contractService,
-        [FromServices] IConfiguration configuration,
-        HttpContext httpContext)
+    public async Task<IResult> TemplateRender([FromBody] TemplateRenderRequestDto templateRenderRequest,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IMapper mapper,
+       [FromServices] IContractService contractService,
+       [FromServices] IConfiguration configuration,
+       HttpContext httpContext)
     {
         try
         {
@@ -76,26 +76,26 @@ public class ContractModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-     
-     public async Task<IResult> DocumentInstance([FromBody] DocumentInstanceRequestDto instanceRequest,
-         [FromServices] ConsentDbContext context,
-         [FromServices] IMapper mapper,
-         [FromServices] IContractService contractService,
-         [FromServices] IConfiguration configuration,
-         HttpContext httpContext)
-     {
-         try
-         {
-             ApiResult contractApiResult = await contractService.DocumentInstance(instanceRequest);
-             if (!contractApiResult.Result)
-             {
-                 return Results.BadRequest(contractApiResult.Message);
-             }
-             return Results.Ok(contractApiResult.Data);
-         }
-         catch (Exception ex)
-         {
-             return Results.Problem($"An error occurred: {ex.Message}");
-         }
-     }
+
+    public async Task<IResult> DocumentInstance([FromBody] DocumentInstanceRequestDto instanceRequest,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IContractService contractService,
+        [FromServices] IConfiguration configuration,
+        HttpContext httpContext)
+    {
+        try
+        {
+            ApiResult contractApiResult = await contractService.DocumentInstance(instanceRequest);
+            if (!contractApiResult.Result)
+            {
+                return Results.BadRequest(contractApiResult.Message);
+            }
+            return Results.Ok(contractApiResult.Data);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
 }

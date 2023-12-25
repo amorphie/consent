@@ -12,6 +12,6 @@ public class DocumentInfoDto
     public bool render { get; set; }
     [JsonProperty("online-sign")]
     [JsonPropertyName("online-sign")]
-    public OnlineSignDto.OnlineSign onlineSign { get; set; } 
+    public OnlineSignDto.OnlineSign onlineSign { get; set; }
     public string version { get; set; }
 }

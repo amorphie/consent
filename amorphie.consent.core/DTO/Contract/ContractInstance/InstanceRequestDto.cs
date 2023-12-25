@@ -2,7 +2,7 @@ namespace amorphie.consent.core.DTO.Contract.ContractInstance;
 
 public class InstanceRequestDto
 {
-    public InstanceRequestDto(string userTCKN,string contractName)
+    public InstanceRequestDto(string userTCKN, string contractName)
     {
         this.contractName = contractName;
         process = new ProcessDto();
