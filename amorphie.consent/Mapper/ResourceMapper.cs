@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.Contract;
+using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.OpenBanking.YOS;
@@ -97,6 +99,15 @@ namespace amorphie.consent.Mapper
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
 
             CreateMap<OBAccountReference, OBAccountReferenceDto>();
+            CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
+                .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
+                .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
+                .ForMember(dest => dest.documentCode, opt => opt.MapFrom(src => src.DocumentCode))
+                .ForMember(dest => dest.documentVersion, opt => opt.MapFrom(src => src.DocumentVersion))
+                .ForMember(dest => dest.fileName, opt => opt.MapFrom(src => src.FileName))
+                .ForMember(dest => dest.fileContextType, opt => opt.MapFrom(src => src.FileContextType))
+                .ForMember(dest => dest.fileType, opt => opt.MapFrom(src => src.FileType));
+
         }
     }
 }

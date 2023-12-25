@@ -1,6 +1,7 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Contract;
 using amorphie.consent.core.DTO.Contract.ContractInstance;
+using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.Contract.TemplateRender;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
@@ -29,6 +30,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
         routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
+        routeGroupBuilder.MapPost("/SaveConsentForAuthorization/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", SaveConsentForAuthorization);
     }
 
     /// <summary>
@@ -87,6 +89,18 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         }
     }
 
+    /// <summary>
+    /// Check authorization for login process by integrated with contract service
+    /// </summary>
+    /// <param name="clientId">Client Id</param>
+    /// <param name="roleId">Role Id</param>
+    /// <param name="userTCKN">Users Identity Number</param>
+    /// <param name="scopeTCKN">Scope Identity Number. Same with usertckn in most cases</param>
+    /// <param name="context">Context instance object</param>
+    /// <param name="contractService">Contract service object</param>
+    /// <param name="mapper">Mapper object</param>
+    /// <param name="httpContext">HttpContext object</param>
+    /// <returns>The value if user is authorized, If not, give to be approved documents</returns>
     public async Task<IResult> CheckAuthorizationForLogin(
       Guid clientId,
       Guid roleId,
@@ -168,7 +182,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 //Get document data for each document 
                 //call templaterender method
                 ApiResult renderResult;
-                response.Contracts = new List<ContractDto>();
+                response.ContractDocuments = new List<ContractDocumentDto>();
                 response.IsAuthorized = false;
                 foreach (var documentInfo in instanceResponse.document)
                 {
@@ -179,7 +193,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                         renderResult = await contractService.TemplateRender(renderRequest);
                         if (renderResult.Result && renderResult.Data != null)
                         {
-                            response.Contracts.Add(new ContractDto()
+                            response.ContractDocuments.Add(new ContractDocumentDto()
                             {
                                 FileContext = (string)renderResult.Data,
                                 FileType = "application/pdf",
@@ -221,5 +235,78 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         {
             return Results.Problem($"An error occurred: {ex.Message}");
         }
+    }
+
+
+    /// <summary>
+    /// Save authorized consent. Gives approved documents to contract service 
+    /// </summary>
+    /// <param name="clientId">Client Id</param>
+    /// <param name="roleId">Role Id</param>
+    /// <param name="userTCKN">Users Identity Number</param>
+    /// <param name="scopeTCKN">Scope Identity Number. Same with usertckn in most cases</param>
+    /// <param name="contractDocuments"></param>
+    /// <param name="context">Context instance object</param>
+    /// <param name="contractService">Contract service object</param>
+    /// <param name="mapper">Mapper object</param>
+    /// <param name="httpContext">HttpContext object</param>
+    /// <returns>If approved documents can be set as approved.</returns>
+    public async Task<IResult> SaveConsentForAuthorization(
+     Guid clientId,
+     Guid roleId,
+     long userTCKN,
+     long scopeTCKN,
+     [FromBody] ICollection<ContractDocumentDto> contractDocuments,
+       [FromServices] ConsentDbContext context,
+     [FromServices] IContractService contractService,
+     [FromServices] IMapper mapper,
+     HttpContext httpContext)
+    {
+        try
+        {
+            //Check if post data is valid to process.
+            var checkValidationResult = IsDataValidToSaveConsentForAuthorization(contractDocuments);
+            if (!checkValidationResult.Result)
+            {//Data not valid
+                return Results.BadRequest(checkValidationResult.Message);
+            }
+
+            //Post documents to contract service. Call documentinstance method
+            foreach (var contractDocument in contractDocuments)
+            {
+                //Get document list. Call constractinstance method
+                var instanceRequest = mapper.Map<DocumentInstanceRequestDto>(contractDocument);
+                ApiResult contractApiResult = await contractService.DocumentInstance(instanceRequest);//post data to service
+                if (!contractApiResult.Result)
+                {//Error in sending approved documents info
+                    return Results.BadRequest(contractApiResult.Message);
+                }
+            }
+            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper,
+                httpContext);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Checks if data is valid to saveConsent
+    /// </summary>
+    /// <param name="contractDocuments">To be checked object</param>
+    /// <returns>Validation check result</returns>
+    private ApiResult IsDataValidToSaveConsentForAuthorization(ICollection<ContractDocumentDto> contractDocuments)
+    {
+        //TODO:Ozlem will documents be checked if there is any document for user
+        ApiResult result = new();
+        //Check message required basic properties
+        if (!(contractDocuments?.Any() ?? false))
+        {
+            result.Result = false;
+            result.Message = "contract document post object can not be empty";
+            return result;
+        }
+        return result;
     }
 }
