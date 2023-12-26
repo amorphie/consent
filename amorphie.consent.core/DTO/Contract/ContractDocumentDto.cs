@@ -1,6 +1,6 @@
 namespace amorphie.consent.core.DTO.Contract;
 
-public class ContractDto
+public class ContractDocumentDto
 {
     public string FileType { get; set; }
     public string FileContextType { get; set; }
