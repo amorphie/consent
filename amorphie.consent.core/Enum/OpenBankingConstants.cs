@@ -29,6 +29,16 @@ public static class OpenBankingConstants
         public const string Kurumsal = "K";
     }
 
+    public static class OhkTanimTip
+    {
+        public const string TCKN = "TCKN";
+        public const string MNO = "MNO";
+        public const string YKN = "YKN";
+        public const string PNO = "PNO";
+        public const string GSM = "GSM";
+        public const string IBAN = "IBAN";
+    }
+
     public static class KolasTur
     {
         public const string TelefonNumarasi = "T";
