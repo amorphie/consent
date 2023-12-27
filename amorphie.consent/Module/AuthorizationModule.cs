@@ -199,7 +199,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                         {
                             response.ContractDocuments.Add(new ContractDocumentDto()
                             {
-                                FilePath = string.Format(templateEngineUrl,templateRenderId),
+                                FilePath = string.Format(templateEngineUrl, templateRenderId),
                                 FileType = "application/pdf",
                                 FileContextType = "base64",
                                 FileName = $"{documentInfo.code}.pdf",
@@ -288,7 +288,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 }
             }
             //Check login validity again
-            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper,configuration, httpContext);
+            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper, configuration, httpContext);
         }
         catch (Exception ex)
         {
