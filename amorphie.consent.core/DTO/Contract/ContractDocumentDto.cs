@@ -9,5 +9,6 @@ public class ContractDocumentDto
     public string DocumentVersion { get; set; }
     public string Reference { get; set; }
     public string Owner { get; set; }
-    public string FileContext { get; set; }
+    public string FileContext { get; set; } = string.Empty;
+    public string FilePath { get; set; }
 }
