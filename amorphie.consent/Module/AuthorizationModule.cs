@@ -99,6 +99,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     /// <param name="context">Context instance object</param>
     /// <param name="contractService">Contract service object</param>
     /// <param name="mapper">Mapper object</param>
+    /// <param name="configuration">Configuration instance</param>
     /// <param name="httpContext">HttpContext object</param>
     /// <returns>The value if user is authorized, If not, give to be approved documents</returns>
     public async Task<IResult> CheckAuthorizationForLogin(
@@ -109,6 +110,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
       [FromServices] ConsentDbContext context,
       [FromServices] IContractService contractService,
       [FromServices] IMapper mapper,
+      [FromServices] IConfiguration configuration,
       HttpContext httpContext)
     {
         try
@@ -184,18 +186,20 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 ApiResult renderResult;
                 response.ContractDocuments = new List<ContractDocumentDto>();
                 response.IsAuthorized = false;
+                string templateEngineUrl = configuration["ServiceURLs:TemplateEngineRendePdfURL"] ?? string.Empty;
                 foreach (var documentInfo in instanceResponse.document)
                 {
                     if (documentInfo.onlineSign != null && (documentInfo.onlineSign.documentModelTemplate?.Any() ?? false))
                     {
                         var template = documentInfo.onlineSign.documentModelTemplate[0];
-                        TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(template.name, template.minVersion);
-                        renderResult = await contractService.TemplateRender(renderRequest);
+                        Guid templateRenderId = Guid.NewGuid();
+                        TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(templateRenderId, template.name, template.minVersion);
+                        renderResult = await contractService.TemplateRender(renderRequest);//Render the template
                         if (renderResult.Result && renderResult.Data != null)
                         {
                             response.ContractDocuments.Add(new ContractDocumentDto()
                             {
-                                FileContext = (string)renderResult.Data,
+                                FilePath = string.Format(templateEngineUrl,templateRenderId),
                                 FileType = "application/pdf",
                                 FileContextType = "base64",
                                 FileName = $"{documentInfo.code}.pdf",
@@ -206,7 +210,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                             });
                         }
                         else
-                        {//Error in getting file
+                        {//Error in getting rendered file
                             return Results.BadRequest(renderResult.Message);
                         }
                     }
@@ -260,6 +264,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
        [FromServices] ConsentDbContext context,
      [FromServices] IContractService contractService,
      [FromServices] IMapper mapper,
+     [FromServices] IConfiguration configuration,
      HttpContext httpContext)
     {
         try
@@ -282,8 +287,8 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     return Results.BadRequest(contractApiResult.Message);
                 }
             }
-            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper,
-                httpContext);
+            //Check login validity again
+            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper,configuration, httpContext);
         }
         catch (Exception ex)
         {

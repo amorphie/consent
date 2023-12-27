@@ -6,11 +6,13 @@ namespace amorphie.consent.core.DTO.Contract.TemplateRender;
 
 public class TemplateRenderRequestDto
 {
-    public TemplateRenderRequestDto(string templateName, string minVersion)
+    public TemplateRenderRequestDto(Guid renderId,
+        string templateName,
+        string minVersion)
     {
         name = templateName;
         semanticVersion = minVersion;
-        renderId = Guid.NewGuid();
+        this.renderId = renderId;
         renderData = "{}";
         renderDataForLog = string.Empty;
         processName = string.Empty;
