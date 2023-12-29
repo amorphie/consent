@@ -163,8 +163,9 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 return Results.BadRequest(contractApiResult.Message);
             }
 
-            if (contractApiResult.Data == null)
-            {//All documents approved. Authorized user
+            if (contractApiResult.Data == null
+                || !(((InstanceResponseDto)contractApiResult.Data).document?.Any(i => i is { required: true, status: "not-started" }) ?? false))
+            {//All documents approved.  Authorized user
                 consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
                 if (isNewConsent)
                 {
@@ -179,61 +180,44 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 return Results.Ok(response);
             }
             InstanceResponseDto instanceResponse = (InstanceResponseDto)contractApiResult.Data;
-            if (instanceResponse.document?.Any() ?? false)
+            //Get document data for each document 
+            //call templaterender method
+            ApiResult renderResult;
+            response.ContractDocuments = new List<ContractDocumentDto>();
+            response.IsAuthorized = false;
+            string templateEngineUrl = configuration["ServiceURLs:TemplateEngineRendePdfURL"] ?? string.Empty;
+            foreach (var documentInfo in instanceResponse.document.Where(i => i is { required: true, status: "not-started" }))
             {
-                //Get document data for each document 
-                //call templaterender method
-                ApiResult renderResult;
-                response.ContractDocuments = new List<ContractDocumentDto>();
-                response.IsAuthorized = false;
-                string templateEngineUrl = configuration["ServiceURLs:TemplateEngineRendePdfURL"] ?? string.Empty;
-                foreach (var documentInfo in instanceResponse.document)
+                if (documentInfo.onlineSign != null
+                    && (documentInfo.onlineSign.documentModelTemplate?.Any() ?? false))
                 {
-                    if (documentInfo.onlineSign != null && (documentInfo.onlineSign.documentModelTemplate?.Any() ?? false))
+                    var template = documentInfo.onlineSign.documentModelTemplate[0];
+                    Guid templateRenderId = Guid.NewGuid();
+                    TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(templateRenderId, template.name, template.minVersion);
+                    renderResult = await contractService.TemplateRender(renderRequest);//Render the template
+                    if (renderResult.Result && renderResult.Data != null)
                     {
-                        var template = documentInfo.onlineSign.documentModelTemplate[0];
-                        Guid templateRenderId = Guid.NewGuid();
-                        TemplateRenderRequestDto renderRequest = new TemplateRenderRequestDto(templateRenderId, template.name, template.minVersion);
-                        renderResult = await contractService.TemplateRender(renderRequest);//Render the template
-                        if (renderResult.Result && renderResult.Data != null)
+                        response.ContractDocuments.Add(new ContractDocumentDto()
                         {
-                            response.ContractDocuments.Add(new ContractDocumentDto()
-                            {
-                                FilePath = string.Format(templateEngineUrl, templateRenderId),
-                                FileType = "application/pdf",
-                                FileContextType = "base64",
-                                FileName = $"{documentInfo.code}.pdf",
-                                DocumentCode = documentInfo.code,
-                                DocumentVersion = template.minVersion,
-                                Reference = userTCKN.ToString(),
-                                Owner = userTCKN.ToString()
-                            });
-                        }
-                        else
-                        {//Error in getting rendered file
-                            return Results.BadRequest(renderResult.Message);
-                        }
+                            FilePath = string.Format(templateEngineUrl, templateRenderId),
+                            FileType = "application/pdf",
+                            FileContextType = "base64",
+                            FileName = $"{documentInfo.code}.pdf",
+                            DocumentCode = documentInfo.code,
+                            DocumentVersion = template.minVersion,
+                            Reference = userTCKN.ToString(),
+                            Owner = userTCKN.ToString()
+                        });
                     }
-
+                    else
+                    {//Error in getting rendered file
+                        return Results.BadRequest(renderResult.Message);
+                    }
                 }
-                await context.SaveChangesAsync();
-                //Not authorized
-                return Results.Ok(response);
             }
-            else
-            {//No document. Authorized user
-                consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-                if (isNewConsent)
-                {
-                    context.Consents.Add(consent);
-                }
-                else
-                {
-                    context.Consents.Update(consent);
-                }
-                await context.SaveChangesAsync();
-                return Results.Ok(response);
-            }
+            await context.SaveChangesAsync();
+            //Not authorized
+            return Results.Ok(response);
         }
         catch (Exception ex)
         {
