@@ -223,5 +223,5 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 }
