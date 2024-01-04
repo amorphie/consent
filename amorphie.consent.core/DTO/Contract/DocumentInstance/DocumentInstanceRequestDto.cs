@@ -5,6 +5,7 @@ namespace amorphie.consent.core.DTO.Contract.DocumentInstance;
 
 public class DocumentInstanceRequestDto
 {
+    //TODO:Özlem bu kısım kullanılmayacaksa komple kaldırılabilir
     public Guid id { get; set; } = Guid.NewGuid();
     [JsonProperty("file-type")]
     [JsonPropertyName("file-type")]
