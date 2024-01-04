@@ -45,12 +45,10 @@ public static class ModuleHelper
     /// <param name="header">Data to be checked</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="isEventHeader">If header is event message header. Optional parameter with default value is false</param>
     /// <returns>If header is valid</returns>
     public static async Task<bool> IsHeaderValid(RequestHeaderDto header,
         IConfiguration configuration,
-        IYosInfoService yosInfoService,
-        bool isEventHeader = false)
+        IYosInfoService yosInfoService)
     {
 
         if (string.IsNullOrEmpty(header.PSUInitiated)
@@ -69,6 +67,44 @@ public static class ModuleHelper
 
         if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
         {//Check psu initiated value
+            return false;
+        }
+
+        //Check setted yos value
+        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
+        if (yosCheckResult.Result == false
+            || yosCheckResult.Data == null
+            || (bool)yosCheckResult.Data == false)
+        {//No yos data in the system
+            return false;
+        }
+        return true;
+    }
+    
+    /// <summary>
+    /// Checks if header is valid by controlling;
+    /// PSU Initiated value is in predefined values
+    /// Required fields are checked
+    /// XASPSPCode is equal with BurganBank hhscode
+    /// </summary>
+    /// <param name="header">Data to be checked</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
+    /// <returns>If header is valid</returns>
+    public static async Task<bool> IsHeaderValidForEvents(RequestHeaderDto header,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService)
+    {
+
+        if (string.IsNullOrEmpty(header.XASPSPCode)
+            || string.IsNullOrEmpty(header.XRequestID)
+            || string.IsNullOrEmpty(header.XTPPCode))
+        {
+            return false;
+        }
+
+        if (configuration["HHSCode"] != header.XASPSPCode)
+        {//XASPSPCode value should be BurganBanks hhscode value
             return false;
         }
 

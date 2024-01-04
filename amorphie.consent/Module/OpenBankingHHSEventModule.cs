@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 using amorphie.consent.core.DTO;
 using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
@@ -37,9 +38,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
     }
-    
-    
-    protected async Task<IResult> EventSubsrciptionPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+
+
+    protected async Task<IResult> EventSubsrciptionPost([FromBody] OlayAbonelikIstegiDto olayAbonelikIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
@@ -49,47 +50,37 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = await IsDataValidToEventSubsrciptionPost(rizaIstegi, configuration, yosInfoService, httpContext);
+            var checkValidationResult =
+                await IsDataValidToEventSubsrciptionPost(olayAbonelikIstegi,context, configuration, yosInfoService,
+                    httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
             }
-          
-
-            var consentEntity = new Consent();
-            context.Consents.Add(consentEntity);
+            
+            //Generate entity object
+            var eventSubscriptionEntity = new OBEventSubscription()
+            {
+                IsActive = true,
+                YOSCode = olayAbonelikIstegi.katilimciBlg.yosKod,
+                HHSCode = olayAbonelikIstegi.katilimciBlg.hhsKod,
+                CreatedAt = DateTime.UtcNow,
+                SubsriptionTypes = ConvertSubscriptionTypes(olayAbonelikIstegi.abonelikTipleri),
+                SubscriptionNumber = Guid.NewGuid()
+            };
             //Generate response object
-            HesapBilgisiRizasiHHSDto hesapBilgisiRizasi = mapper.Map<HesapBilgisiRizasiHHSDto>(rizaIstegi);
-            //Set consent data
-            hesapBilgisiRizasi.rzBlg = new RizaBilgileriDto()
+            OlayAbonelikDto olayAbonelik = new OlayAbonelikDto()
             {
-                rizaNo = consentEntity.Id.ToString(),
-                olusZmn = DateTime.UtcNow,
-                gnclZmn = DateTime.UtcNow,
-                rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
+                olayAbonelikNo = eventSubscriptionEntity.SubscriptionNumber.ToString(),
+                abonelikTipleri = olayAbonelikIstegi.abonelikTipleri,
+                katilimciBlg = olayAbonelikIstegi.katilimciBlg,
+                olusturmaZamani = DateTime.UtcNow,
+                guncellemeZamani = DateTime.UtcNow
             };
-            //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
-            hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
-            consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
-            consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
-            consentEntity.StateModifiedAt = DateTime.UtcNow;
-            consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
-            consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
-            consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
-            {
-                new()
-                {//Get consent identity data to identity entity 
-                    IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
-                    IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
-                    InstitutionIdentityData = hesapBilgisiRizasi.kmlk.krmKmlkVrs,
-                    InstitutionIdentityType = hesapBilgisiRizasi.kmlk.krmKmlkTur,
-                    UserType = hesapBilgisiRizasi.kmlk.ohkTur
-                }
-            };
-            context.Consents.Add(consentEntity);
+          
+            context.OBEventSubscriptions.Add(eventSubscriptionEntity);
             await context.SaveChangesAsync();
-            return Results.Ok(hesapBilgisiRizasi);
+            return Results.Ok(olayAbonelik);
         }
         catch (Exception ex)
         {
@@ -97,152 +88,83 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
         }
     }
 
-    
+    private string[][] ConvertSubscriptionTypes(List<AbonelikTipleriDto> abonelikTipleri)
+    {
+        var subscriptionTypes = abonelikTipleri.Select(i  =>new string[] { i.olayTipi, i.kaynakTipi }).ToArray();
+        return subscriptionTypes;
+    }
+
+
     /// <summary>
     /// Checks if data is valid for account consent post process
     /// </summary>
-    /// <param name="rizaIstegi">To be checked data</param>
+    /// <param name="olayAbonelikIstegi">To be checked data</param>
     /// <param name="configuration">Config object</param>
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
-    private async Task<ApiResult> IsDataValidToEventSubsrciptionPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
-    IConfiguration configuration,
-    IYosInfoService yosInfoService,
-    HttpContext httpContext)
+    private async Task<ApiResult> IsDataValidToEventSubsrciptionPost(OlayAbonelikIstegiDto olayAbonelikIstegi,
+        ConsentDbContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        HttpContext httpContext)
     {
-        ApiResult result = new(); 
-        var header = ModuleHelper.GetHeader(httpContext);
-        // //Check header fields
-        // result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
-        // if (!result.Result)
-        // {//validation error in header fields
-        //     return result;
-        // }
+        ApiResult result = new();
+
         //Check message required basic properties
-        if (rizaIstegi.katilimciBlg is null
-            || rizaIstegi.gkd == null
-            || rizaIstegi.kmlk == null
-            || rizaIstegi.hspBlg == null
-            || rizaIstegi.hspBlg.iznBlg == null)
+        if (olayAbonelikIstegi.katilimciBlg is null
+            || olayAbonelikIstegi.abonelikTipleri?.Any() is null or false
+           )
         {
             result.Result = false;
             result.Message =
-                "katilimciBlg, gkd,odmBsltm, kmlk, hspBlg, spBlg.iznBlg should be in consent request message";
+                "katilimciBlg, abonelikTipleri should be in event subscription request message";
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod)//Required fields
-            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
+        if (string.IsNullOrEmpty(olayAbonelikIstegi.katilimciBlg.hhsKod) //Required fields
+            || string.IsNullOrEmpty(olayAbonelikIstegi.katilimciBlg.yosKod)
+            || configuration["HHSCode"] != olayAbonelikIstegi.katilimciBlg.hhsKod)
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
             return result;
         }
 
-        if (header.XASPSPCode != rizaIstegi.katilimciBlg.hhsKod)
-        {//HHSCode must match with header x-aspsp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-            return result;
-        }
-        if (header.XTPPCode != rizaIstegi.katilimciBlg.yosKod)
-        {//YOSCode must match with header x-tpp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+        //Check header fields
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, olayAbonelikIstegi.katilimciBlg);
+        if (!result.Result)
+        {
+            //validation error in header fields
             return result;
         }
 
-
-
-        //Check Kimlik
-        if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur)//Check required fields
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
-            || (string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) != string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur)
-            || !ConstantHelper.GetKimlikTurList().Contains(rizaIstegi.kmlk.kmlkTur)
-            || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.kmlk.ohkTur)
-            || (!string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) && !ConstantHelper.GetKurumKimlikTurList().Contains(rizaIstegi.kmlk.krmKmlkTur)))
+        //Check aboneliktipleri data validation
+        var sourceTypes = ConstantHelper.GetKaynakTipList();
+        var eventTypes = ConstantHelper.GetOlayTipList();
+        if (olayAbonelikIstegi.abonelikTipleri.Any(a => !eventTypes.Contains(a.olayTipi))
+            || olayAbonelikIstegi.abonelikTipleri.Any(a => !sourceTypes.Contains(a.kaynakTipi)))
         {
             result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data is not valid";
+            result.Message =
+                "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
             return result;
         }
+        //TODO:Özlem check this
+        //Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
 
-        //Check field constraints
-        if ((rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.MNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-             || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.YKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.PNO && (rizaIstegi.kmlk.kmlkVrs.Trim().Length < 7 || rizaIstegi.kmlk.kmlkVrs.Length > 9))
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.TCKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.MNO && rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.VKN && rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10))
+        //1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir.
+        if (await context.OBEventSubscriptions.AnyAsync(s =>
+                s.YOSCode == olayAbonelikIstegi.katilimciBlg.yosKod && s.IsActive))
         {
             result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data validation failed.";
+            result.Message =
+                "HTTP 400 -TR.OHVPS.Business.InvalidContent -Kaynak Çakışması";
             return result;
         }
 
 
-        //Check HesapBilgisi
-        //Check izinbilgisi properties
-        if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
-            || rizaIstegi.hspBlg.iznBlg.iznTur.Any(i => !ConstantHelper.GetIzinTurList().Contains(i))
-            || rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi) == false
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) && !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelIslemBilgisi))
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi) && !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.BakiyeBilgisi)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain TemelHesapBilgisi permission.";
-            return result;
-        }
-
-        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-          || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-          || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. IznBld erisimIzniSonTrh data check failed. It should be between tomorrow and 6 months later ";
-            return result;
-        }
-
-        //Check işlem sorgulama başlangıç zamanı
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12))//Data constraints
-            {
-                result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid. Maximum 12 months before.";
-                return result;
-            }
-        }
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue)//Check işlem sorgulama bitiş zamanı
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                        || p == OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))//Data constraints
-            {
-                result.Result = false;
-                result.Message = "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid. Maximum 12 months later.";
-                return result;
-            }
-        }
         return result;
     }
 
@@ -254,27 +176,40 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
     /// <param name="context">Context</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">Yos service instance</param>
-    /// <param name="header">Header object</param>
+    /// <param name="katilimciBlg">Katilimci data object</param>
     /// <returns>Validation result</returns>
     private async Task<ApiResult> IsHeaderDataValid(HttpContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
-        RequestHeaderDto header = null)
+        KatilimciBilgisiDto katilimciBlg)
     {
         ApiResult result = new();
-        if (header is null)
-        {
-            header = ModuleHelper.GetHeader(context);
-        }
-        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService))
-        {
+        var header = ModuleHelper.GetHeader(context);//Get header object
+        
+        if (!await ModuleHelper.IsHeaderValidForEvents(header, configuration, yosInfoService))
+        {//Header is not valid
             result.Result = false;
             result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
 
+        //Check header data and message data
+        if (header.XASPSPCode != katilimciBlg.hhsKod)
+        {
+            //HHSCode must match with header x-aspsp-code
+            result.Result = false;
+            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
+            return result;
+        }
+
+        if (header.XTPPCode != katilimciBlg.yosKod)
+        {
+            //YOSCode must match with header x-tpp-code
+            result.Result = false;
+            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+            return result;
+        }
+
         return result;
     }
-
-
 }
