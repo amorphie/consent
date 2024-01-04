@@ -67,10 +67,10 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.RoleId == roleId
                     && c.ScopeId == scopeId
                     && c.ConsentType == consentType
-                    && ((c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount
+                    && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                            && authAccountConsentStatusList.Contains(c.State)
                            && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
-                        || (c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment
+                        || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();
             if (consents?.Any() ?? false)
@@ -122,7 +122,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.RoleId == roleId
                     && c.ScopeTCKN == scopeTCKN
                     && c.UserTCKN == userTCKN
-                    && c.ConsentType == OpenBankingConstants.ConsentType.IBLogin)
+                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
                 .ToListAsync();
 
             if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
@@ -146,7 +146,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 consent = new Consent();
                 consent.ScopeTCKN = scopeTCKN;
                 consent.UserTCKN = userTCKN;
-                consent.ConsentType = OpenBankingConstants.ConsentType.IBLogin;
+                consent.ConsentType = ConsentConstants.ConsentType.IBLogin;
                 consent.RoleId = roleId;
                 consent.ClientId = clientId;
                 consent.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;

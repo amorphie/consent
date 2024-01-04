@@ -115,7 +115,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Get consent in db
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == rizaIstegi.Id
-                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingYOSAccount);
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingYOSAccount);
 
             if (existingConsent != null)
             {//Update consent
@@ -130,7 +130,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 existingConsent.Description = rizaIstegi.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
+                existingConsent.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSAccount;
                 existingConsent.XGroupId = rizaIstegi.XGroupId;
                 context.Consents.Update(existingConsent);
             }
@@ -147,7 +147,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 });
 
                 consentData.State = rizaIstegi.rzBlg?.rizaDrm;
-                consentData.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSAccount;
+                consentData.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSAccount;
                 consentData.XGroupId = rizaIstegi.XGroupId;
                 context.Consents.Add(consentData);
                 returnData = consentData;
@@ -176,7 +176,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var existingConsent = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == rizaIstegi.Id
-                                                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingYOSPayment);
+                                                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingYOSPayment);
 
             if (existingConsent != null)
             {//Update consent
@@ -191,7 +191,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 existingConsent.Description = rizaIstegi.Description;
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
-                existingConsent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSPayment;
+                existingConsent.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSPayment;
 
                 context.Consents.Update(existingConsent);
                 resultData = existingConsent;
@@ -200,7 +200,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Insert consent
                 var consent = mapper.Map<Consent>(rizaIstegi);
                 consent.State = rizaIstegi.rzBlg?.rizaDrm;
-                consent.ConsentType = OpenBankingConstants.ConsentType.OpenBankingYOSPayment;
+                consent.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSPayment;
                 consent.XGroupId = rizaIstegi.XGroupId;
                 consent.Description = rizaIstegi.Description;
                 consent.AdditionalData = JsonSerializer.Serialize(new

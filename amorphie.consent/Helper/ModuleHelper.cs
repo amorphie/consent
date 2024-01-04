@@ -45,10 +45,12 @@ public static class ModuleHelper
     /// <param name="header">Data to be checked</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="isEventHeader">If header is event message header. Optional parameter with default value is false</param>
     /// <returns>If header is valid</returns>
     public static async Task<bool> IsHeaderValid(RequestHeaderDto header,
         IConfiguration configuration,
-        IYosInfoService yosInfoService)
+        IYosInfoService yosInfoService,
+        bool isEventHeader = false)
     {
 
         if (string.IsNullOrEmpty(header.PSUInitiated)
