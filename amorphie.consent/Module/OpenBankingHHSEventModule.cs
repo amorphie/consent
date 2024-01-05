@@ -78,20 +78,19 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 YOSCode = olayAbonelikIstegi.katilimciBlg.yosKod,
                 HHSCode = olayAbonelikIstegi.katilimciBlg.hhsKod,
                 CreatedAt = DateTime.UtcNow,
-                OBEventSubscriptionTypes =mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelikIstegi.abonelikTipleri),
-                SubscriptionNumber = Guid.NewGuid()
+                OBEventSubscriptionTypes =mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelikIstegi.abonelikTipleri)
             };
+            context.OBEventSubscriptions.Add(eventSubscriptionEntity);
             //Generate response object
             OlayAbonelikDto olayAbonelik = new OlayAbonelikDto()
             {
-                olayAbonelikNo = eventSubscriptionEntity.SubscriptionNumber.ToString(),
+                olayAbonelikNo = eventSubscriptionEntity.Id.ToString(),
                 abonelikTipleri = olayAbonelikIstegi.abonelikTipleri,
                 katilimciBlg = olayAbonelikIstegi.katilimciBlg,
                 olusturmaZamani = DateTime.UtcNow,
                 guncellemeZamani = DateTime.UtcNow
             };
           
-            context.OBEventSubscriptions.Add(eventSubscriptionEntity);
             await context.SaveChangesAsync();
             return Results.Ok(olayAbonelik);
         }
@@ -156,7 +155,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
         //Event Type check. Descpriton from document:
         //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
-        if (olayAbonelikIstegi.abonelikTipleri.Any(a => eventTypeSourceTypeRelations.Any(r => r.EventType != a.olayTipi && r.SourceType != a.kaynakTipi)))
+        if (olayAbonelikIstegi.abonelikTipleri.Any(a => !eventTypeSourceTypeRelations.Any(r => r.EventType == a.olayTipi && r.SourceType == a.kaynakTipi)))
         {
             result.Result = false;
             result.Message =

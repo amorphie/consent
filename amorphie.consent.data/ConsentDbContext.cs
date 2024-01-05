@@ -54,6 +54,7 @@ public class ConsentDbContext : DbContext
         modelBuilder.Entity<Token>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
         .GetTsVectorComputedColumnSql("english", new string[] { "TokenValue", "TokenType" }), true);
+        modelBuilder.SeedOBEventTypeSourceTypeRelation();
     }
 
     public DbSet<Consent> Consents { get; set; }
