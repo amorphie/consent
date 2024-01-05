@@ -65,7 +65,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
                 YOSCode = olayAbonelikIstegi.katilimciBlg.yosKod,
                 HHSCode = olayAbonelikIstegi.katilimciBlg.hhsKod,
                 CreatedAt = DateTime.UtcNow,
-                SubsriptionTypes = ConvertSubscriptionTypes(olayAbonelikIstegi.abonelikTipleri),
+                OBEventSubscriptionTypes =mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelikIstegi.abonelikTipleri),
                 SubscriptionNumber = Guid.NewGuid()
             };
             //Generate response object
@@ -87,13 +87,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-    private string[][] ConvertSubscriptionTypes(List<AbonelikTipleriDto> abonelikTipleri)
-    {
-        var subscriptionTypes = abonelikTipleri.Select(i  =>new string[] { i.olayTipi, i.kaynakTipi }).ToArray();
-        return subscriptionTypes;
-    }
-
+    
 
     /// <summary>
     /// Checks if data is valid for account consent post process

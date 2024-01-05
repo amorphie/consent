@@ -65,5 +65,6 @@ public class ConsentDbContext : DbContext
     public DbSet<OBEvent> OBEvents { get; set; }
     public DbSet<OBSystemEvent> OBSystemEvents { get; set; }
     public DbSet<OBEventSubscription> OBEventSubscriptions { get; set; }
+    public DbSet<OBEventSubscriptionType> OBEventSubscriptionTypes { get; set; }
 
 }

@@ -6,6 +6,7 @@ using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Contract;
 using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.OpenBanking.YOS;
 using amorphie.consent.core.Model;
@@ -97,7 +98,10 @@ namespace amorphie.consent.Mapper
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
-
+            CreateMap<AbonelikTipleriDto, OBEventSubscriptionType>()
+                .ForMember(dest => dest.EventType, opt => opt.MapFrom(src => src.olayTipi))
+                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.kaynakTipi));
+            
             CreateMap<OBAccountReference, OBAccountReferenceDto>();
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
