@@ -102,7 +102,7 @@ namespace amorphie.consent.data.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
-                    b.ToTable("Consents");
+                    b.ToTable("Consents", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
@@ -153,7 +153,7 @@ namespace amorphie.consent.data.Migrations
 
                     b.HasIndex("ConsentId");
 
-                    b.ToTable("OBAccountReferences");
+                    b.ToTable("OBAccountReferences", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBConsentIdentityInfo", b =>
@@ -205,162 +205,7 @@ namespace amorphie.consent.data.Migrations
 
                     b.HasIndex("ConsentId");
 
-                    b.ToTable("OBConsentIdentityInfos");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscription", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("HHSCode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SubscriptionNumber")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("YOSCode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OBEventSubscriptions");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscriptionType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OBEventSubscriptionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SourceType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OBEventSubscriptionId");
-
-                    b.ToTable("OBEventSubscriptionTypes");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBEventTypeSourceTypeRelation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("APIToGetData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("EventCase")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventNotificationReporter")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventNotificationTime")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("RetryCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("RetryInMinute")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RetryPolicy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SourceNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("SourceType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("YOSRole")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OBEventTypeSourceTypeRelations");
+                    b.ToTable("OBConsentIdentityInfos", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentOrder", b =>
@@ -409,7 +254,7 @@ namespace amorphie.consent.data.Migrations
 
                     b.HasIndex("ConsentId");
 
-                    b.ToTable("OBPaymentOrders");
+                    b.ToTable("OBPaymentOrders", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBYosInfo", b =>
@@ -466,7 +311,7 @@ namespace amorphie.consent.data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OBYosInfos");
+                    b.ToTable("OBYosInfos", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.Token", b =>
@@ -521,7 +366,7 @@ namespace amorphie.consent.data.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
-                    b.ToTable("Tokens");
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
@@ -544,17 +389,6 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired();
 
                     b.Navigation("Consent");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscriptionType", b =>
-                {
-                    b.HasOne("amorphie.consent.core.Model.OBEventSubscription", "OBEventSubscription")
-                        .WithMany("OBEventSubscriptionTypes")
-                        .HasForeignKey("OBEventSubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OBEventSubscription");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentOrder", b =>
@@ -588,11 +422,6 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("PaymentOrders");
 
                     b.Navigation("Tokens");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscription", b =>
-                {
-                    b.Navigation("OBEventSubscriptionTypes");
                 });
 #pragma warning restore 612, 618
         }
