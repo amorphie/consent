@@ -14,7 +14,7 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    [Migration("20240105110704_Task200664EventSubscriptionTables")]
+    [Migration("20240105130857_Task200664EventSubscriptionTables")]
     partial class Task200664EventSubscriptionTables
     {
         /// <inheritdoc />

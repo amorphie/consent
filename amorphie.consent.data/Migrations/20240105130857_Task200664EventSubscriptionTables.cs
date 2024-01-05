@@ -90,7 +90,6 @@ namespace amorphie.consent.data.Migrations
                 name: "IX_OBEventSubscriptionTypes_OBEventSubscriptionId",
                 table: "OBEventSubscriptionTypes",
                 column: "OBEventSubscriptionId");
-
         }
 
         /// <inheritdoc />
