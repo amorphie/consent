@@ -64,13 +64,13 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         {
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToEventSubsrciptionPost(olayAbonelikIstegi,context, configuration, yosInfoService,
+                await IsDataValidToEventSubsrciptionPost(olayAbonelikIstegi, context, configuration, yosInfoService,
                     httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
             }
-            
+
             //Generate entity object
             var eventSubscriptionEntity = new OBEventSubscription()
             {
@@ -78,7 +78,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 YOSCode = olayAbonelikIstegi.katilimciBlg.yosKod,
                 HHSCode = olayAbonelikIstegi.katilimciBlg.hhsKod,
                 CreatedAt = DateTime.UtcNow,
-                OBEventSubscriptionTypes =mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelikIstegi.abonelikTipleri)
+                OBEventSubscriptionTypes = mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelikIstegi.abonelikTipleri)
             };
             context.OBEventSubscriptions.Add(eventSubscriptionEntity);
             //Generate response object
@@ -90,7 +90,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 olusturmaZamani = DateTime.UtcNow,
                 guncellemeZamani = DateTime.UtcNow
             };
-          
+
             await context.SaveChangesAsync();
             return Results.Ok(olayAbonelik);
         }
@@ -99,7 +99,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 
     /// <summary>
     /// Checks if data is valid for account consent post process
@@ -147,11 +147,11 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         }
 
         //Check aboneliktipleri data validation
-       var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
-            .AsNoTracking()
-            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
-            .ToListAsync();
-       
+        var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
+             .AsNoTracking()
+             .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
+             .ToListAsync();
+
 
         //Event Type check. Descpriton from document:
         //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
@@ -162,13 +162,13 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
             return result;
         }
-        
+
         //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Source Type check.  Descpriton from document:
         //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
-        
-       
-       
+
+
+
         //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
         //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
@@ -204,7 +204,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(context);//Get header object
-        
+
         if (!await ModuleHelper.IsHeaderValidForEvents(header, configuration, yosInfoService))
         {//Header is not valid
             result.Result = false;

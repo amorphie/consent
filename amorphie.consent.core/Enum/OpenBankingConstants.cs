@@ -301,33 +301,33 @@ public static class OpenBankingConstants
         public const string OHKStarted = "E";
         public const string SystemStarted = "H";
     }
-    
+
     public static class OlayTip
     {
-        public const string KaynakGuncellendi ="KAYNAK_GUNCELLENDI";
-        public const string AyrikGKDBasarili ="AYRIK_GKD_BASARILI";
-        public const string AyrikGKDBasarisiz ="AYRIK_GKD_BASARISIZ";
-        public const string HHSYOSGuncellendi ="HHS_YOS_GUNCELLENDI";
+        public const string KaynakGuncellendi = "KAYNAK_GUNCELLENDI";
+        public const string AyrikGKDBasarili = "AYRIK_GKD_BASARILI";
+        public const string AyrikGKDBasarisiz = "AYRIK_GKD_BASARISIZ";
+        public const string HHSYOSGuncellendi = "HHS_YOS_GUNCELLENDI";
     }
 
     public static class KaynakTip
     {
-        public const string HesapBilgisiRizasi ="HESAP_BILGISI_RIZASI";
-        public const string OdemeEmriRizasi ="ODEME_EMRI_RIZASI";
-        public const string OdemeEmri ="ODEME_EMRI";
-        public const string Bakiye ="BAKIYE";
-        public const string CokluIslemTalebi ="COKLU_ISLEM_TALEBI";
-        public const string HHS ="HHS";
-        public const string YOS ="YOS";
+        public const string HesapBilgisiRizasi = "HESAP_BILGISI_RIZASI";
+        public const string OdemeEmriRizasi = "ODEME_EMRI_RIZASI";
+        public const string OdemeEmri = "ODEME_EMRI";
+        public const string Bakiye = "BAKIYE";
+        public const string CokluIslemTalebi = "COKLU_ISLEM_TALEBI";
+        public const string HHS = "HHS";
+        public const string YOS = "YOS";
     }
 
     public static class EventNotificationReporter
     {
-        public const string HHS ="HHS";
-        public const string BKM ="BKM";
+        public const string HHS = "HHS";
+        public const string BKM = "BKM";
     }
-    
-    
+
+
     public static class ConsentDetailType
     {
         public const string OpenBankingPaymentOrder = "OB_PaymentOrder";

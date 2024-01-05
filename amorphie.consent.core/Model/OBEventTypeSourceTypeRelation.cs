@@ -6,7 +6,7 @@ namespace amorphie.consent.core.Model;
 
 public class OBEventTypeSourceTypeRelation : EntityBase
 {
-   
+
     public string EventType { get; set; }
     public string YOSRole { get; set; }
     public string SourceType { get; set; }
@@ -18,5 +18,5 @@ public class OBEventTypeSourceTypeRelation : EntityBase
     public string? RetryPolicy { get; set; }
     public int? RetryInMinute { get; set; }
     public int? RetryCount { get; set; }
-    
+
 }

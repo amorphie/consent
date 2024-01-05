@@ -188,7 +188,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OdemeSistemi).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get OlayTip constants values list
     /// </summary>
@@ -197,7 +197,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OlayTip).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get KaynakTip constants values list
     /// </summary>

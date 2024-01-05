@@ -5,7 +5,7 @@ public static class ConsentConstants
     static ConsentConstants()
     {
     }
-    
+
     public static class ConsentType
     {
         public const string OpenBankingAccount = "OB_Account";

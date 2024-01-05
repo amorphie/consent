@@ -80,7 +80,7 @@ public static class ModuleHelper
         }
         return true;
     }
-    
+
     /// <summary>
     /// Checks if header is valid by controlling;
     /// PSU Initiated value is in predefined values
