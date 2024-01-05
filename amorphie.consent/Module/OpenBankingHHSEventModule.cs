@@ -22,16 +22,16 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
-public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
+public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSubscription, ConsentDbContext>
 {
     public OpenBankingHHSEventModule(WebApplication app)
         : base(app)
     {
     }
 
-    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
+    public override string[]? PropertyCheckList => new string[] { "HHSCode", "YOSCode" };
 
-    public override string? UrlFragment => "OpenBankingEvent";
+    public override string? UrlFragment => "OpenBankingHHSEvent";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
@@ -40,6 +40,19 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
     }
 
 
+    /// <summary>
+    /// Do Event Subcscription process of yos.
+    /// </summary>
+    /// <param name="olayAbonelikIstegi">Request object</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="configuration"></param>
+    /// <param name="yosInfoService"></param>
+    /// <param name="httpContext"></param>
+    /// <returns>EventSubscription response</returns>
+    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     protected async Task<IResult> EventSubsrciptionPost([FromBody] OlayAbonelikIstegiDto olayAbonelikIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -135,20 +148,33 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OpenBankingConsentDto, Con
         }
 
         //Check aboneliktipleri data validation
-        var sourceTypes = ConstantHelper.GetKaynakTipList();
-        var eventTypes = ConstantHelper.GetOlayTipList();
-        if (olayAbonelikIstegi.abonelikTipleri.Any(a => !eventTypes.Contains(a.olayTipi))
-            || olayAbonelikIstegi.abonelikTipleri.Any(a => !sourceTypes.Contains(a.kaynakTipi)))
+       var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
+            .AsNoTracking()
+            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
+            .ToListAsync();
+       
+
+        //Event Type check. Descpriton from document:
+        //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
+        if (olayAbonelikIstegi.abonelikTipleri.Any(a => eventTypeSourceTypeRelations.Any(r => r.EventType != a.olayTipi && r.SourceType != a.kaynakTipi)))
         {
             result.Result = false;
             result.Message =
                 "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
             return result;
         }
-        //TODO:Özlem check this
-        //Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
+        
+        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
+        //Source Type check.  Descpriton from document:
+        //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+        
+       
+       
+        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
+        //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
+        //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
 
-        //1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir.
+        //Descpriton from document: 1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir.
         if (await context.OBEventSubscriptions.AnyAsync(s =>
                 s.YOSCode == olayAbonelikIstegi.katilimciBlg.yosKod && s.IsActive))
         {
