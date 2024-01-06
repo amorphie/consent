@@ -101,7 +101,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                        && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
+                                        && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             ApiResult isDataValidResult = IsDataValidToGetAccountConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
             {
@@ -138,7 +138,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .AsNoTracking()
                 .Include(c => c.OBAccountReferences)
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                        && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
+                                        && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             var accountConsent = mapper.Map<HHSAccountConsentDto>(entity);
             return Results.Ok(accountConsent);
         }
@@ -606,7 +606,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
             if (!isDataValidResult.Result)//Error in data validation
             {
@@ -693,7 +693,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                    && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                                    && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             var paymentConsent = mapper.Map<HHSPaymentConsentDto>(entity);
             return Results.Ok(paymentConsent);
         }
@@ -723,7 +723,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
-                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             //Check consent validity
             ApiResult isDataValidResult = IsDataValidToUpdatePaymentConsentStatusForUsage(entity, updateConsentState);
             if (!isDataValidResult.Result)//Error in data validation
@@ -770,7 +770,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context, tokenService);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
-                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             //Check consent validity
             ApiResult isDataValidResult = IsDataValidToUpdatePaymentConsentForAuth(entity, savePCStatusSenderAccount);
             if (!isDataValidResult.Result)//Error in data validation
@@ -823,7 +823,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await ProcessAccountConsentToCancelOrEnd(updateConsentState.Id, context);
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
-                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             //Check consent validity
             ApiResult isDataValidResult = IsDataValidToUpdateAccountConsentStatusForUsage(entity, updateConsentState);
             if (!isDataValidResult.Result)//Error in data validation
@@ -869,7 +869,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Get consent from db
             var consentEntity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == saveAccountReference.Id
-                && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
+                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
 
             //Check consent validity For Authorization
             ApiResult isDataValidResult = IsDataValidToUpdateAccountConsentForAuthorization(consentEntity, saveAccountReference);
@@ -966,7 +966,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
-            consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingAccount;
+            consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
             consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
@@ -1106,7 +1106,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             consentEntity.StateModifiedAt = DateTime.UtcNow;
-            consentEntity.ConsentType = OpenBankingConstants.ConsentType.OpenBankingPayment;
+            consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingPayment;
             consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
@@ -1775,7 +1775,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Do OdemeEmriRizasi validations
         var odemeEmriRizasiConsent = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == new Guid(odemeEmriIstegi.rzBlg.rizaNo)
-                                      && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                                      && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
 
         if (odemeEmriRizasiConsent == null)//No consent in db
         {
@@ -2162,7 +2162,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var activeAccountConsentStatusList = ConstantHelper.GetActiveAccountConsentStatusList(); //Get active status list
         //Active account consents in db
         var activeAccountConsents = await context.Consents.Where(c =>
-                c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount
+                c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                 && activeAccountConsentStatusList.Contains(c.State)
                 && c.ObConsentIdentityInfos.Any(i => i.IdentityData == rizaIstegi.kmlk.kmlkVrs
                                                      && i.IdentityType == rizaIstegi.kmlk.kmlkTur
@@ -2183,7 +2183,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         var entity = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                      && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount);
+                                      && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
         var today = DateTime.UtcNow;
         if (entity == null
             || string.IsNullOrEmpty(entity.AdditionalData)
@@ -2263,7 +2263,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         var entity = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                          && c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingPayment);
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
         var today = DateTime.UtcNow;
         if (entity == null
             || string.IsNullOrEmpty(entity.AdditionalData)

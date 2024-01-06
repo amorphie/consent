@@ -248,7 +248,7 @@ public class AccountService : IAccountService
         var activeConsent = (await _context.Consents
             .Include(c => c.OBAccountReferences)
             .Include(c => c.ObConsentIdentityInfos)
-            .Where(c => c.ConsentType == OpenBankingConstants.ConsentType.OpenBankingAccount
+            .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                       && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
                                       && c.ObConsentIdentityInfos.Any(i => i.IdentityData == customerId))
                                       .ToListAsync())

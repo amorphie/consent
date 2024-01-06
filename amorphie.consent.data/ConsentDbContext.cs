@@ -54,6 +54,7 @@ public class ConsentDbContext : DbContext
         modelBuilder.Entity<Token>().Property(item => item.SearchVector)
         .HasComputedColumnSql(FullTextSearchHelper
         .GetTsVectorComputedColumnSql("english", new string[] { "TokenValue", "TokenType" }), true);
+        modelBuilder.SeedOBEventTypeSourceTypeRelation();
     }
 
     public DbSet<Consent> Consents { get; set; }
@@ -62,5 +63,10 @@ public class ConsentDbContext : DbContext
     public DbSet<OBConsentIdentityInfo> OBConsentIdentityInfos { get; set; }
     public DbSet<OBPaymentOrder> OBPaymentOrders { get; set; }
     public DbSet<OBYosInfo> OBYosInfos { get; set; }
+    // public DbSet<OBEvent> OBEvents { get; set; }
+    // public DbSet<OBSystemEvent> OBSystemEvents { get; set; }
+    public DbSet<OBEventSubscription> OBEventSubscriptions { get; set; }
+    public DbSet<OBEventSubscriptionType> OBEventSubscriptionTypes { get; set; }
+    public DbSet<OBEventTypeSourceTypeRelation> OBEventTypeSourceTypeRelations { get; set; }
 
 }
