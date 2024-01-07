@@ -97,12 +97,22 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
+            CreateMap<OBAccountReference, OBAccountReferenceDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
             CreateMap<AbonelikTipleriDto, OBEventSubscriptionType>()
                 .ForMember(dest => dest.EventType, opt => opt.MapFrom(src => src.olayTipi))
-                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.kaynakTipi));
+                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.kaynakTipi))
+                .ReverseMap();
+            CreateMap<OBEventSubscription, OlayAbonelikDto>()
+                .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
+                .ForMember(dest => dest.olayAbonelikNo, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.olusturmaZamani, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.guncellemeZamani, opt => opt.MapFrom(src => src.ModifiedAt))
+                .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
 
-            CreateMap<OBAccountReference, OBAccountReferenceDto>();
+
+        
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
                 .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
