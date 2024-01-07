@@ -150,7 +150,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     }
 
 
-    
+
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
@@ -190,7 +190,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             entity.IsActive = false;
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
-            
+
             return Results.Ok();
         }
         catch (Exception ex)
@@ -199,7 +199,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         }
     }
 
-    
+
 
 
     /// <summary>
@@ -286,7 +286,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
         return result;
     }
-    
+
     /// <summary>
     ///  Checks if data is valid to delete EventSubsrciption
     /// </summary>

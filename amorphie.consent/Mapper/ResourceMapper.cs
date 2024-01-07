@@ -112,7 +112,7 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
 
 
-        
+
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
                 .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
