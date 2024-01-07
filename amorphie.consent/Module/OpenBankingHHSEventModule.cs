@@ -38,6 +38,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
+        routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
     }
 
     /// <summary>
@@ -149,8 +150,60 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     }
 
 
+    
+    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
+    protected async Task<IResult> DeleteEventSubsrciption(Guid id,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var header = ModuleHelper.GetHeader(httpContext);//Get header object
+            //Check header fields
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+            if (!headerValidation.Result)
+            {//Missing header fields
+                return Results.BadRequest(headerValidation.Message);
+            }
+
+            //Get entity from db
+            var entity = await context.OBEventSubscriptions
+                .FirstOrDefaultAsync(s => s.Id == id
+                                          && s.YOSCode == header.XTPPCode
+                                          && s.HHSCode == header.XASPSPCode
+                                          && s.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                          && s.IsActive);
+            ApiResult dataValidationResult = IsDataValidToDeleteEventSubsrciption(entity);//Check data validation
+            if (!dataValidationResult.Result)
+            {//Data not valid
+                return Results.BadRequest(dataValidationResult.Message);
+            }
+
+            //Update entity
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.IsActive = false;
+            context.OBEventSubscriptions.Update(entity);
+            await context.SaveChangesAsync();
+            
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    
+
+
     /// <summary>
-    /// Checks if data is valid for account consent post process
+    /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
     /// <param name="olayAbonelikIstegi">To be checked data</param>
     /// <param name="configuration">Config object</param>
@@ -231,7 +284,18 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return result;
         }
 
-
+        return result;
+    }
+    
+    /// <summary>
+    ///  Checks if data is valid to delete EventSubsrciption
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <returns>Is data valid to delete EventSubsrciption</returns>
+    private ApiResult IsDataValidToDeleteEventSubsrciption(OBEventSubscription entity)
+    {
+        ApiResult result = new();
+        //TODO:Özlem If there is any undeliverable object, or not finished consent state. Will I delete the subscription?
         return result;
     }
 
