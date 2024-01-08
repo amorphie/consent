@@ -328,6 +328,16 @@ public static class OpenBankingConstants
     }
 
 
+    public static class ModuleName
+    {
+        public const string HHS = "HHS";
+        public const string YOS = "YOS";
+    }
+
+
+
+
+
     public static class ConsentDetailType
     {
         public const string OpenBankingPaymentOrder = "OB_PaymentOrder";
