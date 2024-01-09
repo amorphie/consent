@@ -28,16 +28,15 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
+        routeGroupBuilder.MapGet("/CheckAuthorization/clientCode={clientCode}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
         routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
-        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
-        routeGroupBuilder.MapPost("/SaveConsentForAuthorization/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", SaveConsentForAuthorization);
+        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
     }
 
     /// <summary>
     /// Check if there is any valid consent with given parameters
     /// </summary>
-    /// <param name="clientId">Client Id</param>
+    /// <param name="clientCode">ClientCode</param>
     /// <param name="userId">User Id</param>
     /// <param name="roleId">Role Id</param>
     /// <param name="scopeId">Scope Id</param>
@@ -47,7 +46,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     /// <param name="httpContext"></param>
     /// <returns>If there is any valid consent with given parameters</returns>
     public async Task<IResult> CheckAuthorization(
-        Guid clientId,
+        string clientCode,
         Guid userId,
         Guid roleId,
         Guid scopeId,
@@ -63,7 +62,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
                                                                                                           //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
-                    c.ClientId == clientId
+                    c.ClientCode == clientCode
                     && c.UserId == userId
                     && c.RoleId == roleId
                     && c.ScopeId == scopeId
@@ -140,7 +139,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     /// <summary>
     /// Check authorization for login process by integrated with contract service
     /// </summary>
-    /// <param name="clientId">Client Id</param>
+    /// <param name="clientCode">Client Code</param>
     /// <param name="roleId">Role Id</param>
     /// <param name="userTCKN">Users Identity Number</param>
     /// <param name="scopeTCKN">Scope Identity Number. Same with usertckn in most cases</param>
@@ -151,7 +150,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     /// <param name="httpContext">HttpContext object</param>
     /// <returns>The value if user is authorized, If not, give to be approved documents</returns>
     public async Task<IResult> CheckAuthorizationForLogin(
-      Guid clientId,
+      string clientCode,
       Guid roleId,
       long userTCKN,
       long scopeTCKN,
@@ -166,7 +165,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             var response = new ContractResponseDto();
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
-                    c.ClientId == clientId
+                    c.ClientCode == clientCode
                     && c.RoleId == roleId
                     && c.ScopeTCKN == scopeTCKN
                     && c.UserTCKN == userTCKN
@@ -196,10 +195,10 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 consent.UserTCKN = userTCKN;
                 consent.ConsentType = ConsentConstants.ConsentType.IBLogin;
                 consent.RoleId = roleId;
-                consent.ClientId = clientId;
+                consent.ClientCode = clientCode;
                 consent.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
                 consent.AdditionalData = string.Empty;
-                consent.ModifiedAt = DateTime.UtcNow;
+                consent.CreatedAt = DateTime.UtcNow;
                 consent.StateModifiedAt = DateTime.UtcNow;
                 context.Consents.Add(consent);
             }
@@ -273,77 +272,4 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         }
     }
 
-
-    /// <summary>
-    /// Save authorized consent. Gives approved documents to contract service 
-    /// </summary>
-    /// <param name="clientId">Client Id</param>
-    /// <param name="roleId">Role Id</param>
-    /// <param name="userTCKN">Users Identity Number</param>
-    /// <param name="scopeTCKN">Scope Identity Number. Same with usertckn in most cases</param>
-    /// <param name="contractDocuments"></param>
-    /// <param name="context">Context instance object</param>
-    /// <param name="contractService">Contract service object</param>
-    /// <param name="mapper">Mapper object</param>
-    /// <param name="httpContext">HttpContext object</param>
-    /// <returns>If approved documents can be set as approved.</returns>
-    public async Task<IResult> SaveConsentForAuthorization(
-     Guid clientId,
-     Guid roleId,
-     long userTCKN,
-     long scopeTCKN,
-     [FromBody] ICollection<ContractDocumentDto> contractDocuments,
-       [FromServices] ConsentDbContext context,
-     [FromServices] IContractService contractService,
-     [FromServices] IMapper mapper,
-     [FromServices] IConfiguration configuration,
-     HttpContext httpContext)
-    {
-        try
-        {
-            //Check if post data is valid to process.
-            var checkValidationResult = IsDataValidToSaveConsentForAuthorization(contractDocuments);
-            if (!checkValidationResult.Result)
-            {//Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
-            }
-
-            //Post documents to contract service. Call documentinstance method
-            foreach (var contractDocument in contractDocuments)
-            {
-                //Get document list. Call constractinstance method
-                var instanceRequest = mapper.Map<DocumentInstanceRequestDto>(contractDocument);
-                ApiResult contractApiResult = await contractService.DocumentInstance(instanceRequest);//post data to service
-                if (!contractApiResult.Result)
-                {//Error in sending approved documents info
-                    return Results.BadRequest(contractApiResult.Message);
-                }
-            }
-            //Check login validity again
-            return await CheckAuthorizationForLogin(clientId, roleId, userTCKN, scopeTCKN, context, contractService, mapper, configuration, httpContext);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Checks if data is valid to saveConsent
-    /// </summary>
-    /// <param name="contractDocuments">To be checked object</param>
-    /// <returns>Validation check result</returns>
-    private ApiResult IsDataValidToSaveConsentForAuthorization(ICollection<ContractDocumentDto> contractDocuments)
-    {
-        //TODO:Ozlem will documents be checked if there is any document for user
-        ApiResult result = new();
-        //Check message required basic properties
-        if (!(contractDocuments?.Any() ?? false))
-        {
-            result.Result = false;
-            result.Message = "contract document post object can not be empty";
-            return result;
-        }
-        return result;
-    }
 }

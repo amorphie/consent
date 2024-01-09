@@ -34,8 +34,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("ConsentType")
                         .IsRequired()
