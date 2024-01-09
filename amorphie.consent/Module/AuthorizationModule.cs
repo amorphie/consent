@@ -88,7 +88,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Checks if any active Open Banking authorization of rizaNo is match with given userTCKN
     /// </summary>
