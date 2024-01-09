@@ -38,6 +38,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
+        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
     }
 
@@ -142,6 +143,72 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
             await context.SaveChangesAsync();
             return Results.Ok(olayAbonelik);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Updates current event subcsription by eventSubscriptionNumber
+    /// </summary>
+    /// <param name="olayAbonelik">Updated data</param>
+    /// <param name="olayAbonelikNo">To be updated data's eventSubscriptionNumber</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="configuration"></param>
+    /// <param name="yosInfoService"></param>
+    /// <param name="httpContext"></param>
+    /// <returns>Updated Event Subscription Object</returns>
+    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
+    protected async Task<IResult> UpdateEventSubsrciption([FromBody] OlayAbonelikDto olayAbonelik,
+        string olayAbonelikNo,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Check if post data is valid to process.
+            var checkValidationResult =
+                await IsDataValidToUpdateEventSubsrciption(olayAbonelik, olayAbonelikNo, context, configuration, yosInfoService,
+                    httpContext);
+            if (!checkValidationResult.Result)
+            {//Data not valid
+                return Results.BadRequest(checkValidationResult.Message);
+            }
+
+            var header = ModuleHelper.GetHeader(httpContext);//Get header object
+
+            //Get entity from db
+            var entity = await context.OBEventSubscriptions
+                .Include(s => s.OBEventSubscriptionTypes)
+                .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNo
+                                          && s.YOSCode == header.XTPPCode
+                                          && s.HHSCode == header.XASPSPCode
+                                          && s.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                          && s.IsActive);
+
+            //Delete OBEventSubscriptionTypes
+            context.OBEventSubscriptionTypes.RemoveRange(entity.OBEventSubscriptionTypes);
+            //Insert new 
+            var obEventSubscriptionTypes = mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelik.abonelikTipleri);
+            obEventSubscriptionTypes = obEventSubscriptionTypes.Select(st =>
+            {
+                st.OBEventSubscriptionId = entity.Id;
+                return st;
+            }).ToList();
+            context.OBEventSubscriptionTypes.AddRange(obEventSubscriptionTypes);
+            //update entity object
+            entity.ModifiedAt = DateTime.UtcNow;
+            context.OBEventSubscriptions.Update(entity);
+            await context.SaveChangesAsync();
+            return Results.Ok(mapper.Map<OlayAbonelikDto>(entity));
         }
         catch (Exception ex)
         {
@@ -288,14 +355,106 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     }
 
     /// <summary>
+    /// Checks if data is valid for EventSubsrciption consent post process
+    /// </summary>
+    /// <param name="olayAbonelik">To be checked data</param>
+    /// <param name="configuration">Config object</param>
+    /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="httpContext">Context object to get header parameters</param>
+    /// <exception cref="NotImplementedException"></exception>
+    private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
+         string olayAbonelikNo,
+        ConsentDbContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        ApiResult result = new();
+
+        //Get entity from db
+        var entity = await context.OBEventSubscriptions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNo
+                                      && s.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                      && s.IsActive);
+        if (entity is null)//No event subscription in system to update
+        {
+            result.Result = false;
+            result.Message = "No event subscription in the system";
+            return result;
+        }
+
+        //Check message required basic properties
+        if (olayAbonelik.katilimciBlg is null
+            || olayAbonelik.abonelikTipleri?.Any() is null or false
+            || olayAbonelik.olayAbonelikNo != entity.Id.ToString()
+            || olayAbonelik.katilimciBlg.hhsKod != entity.HHSCode
+            || olayAbonelik.katilimciBlg.yosKod != entity.YOSCode
+           )
+        {
+            result.Result = false;
+            result.Message =
+                "Event subscription data not match with system data";
+            return result;
+        }
+
+        //Check header fields
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, katilimciBlg: olayAbonelik.katilimciBlg);
+        if (!result.Result)
+        {
+            //validation error in header fields
+            return result;
+        }
+
+        //Check aboneliktipleri data validation
+        var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
+             .AsNoTracking()
+             .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
+             .ToListAsync();
+
+
+        //Event Type check. Descpriton from document:
+        //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
+        if (olayAbonelik.abonelikTipleri.Any(a => !eventTypeSourceTypeRelations.Any(r => r.EventType == a.olayTipi && r.SourceType == a.kaynakTipi)))
+        {
+            result.Result = false;
+            result.Message =
+                "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
+            return result;
+        }
+
+        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
+        //Source Type check.  Descpriton from document:
+        //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+
+
+
+        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
+        //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
+        //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
+
+
+
+        return result;
+    }
+
+
+    /// <summary>
     ///  Checks if data is valid to delete EventSubsrciption
     /// </summary>
     /// <param name="entity">To be checked entity</param>
     /// <returns>Is data valid to delete EventSubsrciption</returns>
-    private ApiResult IsDataValidToDeleteEventSubsrciption(OBEventSubscription entity)
+    private ApiResult IsDataValidToDeleteEventSubsrciption(OBEventSubscription? entity)
     {
         ApiResult result = new();
+        if (entity is null)//No event subscription in system to update
+        {
+            result.Result = false;
+            result.Message = "No event subscription in the system";
+            return result;
+        }
         //TODO:Özlem If there is any undeliverable object, or not finished consent state. Will I delete the subscription?
+
         return result;
     }
 
