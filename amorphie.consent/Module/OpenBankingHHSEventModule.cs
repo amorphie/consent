@@ -38,7 +38,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
-        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}",UpdateEventSubsrciption);
+        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
     }
 
@@ -176,29 +176,31 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         {
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToUpdateEventSubsrciption(olayAbonelik,olayAbonelikNo, context, configuration, yosInfoService,
+                await IsDataValidToUpdateEventSubsrciption(olayAbonelik, olayAbonelikNo, context, configuration, yosInfoService,
                     httpContext);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
             }
-            
+
             var header = ModuleHelper.GetHeader(httpContext);//Get header object
-            
+
             //Get entity from db
             var entity = await context.OBEventSubscriptions
                 .Include(s => s.OBEventSubscriptionTypes)
-                .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNo 
+                .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNo
                                           && s.YOSCode == header.XTPPCode
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                           && s.IsActive);
-           
-           //Delete OBEventSubscriptionTypes
+
+            //Delete OBEventSubscriptionTypes
             context.OBEventSubscriptionTypes.RemoveRange(entity.OBEventSubscriptionTypes);
             //Insert new 
             var obEventSubscriptionTypes = mapper.Map<IList<OBEventSubscriptionType>>(olayAbonelik.abonelikTipleri);
-            obEventSubscriptionTypes = obEventSubscriptionTypes.Select(st => {st.OBEventSubscriptionId = entity.Id;
+            obEventSubscriptionTypes = obEventSubscriptionTypes.Select(st =>
+            {
+                st.OBEventSubscriptionId = entity.Id;
                 return st;
             }).ToList();
             context.OBEventSubscriptionTypes.AddRange(obEventSubscriptionTypes);
@@ -206,7 +208,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             entity.ModifiedAt = DateTime.UtcNow;
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
-            return Results.Ok( mapper.Map<OlayAbonelikDto>(entity));
+            return Results.Ok(mapper.Map<OlayAbonelikDto>(entity));
         }
         catch (Exception ex)
         {
@@ -352,7 +354,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         return result;
     }
 
-     /// <summary>
+    /// <summary>
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
     /// <param name="olayAbonelik">To be checked data</param>
@@ -360,7 +362,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
-    private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik, 
+    private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
          string olayAbonelikNo,
         ConsentDbContext context,
         IConfiguration configuration,
@@ -431,12 +433,12 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
         //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
 
-       
+
 
         return result;
     }
 
-    
+
     /// <summary>
     ///  Checks if data is valid to delete EventSubsrciption
     /// </summary>
@@ -452,7 +454,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return result;
         }
         //TODO:Özlem If there is any undeliverable object, or not finished consent state. Will I delete the subscription?
-        
+
         return result;
     }
 
