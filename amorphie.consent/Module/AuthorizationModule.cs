@@ -29,6 +29,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientId={clientId}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
+        routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
         routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
         routeGroupBuilder.MapPost("/SaveConsentForAuthorization/clientId={clientId}&roleId={roleId}&userTCKN={userTCKN}", SaveConsentForAuthorization);
     }
@@ -70,6 +71,53 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                            && authAccountConsentStatusList.Contains(c.State)
                            && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
+                        || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
+                            && authPaymentConsentStatusList.Contains(c.State))))
+                .ToListAsync();
+            if (consents?.Any() ?? false)
+            {
+                return Results.Ok();
+            }
+            else
+            {//Not authorized
+                return Results.Forbid();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Checks if any active Open Banking authorization of rizaNo is match with given userTCKN
+    /// </summary>
+    /// <param name="rizaNo">Open Banking riza no</param>
+    /// <param name="userTCKN">User identity number</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="httpContext"></param>
+    /// <returns>If any open banking consent userTCKN and rizaNo matches.</returns>
+    public async Task<IResult> CheckOBAuthorization(
+        Guid rizaNo,
+        long userTCKN,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var today = DateTime.UtcNow;
+            var authAccountConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list for account
+            var authPaymentConsentStatusList = ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
+            //Filter consent according to parameters
+            var consents = await context.Consents.AsNoTracking().Where(c =>
+                    c.Id == rizaNo
+                    && c.UserTCKN == userTCKN
+                    && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                         && authAccountConsentStatusList.Contains(c.State)
+                         && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
                         || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();
