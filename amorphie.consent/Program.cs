@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Prometheus;
 using Dapr.Client;
+using Elastic.Apm.NetCoreAll;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Retry;
@@ -107,6 +108,7 @@ builder.Services.AddDbContext<ConsentDbContext>
 
 
 var app = builder.Build();
+app.UseAllElasticApm(app.Configuration);
 
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
