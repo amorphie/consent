@@ -14,8 +14,8 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    [Migration("20240105200336_Task200664SeedOBEventTypeSourceTypeRelation")]
-    partial class Task200664SeedOBEventTypeSourceTypeRelation
+    [Migration("20240111084100_SeedOBEventTypeSourceTypeRelation")]
+    partial class SeedOBEventTypeSourceTypeRelation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,8 +37,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("ConsentType")
                         .IsRequired()
@@ -242,6 +243,10 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ModuleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("YOSCode")
                         .IsRequired()
                         .HasColumnType("text");
@@ -365,15 +370,15 @@ namespace amorphie.consent.data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("fa46a41f-7f62-4fe5-b95e-542b3c9cc422"),
+                            Id = new Guid("8bf4a8dd-1531-4ca8-bed9-cfc4ae035bee"),
                             APIToGetData = "GET /odeme-emri/{odemeEmriNo}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3760),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(870),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "Tüm ödeme durum değişikliklerinde",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3760),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(870),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 30,
@@ -384,15 +389,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("3e56c5b6-b779-4961-8870-ce79ed226b79"),
+                            Id = new Guid("55cf6777-4542-4e26-bfb5-8df4600e4e5c"),
                             APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3800),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(910),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "Rıza iptal detay kodu ‘02’ : Kullanıcı İsteği ile HHS üzerinden İptal durumunda",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3800),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(910),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 30,
@@ -403,15 +408,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("c1dc6049-4879-4378-9c41-c56641abd408"),
+                            Id = new Guid("17322cb5-20e5-4046-bddb-78e84d30b6e4"),
                             APIToGetData = "GET /hesaplar/{hspRef}/bakiye",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3820),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(940),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "Bakiye nesnesindeki tutarla ilgili bir bilgi değiştiğinde ve HBH rızası içerisinde \"06-Anlık Bakiye Bildirimi\" izin türü varsa oluşturulur.\n\nMevcutta alınmış rızalar için bakiye kaynak tipi özelinde 06 izin türü gerektiğinden; mevcut rızanın yenilenmesine dair müşteriye bilgilendirme yapılarak 06 izin türünü kapsayan yeni rıza alınması süreci YÖS tarafından gerçekleştirilebilir.\n\nBloke tutar değişikliği için olay oluşturma ve bildirimi HHS inisiyatifindedir.\n\nKrdHsp içerisinde yer alan kulKrdTtr değerinin değiştiği durumda olay bildirim gönderilmesi gerekmektedir.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Maksimum 10 dakika içerisinde",
                             EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3820),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(940),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryPolicy = "Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.",
                             SourceNumber = "hspRef",
@@ -420,15 +425,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("651b1893-076e-4298-8b9e-742a2cf03af2"),
+                            Id = new Guid("f766cd71-265a-4de0-8d0e-40d02effc336"),
                             APIToGetData = "",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3870),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(970),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "İlgili API İlke ve kurallarına eklendiğinde güncellenecektir.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "",
                             EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(3870),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(970),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 30,
@@ -439,15 +444,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("308e1243-207f-48e8-82fb-19f68659f248"),
+                            Id = new Guid("85a73a7d-7519-4c1b-bb9a-099bbbdb3686"),
                             APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=O",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4150),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(990),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "AYRIK_GKD_BASARILI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4150),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(990),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 1,
@@ -458,15 +463,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("249d199d-9365-4eff-8932-7be46247cb5b"),
+                            Id = new Guid("cc538bf8-fb05-4515-9a69-d017e9e3228e"),
                             APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=H",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4230),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1010),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "AYRIK_GKD_BASARILI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4230),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1010),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 1,
@@ -477,15 +482,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("0eb17791-f3a0-4b2c-b953-2454f90b80a3"),
+                            Id = new Guid("80a51750-7100-4d54-85c8-442774f8494c"),
                             APIToGetData = "GET /odeme-emri-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4260),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1040),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "AYRIK_GKD_BASARISIZ",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4260),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1040),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 1,
@@ -496,15 +501,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("439bb1e1-2796-4685-a0dc-634e8646d655"),
+                            Id = new Guid("e7778043-2ac8-4136-b93f-abe79d720203"),
                             APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4280),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1060),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
                             EventNotificationReporter = "HHS",
                             EventNotificationTime = "Anlık",
                             EventType = "AYRIK_GKD_BASARISIZ",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4280),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1060),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 1,
@@ -515,15 +520,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("4f39cb46-a78e-4da8-84a2-ad01af3ef702"),
+                            Id = new Guid("80a30b1d-406c-4fba-bdb4-29d66bdc664f"),
                             APIToGetData = "GET /hhs/{hhsKod}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4310),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1110),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "HHS bilgilerinde değişiklik olduğunda, YÖS'ün hhsKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir",
                             EventNotificationReporter = "BKM",
                             EventNotificationTime = "Anlık",
                             EventType = "HHS_YOS_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4310),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1110),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 5,
@@ -534,15 +539,15 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("1bc7080e-ea78-4b7b-8cb4-72006a22d78d"),
+                            Id = new Guid("1421ba33-e7ae-4c59-9182-fc68d4e82bb2"),
                             APIToGetData = "GET /yos/{yosKod}",
-                            CreatedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4330),
+                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1130),
                             CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             EventCase = "YÖS bilgilerinde değişiklik olduğunda, HHS'nin yosKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir.",
                             EventNotificationReporter = "BKM",
                             EventNotificationTime = "Anlık",
                             EventType = "HHS_YOS_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 5, 20, 3, 36, 157, DateTimeKind.Utc).AddTicks(4330),
+                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1130),
                             ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
                             RetryCount = 3,
                             RetryInMinute = 5,
