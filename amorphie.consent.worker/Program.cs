@@ -28,7 +28,6 @@ app.MapPost("/change-state", async void (
             =>
 {
 
-        Console.WriteLine(request.Headers["X-Zeebe-Element-Instance-Key"].ToString());
 })
 .WithOpenApi();
 
