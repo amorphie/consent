@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
+[OBCustomResponseHeader]
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
     public OpenBankingHHSConsentModule(WebApplication app)
@@ -50,14 +51,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}", GetAuthorizedAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/bakiye", GetAuthorizedBalances);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef);
-        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent);
-        routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost);
-        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentConsentPost);
+        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentConsentPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentStatusForUsage", UpdatePaymentConsentStatusForUsage);
         routeGroupBuilder.MapPost("/UpdateAccountConsentStatusForUsage", UpdateAccountConsentStatusForUsage);
-        routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost);
+        routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -924,7 +925,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    [OBCustomResponseHeader]
+    [OBCustomResponseHeader()]
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -969,6 +970,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
             consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
+            consentEntity.ClientCode = string.Empty;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new()
