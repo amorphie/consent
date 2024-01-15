@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace amorphie.consent.Helper;
 
-public class OBCustomResponseHeaderFilter: IEndpointFilter
+public class OBCustomResponseHeaderFilter : IEndpointFilter
 {
     /// <summary>
     /// Add open banking header properties to response message.
@@ -10,9 +10,9 @@ public class OBCustomResponseHeaderFilter: IEndpointFilter
     /// <param name="context"></param>
     /// <param name="next"></param>
     /// <returns></returns>
-    public async ValueTask<object?> InvokeAsync(  
-        EndpointFilterInvocationContext context,  
-        EndpointFilterDelegate next)  
+    public async ValueTask<object?> InvokeAsync(
+        EndpointFilterInvocationContext context,
+        EndpointFilterDelegate next)
     {
         if (context.HttpContext.Request.Headers.TryGetValue("X-Request-ID", out var traceValue))
         {
@@ -26,7 +26,7 @@ public class OBCustomResponseHeaderFilter: IEndpointFilter
         {
             context.HttpContext.Response.Headers.Add("X-TPP-Code", traceValue);
         }
-        return await next(context);  
+        return await next(context);
     }
-    
+
 }

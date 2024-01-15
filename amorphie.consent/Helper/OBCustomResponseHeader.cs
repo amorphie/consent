@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace amorphie.consent.Helper;
 
-public class OBCustomResponseHeader: ResultFilterAttribute
+public class OBCustomResponseHeader : ResultFilterAttribute
 {
     public override void OnResultExecuting(ResultExecutingContext context)
     {
@@ -18,7 +18,7 @@ public class OBCustomResponseHeader: ResultFilterAttribute
         {
             context.HttpContext.Response.Headers.Add("X-Request-ID", traceValue);
         }
-       
+
         base.OnResultExecuting(context);
     }
 }
