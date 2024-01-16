@@ -267,6 +267,77 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     }
 
 
+     protected async Task<IResult> DoEventProcess(
+         Guid consentId,
+         KatilimciBilgisiDto katilimciBilgisi, 
+         string eventType, 
+         string sourceType,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Generates OBEvent and OBEventItem entities in db.
+            ApiResult insertResult = await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, context);
+            
+            //Post message to YOS
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+     private async Task<ApiResult> CreateOBEventEntityObject(Guid consentId,
+         KatilimciBilgisiDto katilimciBilgisi, 
+         string eventType, 
+         string sourceType,
+         ConsentDbContext context)
+     {
+         ApiResult result = new();
+       var relation = await  context.OBEventTypeSourceTypeRelations.FirstOrDefaultAsync(r => r.EventType == eventType
+                                                                         && r.SourceType == sourceType);
+       if (relation == null)
+       {
+           result.Result = false;
+           result.Message =
+               "EventType SourceType relation not found in system.";
+           return result;
+       }  
+       OBEvent eventEntity = new OBEvent()
+         {
+             HHSCode = katilimciBilgisi.hhsKod,
+             YOSCode = katilimciBilgisi.yosKod,
+             IsUndeliverable = false,
+             TryCount = relation.RetryCount,
+             LastTryTime = null,
+             ModuleName = OpenBankingConstants.ModuleName.HHS,
+             CreatedAt = DateTime.UtcNow,
+             ModifiedAt = DateTime.UtcNow,
+             OBEventItems = new List<OBEventItem>()
+         };
+       context.OBEvents.Add(eventEntity);
+       //TODO:Özlem if balance update code
+       var itemEntity = new OBEventItem()
+       {
+           EventType = eventType,
+           SourceType = sourceType,
+           SourceNumber = consentId.ToString(),
+           EventDate = DateTime.UtcNow,
+           CreatedAt = DateTime.UtcNow,
+           ModifiedAt = DateTime.UtcNow,
+       };
+       context.OBEventItems.Add(itemEntity);
+       itemEntity.EventNumber = itemEntity.Id.ToString();
+       eventEntity.OBEventItems.Add(itemEntity);
+       await context.SaveChangesAsync();
+       result.Data = eventEntity;
+         return result;
+     }
 
 
     /// <summary>
