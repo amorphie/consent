@@ -13,14 +13,8 @@ public class TemplateRenderRequestDto
         name = templateName;
         semanticVersion = minVersion;
         this.renderId = renderId;
-        renderData = "{}";
+        renderData = string.Empty;
         renderDataForLog = string.Empty;
-        processName = string.Empty;
-        itemId = action = identity = customer = childrenName = string.Empty;
-        children = new Collection<string>()
-                {
-                        "string"
-                };
     }
     public string name { get; set; }
     [JsonProperty("render-id")]
@@ -35,16 +29,4 @@ public class TemplateRenderRequestDto
     [JsonProperty("semantic-version")]
     [JsonPropertyName("semantic-version")]
     public string semanticVersion { get; set; }
-    [JsonProperty("process-name")]
-    [JsonPropertyName("process-name")]
-    public string processName { get; set; }
-    [JsonProperty("item-id")]
-    [JsonPropertyName("item-id")]
-    public string itemId { get; set; }
-    public string action { get; set; }
-    public string identity { get; set; }
-    public string customer { get; set; }
-    [JsonProperty("children-name")]
-    public string childrenName { get; set; }
-    public IList<string> children { get; set; }
 }
