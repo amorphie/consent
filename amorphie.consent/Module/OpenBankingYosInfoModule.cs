@@ -57,7 +57,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
         )
     {
         var accessToken = String.Empty;
-        OBYosInfoDto obYosInfoDto=new OBYosInfoDto();
+        OBYosInfoDto obYosInfoDto = new OBYosInfoDto();
         var yosInfo = await context.OBYosInfos.FirstOrDefaultAsync(x => x.Kod == yosKod);
         var data = new[]
 
@@ -100,7 +100,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             if (yosInfo != null)
             {
 
-                obYosInfoDto.Id=yosInfo.Id;
+                obYosInfoDto.Id = yosInfo.Id;
                 mapper.Map(obYosInfoDto, yosInfo);
 
                 yosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
@@ -139,8 +139,8 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
     IConfiguration configuration
 )
     {
-        var clientId=configuration["ClientId:YosClientId"];
-        var clientSecret=configuration["ClientSecret:YosClientSecret"];
+        var clientId = configuration["ClientId:YosClientId"];
+        var clientSecret = configuration["ClientSecret:YosClientSecret"];
         var accessToken = String.Empty;
         var data = new[]
         {
@@ -195,14 +195,15 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
                     context.OBYosInfos.Add(newYosInfo);
                 }
             }
-            KimlikDto kimlikDto= new KimlikDto{
-                kmlkTur="A",
-                kmlkVrs="29512549210",
-                krmKmlkTur="",
-                krmKmlkVrs="",
-                ohkTur=""
+            KimlikDto kimlikDto = new KimlikDto
+            {
+                kmlkTur = "A",
+                kmlkVrs = "29512549210",
+                krmKmlkTur = "",
+                krmKmlkVrs = "",
+                ohkTur = ""
             };
-            await pushService.OpenBankingSendPush(kimlikDto,"23423423423");
+            await pushService.OpenBankingSendPush(kimlikDto, "23423423423");
             await context.SaveChangesAsync();
             return Results.Ok();
         }

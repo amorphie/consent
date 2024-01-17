@@ -1,4 +1,5 @@
-public class SmsRequestDto{
+public class SmsRequestDto
+{
     public string Sender { get; set; }
     public string SmsType { get; set; }
     public PhoneInfoDto Phone { get; set; }

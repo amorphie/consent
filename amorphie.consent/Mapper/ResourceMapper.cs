@@ -135,7 +135,7 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.olayTipi, opt => opt.MapFrom(src => src.EventType))
                 .ForMember(dest => dest.olayNo, opt => opt.MapFrom(src => src.EventNumber))
                 .ForMember(dest => dest.olayZamani, opt => opt.MapFrom(src => src.EventDate));
-            
+
 
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
