@@ -86,14 +86,17 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
     public async Task<IResult> PostHhsInfo(
     IMapper mapper,
     [FromServices] ConsentDbContext context,
-    IBKMClientService bkmClientService
+    IBKMClientService bkmClientService,
+    IConfiguration configuration
 )
     {
+        var clientId=configuration["ClientId:HhsClientId"];
+        var clientSecret=configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
         var data = new[]
         {
-        new KeyValuePair<string, string>("client_id", "6de7e5fa2a579cd259f143bb7b5ee1ed"),
-        new KeyValuePair<string, string>("client_secret", "174aca557d966fc89478d61c991bd7f8"),
+        new KeyValuePair<string, string>("client_id", clientId),
+        new KeyValuePair<string, string>("client_secret", clientSecret),
         new KeyValuePair<string, string>("grant_type", "client_credentials"),
         new KeyValuePair<string, string>("scope", "hhs_read"),
     };

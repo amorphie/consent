@@ -135,14 +135,17 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
     IMapper mapper,
     [FromServices] ConsentDbContext context,
     [FromServices] IBKMClientService bkmClientService,
-    IPushService pushService
+    IPushService pushService,
+    IConfiguration configuration
 )
     {
+        var clientId=configuration["ClientId:YosClientId"];
+        var clientSecret=configuration["ClientSecret:YosClientSecret"];
         var accessToken = String.Empty;
         var data = new[]
         {
-        new KeyValuePair<string, string>("client_id", "c725c3a61eebefc3c3a1e432ecfdae7d"),
-        new KeyValuePair<string, string>("client_secret", "83ade3892b498a3ca7487b0791713539"),
+        new KeyValuePair<string, string>("client_id", clientId),
+        new KeyValuePair<string, string>("client_secret", clientSecret),
         new KeyValuePair<string, string>("grant_type", "client_credentials"),
         new KeyValuePair<string, string>("scope", "yos_read"),
     };
