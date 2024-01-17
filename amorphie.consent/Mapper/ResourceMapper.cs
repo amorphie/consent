@@ -24,12 +24,27 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
+            CreateMap<OBYosInfoDto, OBYosInfo>()
+            .ForMember(dest => dest.Adresler, opt => opt.MapFrom(src => src.adresler))
+            .ForMember(dest => dest.LogoBilgileri, opt => opt.MapFrom(src => src.logoBilgileri)).ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
+            CreateMap<OBHhsInfo, OBHhsInfoDto>()
+            .ForMember(dest => dest.apiBilgileri,
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgi>(), src => src.ApiBilgileri))
+            .ForMember(dest => dest.logoBilgileri,
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisi>(), src => src.LogoBilgileri)).ReverseMap();
+            CreateMap<OBYosInfo, OBYosInfoDto>()
+            .ForMember(dest => dest.adresler,
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<Adres>(), src => src.Adresler))
+            .ForMember(dest => dest.logoBilgileri,
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisi>(), src => src.LogoBilgileri))
+            .ForMember(dest => dest.apiBilgileri,
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgi>(), src => src.ApiBilgileri)).ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens)).ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
@@ -108,6 +123,18 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.fileContextType, opt => opt.MapFrom(src => src.FileContextType))
                 .ForMember(dest => dest.fileType, opt => opt.MapFrom(src => src.FileType));
 
+        }
+    }
+    public class JsonToListTypeConverter<T> : IValueConverter<string, List<T>>
+    {
+        public List<T> Convert(string source, ResolutionContext context)
+        {
+            if (string.IsNullOrEmpty(source))
+            {
+                return new List<T>();
+            }
+
+            return System.Text.Json.JsonSerializer.Deserialize<List<T>>(source) ?? new List<T>();
         }
     }
 }

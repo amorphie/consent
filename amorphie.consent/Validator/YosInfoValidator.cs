@@ -6,7 +6,7 @@ public sealed class YosInfoalidator : AbstractValidator<OBYosInfo>
 {
     public YosInfoalidator()
     {
-        RuleFor(x => x.marka).NotNull();
-        RuleFor(x => x.unv).NotNull();
+        RuleFor(x => x.Marka).NotNull();
+        RuleFor(x => x.Unv).NotNull();
     }
 }

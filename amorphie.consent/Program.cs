@@ -22,6 +22,9 @@ using Polly.Extensions.Http;
 using Polly.Retry;
 using Polly.Timeout;
 using Refit;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.Net.Http.Headers;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +36,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IPushService, PushService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -84,6 +88,28 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:ContractServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "ContractServiceURL")))
     .AddPolicyHandler(retryPolicy);
+X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", "Test1234");
+var handler = new HttpClientHandler();
+handler.ClientCertificates.Add(certificate);
+
+builder.Services
+    .AddRefitClient<IBKMClientService>()
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri(builder.Configuration["BkmServices:BkmUrl"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => handler)
+    .AddPolicyHandler(retryPolicy);
+builder.Services
+    .AddRefitClient<IMessagingGateway>()
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri("https://intprod-messaginggateway.burgan.com.tr" ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => handler)
+    .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {
@@ -98,6 +124,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
 
 builder.Services.AddDbContext<ConsentDbContext>
     (options => options.UseNpgsql(postgreSql, b => b.MigrationsAssembly("amorphie.consent.data")));

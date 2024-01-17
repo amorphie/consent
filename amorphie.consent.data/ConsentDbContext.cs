@@ -62,5 +62,6 @@ public class ConsentDbContext : DbContext
     public DbSet<OBConsentIdentityInfo> OBConsentIdentityInfos { get; set; }
     public DbSet<OBPaymentOrder> OBPaymentOrders { get; set; }
     public DbSet<OBYosInfo> OBYosInfos { get; set; }
+    public DbSet<OBHhsInfo> OBHhsInfos {get; set; }
 
 }
