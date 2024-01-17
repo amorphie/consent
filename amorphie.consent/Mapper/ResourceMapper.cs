@@ -6,6 +6,7 @@ using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Contract;
 using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.OpenBanking.YOS;
 using amorphie.consent.core.Model;
@@ -111,9 +112,22 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
-            CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
-
             CreateMap<OBAccountReference, OBAccountReferenceDto>();
+            CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
+            CreateMap<AbonelikTipleriDto, OBEventSubscriptionType>()
+                .ForMember(dest => dest.EventType, opt => opt.MapFrom(src => src.olayTipi))
+                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.kaynakTipi))
+                .ReverseMap();
+            CreateMap<OBEventSubscription, OlayAbonelikDto>()
+                .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
+                .ForMember(dest => dest.olayAbonelikNo, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.olusturmaZamani, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.guncellemeZamani, opt => opt.MapFrom(src => src.ModifiedAt))
+                .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
+
+
+
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
                 .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
