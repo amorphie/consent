@@ -6,7 +6,7 @@ namespace amorphie.consent.core.Model;
 
 public class OBSystemEvent : EntityBase
 {
-    public Guid EventNumber { get; set; }
+    public string EventNumber { get; set; }
     public string HHSCode { get; set; }
     public string YOSCode { get; set; }
     public DateTime EventDate { get; set; }
@@ -17,4 +17,6 @@ public class OBSystemEvent : EntityBase
     public int? TryCount { get; set; }
     public DateTime? LastTryTime { get; set; }
     public bool IsCompleted { get; set; }
+    public string XRequestId { get; set; }
+    public string ModuleName { get; set; }
 }

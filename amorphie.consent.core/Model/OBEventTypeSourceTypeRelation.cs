@@ -15,6 +15,7 @@ public class OBEventTypeSourceTypeRelation : EntityBase
     public string APIToGetData { get; set; }
     public string EventNotificationReporter { get; set; }
     public string EventNotificationTime { get; set; }
+    public bool IsImmediateNotification { get; set; }
     public string? RetryPolicy { get; set; }
     public int? RetryInMinute { get; set; }
     public int? RetryCount { get; set; }

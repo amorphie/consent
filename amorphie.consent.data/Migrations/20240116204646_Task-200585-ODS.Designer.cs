@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240116204646_Task-200585-ODS")]
+    partial class Task200585ODS
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -23,65 +26,6 @@ namespace amorphie.consent.data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("OBHhsInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AcikAnahtar")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ApiBilgileri")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("AyrikGKD")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Durum")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Kod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LogoBilgileri")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Marka")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Unv")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OBHhsInfos");
-                });
 
             modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
@@ -672,18 +616,6 @@ namespace amorphie.consent.data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AcikAnahtar")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Adresler")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ApiBilgileri")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -692,22 +624,6 @@ namespace amorphie.consent.data.Migrations
 
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Durum")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Kod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LogoBilgileri")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Marka")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -718,11 +634,31 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<List<string>>("Roller")
+                    b.Property<string>("acikAnahtar")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("adresler")
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<string>("Unv")
+                    b.Property<string>("kod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("logoBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("marka")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("roller")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("unv")
                         .IsRequired()
                         .HasColumnType("text");
 
