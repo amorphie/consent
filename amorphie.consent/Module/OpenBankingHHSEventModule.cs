@@ -37,12 +37,16 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
+        routeGroupBuilder.MapGet("/olay-abonelik/{olayAbonelikNo}/iletilemeyen-olaylar",
+            GetEventSubscriptionUnDeliveredEvents);
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
         routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
         routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{consentId}", DoEventProcess);
-        routeGroupBuilder.MapPost("/sistem-olay-dinleme",SystemEventPost);
+        routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
+
+    #region EventSubscription
 
     /// <summary>
     /// Get YOS's active event subscription record
@@ -84,6 +88,111 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                           && s.IsActive);
             var activeSubscription = mapper.Map<OlayAbonelikDto>(entity);
             return Results.Ok(activeSubscription);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets UnDelivered Events of Given Event Subscription
+    /// Max 100 records are listed
+    /// It gives maximum 1 day left records
+    /// </summary>
+    /// <param name="olayAbonelikNo">Event subscription number</param>
+    /// <param name="syfNo">Page number</param>
+    /// <param name="olyZmnBslTrh">Event query start date time. Optional parameter. If not set. 1 day past is set.</param>
+    /// <param name="olyZmnBtsTrh">Event query end date time. Optional parameter. If not set. Query time - now - is set.</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="configuration"></param>
+    /// <param name="yosInfoService"></param>
+    /// <param name="httpContext"></param>
+    /// <returns></returns>
+    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
+    public async Task<IResult> GetEventSubscriptionUnDeliveredEvents(string olayAbonelikNo,
+        int? syfNo,
+        DateTime? olyZmnBslTrh,
+        DateTime? olyZmnBtsTrh,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            //Check header fields
+            ApiResult headerValidation =
+                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+            if (!headerValidation.Result)
+            {
+                //Missing header fields
+                return Results.BadRequest(headerValidation.Message);
+            }
+
+            if (string.IsNullOrEmpty(olayAbonelikNo))
+            {
+                return Results.BadRequest("olayAbonelikNo is not valid.");
+            }
+
+            //Get eventsubscription from db
+            var subscription = await context.OBEventSubscriptions
+                .Include(s => s.OBEventSubscriptionTypes)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.YOSCode == header.XTPPCode
+                                          && s.HHSCode == header.XASPSPCode
+                                          && s.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                          && s.IsActive
+                                          && s.Id.ToString() == olayAbonelikNo);
+            if (subscription == null) //There is no subscription in system
+            {
+                return Results.BadRequest("There is no event subscription in the system with providing olayAbonelikNo");
+            }
+
+            DateTime queryTime = DateTime.UtcNow;
+            DateTime minStartTime = queryTime.AddDays(-1); //Min 1 day left events will be given
+            //Start date
+            DateTime eventQueryStartDate =
+                olyZmnBslTrh.HasValue && olyZmnBslTrh >= minStartTime && olyZmnBslTrh < queryTime
+                    ? olyZmnBslTrh.Value
+                    : minStartTime;
+            //End Date
+            DateTime eventQueryEndDate =
+                olyZmnBtsTrh.HasValue && olyZmnBtsTrh <= queryTime && olyZmnBtsTrh > minStartTime
+                    ? olyZmnBtsTrh.Value
+                    : queryTime;
+            int skipCount = syfNo.HasValue && syfNo.Value > 1 ? ((syfNo.Value - 1) * 100) : 0;
+            var eventItems = (await context.OBEventItems.Where(e => e.OBEvent.IsUndeliverable == true
+                                                                    && e.OBEvent.HHSCode == subscription.HHSCode
+                                                                    && e.OBEvent.YOSCode == subscription.YOSCode
+                                                                    && e.OBEvent.ModuleName ==
+                                                                    OpenBankingConstants.ModuleName.HHS
+                                                                    && e.EventDate >= eventQueryStartDate
+                                                                    && e.EventDate <= eventQueryEndDate)
+                                                            .ToListAsync())
+                .Where(e =>
+                    subscription.OBEventSubscriptionTypes.Any(st =>
+                        st.EventType == e.EventType && st.SourceType == e.SourceType)
+                )
+                .OrderBy(e => e.EventDate)
+                .Skip(skipCount)
+                .Take(100)
+                .ToList();
+            OlayIstegiDto responseObject = new OlayIstegiDto()
+            {
+                katilimciBlg = new KatilimciBilgisiDto()
+                {
+                    hhsKod = subscription.HHSCode,
+                    yosKod = subscription.YOSCode
+                },
+                olaylar = mapper.Map<List<OlaylarDto>>(eventItems)
+            };
+            return Results.Ok(responseObject);
         }
         catch (Exception ex)
         {
@@ -289,10 +398,11 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         }
     }
 
+    #endregion
 
     protected async Task<IResult> DoEventProcess(
         string consentId,
-        [FromBody]KatilimciBilgisiDto katilimciBilgisi,
+        [FromBody] KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
         string sourceType,
         [FromServices] ConsentDbContext context,
@@ -303,22 +413,26 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         try
         {
+            //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
-                await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, context,mapper);
+                await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, context, mapper);
             if (!insertResult.Result)
             {
                 //Event could not be created in database
                 return Results.BadRequest(insertResult.Message);
             }
+
             //Check if it is instant Post message to YOS
-            var isImmediateNotification = await context.OBEventTypeSourceTypeRelations.AsNoTracking().Where(r => r.EventType == eventType
+            var isImmediateNotification = await context.OBEventTypeSourceTypeRelations.AsNoTracking().Where(r =>
+                r.EventType == eventType
                 && r.SourceType == sourceType).Select(r => r.IsImmediateNotification).FirstOrDefaultAsync();
             if (isImmediateNotification)
             {
                 //Send message to yos
                 //TODO:Ozlem mehmetin servisi bitince burayı tamamla
             }
+
             return Results.Ok();
         }
         catch (Exception ex)
@@ -326,7 +440,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
+
     /// <summary>
     /// does post sistem-olay-dinleme process.
     /// Creates system event record.
@@ -359,20 +474,21 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 //Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
             }
-            
+
             //Check if any system record in database with same data
-           var header = ModuleHelper.GetHeader(httpContext); //Get header object
-           var anyDBRecords = await context.OBSystemEvents.AnyAsync(se =>
-                   se.YOSCode == olayIstegi.katilimciBlg.yosKod
-                   && se.ModuleName == OpenBankingConstants.ModuleName.HHS
-                   && se.EventType == olayIstegi.olaylar[0].olayTipi
-                   && se.SourceType == olayIstegi.olaylar[0].kaynakTipi
-                   && se.SourceNumber == olayIstegi.olaylar[0].kaynakNo
-                   && se.XRequestId == header.XRequestID);
-           if (anyDBRecords)
-           {
-               return Results.Accepted();
-           }
+            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var anyDBRecords = await context.OBSystemEvents.AnyAsync(se =>
+                se.YOSCode == olayIstegi.katilimciBlg.yosKod
+                && se.ModuleName == OpenBankingConstants.ModuleName.HHS
+                && se.EventType == olayIstegi.olaylar[0].olayTipi
+                && se.SourceType == olayIstegi.olaylar[0].kaynakTipi
+                && se.SourceNumber == olayIstegi.olaylar[0].kaynakNo
+                && se.XRequestId == header.XRequestID);
+            if (anyDBRecords)
+            {
+                return Results.Accepted();
+            }
+
             //Generate entity object
             var systemEventEntity = new OBSystemEvent()
             {
@@ -433,7 +549,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             ModifiedAt = DateTime.UtcNow,
             OBEventItems = new List<OBEventItem>()
         };
-        context.OBEvents.Add(eventEntity);//Add to get Id
+        context.OBEvents.Add(eventEntity); //Add to get Id
         //TODO:Özlem if balance update code
         var itemEntity = new OBEventItem()
         {
@@ -445,11 +561,11 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow,
         };
-        context.OBEventItems.Add(itemEntity);//Add to get id
+        context.OBEventItems.Add(itemEntity); //Add to get id
         itemEntity.EventNumber = itemEntity.Id.ToString();
         //Generate yos post message
         var postMessage = mapper.Map<OlayIstegiDto>(eventEntity);
-        eventEntity.AdditionalData =  JsonSerializer.Serialize(postMessage);
+        eventEntity.AdditionalData = JsonSerializer.Serialize(postMessage);
         await context.SaveChangesAsync();
         result.Data = eventEntity;
         return result;
@@ -645,8 +761,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
         return result;
     }
-    
-     private async Task<ApiResult> IsDataValidToSystemEventPost(OlayIstegiDto olayIstegi,
+
+    private async Task<ApiResult> IsDataValidToSystemEventPost(OlayIstegiDto olayIstegi,
         ConsentDbContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
@@ -688,21 +804,22 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         //Check aboneliktipleri data validation
         var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
             .AsNoTracking()
-            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM 
-            && r.SourceType == olayIstegi.olaylar[0].kaynakTipi
-            && r.EventType == olayIstegi.olaylar[0].olayTipi)
+            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
+                        && r.SourceType == olayIstegi.olaylar[0].kaynakTipi
+                        && r.EventType == olayIstegi.olaylar[0].olayTipi)
             .ToListAsync();
 
 
         //Event Type source type check.
         if (!(eventTypeSourceTypeRelations?.Any() ?? false))
-        {//no relation in db
+        {
+            //no relation in db
             result.Result = false;
             result.Message =
                 "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
             return result;
         }
-        
+
         return result;
     }
 
