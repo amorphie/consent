@@ -95,7 +95,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
         var clientId = configuration["ClientId:HhsClientId"];
         var clientSecret = configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
-       var data = new TokenRequestDto
+        var data = new TokenRequestDto
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
