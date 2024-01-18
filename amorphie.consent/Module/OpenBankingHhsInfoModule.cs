@@ -93,16 +93,16 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
         var clientId=configuration["ClientId:HhsClientId"];
         var clientSecret=configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
-        var data = new[]
+       var data = new TokenRequest
         {
-        new KeyValuePair<string, string>("client_id", clientId),
-        new KeyValuePair<string, string>("client_secret", clientSecret),
-        new KeyValuePair<string, string>("grant_type", "client_credentials"),
-        new KeyValuePair<string, string>("scope", "hhs_read"),
-    };
+            ClientId = clientId,
+            ClientSecret = clientSecret,
+            GrantType = "client_credentials",
+            Scope = "hhs_read"
+        };
     try
         {
-            var httpResponse = await bkmClientService.GetToken(new FormUrlEncodedContent(data));
+            var httpResponse = await bkmClientService.GetToken(data);
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
