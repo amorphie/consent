@@ -110,8 +110,16 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.olusturmaZamani, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.guncellemeZamani, opt => opt.MapFrom(src => src.ModifiedAt))
                 .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
-
-
+            CreateMap<OBEvent, OlayIstegiDto>()
+                .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
+                .ForMember(dest => dest.olaylar, opt => opt.MapFrom(src => src.OBEventItems));
+            CreateMap<OBEventItem, OlaylarDto>()
+                .ForMember(dest => dest.kaynakTipi, opt => opt.MapFrom(src => src.SourceType))
+                .ForMember(dest => dest.kaynakNo, opt => opt.MapFrom(src => src.SourceNumber))
+                .ForMember(dest => dest.olayTipi, opt => opt.MapFrom(src => src.EventType))
+                .ForMember(dest => dest.olayNo, opt => opt.MapFrom(src => src.EventNumber))
+                .ForMember(dest => dest.olayZamani, opt => opt.MapFrom(src => src.EventDate));
 
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
