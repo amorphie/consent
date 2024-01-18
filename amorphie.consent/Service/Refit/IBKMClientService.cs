@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using Refit;
 
@@ -5,7 +6,7 @@ public interface IBKMClientService
 {
     [Headers("Content-Type: application/x-www-form-urlencoded", "Accept: application/x-www-form-urlencoded")]
     [Post("/oauth-provider/oauth2/token")]
-    Task<HttpResponseMessage> GetToken([Body(BodySerializationMethod.UrlEncoded)] TokenRequest request);
+    Task<HttpResponseMessage> GetToken([Body(BodySerializationMethod.UrlEncoded)] TokenRequestDto request);
 
     [Headers("Accept: application/json")]
     [Get("/yos-api/s1.1/yos?srlmKrtr=kod&srlmYon=A")]

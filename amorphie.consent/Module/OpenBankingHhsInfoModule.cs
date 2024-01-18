@@ -1,5 +1,7 @@
 using System.Text.Json;
+using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.Model;
 using amorphie.consent.data;
 using amorphie.core.Module.minimal_api;
 using AutoMapper;
@@ -93,7 +95,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
         var clientId=configuration["ClientId:HhsClientId"];
         var clientSecret=configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
-       var data = new TokenRequest
+       var data = new TokenRequestDto
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
@@ -106,7 +108,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(content);
+                var tokenResponse = JsonConvert.DeserializeObject<TokenResponseDto>(content);
                 accessToken = tokenResponse.AccessToken;
             }
             else

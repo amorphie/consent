@@ -1,5 +1,5 @@
 using amorphie.core.Base;
-
+namespace amorphie.consent.core.Model;
 public class OBHhsInfo : EntityBase
 {
     public string Kod { get; set; }

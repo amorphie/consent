@@ -1,6 +1,6 @@
 namespace amorphie.consent.core.DTO.OpenBanking
 {
-    public class SendPush
+    public class SendPushDto
     {
     public string Sender { get; set; }
     public string CitizenshipNo { get; set; }

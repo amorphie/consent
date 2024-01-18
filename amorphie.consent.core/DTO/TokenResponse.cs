@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
-
-public class TokenResponse
+namespace amorphie.consent.core.DTO;
+public class TokenResponseDto
 {
     [JsonProperty("access_token")]
     public string AccessToken { get; set; }

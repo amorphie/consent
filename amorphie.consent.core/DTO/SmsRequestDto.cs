@@ -1,3 +1,5 @@
+namespace amorphie.consent.core.DTO;
+
 public class SmsRequestDto{
     public string Sender { get; set; }
     public string SmsType { get; set; }

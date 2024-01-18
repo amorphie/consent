@@ -1,6 +1,7 @@
 using Refit;
+namespace amorphie.consent.core.DTO;
 
-public class TokenRequest
+public class TokenRequestDto
 {
     [AliasAs("client_id")]
     public string ClientId { get; set; }

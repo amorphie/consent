@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.Service.Interface;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -36,7 +37,7 @@ public class PushService : IPushService
         }
         else
         {
-            var sendPush = new SendPush
+            var sendPush = new SendPushDto
             {
                 Sender = "AutoDetect",
                 CitizenshipNo = data.kmlkVrs,

@@ -62,7 +62,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
         var accessToken = String.Empty;
         OBYosInfoDto obYosInfoDto = new OBYosInfoDto();
         var yosInfo = await context.OBYosInfos.FirstOrDefaultAsync(x => x.Kod == yosKod);
-        var data = new TokenRequest
+        var data = new TokenRequestDto
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
@@ -77,7 +77,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(content);
+                var tokenResponse = JsonConvert.DeserializeObject<TokenResponseDto>(content);
                 accessToken = tokenResponse.AccessToken;
 
             }
@@ -145,7 +145,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
         var clientId = configuration["ClientId:YosClientId"];
         var clientSecret = configuration["ClientSecret:YosClientSecret"];
         var accessToken = String.Empty;
-        var data = new TokenRequest
+        var data = new TokenRequestDto
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
@@ -159,7 +159,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(content);
+                var tokenResponse = JsonConvert.DeserializeObject<TokenResponseDto>(content);
                 accessToken = tokenResponse.AccessToken;
             }
             else
