@@ -46,6 +46,7 @@ builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
+var pfxPassword=builder.Configuration["PfxPassword"];
 Console.WriteLine($"PostgreSql: {postgreSql}");
 string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 
@@ -89,7 +90,7 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:ContractServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "ContractServiceURL")))
     .AddPolicyHandler(retryPolicy);
-X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", "Test1234");
+X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
 var handler = new HttpClientHandler();
 handler.ClientCertificates.Add(certificate);
 
