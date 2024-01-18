@@ -11,7 +11,7 @@ public class OBYosInfoDto : DtoBase
     public List<string> roller { get; set; }
     public List<Adres> adresler { get; set; }
     public List<LogoBilgisi> logoBilgileri { get; set; }
-    public List<YosApiBilgi> apiBilgileri {get; set;}
+    public List<YosApiBilgi> apiBilgileri { get; set; }
     public string durum { get; set; }
 
 }

@@ -2,12 +2,12 @@ namespace amorphie.consent.core.DTO.OpenBanking
 {
     public class SendPushDto
     {
-    public string Sender { get; set; }
-    public string CitizenshipNo { get; set; }
-    public string Template { get; set; }
-    public string TemplateParams { get; set; }
-    public bool SaveInbox { get; set; }
-    public ProcessInfo Process { get; set; }
+        public string Sender { get; set; }
+        public string CitizenshipNo { get; set; }
+        public string Template { get; set; }
+        public string TemplateParams { get; set; }
+        public bool SaveInbox { get; set; }
+        public ProcessInfo Process { get; set; }
     }
 
     public class ProcessInfo

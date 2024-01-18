@@ -9,9 +9,9 @@ public class OBYosInfo : EntityBase
     public string Marka { get; set; }
     public string AcikAnahtar { get; set; }
     public List<string> Roller { get; set; }
-    public string Adresler {get; set;}
-    public string LogoBilgileri {get; set;}
-    public string ApiBilgileri {get; set;}
+    public string Adresler { get; set; }
+    public string LogoBilgileri { get; set; }
+    public string ApiBilgileri { get; set; }
     public string Durum { get; set; }
 
 }
