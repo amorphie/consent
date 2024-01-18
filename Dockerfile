@@ -5,11 +5,11 @@ RUN adduser -u 5679 --disabled-password --gecos "" amorphie-consentuser && chown
 USER amorphie-consentuser
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /src
+WORKDIR /app
 COPY . .
 RUN dotnet restore "./amorphie.consent/amorphie.consent.csproj"
 
-WORKDIR "/src/."
+WORKDIR "/app/."
 RUN dotnet build "./amorphie.consent/amorphie.consent.csproj" -c Release -o /app/build
 
 FROM build AS publish
