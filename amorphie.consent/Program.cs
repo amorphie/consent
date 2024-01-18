@@ -107,7 +107,7 @@ builder.Services
     .AddRefitClient<IMessagingGateway>()
     .ConfigureHttpClient(c =>
     {
-        c.BaseAddress = new Uri("MessagingGateway:MessagingGatewayUrl" ??
+        c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
     })
     .ConfigurePrimaryHttpMessageHandler(() => handler)
