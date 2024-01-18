@@ -16,6 +16,7 @@ FROM build AS publish
 RUN dotnet publish "./amorphie.consent/amorphie.consent.csproj" -c Release -o /app/publish
 
 FROM base AS final
+COPY amorphie.consent/0125_480.pfx /app
 WORKDIR /app
 COPY --from=publish /app/publish .
 EXPOSE 5000
