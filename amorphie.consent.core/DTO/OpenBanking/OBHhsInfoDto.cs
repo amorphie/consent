@@ -1,5 +1,6 @@
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.core.Base;
+namespace amorphie.consent.core.DTO.OpenBanking;
 
 public class OBHhsInfoDto:DtoBase
 {
