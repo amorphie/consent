@@ -46,7 +46,7 @@ builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
-var pfxPassword=builder.Configuration["PfxPassword"];
+var pfxPassword = builder.Configuration["PfxPassword"];
 Console.WriteLine($"PostgreSql: {postgreSql}");
 string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 

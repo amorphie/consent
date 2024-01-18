@@ -90,17 +90,17 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
     IConfiguration configuration
 )
     {
-        var clientId=configuration["ClientId:HhsClientId"];
-        var clientSecret=configuration["ClientSecret:HhsClientSecret"];
+        var clientId = configuration["ClientId:HhsClientId"];
+        var clientSecret = configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
-       var data = new TokenRequest
+        var data = new TokenRequest
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
             GrantType = "client_credentials",
             Scope = "hhs_read"
         };
-    try
+        try
         {
             var httpResponse = await bkmClientService.GetToken(data);
             if (httpResponse.IsSuccessStatusCode)
@@ -127,7 +127,7 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
             string authorizationValue = $"Bearer {accessToken}";
             var hhsResponse = await bkmClientService.GetAllHhs(authorizationValue);
 
-        foreach (var hhsDto in hhsResponse)
+            foreach (var hhsDto in hhsResponse)
             {
                 var existingHhsInfo = await context.OBHhsInfos
                     .AsNoTracking()

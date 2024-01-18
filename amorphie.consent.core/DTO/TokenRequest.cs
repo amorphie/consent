@@ -12,5 +12,5 @@ public class TokenRequest
     public string GrantType { get; set; }
 
     [AliasAs("scope")]
-    public string Scope {get; set;}
+    public string Scope { get; set; }
 }
