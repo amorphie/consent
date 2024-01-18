@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 namespace amorphie.consent.core.DTO.OpenBanking;
-public class TokenResponseDto
+public class BKMTokenResponseDto
 {
     [JsonProperty("access_token")]
     public string AccessToken { get; set; }

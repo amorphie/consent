@@ -409,6 +409,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IBKMService bkmService,
         HttpContext httpContext)
     {
         try
@@ -417,7 +418,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
                 await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, context, mapper);
-            if (!insertResult.Result)
+            if (!insertResult.Result || insertResult.Data == null)
             {
                 //Event could not be created in database
                 return Results.BadRequest(insertResult.Message);
@@ -430,7 +431,23 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             if (isImmediateNotification)
             {
                 //Send message to yos
-                //TODO:Ozlem mehmetin servisi bitince burayı tamamla
+                var eventEntity = (OBEvent)insertResult.Data;
+                var olayIstegi= mapper.Map<OlayIstegiDto>(eventEntity);
+                var bkmServiceResponse = await bkmService.SendEventToYos(olayIstegi);
+                if (bkmServiceResponse.Result)//Success from service
+                {
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200) ;
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400) ;
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                    eventEntity.LastTryTime = DateTime.UtcNow;
+                    eventEntity.TryCount = (eventEntity.TryCount ?? 0) + 1;
+                }
+                context.OBEvents.Update(eventEntity);
+                await context.SaveChangesAsync();
             }
 
             return Results.Ok();

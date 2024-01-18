@@ -1,7 +1,7 @@
 using Refit;
 namespace amorphie.consent.core.DTO.OpenBanking;
 
-public class TokenRequestDto
+public class BKMTokenRequestDto
 {
     [AliasAs("client_id")]
     public string ClientId { get; set; }

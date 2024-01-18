@@ -37,6 +37,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IPushService, PushService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
@@ -47,7 +48,6 @@ builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
 var pfxPassword = builder.Configuration["PfxPassword"];
-Console.WriteLine($"PostgreSql: {postgreSql}");
 string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 
 builder.Services.AddSwaggerGen(options =>
@@ -103,7 +103,8 @@ builder.Services
     })
     .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
-builder.Services
+
+    builder.Services
     .AddRefitClient<IMessagingGateway>()
     .ConfigureHttpClient(c =>
     {

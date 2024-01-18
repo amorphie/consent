@@ -95,7 +95,7 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
         var clientId = configuration["ClientId:HhsClientId"];
         var clientSecret = configuration["ClientSecret:HhsClientSecret"];
         var accessToken = String.Empty;
-        var data = new TokenRequestDto
+        var data = new BKMTokenRequestDto
         {
             ClientId = clientId,
             ClientSecret = clientSecret,
@@ -108,7 +108,7 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
             if (httpResponse.IsSuccessStatusCode)
             {
                 var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<TokenResponseDto>(content);
+                var tokenResponse = JsonConvert.DeserializeObject<BKMTokenResponseDto>(content);
                 accessToken = tokenResponse.AccessToken;
             }
             else

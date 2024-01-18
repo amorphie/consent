@@ -333,6 +333,11 @@ public static class OpenBankingConstants
         public const string HHS = "HHS";
         public const string YOS = "YOS";
     }
+    
+    public static class BKMServiceScope
+    {
+        public const string OlayDinleme = "olay_dinleme";
+    }
 
 
 
