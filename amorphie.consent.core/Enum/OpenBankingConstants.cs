@@ -337,6 +337,8 @@ public static class OpenBankingConstants
     public static class BKMServiceScope
     {
         public const string OlayDinleme = "olay_dinleme";
+        public const string HhsRead = "hhs_read";
+        public const string YosRead = "yos_read";
     }
 
 

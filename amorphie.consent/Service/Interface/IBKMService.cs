@@ -21,5 +21,7 @@ public interface IBKMService
     /// <param name="olayIstegi">To be post data</param>
     /// <returns>Post olay-dinleme service response</returns>
     Task<ApiResult> SendEventToYos(OlayIstegiDto olayIstegi);
+
+    Task<ApiResult> GetAllHhs();
     
 }
