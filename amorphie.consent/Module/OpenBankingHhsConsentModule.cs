@@ -595,7 +595,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
-            var yosCheckResult = await yosInfoService.IsYosInApplication("sdfs");
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)

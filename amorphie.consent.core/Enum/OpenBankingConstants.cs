@@ -326,7 +326,28 @@ public static class OpenBankingConstants
         public const string HHS = "HHS";
         public const string BKM = "BKM";
     }
+    
+    public static class EventTypeSourceTypeRelationYosRole
+    {
+        public const string OBH = "ÖBH";
+        public const string HBH = "HBH";
+    }
+    
+    public static class BKMServiceRole
+    {
+        public const string OBHS = "obhs";
+        public const string HBHS = "hbhs";
+    }
+    
+    public static class BKMServiceScope
+    {
+        public const string OlayDinleme = "olay_dinleme";
+    }
 
+    public static class YosApi
+    {
+        public const string OlayDinleme = "ods";
+    }
 
     public static class ModuleName
     {
@@ -334,10 +355,7 @@ public static class OpenBankingConstants
         public const string YOS = "YOS";
     }
     
-    public static class BKMServiceScope
-    {
-        public const string OlayDinleme = "olay_dinleme";
-    }
+    
 
 
 

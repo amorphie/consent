@@ -432,16 +432,16 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             {
                 //Send message to yos
                 var eventEntity = (OBEvent)insertResult.Data;
-                var olayIstegi= mapper.Map<OlayIstegiDto>(eventEntity);
+                var olayIstegi = mapper.Map<OlayIstegiDto>(eventEntity);
                 var bkmServiceResponse = await bkmService.SendEventToYos(olayIstegi);
                 if (bkmServiceResponse.Result)//Success from service
                 {
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200) ;
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                 }
                 else
                 {
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400) ;
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400);
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     eventEntity.LastTryTime = DateTime.UtcNow;
                     eventEntity.TryCount = (eventEntity.TryCount ?? 0) + 1;
@@ -653,14 +653,28 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return result;
         }
 
-        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Source Type check.  Descpriton from document:
         //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+        var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(olayAbonelikIstegi.katilimciBlg.yosKod, olayAbonelikIstegi.abonelikTipleri, eventTypeSourceTypeRelations);
+        if (yosInfoResponse.Result == false
+          || yosInfoResponse.Data == null
+          || (bool)yosInfoResponse.Data == false)
+        {//Yos does not have required roles
+            result.Result = false;
+            result.Message ="Yos does not have desired roles.";
+            return result;
+        }
 
-
-        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
         //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
+        yosInfoResponse = await yosInfoService.CheckIfYosProvidesDesiredApi(olayAbonelikIstegi.katilimciBlg.yosKod, OpenBankingConstants.YosApi.OlayDinleme);
+        if (yosInfoResponse.Result == false
+          || yosInfoResponse.Data == null
+          || (bool)yosInfoResponse.Data == false)
+        {//Yos does not provide olay dinleme api ods
+            result.Result = false;
+            return result;
+        }
 
         //Descpriton from document: 1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir.
         if (await context.OBEventSubscriptions.AnyAsync(s =>
@@ -746,15 +760,28 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return result;
         }
 
-        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Source Type check.  Descpriton from document:
         //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+        var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(olayAbonelik.katilimciBlg.yosKod, olayAbonelik.abonelikTipleri, eventTypeSourceTypeRelations);
+        if (yosInfoResponse.Result == false
+          || yosInfoResponse.Data == null
+          || (bool)yosInfoResponse.Data == false)
+        {//Yos does not have required roles
+            result.Result = false;
+            result.Message ="Yos does not have desired roles.";
+            return result;
+        }
 
-
-        //TODO:Özlem Mehmet yös tablosunu bitirince burayı güncelle
         //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
         //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
-
+        yosInfoResponse = await yosInfoService.CheckIfYosProvidesDesiredApi(olayAbonelik.katilimciBlg.yosKod, OpenBankingConstants.YosApi.OlayDinleme);
+        if (yosInfoResponse.Result == false
+          || yosInfoResponse.Data == null
+          || (bool)yosInfoResponse.Data == false)
+        {//Yos does not provide olay dinleme api ods
+            result.Result = false;
+            return result;
+        }
 
         return result;
     }
