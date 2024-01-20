@@ -39,7 +39,7 @@ public class YosInfoService : IYosInfoService
         }
         return result;
     }
-    
+
     public async Task<ApiResult> GetYosByCode(string yosCode)
     {
         ApiResult result = new();
@@ -57,35 +57,35 @@ public class YosInfoService : IYosInfoService
         }
         return result;
     }
-    
+
     public async Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
-        List<AbonelikTipleriDto> abonelikTipleri, 
+        List<AbonelikTipleriDto> abonelikTipleri,
         List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations)
     {
         ApiResult result = new();
         try
         {
             //Get yos role of desired abonelik tipleri
-           var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
-                abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
-               .Select(r => r.YOSRole)
-               .Distinct();
-           
-           //Set yosRole list
-           List<string> toBeCheckedRoles = new List<string>();
-           if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
-           {
-               toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.HBHS);
-           }
-           if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
-           {
-               toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.OBHS);
-           }
-           
-           //Check yos in database if has specified roles
+            var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
+                 abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
+                .Select(r => r.YOSRole)
+                .Distinct();
+
+            //Set yosRole list
+            List<string> toBeCheckedRoles = new List<string>();
+            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
+            {
+                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.HBHS);
+            }
+            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
+            {
+                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.OBHS);
+            }
+
+            //Check yos in database if has specified roles
             var isAnyYosWithRole = await _context.OBYosInfos
                 .AsNoTracking()
-                .AnyAsync(y => y.Roller.Any(r => toBeCheckedRoles.Contains(r) ) 
+                .AnyAsync(y => y.Roller.Any(r => toBeCheckedRoles.Contains(r))
                                && y.Kod == yosCode);
             result.Data = isAnyYosWithRole;
         }
@@ -105,7 +105,7 @@ public class YosInfoService : IYosInfoService
         try
         {
             //TODO:Ozlem api bilgileri array olmalı. Mehmet güncelleyince burayı güncelle
-            
+
             //Check yos by yosCode in database having specified api
             var isAnyYosWithApi = await _context.OBYosInfos
                 .AsNoTracking()
@@ -121,5 +121,5 @@ public class YosInfoService : IYosInfoService
     }
 
 
-    
+
 }

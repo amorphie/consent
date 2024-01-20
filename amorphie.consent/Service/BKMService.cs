@@ -26,7 +26,7 @@ public class BKMService : IBKMService
         _mapper = mapper;
         _configuration = configuration;
     }
-    
+
     public async Task<ApiResult> GetToken(string bkmServiceScope)
     {
         ApiResult result = new();
@@ -64,20 +64,20 @@ public class BKMService : IBKMService
         return result;
     }
 
-   
+
     public async Task<ApiResult> SendEventToYos(OlayIstegiDto olayIstegi)
     {
         ApiResult result = new();
         try
         {
-           //Get token to use in olay-dinleme 
+            //Get token to use in olay-dinleme 
             ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.OlayDinleme);
             if (!tokenServiceResponse.Result)//Error in service
                 return tokenServiceResponse;
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
-            
+
             //Send event to YOS
-            var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,olayIstegi);
+            var httpResponse = await _bkmClientService.SendEventToYos(authorizationValue, olayIstegi);
             if (!httpResponse.IsSuccessStatusCode)
             {
                 result.Result = false;
@@ -92,8 +92,8 @@ public class BKMService : IBKMService
         }
         return result;
     }
-    
-    
+
+
     /// <summary>
     /// Generates BKMTokenRequest Object by service scope
     /// </summary>
@@ -123,7 +123,7 @@ public class BKMService : IBKMService
         };
     }
 
-    
-    
-    
+
+
+
 }

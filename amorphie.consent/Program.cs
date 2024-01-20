@@ -104,15 +104,15 @@ builder.Services
     .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
 
-    builder.Services
-    .AddRefitClient<IMessagingGateway>()
-    .ConfigureHttpClient(c =>
-    {
-        c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
-                                throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => handler)
-    .AddPolicyHandler(retryPolicy);
+builder.Services
+.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+})
+.ConfigurePrimaryHttpMessageHandler(() => handler)
+.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {
