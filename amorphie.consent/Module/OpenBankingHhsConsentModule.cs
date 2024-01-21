@@ -860,7 +860,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns></returns>
     protected async Task<IResult> UpdateAccountConsentForAuthorization([FromBody] SaveAccountReferenceDto saveAccountReference,
       [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper)
+      [FromServices] IMapper mapper, 
+      [FromServices] IOBEventService obEventService)
     {
         try
         {
@@ -901,8 +902,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.OBAccountReferences.Add(accountReferenceEntity);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();
-            //TODO:Özlem If ayrikGKD, post olay-dinleme to YOS
-            
+            //If ayrikGKD, post olay-dinleme to YOS
+            if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
+            {
+                await obEventService.DoEventProcess(consentEntity.Id.ToString(), additionalData.katilimciBlg,
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi);
+            }
             return Results.Ok();
         }
         catch (Exception ex)

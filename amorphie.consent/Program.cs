@@ -39,6 +39,7 @@ builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IPushService, PushService>();
+builder.Services.AddScoped<IOBEventService, OBEventService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
