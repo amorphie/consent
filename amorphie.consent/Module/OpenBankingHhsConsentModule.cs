@@ -901,6 +901,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.OBAccountReferences.Add(accountReferenceEntity);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();
+            //TODO:Özlem If ayrikGKD, post olay-dinleme to YOS
+            
             return Results.Ok();
         }
         catch (Exception ex)
@@ -934,7 +936,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check if post data is valid to process.
-            var checkValidationResult = await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
+            var checkValidationResult = await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext, context);
             if (!checkValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(checkValidationResult.Message);
@@ -960,8 +962,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 gnclZmn = DateTime.UtcNow,
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
+            
+            bool isAyrikGKD = hesapBilgisiRizasi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik;
             //Set gkd data
-            hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
+            //Set hhsYonAdr in Yonlendirmeli GKD
+            if (isAyrikGKD == false)
+            {
+                hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
+            }
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(hesapBilgisiRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
@@ -982,6 +990,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             };
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
+            if (isAyrikGKD)
+            {//Send notification to user
+                //TODO:Özlem call send notification
+            }
             return Results.Ok(hesapBilgisiRizasi);
         }
         catch (Exception ex)
@@ -1079,7 +1091,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext);
+            var dataValidationResult = await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext,context);
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -1257,7 +1269,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private async Task<ApiResult> IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
     IConfiguration configuration,
     IYosInfoService yosInfoService,
-    HttpContext httpContext)
+    HttpContext httpContext,
+    ConsentDbContext dbContext)
     {
         //TODO:Ozlem Check if user is customer
         //TODO:Ozlem Check fields length and necessity
@@ -1265,7 +1278,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, katilimciBlg: rizaIstegi.katilimciBlg);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1293,26 +1306,23 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
-        if (header.XASPSPCode != rizaIstegi.katilimciBlg.hhsKod)
-        {//HHSCode must match with header x-aspsp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-            return result;
-        }
-        if (header.XTPPCode != rizaIstegi.katilimciBlg.yosKod)
-        {//YOSCode must match with header x-tpp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
-            return result;
-        }
-
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!await IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
+
+        //Check if yos has subscription
+        if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik 
+            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingAccount, dbContext))
+        {
+            result.Result = false;
+            result.Message = "Yos does not have subsription for Ayrik GKD";
+            return result;
+        }
+        
 
         //Check Kimlik
         if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur)//Check required fields
@@ -1411,11 +1421,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="configuration">Config file</param>
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">HttpContext httpContext</param>
+    /// <param name="dbContext"></param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
      IConfiguration configuration,
      IYosInfoService yosInfoService,
-     HttpContext httpContext)
+     HttpContext httpContext,
+     ConsentDbContext dbContext)
     {
 
         //TODO:Ozlem update method
@@ -1467,10 +1479,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!await IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
+            return result;
+        }
+        
+        //Check if yos has subscription
+        if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik 
+            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment, dbContext))
+        {
+            result.Result = false;
+            result.Message = "Yos does not have subsription for Ayrik GKD";
             return result;
         }
 
@@ -2080,11 +2101,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">Yos service instance</param>
     /// <param name="header">Header object</param>
+    /// <param name="katilimciBlg">Katilimci data object default value with null</param>
     /// <returns>Validation result</returns>
     private async Task<ApiResult> IsHeaderDataValid(HttpContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
-        RequestHeaderDto header = null)
+        RequestHeaderDto? header = null,
+        KatilimciBilgisiDto? katilimciBlg = null)
     {
         ApiResult result = new();
         if (header is null)
@@ -2096,6 +2119,27 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Result = false;
             result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
+        }
+
+        //If there is katilimciBlg object, validate data in it with header
+        if (katilimciBlg != null)
+        {
+            //Check header data and message data
+            if (header.XASPSPCode != katilimciBlg.hhsKod)
+            {
+                //HHSCode must match with header x-aspsp-code
+                result.Result = false;
+                result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
+                return result;
+            }
+
+            if (header.XTPPCode != katilimciBlg.yosKod)
+            {
+                //YOSCode must match with header x-tpp-code
+                result.Result = false;
+                result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+                return result;
+            }
         }
 
         return result;
@@ -2352,8 +2396,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns>Is gkd data valid</returns>
     private static bool IsGkdValid(GkdDto gkd)
     {
-        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
-               && gkd.yetTmmZmn != DateTime.MinValue;
+        return true;
+        // return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
+        //        && gkd.yetTmmZmn != DateTime.MinValue;
     }
 
     /// <summary>
@@ -2361,7 +2406,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="gkd">To be checked data</param>
     /// <returns>Is gkd data valid</returns>
-    private static bool IsGkdValid(GkdRequestDto gkd)
+    private async Task<bool> IsGkdValid(GkdRequestDto gkd)
     {
         if (!string.IsNullOrEmpty(gkd.yetYntm))//YetYntm is set
         {//Check data
@@ -2416,10 +2461,46 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 }
             }
         }
+        else
+        {//Yetkilendirme yontemi not set
+            //TODO:Özlem. Set edilmeyebilir. Ama set edilmediği durumda nasıl ilerleyeceğimiz konuşulmalı. Patlamasın diye zorunluymuş gibi ilerltiyoruz.
+            return false;
+        }
 
         return true;
     }
 
+    /// <summary>
+    /// Check if yos has subscription for GKD
+    /// </summary>
+    /// <param name="yosKod"></param>
+    /// <param name="consentType"></param>
+    /// <param name="dbContext"></param>
+    /// <returns></returns>
+    private static async Task<bool> IsSubscsribed(string yosKod, string consentType, ConsentDbContext dbContext)
+    {
+        string sourceType = consentType == ConsentConstants.ConsentType.OpenBankingAccount
+            ? OpenBankingConstants.KaynakTip.HesapBilgisiRizasi
+            : OpenBankingConstants.KaynakTip.OdemeEmriRizasi;
 
+        //HHS, YÖS'ün AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliğinin varlığını kontrol eder
+        bool isSubscriped = await dbContext.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
+            s.ModuleName == OpenBankingConstants.ModuleName.HHS
+            && s.YOSCode == yosKod
+            && s.OBEventSubscriptionTypes.Any(t =>
+                t.SourceType == sourceType
+                && t.EventType == OpenBankingConstants.OlayTip
+                    .AyrikGKDBasarili)
+            && s.OBEventSubscriptionTypes.Any(t =>
+                t.SourceType == sourceType
+                && t.EventType == OpenBankingConstants.OlayTip
+                    .AyrikGKDBasarisiz));
+        if (isSubscriped == false)
+        {
+            //Yos does not have subscription for ayrikGkd
+            return false;
+        }
 
+        return true;
+    }
 }

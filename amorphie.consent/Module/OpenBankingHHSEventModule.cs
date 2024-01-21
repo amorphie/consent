@@ -353,7 +353,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     protected async Task<IResult> DeleteEventSubsrciption(Guid id,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [FromServices] ITokenService tokenService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
