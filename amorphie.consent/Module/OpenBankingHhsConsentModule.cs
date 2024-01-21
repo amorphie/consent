@@ -760,8 +760,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns></returns>
     protected async Task<IResult> UpdatePaymentConsentForAuthorization([FromBody] UpdatePCForAuthorizationDto savePCStatusSenderAccount,
       [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper,
-        [FromServices] ITokenService tokenService)
+      [FromServices] IMapper mapper, 
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService obEventService)
     {
         var resultData = new Consent();
         try
@@ -797,6 +798,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
+            //If ayrikGKD, post olay-dinleme to YOS
+            if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
+            {
+                await obEventService.DoEventProcess(entity.Id.ToString(), additionalData.katilimciBlg,
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi);
+            }
             return Results.Ok(resultData);
         }
         catch (Exception ex)
@@ -1118,8 +1125,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 gnclZmn = DateTime.UtcNow,
                 rizaDrm = OpenBankingConstants.RizaDurumu.YetkiBekleniyor
             };
+            
+            bool isAyrikGKD = odemeEmriRizasi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik;
             //Set gkd data
-            odemeEmriRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
+            //Set hhsYonAdr in Yonlendirmeli GKD
+            if (isAyrikGKD == false)
+            {
+                odemeEmriRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentEntity.Id.ToString());
+            }
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
             consentEntity.AdditionalData = JsonSerializer.Serialize(odemeEmriRizasi);
             consentEntity.State = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
@@ -1139,6 +1152,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             };
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
+            if (isAyrikGKD)
+            {//Send notification to user
+                //TODO:Özlem call send notification
+            }
             return Results.Ok(odemeEmriRizasi);
         }
         catch (Exception ex)
@@ -1312,7 +1329,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!await IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1439,7 +1456,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, katilimciBlg: rizaIstegi.katilimciBlg);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1470,21 +1487,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
-        if (header.XASPSPCode != rizaIstegi.katilimciBlg.hhsKod)
-        {//HHSCode must match with header x-aspsp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-            return result;
-        }
-        if (header.XTPPCode != rizaIstegi.katilimciBlg.yosKod)
-        {//YOSCode must match with header x-tpp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
-            return result;
-        }
-
         //Check GKD
-        if (!await IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1616,7 +1620,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);//Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header);
+        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, katilimciBlg:odemeEmriIstegi.katilimciBlg);
         if (!result.Result)
         {//validation error in header fields
             return result;
@@ -1659,19 +1663,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required / HHSKod is wrong.";
-            return result;
-        }
-
-        if (header.XASPSPCode != odemeEmriIstegi.katilimciBlg.hhsKod)
-        {//HHSCode must match with header x-aspsp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-            return result;
-        }
-        if (header.XTPPCode != odemeEmriIstegi.katilimciBlg.yosKod)
-        {//YOSCode must match with header x-tpp-code
-            result.Result = false;
-            result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
             return result;
         }
 
@@ -2401,9 +2392,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns>Is gkd data valid</returns>
     private static bool IsGkdValid(GkdDto gkd)
     {
-        return true;
-        // return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
-        //        && gkd.yetTmmZmn != DateTime.MinValue;
+        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
+               && gkd.yetTmmZmn != DateTime.MinValue;
     }
 
     /// <summary>
@@ -2411,7 +2401,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="gkd">To be checked data</param>
     /// <returns>Is gkd data valid</returns>
-    private async Task<bool> IsGkdValid(GkdRequestDto gkd)
+    private static bool IsGkdValid(GkdRequestDto gkd)
     {
         if (!string.IsNullOrEmpty(gkd.yetYntm))//YetYntm is set
         {//Check data
