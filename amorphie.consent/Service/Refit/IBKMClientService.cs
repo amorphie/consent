@@ -23,6 +23,10 @@ public interface IBKMClientService
     
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Post("/ohvps/ods/s1.1/olay-dinleme")]
-    Task<HttpResponseMessage> SendEventToYos([Header("Authorization")] string authorization,[Body] OlayIstegiDto olayIstegi);
+    Task<HttpResponseMessage> SendEventToYos([Header("Authorization")] string authorization,
+        [Header("X-Request-ID")] string xRequestId,
+        [Header("X-ASPSP-Code")] string xAspspCode,
+        [Header("X-TPP-Code")] string xTppCode,
+        [Body] OlayIstegiDto olayIstegi);
 }
 

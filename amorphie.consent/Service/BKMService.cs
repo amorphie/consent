@@ -77,7 +77,11 @@ public class BKMService : IBKMService
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
             
             //Send event to YOS
-            var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,olayIstegi);
+            var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,
+                Guid.NewGuid().ToString(),
+                olayIstegi.katilimciBlg.hhsKod,
+                olayIstegi.katilimciBlg.yosKod,
+                olayIstegi);
             if (!httpResponse.IsSuccessStatusCode)
             {
                 result.Result = false;
