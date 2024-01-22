@@ -67,7 +67,7 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
 
                 hhsInfo.LogoBilgileri = JsonConvert.SerializeObject(obHhsInfoDto.logoBilgileri);
                 hhsInfo.ApiBilgileri = JsonConvert.SerializeObject(obHhsInfoDto.apiBilgileri);
-                hhsInfo.ModifiedAt=DateTime.Now.ToUniversalTime();
+                hhsInfo.ModifiedAt=DateTime.UtcNow;
                 context.OBHhsInfos.Update(hhsInfo);
             }
             else
