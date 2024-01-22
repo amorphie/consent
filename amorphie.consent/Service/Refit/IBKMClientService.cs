@@ -11,18 +11,22 @@ public interface IBKMClientService
 
     [Headers("Accept: application/json")]
     [Get("/yos-api/s1.1/yos?srlmKrtr=kod&srlmYon=A")]
-    Task<List<OBYosInfoDto>> GetAllYos([Header("Authorization")] string authorization);
+    Task<HttpResponseMessage> GetAllYos([Header("Authorization")] string authorization);
 
     [Headers("Accept: application/json")]
     [Get("/yos-api/s1.1/yos/{yosKod}")]
     Task<OBYosInfoDto> GetYos([Header("Authorization")] string authorization, string yosKod);
 
     [Headers("Accept: application/json")]
+    [Get("/hhs-api/s1.0/hhs/{hhsKod}")]
+    Task<OBHhsInfoDto> GetHhs([Header("Authorization")] string authorization, string hhsKod);
+
+    [Headers("Accept: application/json")]
     [Get("/hhs-api/s1.0/hhs")]
     Task<HttpResponseMessage> GetAllHhs([Header("Authorization")] string authorization);
-    
+
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Post("/ohvps/ods/s1.1/olay-dinleme")]
-    Task<HttpResponseMessage> SendEventToYos([Header("Authorization")] string authorization,[Body] OlayIstegiDto olayIstegi);
+    Task<HttpResponseMessage> SendEventToYos([Header("Authorization")] string authorization, [Body] OlayIstegiDto olayIstegi);
 }
 

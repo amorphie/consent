@@ -112,10 +112,15 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
                     var tempId = existingHhsInfo.Id;
                     mapper.Map(hhsDto, existingHhsInfo);
                     existingHhsInfo.Id = tempId;
+                    existingHhsInfo.LogoBilgileri = JsonConvert.SerializeObject(hhsDto.logoBilgileri);
+                    existingHhsInfo.ApiBilgileri = JsonConvert.SerializeObject(hhsDto.apiBilgileri);
+                    context.Update(existingHhsInfo);
                 }
                 else
                 {
                     var newHhsInfo = mapper.Map<OBHhsInfo>(hhsDto);
+                    newHhsInfo.LogoBilgileri = JsonConvert.SerializeObject(hhsDto.logoBilgileri);
+                    newHhsInfo.ApiBilgileri = JsonConvert.SerializeObject(hhsDto.apiBilgileri);
                     context.OBHhsInfos.Add(newHhsInfo);
                 }
             }

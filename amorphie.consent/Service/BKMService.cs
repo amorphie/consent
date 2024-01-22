@@ -27,6 +27,38 @@ public class BKMService : IBKMService
         _configuration = configuration;
     }
 
+    // public async Task<ApiResult> GetHhs(string hhsKod)
+    // {
+    //     ApiResult apiResult = new();
+    //  try
+    //     {
+    //         ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
+    //         if (!tokenServiceResponse.Result)
+    //             return tokenServiceResponse;
+
+    //         string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+    //         var httpResponse = await _bkmClientService.GetHhs(authorizationValue,hhsKod);
+
+    //         if (!httpResponse.IsSuccessStatusCode)
+    //         {
+    //             apiResult.Result = false;
+    //             apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+    //             return apiResult;
+    //         }
+
+    //         var content = await httpResponse.Content.ReadAsStringAsync();
+    //         var hhsResponse = JsonConvert.DeserializeObject<List<OBHhsInfoDto>>(content);
+    //         apiResult.Data = hhsResponse;
+    //         apiResult.Result = true;
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         apiResult.Result = false;
+    //         apiResult.Message = e.Message;
+    //     }
+    //     return apiResult;
+    // }
     public async Task<ApiResult> GetAllHhs()
     {
         ApiResult apiResult = new();
@@ -35,27 +67,67 @@ public class BKMService : IBKMService
             ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
             if (!tokenServiceResponse.Result)
                 return tokenServiceResponse;
+
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
 
-            var httpResponse= await _bkmClientService.GetAllHhs(authorizationValue);
-            var content = await httpResponse.Content.ReadAsStringAsync();
-            var hhsResponse = JsonConvert.DeserializeObject<List<OBHhsInfoDto>>(content);
-
+            var httpResponse = await _bkmClientService.GetAllHhs(authorizationValue);
 
             if (!httpResponse.IsSuccessStatusCode)
             {
                 apiResult.Result = false;
                 apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
             }
-            apiResult.Data = hhsResponse;
 
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<List<OBHhsInfoDto>>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
         }
-          catch (Exception e)
+        catch (Exception e)
         {
             apiResult.Result = false;
             apiResult.Message = e.Message;
         }
         return apiResult;
+    }
+
+    public async Task<ApiResult> GetAllYos()
+    {
+        ApiResult apiResult = new();
+        try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.YosRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetAllYos(authorizationValue);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<List<OBYosInfoDto>>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+
+    public Task<ApiResult> GetHhs(string yosKod)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<ApiResult> GetToken(string bkmServiceScope)
@@ -161,8 +233,4 @@ public class BKMService : IBKMService
             Scope = bkmServiceScope
         };
     }
-
-
-
-
 }

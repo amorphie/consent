@@ -23,5 +23,9 @@ public interface IBKMService
     Task<ApiResult> SendEventToYos(OlayIstegiDto olayIstegi);
 
     Task<ApiResult> GetAllHhs();
+
+    Task<ApiResult> GetAllYos();
+
+    Task<ApiResult> GetHhs(string yosKod);
     
 }
