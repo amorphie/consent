@@ -99,64 +99,27 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
     }
     public async Task<IResult> UpsertYos(
         IMapper mapper,
+        IBKMService bkmService,
         [FromServices] ConsentDbContext context,
-        string yosKod,
-        IBKMClientService bkmClientService,
-        IConfiguration configuration
-        )
+        string yosKod
+    )
     {
-        var clientId = configuration["ClientId:YosClientId"];
-        var clientSecret = configuration["ClientSecret:YosClientSecret"];
-        var accessToken = String.Empty;
-        OBYosInfoDto obYosInfoDto = new OBYosInfoDto();
         var yosInfo = await context.OBYosInfos.FirstOrDefaultAsync(x => x.Kod == yosKod);
-        var data = new BKMTokenRequestDto
-        {
-            ClientId = clientId,
-            ClientSecret = clientSecret,
-            GrantType = "client_credentials",
-            Scope = "yos_read"
-        };
+        var data = await bkmService.GetYos(yosKod);
+        OBYosInfoDto oBYosInfoDto = new();
+        var obYosInfoDto = mapper.Map(data, oBYosInfoDto);
 
-        try
-        {
-            var httpResponse = await bkmClientService.GetToken(data);
-
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<BKMTokenResponseDto>(content);
-                accessToken = tokenResponse.AccessToken;
-
-            }
-            else
-            {
-                var errorContent = await httpResponse.Content.ReadAsStringAsync();
-                Console.WriteLine(errorContent);
-                return Results.Problem("Token alınamadı.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return Results.Problem("Bir hata oluştu: " + ex.Message);
-        }
-        if (!string.IsNullOrEmpty(accessToken))
-        {
-            string authorizationValue = $"Bearer {accessToken}";
-            obYosInfoDto = await bkmClientService.GetYos(authorizationValue, yosKod);
-        }
         try
         {
             if (yosInfo != null)
             {
-
                 obYosInfoDto.Id = yosInfo.Id;
                 mapper.Map(obYosInfoDto, yosInfo);
 
-                yosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
                 yosInfo.LogoBilgileri = JsonConvert.SerializeObject(obYosInfoDto.logoBilgileri);
                 yosInfo.ApiBilgileri = JsonConvert.SerializeObject(obYosInfoDto.apiBilgileri);
+                yosInfo.Adresler=JsonConvert.SerializeObject(obYosInfoDto.adresler);
+                yosInfo.ModifiedAt=DateTime.Now.ToUniversalTime();
 
                 context.OBYosInfos.Update(yosInfo);
             }
@@ -164,7 +127,6 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             {
                 var newYosInfo = mapper.Map<OBYosInfo>(obYosInfoDto);
 
-                newYosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
                 newYosInfo.LogoBilgileri = JsonConvert.SerializeObject(obYosInfoDto.logoBilgileri);
                 newYosInfo.ApiBilgileri = JsonConvert.SerializeObject(obYosInfoDto.apiBilgileri);
 
@@ -180,7 +142,9 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             Console.WriteLine(ex.Message);
             return Results.NotFound();
         }
+
     }
+
 
     //     public async Task<IResult> PostYosInfo(
     //     IMapper mapper,

@@ -26,6 +26,7 @@ public interface IBKMService
 
     Task<ApiResult> GetAllYos();
 
-    Task<ApiResult> GetHhs(string yosKod);
-    
+    Task<ApiResult> GetHhs(string hhsKod);
+
+    Task<ApiResult> GetYos(string yosKod);
 }

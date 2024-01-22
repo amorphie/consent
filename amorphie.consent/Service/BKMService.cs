@@ -27,38 +27,70 @@ public class BKMService : IBKMService
         _configuration = configuration;
     }
 
-    // public async Task<ApiResult> GetHhs(string hhsKod)
-    // {
-    //     ApiResult apiResult = new();
-    //  try
-    //     {
-    //         ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
-    //         if (!tokenServiceResponse.Result)
-    //             return tokenServiceResponse;
+    public async Task<ApiResult> GetHhs(string hhsKod)
+    {
+        ApiResult apiResult = new();
+     try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
 
-    //         string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
 
-    //         var httpResponse = await _bkmClientService.GetHhs(authorizationValue,hhsKod);
+            var httpResponse = await _bkmClientService.GetHhs(authorizationValue,hhsKod);
 
-    //         if (!httpResponse.IsSuccessStatusCode)
-    //         {
-    //             apiResult.Result = false;
-    //             apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
-    //             return apiResult;
-    //         }
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
 
-    //         var content = await httpResponse.Content.ReadAsStringAsync();
-    //         var hhsResponse = JsonConvert.DeserializeObject<List<OBHhsInfoDto>>(content);
-    //         apiResult.Data = hhsResponse;
-    //         apiResult.Result = true;
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         apiResult.Result = false;
-    //         apiResult.Message = e.Message;
-    //     }
-    //     return apiResult;
-    // }
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<OBHhsInfoDto>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+     public async Task<ApiResult> GetYos(string yosKod)
+    {
+        ApiResult apiResult = new();
+     try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.YosRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetYos(authorizationValue,yosKod);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<OBYosInfoDto>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
     public async Task<ApiResult> GetAllHhs()
     {
         ApiResult apiResult = new();
@@ -123,11 +155,6 @@ public class BKMService : IBKMService
             apiResult.Message = e.Message;
         }
         return apiResult;
-    }
-
-    public Task<ApiResult> GetHhs(string yosKod)
-    {
-        throw new NotImplementedException();
     }
 
     public async Task<ApiResult> GetToken(string bkmServiceScope)
@@ -211,10 +238,6 @@ public class BKMService : IBKMService
                 clientId = _configuration["BKM:HHSClientId"];
                 clientSecret = _configuration["BKM:HHSClientSecret"];
                 break;
-            default:
-                clientId = _configuration["BKM:HHSClientId"];
-                clientSecret = _configuration["BKM:HHSClientSecret"];
-                break;
             case OpenBankingConstants.BKMServiceScope.HhsRead:
                 clientId = _configuration["BKM:HHSClientId"];
                 clientSecret = _configuration["BKM:HHSClientSecret"];
@@ -222,6 +245,10 @@ public class BKMService : IBKMService
             case OpenBankingConstants.BKMServiceScope.YosRead:
                 clientId = _configuration["BKM:YOSClientId"];
                 clientSecret = _configuration["BKM:YOSClientSecret"];
+                break;
+            default:
+                clientId = _configuration["BKM:HHSClientId"];
+                clientSecret = _configuration["BKM:HHSClientSecret"];
                 break;
         }
         //Generate object

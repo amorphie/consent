@@ -26,7 +26,7 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
         routeGroupBuilder.MapGet("/code/{hhsKod}", GetHhsWithHhsCode);
         // routeGroupBuilder.MapPost("PostHhsInfo", PostHhsInfo);
         routeGroupBuilder.MapPost("UpsertHhs/{hhsKod}", UpsertHhs);
-        routeGroupBuilder.MapPost("GetTest", GetTest);
+        routeGroupBuilder.MapPost("PosAllHhsInfo", PosAllHhsInfo);
 
     }
     public async Task<IResult> GetHhsWithHhsCode(
@@ -48,12 +48,15 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
 
     public async Task<IResult> UpsertHhs(
         IMapper mapper,
+        IBKMService bkmService,
         [FromServices] ConsentDbContext context,
-        [FromBody] OBHhsInfoDto obHhsInfoDto,
         string hhsKod
     )
     {
         var hhsInfo = await context.OBHhsInfos.FirstOrDefaultAsync(x => x.Kod == hhsKod);
+        var data = await bkmService.GetHhs(hhsKod);
+        OBHhsInfoDto oBHhsInfoDto = new();
+        var obHhsInfoDto = mapper.Map(data, oBHhsInfoDto);
 
         try
         {
@@ -64,7 +67,7 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
 
                 hhsInfo.LogoBilgileri = JsonConvert.SerializeObject(obHhsInfoDto.logoBilgileri);
                 hhsInfo.ApiBilgileri = JsonConvert.SerializeObject(obHhsInfoDto.apiBilgileri);
-
+                hhsInfo.ModifiedAt=DateTime.Now.ToUniversalTime();
                 context.OBHhsInfos.Update(hhsInfo);
             }
             else
@@ -89,7 +92,9 @@ public class OpenBankingHhsInfoModule : BaseBBTRoute<OBHhsInfoDto, OBHhsInfo, Co
 
     }
 
-    public async Task<IResult> GetTest(
+
+
+    public async Task<IResult> PosAllHhsInfo(
         IMapper mapper,
         IBKMService bkmService,
         [FromServices] ConsentDbContext context

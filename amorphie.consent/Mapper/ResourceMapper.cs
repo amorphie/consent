@@ -111,6 +111,10 @@ namespace amorphie.consent.Mapper
             .ConvertUsing(src => src.Data as List<OBHhsInfoDto>);
             CreateMap<ApiResult, List<OBYosInfoDto>>()
             .ConvertUsing(src => src.Data as List<OBYosInfoDto>);
+            CreateMap<ApiResult, OBYosInfoDto>()
+                .ConvertUsing(src => src.Data as OBYosInfoDto);
+            CreateMap<ApiResult, OBHhsInfoDto>()
+                .ConvertUsing(src => src.Data as OBHhsInfoDto);
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();

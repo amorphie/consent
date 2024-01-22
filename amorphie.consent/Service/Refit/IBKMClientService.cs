@@ -15,11 +15,11 @@ public interface IBKMClientService
 
     [Headers("Accept: application/json")]
     [Get("/yos-api/s1.1/yos/{yosKod}")]
-    Task<OBYosInfoDto> GetYos([Header("Authorization")] string authorization, string yosKod);
+    Task<HttpResponseMessage> GetYos([Header("Authorization")] string authorization, string yosKod);
 
     [Headers("Accept: application/json")]
     [Get("/hhs-api/s1.0/hhs/{hhsKod}")]
-    Task<OBHhsInfoDto> GetHhs([Header("Authorization")] string authorization, string hhsKod);
+    Task<HttpResponseMessage> GetHhs([Header("Authorization")] string authorization, string hhsKod);
 
     [Headers("Accept: application/json")]
     [Get("/hhs-api/s1.0/hhs")]
