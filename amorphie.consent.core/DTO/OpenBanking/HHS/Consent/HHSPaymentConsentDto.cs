@@ -8,5 +8,5 @@ namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
 public class HHSPaymentConsentDto : HHSConsentDto
 {
-    public OdemeEmriRizasiHHSDto AdditionalData { get; set; }
+    public OdemeEmriRizasiWithMsrfTtrHHSDto AdditionalData { get; set; }
 }

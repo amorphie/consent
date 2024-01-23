@@ -1116,7 +1116,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
-            OdemeEmriRizasiHHSDto odemeEmriRizasi = (OdemeEmriRizasiHHSDto)paymentServiceResponse.Data;
+            OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi = (OdemeEmriRizasiWithMsrfTtrHHSDto)paymentServiceResponse.Data;
             //Set consent data
             odemeEmriRizasi.rzBlg = new RizaBilgileriDto()
             {
@@ -1157,7 +1157,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Send notification to user
                 //TODO:Özlem call send notification
             }
-            return Results.Ok(odemeEmriRizasi);
+            //Send consent to YOS without hhsmsrfttr property
+            return Results.Ok(mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi));
         }
         catch (Exception ex)
         {
@@ -1591,15 +1592,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
-
-        if (rizaIstegi.odmBsltm.obhsMsrfTtr != null
-            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.obhsMsrfTtr.ttr)
-                || string.IsNullOrEmpty(rizaIstegi.odmBsltm.obhsMsrfTtr.prBrm)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. odmBsltm => obhsMsrfTtr fields empty";
-            return result;
-        }
         return result;
     }
 
@@ -1771,26 +1763,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
-
-        //Check odmBsltma obhsMsrfTtr 
-        if (odemeEmriIstegi.odmBsltm.obhsMsrfTtr != null
-            && (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.obhsMsrfTtr.ttr)
-                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.obhsMsrfTtr.prBrm)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. If obhsMsrfTtr is not null than ttr, prm required fields.";
-            return result;
-        }
-        //Check odmBsltma hhsMsrfTtr 
-        if (odemeEmriIstegi.odmBsltm.hhsMsrfTtr != null
-            && (string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.hhsMsrfTtr.ttr)
-                || string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.hhsMsrfTtr.prBrm)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. If hhsMsrfTtr is not null than ttr, prm required fields.";
-            return result;
-        }
-
+        
         //Do OdemeEmriRizasi validations
         var odemeEmriRizasiConsent = await context.Consents
             .FirstOrDefaultAsync(c => c.Id == new Guid(odemeEmriIstegi.rzBlg.rizaNo)
@@ -1869,24 +1842,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             result.Result = false;
             result.Message = "odmKynk,odmAmc, refBlg,odmStm data has to be equal with payment consent and payment order";
-            return result;
-        }
-        //obhsMsrfTtr must be same
-        if (odemeEmriRizasi.odmBsltm.obhsMsrfTtr != null
-            && (odemeEmriRizasi.odmBsltm.obhsMsrfTtr.ttr != odemeEmriIstegi.odmBsltm.obhsMsrfTtr?.ttr
-                || odemeEmriRizasi.odmBsltm.obhsMsrfTtr.prBrm != odemeEmriIstegi.odmBsltm.obhsMsrfTtr?.prBrm))
-        {
-            result.Result = false;
-            result.Message = "obhsMsrfTtr ttr and prBrm data has to be equal with payment consent and payment order";
-            return result;
-        }
-        //hhsMsrfTtr must be same
-        if (odemeEmriRizasi.odmBsltm.hhsMsrfTtr != null
-            && (odemeEmriRizasi.odmBsltm.hhsMsrfTtr.ttr != odemeEmriIstegi.odmBsltm.hhsMsrfTtr?.ttr
-                || odemeEmriRizasi.odmBsltm.hhsMsrfTtr.prBrm != odemeEmriIstegi.odmBsltm.hhsMsrfTtr?.prBrm))
-        {
-            result.Result = false;
-            result.Message = "hhsMsrfTtr ttr and prBrm data has to be equal with payment consent and payment order";
             return result;
         }
         result.Data = odemeEmriRizasiConsent;

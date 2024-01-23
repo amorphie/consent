@@ -30,7 +30,7 @@ public class PaymentService : IPaymentService
             OdemeEmriRizasiServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
             if (string.IsNullOrEmpty(serviceResponse.error))//Success
             {
-                OdemeEmriRizasiHHSDto odemeEmriRizasi = new OdemeEmriRizasiHHSDto()
+                OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi = new OdemeEmriRizasiWithMsrfTtrHHSDto()
                 {
                     isyOdmBlg = serviceResponse.isyOdmBlg,
                     rzBlg = serviceResponse.rzBlg,

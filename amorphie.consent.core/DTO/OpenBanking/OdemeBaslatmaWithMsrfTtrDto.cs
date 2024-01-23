@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace amorphie.consent.core.DTO.OpenBanking
 {
-    public class OdemeBaslatmaDto
+    public class OdemeBaslatmaWithMsrfTtrDto
     {
         public KimlikDto kmlk { get; set; }
         public TutarDto islTtr { get; set; }
@@ -14,5 +14,7 @@ namespace amorphie.consent.core.DTO.OpenBanking
         public AliciHesapDto alc { get; set; }
         public KarekodDto? kkod { get; set; }
         public OdemeAyrintilariDto odmAyr { get; set; }
+        public TutarDto? hhsMsrfTtr { get; set; }
+
     }
 }
