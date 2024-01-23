@@ -9,35 +9,35 @@ public class OBYosInfoDto : DtoBase
     public string marka { get; set; }
     public string acikAnahtar { get; set; }
     public List<string> roller { get; set; }
-    public List<Adres> adresler { get; set; }
-    public List<LogoBilgisi> logoBilgileri { get; set; }
-    public List<YosApiBilgi> apiBilgileri { get; set; }
+    public List<AdresDto> adresler { get; set; }
+    public List<LogoBilgisiDto> logoBilgileri { get; set; }
+    public List<YosApiBilgiDto> apiBilgileri { get; set; }
     public string durum { get; set; }
 
 }
 
-public class AdresDetayi
+public class AdresDetayiDto
 {
-    public string TmlAdr { get; set; }
-    public string Aciklama { get; set; }
+    public string tmlAdr { get; set; }
+    public string aciklama { get; set; }
 }
 
-public class Adres
+public class AdresDto
 {
-    public string YetYntm { get; set; }
-    public List<AdresDetayi> AdresDetaylari { get; set; }
+    public string yetYntm { get; set; }
+    public List<AdresDetayiDto> adresDetaylari { get; set; }
 }
 
-public class LogoBilgisi
+public class LogoBilgisiDto
 {
-    public string LogoTur { get; set; }
-    public string LogoAdr { get; set; }
-    public string LogoArkaPlan { get; set; }
-    public string LogoFormat { get; set; }
+    public string logoTur { get; set; }
+    public string logoAdr { get; set; }
+    public string logoArkaPlan { get; set; }
+    public string logoFormat { get; set; }
 }
 
-public class YosApiBilgi
+public class YosApiBilgiDto
 {
-    public string Api { get; set; }
-    public string Surum { get; set; }
+    public string api { get; set; }
+    public string surum { get; set; }
 }
