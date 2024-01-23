@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
@@ -7,6 +8,7 @@ using amorphie.consent.data;
 using amorphie.consent.data.Migrations;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.consent.Service;
@@ -14,10 +16,13 @@ namespace amorphie.consent.Service;
 public class YosInfoService : IYosInfoService
 {
     private readonly ConsentDbContext _context;
+    private readonly IMapper _mapper;
 
-    public YosInfoService(ConsentDbContext context)
+    public YosInfoService(ConsentDbContext context,
+        IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
 
@@ -104,13 +109,16 @@ public class YosInfoService : IYosInfoService
         ApiResult result = new();
         try
         {
-            //TODO:Ozlem api bilgileri array olmalı. Mehmet güncelleyince burayı güncelle
-            
+            bool doesYosProvidesApi = false;
             //Check yos by yosCode in database having specified api
-            var isAnyYosWithApi = await _context.OBYosInfos
+            var yos = await _context.OBYosInfos
                 .AsNoTracking()
-                .AnyAsync(y => y.Kod == yosCode);
-            result.Data = isAnyYosWithApi;
+                .FirstOrDefaultAsync(y => y.Kod == yosCode);
+            if (yos != null)
+            {//Check if yos apibilgileri object contains desired api
+                doesYosProvidesApi =   _mapper.Map<OBYosInfoDto>(yos).apiBilgileri.Any(a => a.api == apiName);
+            }
+            result.Data = doesYosProvidesApi;
         }
         catch (Exception e)
         {
