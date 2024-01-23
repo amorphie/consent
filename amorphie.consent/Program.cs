@@ -99,7 +99,7 @@ builder.Services
     .AddRefitClient<IBKMClientService>()
     .ConfigureHttpClient(c =>
     {
-        c.BaseAddress = new Uri(builder.Configuration["BkmServices:BkmUrl"] ??
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:BkmUrl"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
     })
     .ConfigurePrimaryHttpMessageHandler(() => handler)

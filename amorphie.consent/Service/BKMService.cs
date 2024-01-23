@@ -26,7 +26,137 @@ public class BKMService : IBKMService
         _mapper = mapper;
         _configuration = configuration;
     }
-    
+
+    public async Task<ApiResult> GetHhs(string hhsKod)
+    {
+        ApiResult apiResult = new();
+     try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetHhs(authorizationValue,hhsKod);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<OBHhsInfoDto>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+     public async Task<ApiResult> GetYos(string yosKod)
+    {
+        ApiResult apiResult = new();
+     try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.YosRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetYos(authorizationValue,yosKod);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<OBYosInfoDto>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+    public async Task<ApiResult> GetAllHhs()
+    {
+        ApiResult apiResult = new();
+        try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetAllHhs(authorizationValue);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<List<OBHhsInfoDto>>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+
+    public async Task<ApiResult> GetAllYos()
+    {
+        ApiResult apiResult = new();
+        try
+        {
+            ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.YosRead);
+            if (!tokenServiceResponse.Result)
+                return tokenServiceResponse;
+
+            string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
+
+            var httpResponse = await _bkmClientService.GetAllYos(authorizationValue);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                apiResult.Result = false;
+                apiResult.Message = await httpResponse.Content.ReadAsStringAsync();
+                return apiResult;
+            }
+
+            var content = await httpResponse.Content.ReadAsStringAsync();
+            var hhsResponse = JsonConvert.DeserializeObject<List<OBYosInfoDto>>(content);
+            apiResult.Data = hhsResponse;
+            apiResult.Result = true;
+        }
+        catch (Exception e)
+        {
+            apiResult.Result = false;
+            apiResult.Message = e.Message;
+        }
+        return apiResult;
+    }
+
     public async Task<ApiResult> GetToken(string bkmServiceScope)
     {
         ApiResult result = new();
@@ -64,18 +194,18 @@ public class BKMService : IBKMService
         return result;
     }
 
-   
+
     public async Task<ApiResult> SendEventToYos(OlayIstegiDto olayIstegi)
     {
         ApiResult result = new();
         try
         {
-           //Get token to use in olay-dinleme 
+            //Get token to use in olay-dinleme 
             ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.OlayDinleme);
             if (!tokenServiceResponse.Result)//Error in service
                 return tokenServiceResponse;
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
-            
+
             //Send event to YOS
             var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,
                 Guid.NewGuid().ToString(),
@@ -96,8 +226,8 @@ public class BKMService : IBKMService
         }
         return result;
     }
-    
-    
+
+
     /// <summary>
     /// Generates BKMTokenRequest Object by service scope
     /// </summary>
@@ -111,6 +241,14 @@ public class BKMService : IBKMService
             case OpenBankingConstants.BKMServiceScope.OlayDinleme:
                 clientId = _configuration["BKM:HHSClientId"];
                 clientSecret = _configuration["BKM:HHSClientSecret"];
+                break;
+            case OpenBankingConstants.BKMServiceScope.HhsRead:
+                clientId = _configuration["BKM:HHSClientId"];
+                clientSecret = _configuration["BKM:HHSClientSecret"];
+                break;
+            case OpenBankingConstants.BKMServiceScope.YosRead:
+                clientId = _configuration["BKM:YOSClientId"];
+                clientSecret = _configuration["BKM:YOSClientSecret"];
                 break;
             default:
                 clientId = _configuration["BKM:HHSClientId"];
@@ -126,8 +264,4 @@ public class BKMService : IBKMService
             Scope = bkmServiceScope
         };
     }
-
-    
-    
-    
 }

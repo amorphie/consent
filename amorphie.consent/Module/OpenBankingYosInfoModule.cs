@@ -29,8 +29,56 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/code/{yosKod}", GetAllYosWithYosCode);
-        routeGroupBuilder.MapPost("PostYosInfo", PostYosInfo);
+        // routeGroupBuilder.MapPost("PostYosInfo", PostYosInfo);
         routeGroupBuilder.MapPost("UpsertYos/{yosKod}", UpsertYos);
+        routeGroupBuilder.MapPost("PosAllYosInfo", PosAllYosInfo);
+    }
+    public async Task<IResult> PosAllYosInfo(
+       IMapper mapper,
+       IBKMService bkmService,
+       [FromServices] ConsentDbContext context
+   )
+    {
+        var data = await bkmService.GetAllYos();
+        List<OBYosInfoDto> dtos = new();
+        var test = mapper.Map(data, dtos);
+
+        try
+        {
+            foreach (var yosDto in test)
+            {
+                var existingYosInfo = await context.OBYosInfos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Kod == yosDto.kod);
+
+                if (existingYosInfo != null)
+                {
+                    var tempId = existingYosInfo.Id;
+                    mapper.Map(yosDto, existingYosInfo);
+                    existingYosInfo.Id = tempId;
+                    existingYosInfo.Adresler = JsonConvert.SerializeObject(yosDto.adresler);
+                    existingYosInfo.LogoBilgileri = JsonConvert.SerializeObject(yosDto.logoBilgileri);
+                    existingYosInfo.ApiBilgileri = JsonConvert.SerializeObject(yosDto.apiBilgileri);
+                    context.Update(existingYosInfo);
+                }
+                else
+                {
+                    var newYosInfo = mapper.Map<OBYosInfo>(yosDto);
+                    newYosInfo.Adresler = JsonConvert.SerializeObject(yosDto.adresler);
+                    newYosInfo.LogoBilgileri = JsonConvert.SerializeObject(yosDto.logoBilgileri);
+                    newYosInfo.ApiBilgileri = JsonConvert.SerializeObject(yosDto.apiBilgileri);
+                    context.OBYosInfos.Add(newYosInfo);
+                }
+            }
+
+            await context.SaveChangesAsync();
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+
+            return Results.Problem(ex.Message);
+        }
     }
 
     public async Task<IResult> GetAllYosWithYosCode(
@@ -51,64 +99,27 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
     }
     public async Task<IResult> UpsertYos(
         IMapper mapper,
+        IBKMService bkmService,
         [FromServices] ConsentDbContext context,
-        string yosKod,
-        IBKMClientService bkmClientService,
-        IConfiguration configuration
-        )
+        string yosKod
+    )
     {
-        var clientId = configuration["ClientId:YosClientId"];
-        var clientSecret = configuration["ClientSecret:YosClientSecret"];
-        var accessToken = String.Empty;
-        OBYosInfoDto obYosInfoDto = new OBYosInfoDto();
         var yosInfo = await context.OBYosInfos.FirstOrDefaultAsync(x => x.Kod == yosKod);
-        var data = new BKMTokenRequestDto
-        {
-            ClientId = clientId,
-            ClientSecret = clientSecret,
-            GrantType = "client_credentials",
-            Scope = "yos_read"
-        };
+        var data = await bkmService.GetYos(yosKod);
+        OBYosInfoDto oBYosInfoDto = new();
+        var obYosInfoDto = mapper.Map(data, oBYosInfoDto);
 
-        try
-        {
-            var httpResponse = await bkmClientService.GetToken(data);
-
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<BKMTokenResponseDto>(content);
-                accessToken = tokenResponse.AccessToken;
-
-            }
-            else
-            {
-                var errorContent = await httpResponse.Content.ReadAsStringAsync();
-                Console.WriteLine(errorContent);
-                return Results.Problem("Token alınamadı.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return Results.Problem("Bir hata oluştu: " + ex.Message);
-        }
-        if (!string.IsNullOrEmpty(accessToken))
-        {
-            string authorizationValue = $"Bearer {accessToken}";
-            obYosInfoDto = await bkmClientService.GetYos(authorizationValue, yosKod);
-        }
         try
         {
             if (yosInfo != null)
             {
-
                 obYosInfoDto.Id = yosInfo.Id;
                 mapper.Map(obYosInfoDto, yosInfo);
 
-                yosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
                 yosInfo.LogoBilgileri = JsonConvert.SerializeObject(obYosInfoDto.logoBilgileri);
                 yosInfo.ApiBilgileri = JsonConvert.SerializeObject(obYosInfoDto.apiBilgileri);
+                yosInfo.Adresler=JsonConvert.SerializeObject(obYosInfoDto.adresler);
+                yosInfo.ModifiedAt=DateTime.UtcNow;
 
                 context.OBYosInfos.Update(yosInfo);
             }
@@ -116,7 +127,6 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             {
                 var newYosInfo = mapper.Map<OBYosInfo>(obYosInfoDto);
 
-                newYosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
                 newYosInfo.LogoBilgileri = JsonConvert.SerializeObject(obYosInfoDto.logoBilgileri);
                 newYosInfo.ApiBilgileri = JsonConvert.SerializeObject(obYosInfoDto.apiBilgileri);
 
@@ -132,86 +142,88 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
             Console.WriteLine(ex.Message);
             return Results.NotFound();
         }
+
     }
 
-    public async Task<IResult> PostYosInfo(
-    IMapper mapper,
-    [FromServices] ConsentDbContext context,
-    [FromServices] IBKMClientService bkmClientService,
-    IPushService pushService,
-    IConfiguration configuration
-)
-    {
-        var clientId = configuration["ClientId:YosClientId"];
-        var clientSecret = configuration["ClientSecret:YosClientSecret"];
-        var accessToken = String.Empty;
-        var data = new BKMTokenRequestDto
-        {
-            ClientId = clientId,
-            ClientSecret = clientSecret,
-            GrantType = "client_credentials",
-            Scope = "yos_read"
-        };
 
-        try
-        {
-            var httpResponse = await bkmClientService.GetToken(data);
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var content = await httpResponse.Content.ReadAsStringAsync();
-                var tokenResponse = JsonConvert.DeserializeObject<BKMTokenResponseDto>(content);
-                accessToken = tokenResponse.AccessToken;
-            }
-            else
-            {
-                var errorContent = await httpResponse.Content.ReadAsStringAsync();
-                Console.WriteLine(errorContent);
-                return Results.Problem("Token alınamadı.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            return Results.Problem("Bir hata oluştu: " + ex.Message);
-        }
+    //     public async Task<IResult> PostYosInfo(
+    //     IMapper mapper,
+    //     [FromServices] ConsentDbContext context,
+    //     [FromServices] IBKMClientService bkmClientService,
+    //     IPushService pushService,
+    //     IConfiguration configuration
+    // )
+    //     {
+    //         var clientId = configuration["ClientId:YosClientId"];
+    //         var clientSecret = configuration["ClientSecret:YosClientSecret"];
+    //         var accessToken = String.Empty;
+    //         var data = new BKMTokenRequestDto
+    //         {
+    //             ClientId = clientId,
+    //             ClientSecret = clientSecret,
+    //             GrantType = "client_credentials",
+    //             Scope = "yos_read"
+    //         };
 
-        if (!string.IsNullOrEmpty(accessToken))
-        {
-            string authorizationValue = $"Bearer {accessToken}";
-            var yosResponse = await bkmClientService.GetAllYos(authorizationValue);
+    //         try
+    //         {
+    //             var httpResponse = await bkmClientService.GetToken(data);
+    //             if (httpResponse.IsSuccessStatusCode)
+    //             {
+    //                 var content = await httpResponse.Content.ReadAsStringAsync();
+    //                 var tokenResponse = JsonConvert.DeserializeObject<BKMTokenResponseDto>(content);
+    //                 accessToken = tokenResponse.AccessToken;
+    //             }
+    //             else
+    //             {
+    //                 var errorContent = await httpResponse.Content.ReadAsStringAsync();
+    //                 Console.WriteLine(errorContent);
+    //                 return Results.Problem("Token alınamadı.");
+    //             }
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             Console.WriteLine(ex.Message);
+    //             return Results.Problem("Bir hata oluştu: " + ex.Message);
+    //         }
 
-            foreach (var yosDto in yosResponse)
-            {
-                var existingYosInfo = await context.OBYosInfos
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Kod == yosDto.kod);
+    //         if (!string.IsNullOrEmpty(accessToken))
+    //         {
+    //             string authorizationValue = $"Bearer {accessToken}";
+    //             var yosResponse = await bkmClientService.GetAllYos(authorizationValue);
 
-                if (existingYosInfo != null)
-                {
-                    var tempId = existingYosInfo.Id;
-                    mapper.Map(yosDto, existingYosInfo);
-                    existingYosInfo.Id = tempId;
-                }
-                else
-                {
-                    var newYosInfo = mapper.Map<OBYosInfo>(yosDto);
-                    context.OBYosInfos.Add(newYosInfo);
-                }
-            }
-            KimlikDto kimlikDto = new KimlikDto
-            {
-                kmlkTur = "A",
-                kmlkVrs = "29512549210",
-                krmKmlkTur = "",
-                krmKmlkVrs = "",
-                ohkTur = ""
-            };
-            await pushService.OpenBankingSendPush(kimlikDto, "23423423423");
-            await context.SaveChangesAsync();
-            return Results.Ok();
-        }
+    //             foreach (var yosDto in yosResponse)
+    //             {
+    //                 var existingYosInfo = await context.OBYosInfos
+    //                     .AsNoTracking()
+    //                     .FirstOrDefaultAsync(x => x.Kod == yosDto.kod);
 
-        return Results.Problem("AccessToken alınamadı.");
-    }
+    //                 if (existingYosInfo != null)
+    //                 {
+    //                     var tempId = existingYosInfo.Id;
+    //                     mapper.Map(yosDto, existingYosInfo);
+    //                     existingYosInfo.Id = tempId;
+    //                 }
+    //                 else
+    //                 {
+    //                     var newYosInfo = mapper.Map<OBYosInfo>(yosDto);
+    //                     context.OBYosInfos.Add(newYosInfo);
+    //                 }
+    //             }
+    //             KimlikDto kimlikDto = new KimlikDto
+    //             {
+    //                 kmlkTur = "A",
+    //                 kmlkVrs = "29512549210",
+    //                 krmKmlkTur = "",
+    //                 krmKmlkVrs = "",
+    //                 ohkTur = ""
+    //             };
+    //             await pushService.OpenBankingSendPush(kimlikDto, "23423423423");
+    //             await context.SaveChangesAsync();
+    //             return Results.Ok();
+    //         }
+
+    //         return Results.Problem("AccessToken alınamadı.");
+    //     }
 
 }

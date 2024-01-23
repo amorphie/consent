@@ -36,16 +36,16 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
             CreateMap<OBHhsInfo, OBHhsInfoDto>()
             .ForMember(dest => dest.apiBilgileri,
-                       opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgi>(), src => src.ApiBilgileri))
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgiDto>(), src => src.ApiBilgileri))
             .ForMember(dest => dest.logoBilgileri,
-                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisi>(), src => src.LogoBilgileri)).ReverseMap();
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri)).ReverseMap();
             CreateMap<OBYosInfo, OBYosInfoDto>()
             .ForMember(dest => dest.adresler,
-                       opt => opt.ConvertUsing(new JsonToListTypeConverter<Adres>(), src => src.Adresler))
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<AdresDto>(), src => src.Adresler))
             .ForMember(dest => dest.logoBilgileri,
-                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisi>(), src => src.LogoBilgileri))
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri))
             .ForMember(dest => dest.apiBilgileri,
-                       opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgi>(), src => src.ApiBilgileri)).ReverseMap();
+                       opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgiDto>(), src => src.ApiBilgileri)).ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens)).ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
@@ -107,7 +107,14 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
             CreateMap<HesapBilgisiRequestDto, HesapBilgisiDto>();
-
+            CreateMap<ApiResult, List<OBHhsInfoDto>>()
+            .ConvertUsing(src => src.Data as List<OBHhsInfoDto>);
+            CreateMap<ApiResult, List<OBYosInfoDto>>()
+            .ConvertUsing(src => src.Data as List<OBYosInfoDto>);
+            CreateMap<ApiResult, OBYosInfoDto>()
+                .ConvertUsing(src => src.Data as OBYosInfoDto);
+            CreateMap<ApiResult, OBHhsInfoDto>()
+                .ConvertUsing(src => src.Data as OBHhsInfoDto);
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
