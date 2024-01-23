@@ -1139,6 +1139,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingPayment;
             consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
+            consentEntity.ClientCode = string.Empty;
             consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
             {
                 new OBConsentIdentityInfo()
