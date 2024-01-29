@@ -37,7 +37,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-        routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById);
+        routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
@@ -109,6 +109,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
             return Results.Ok(accountConsent);
         }
         catch (Exception ex)
@@ -1006,6 +1007,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Send notification to user
                 //TODO:Özlem call send notification
             }
+            ModuleHelper.SetXJwsSignatureHeader(httpContext,configuration, hesapBilgisiRizasi);
             return Results.Ok(hesapBilgisiRizasi);
         }
         catch (Exception ex)

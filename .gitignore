@@ -51,6 +51,8 @@ nunit-*.xml
 # Ignore Sh files,
 *.sh
 
+# Ignore pem files,
+*.pem
 
 # Build Results of an ATL Project
 [Dd]ebugPS/
