@@ -1,0 +1,11 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: openbanking-kafka
+spec:
+  type: pubsub.kafka
+  metadata:
+   - name: brokers # Required. Kafka broker connection setting
+     value: "localhost:29092"
+   - name: authType # Required.
+     value: "none"

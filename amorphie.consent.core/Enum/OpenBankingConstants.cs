@@ -357,11 +357,20 @@ public static class OpenBankingConstants
         public const string HHS = "HHS";
         public const string YOS = "YOS";
     }
-    
 
-    public static class ConsentDetailType
+    public static class KafkaInformation
     {
-        public const string OpenBankingPaymentOrder = "OB_PaymentOrder";
+        public const string KafkaName = "openbanking-kafka";
+        public const string UpdatePaymentStatusTopicName = "EFT.SGOD_MASTER_OPENBANKING";
+
     }
+    
+    public static class PaymentServiceInformation
+    {
+        public const int PaymentServiceBranchCode = 1000;
+    }
+
+    
+    
 
 }

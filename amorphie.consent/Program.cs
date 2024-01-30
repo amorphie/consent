@@ -26,6 +26,7 @@ using Refit;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Net.Http.Headers;
 using System;
+using Dapr;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -139,6 +140,13 @@ builder.Services.AddDbContext<ConsentDbContext>
 
 var app = builder.Build();
 app.UseAllElasticApm(app.Configuration);
+app.UseCloudEvents();
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapSubscribeHandler();
+});
+
 
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
