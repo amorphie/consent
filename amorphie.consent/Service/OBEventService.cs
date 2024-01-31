@@ -39,6 +39,8 @@ public class OBEventService : IOBEventService
     {
         try
         {
+            //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
+            
             //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =

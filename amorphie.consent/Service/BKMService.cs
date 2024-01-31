@@ -3,6 +3,7 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
+using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using AutoMapper;
@@ -205,12 +206,13 @@ public class BKMService : IBKMService
             if (!tokenServiceResponse.Result)//Error in service
                 return tokenServiceResponse;
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
-
+            var xjwsHeader= ModuleHelper.GetXJwsSignature(olayIstegi,_configuration);
             //Send event to YOS
             var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,
                 Guid.NewGuid().ToString(),
                 olayIstegi.katilimciBlg.hhsKod,
                 olayIstegi.katilimciBlg.yosKod,
+                xjwsHeader,
                 olayIstegi);
             if (!httpResponse.IsSuccessStatusCode)
             {

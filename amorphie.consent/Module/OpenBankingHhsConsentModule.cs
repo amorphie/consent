@@ -20,8 +20,6 @@ using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Dapr;
-using Dapr.Client;
-using System.Text;
 
 namespace amorphie.consent.Module;
 
@@ -63,7 +61,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentStatusForUsage", UpdatePaymentConsentStatusForUsage);
         routeGroupBuilder.MapPost("/UpdateAccountConsentStatusForUsage", UpdateAccountConsentStatusForUsage);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapPost("kafka-test", UpdatePaymentState);
+        routeGroupBuilder.MapPost("updatePaymentState", UpdatePaymentState);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -92,15 +90,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
-        HttpContext httpContext,
-        [FromServices] DaprClient daprClient)
+        HttpContext httpContext)
     {
         try
         {
-
-
-            await daprClient.PublishEventAsync<Object>("amorphie-kafka", "EFT.SGOD_MASTER_OPENBANKING", "message");
-
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
             if (!headerValidation.Result)
@@ -1292,14 +1285,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     out DateTime result))
             {
                 // Successfully parsed
-                orderEntity.PSNDate = result;
+                orderEntity.PSNDate =  DateTime.SpecifyKind(result, DateTimeKind.Utc);
             }
             else
             {
                 orderEntity.PSNDate = null;
             }
         }
-        
         orderEntity.PSNYosCode = systemNumberItems?[1] ?? null;
         if (systemNumberItems?[2] == null
             || string.IsNullOrEmpty(systemNumberItems[2]))
@@ -1325,23 +1317,53 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [HttpPost]
     public async Task<IResult> UpdatePaymentState(
         [FromServices] ConsentDbContext context,
+        [FromServices] IOBEventService obEventService,
         HttpContext httpContext)
     {
         try
         {
             PaymentRecordDto model = await httpContext.Deserialize<PaymentRecordDto>();
-            if (model == null
+            if (model != null
                 && model.message?.data?.TRAN_BRANCH_CODE == OpenBankingConstants.PaymentServiceInformation.PaymentServiceBranchCode
-                && !string.IsNullOrEmpty(model.message.data.TRAN_DATE))
+                && !string.IsNullOrEmpty(model.message.data.TRAN_DATE)
+                && !string.IsNullOrEmpty(model.message.data.RECORD_STATUS))
             {
-                DateTime tranDate = DateTime.ParseExact(model.message.data.TRAN_DATE, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                string recordStatus = model.message.data.RECORD_STATUS;
+                DateTime tranDate = DateTime.ParseExact(model.message.data.TRAN_DATE, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                DateTime utcTranDate = DateTime.SpecifyKind(tranDate, DateTimeKind.Utc);
+                DateTime lastUpdateDate = DateTime.ParseExact(model.message.data.LAST_UPDATE_DATE, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                DateTime utcLastUpdateDate = DateTime.SpecifyKind(lastUpdateDate, DateTimeKind.Utc);
                 int refNum = model.message.data.REF_NUM;
-                var paymentOrder =  await  context.OBPaymentOrders.FirstOrDefaultAsync(o => o.PSNRefNum == refNum
+                var paymentOrderEntity =  await  context.OBPaymentOrders.FirstOrDefaultAsync(o => o.PSNRefNum == refNum
                                                                  && o.PSNDate != null
-                                                                 && o.PSNDate.Value.Date == tranDate.Date);
-              if (paymentOrder != null)
+                                                                 && o.PSNDate.Value.Date == utcTranDate.Date);
+              if (paymentOrderEntity != null)
               {
-                  
+                  if (paymentOrderEntity.PaymentServiceUpdateTime != null && paymentOrderEntity.PaymentServiceUpdateTime.Value > utcLastUpdateDate)
+                  {//Payment order updated with latest record
+                      //TODO:Ozlem log this case
+                      return Results.Ok();
+                  }
+                  //Calculate new state
+                  var paymentState = GetPaymentState(recordStatus, paymentOrderEntity.PaymentSystem,paymentOrderEntity.PaymentState);
+                  if (paymentState != paymentOrderEntity.PaymentState) //Payment state changed
+                  {
+                      //Update payment message
+                      var additionalData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
+                      additionalData.odmBsltm.odmAyr.odmDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+                      //Update payment order data
+                      paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                      paymentOrderEntity.PaymentServiceUpdateTime = utcLastUpdateDate;
+                      paymentOrderEntity.PaymentState = paymentState;
+                      paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
+                      context.OBPaymentOrders.Update(paymentOrderEntity);
+                      await context.SaveChangesAsync();
+                      //Do event process
+                      await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(), additionalData.katilimciBlg,
+                          OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
+
+                  }
+                 
               }
             }
             return Results.Ok();
@@ -1351,6 +1373,53 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
 
+    }
+
+    private string GetPaymentState(string recordStatus, string paymentSystem, string currentPaymentState)
+    {
+        string paymentState = currentPaymentState;
+        if (paymentSystem == OpenBankingConstants.OdemeSistemi.Fast)
+        {
+            switch (recordStatus)
+            {
+                case "TM":
+                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesti;
+                    break;
+                case "HM":
+                case "FR":
+                case "IT":
+                case "I":
+                case "FI":
+                case "EM":
+                case "T":
+                case "W":
+                case "Y":
+                case "G":
+                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesmedi;
+                    break;
+            }
+        }
+        else if (paymentSystem == OpenBankingConstants.OdemeSistemi.EFT_POS)
+        {
+            switch (recordStatus)
+            {
+                case "T":
+                case "B":
+                case "O":
+                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesti;
+                    break;
+                case "I":
+                case "Q":
+                case "U":
+                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesmedi;
+                    break;
+                case "G":
+                    paymentState = OpenBankingConstants.OdemeDurumu.Gonderildi;
+                    break;
+            }
+        }
+
+        return paymentState;
     }
 
     #endregion

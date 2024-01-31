@@ -31,6 +31,7 @@ public interface IBKMClientService
         [Header("X-Request-ID")] string xRequestId,
         [Header("X-ASPSP-Code")] string xAspspCode,
         [Header("X-TPP-Code")] string xTppCode,
+        [Header("X-JWS-Signature")] string xJwsSignature,
         [Body] OlayIstegiDto olayIstegi);
 }
 
