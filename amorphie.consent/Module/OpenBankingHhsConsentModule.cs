@@ -20,6 +20,7 @@ using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Dapr;
+using System.Linq;
 
 namespace amorphie.consent.Module;
 
@@ -1246,6 +1247,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             orderEntity.PaymentSource = odemeEmriDto.odmBsltm.odmAyr.odmKynk;
             orderEntity.PaymentPurpose = odemeEmriDto.odmBsltm.odmAyr.odmAmc;
             orderEntity.ReferenceInformation = odemeEmriDto.odmBsltm.odmAyr.refBlg;
+            orderEntity.OHKMessage = odemeEmriDto.odmBsltm.odmAyr.ohkMsj;
+            orderEntity.PaymentDescription = odemeEmriDto.odmBsltm.odmAyr.odmAcklm;
             orderEntity.PaymentSystem = odemeEmriDto.odmBsltm.odmAyr.odmStm;
             orderEntity.ExpectedPaymentDate = odemeEmriDto.odmBsltm.odmAyr.bekOdmZmn;
             orderEntity.PaymentSystemNumber = odemeEmriDto.odmBsltm.odmAyr.odmStmNo;
@@ -1274,24 +1277,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private static void SetPaymentSystemNumberFields(OdemeEmriHHSDto odemeEmriDto, OBPaymentOrder orderEntity)
     {
         var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray() ?? null;
-        if (systemNumberItems?[0] == null
-            || string.IsNullOrEmpty(systemNumberItems[0]))
-        {
-            orderEntity.PSNDate = null;
-        }
-        else
-        {
-            if (DateTime.TryParseExact(systemNumberItems[0], "yyyy-MM-dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None,
-                    out DateTime result))
-            {
-                // Successfully parsed
-                orderEntity.PSNDate =  DateTime.SpecifyKind(result, DateTimeKind.Utc);
-            }
-            else
-            {
-                orderEntity.PSNDate = null;
-            }
-        }
+        orderEntity.PSNDate =  systemNumberItems?[0] ?? null;
         orderEntity.PSNYosCode = systemNumberItems?[1] ?? null;
         if (systemNumberItems?[2] == null
             || string.IsNullOrEmpty(systemNumberItems[2]))
@@ -1332,14 +1318,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 DateTime tranDate = DateTime.ParseExact(model.message.data.TRAN_DATE, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
                 DateTime utcTranDate = DateTime.SpecifyKind(tranDate, DateTimeKind.Utc);
                 DateTime lastUpdateDate = DateTime.ParseExact(model.message.data.LAST_UPDATE_DATE, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                DateTime utcLastUpdateDate = DateTime.SpecifyKind(lastUpdateDate, DateTimeKind.Utc);
                 int refNum = model.message.data.REF_NUM;
-                var paymentOrderEntity =  await  context.OBPaymentOrders.FirstOrDefaultAsync(o => o.PSNRefNum == refNum
-                                                                 && o.PSNDate != null
-                                                                 && o.PSNDate.Value.Date == utcTranDate.Date);
+                var paymentOrderEntity =  context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
+                                                                 && o.PSNDate != null).AsEnumerable().FirstOrDefault(o =>
+                                                                  DateTime.ParseExact(o.PSNDate,"yyyy-MM-dd HH:mm:ss",null).Date == utcTranDate.Date);
               if (paymentOrderEntity != null)
               {
-                  if (paymentOrderEntity.PaymentServiceUpdateTime != null && paymentOrderEntity.PaymentServiceUpdateTime.Value > utcLastUpdateDate)
+                  if (paymentOrderEntity.PaymentServiceUpdateTime != null 
+                      && DateTime.ParseExact(paymentOrderEntity.PaymentServiceUpdateTime,"yyyy-MM-dd HH:mm:ss.fff",null) > lastUpdateDate)
                   {//Payment order updated with latest record
                       //TODO:Ozlem log this case
                       return Results.Ok();
@@ -1350,10 +1336,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                   {
                       //Update payment message
                       var additionalData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
-                      additionalData.odmBsltm.odmAyr.odmDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+                      additionalData.odmBsltm.odmAyr.odmDrm = paymentState;
                       //Update payment order data
                       paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
-                      paymentOrderEntity.PaymentServiceUpdateTime = utcLastUpdateDate;
+                      paymentOrderEntity.PaymentServiceUpdateTime = model.message.data.LAST_UPDATE_DATE;
                       paymentOrderEntity.PaymentState = paymentState;
                       paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
                       context.OBPaymentOrders.Update(paymentOrderEntity);
