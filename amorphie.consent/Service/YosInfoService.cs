@@ -42,9 +42,10 @@ public class YosInfoService : IYosInfoService
             result.Result = false;
             result.Message = e.Message;
         }
+
         return result;
     }
-    
+
     public async Task<ApiResult> GetYosByCode(string yosCode)
     {
         ApiResult result = new();
@@ -60,37 +61,39 @@ public class YosInfoService : IYosInfoService
             result.Result = false;
             result.Message = e.Message;
         }
+
         return result;
     }
-    
+
     public async Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
-        List<AbonelikTipleriDto> abonelikTipleri, 
+        List<AbonelikTipleriDto> abonelikTipleri,
         List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations)
     {
         ApiResult result = new();
         try
         {
             //Get yos role of desired abonelik tipleri
-           var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
-                abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
-               .Select(r => r.YOSRole)
-               .Distinct();
-           
-           //Set yosRole list
-           List<string> toBeCheckedRoles = new List<string>();
-           if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
-           {
-               toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.HBHS);
-           }
-           if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
-           {
-               toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.OBHS);
-           }
-           
-           //Check yos in database if has specified roles
+            var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
+                    abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
+                .Select(r => r.YOSRole)
+                .Distinct();
+
+            //Set yosRole list
+            List<string> toBeCheckedRoles = new List<string>();
+            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
+            {
+                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.HBHS);
+            }
+
+            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
+            {
+                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.OBHS);
+            }
+
+            //Check yos in database if has specified roles
             var isAnyYosWithRole = await _context.OBYosInfos
                 .AsNoTracking()
-                .AnyAsync(y => y.Roller.Any(r => toBeCheckedRoles.Contains(r) ) 
+                .AnyAsync(y => y.Roller.Any(r => toBeCheckedRoles.Contains(r))
                                && y.Kod == yosCode);
             result.Data = isAnyYosWithRole;
         }
@@ -99,6 +102,7 @@ public class YosInfoService : IYosInfoService
             result.Result = false;
             result.Message = e.Message;
         }
+
         return result;
     }
 
@@ -115,9 +119,11 @@ public class YosInfoService : IYosInfoService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(y => y.Kod == yosCode);
             if (yos != null)
-            {//Check if yos apibilgileri object contains desired api
-                doesYosProvidesApi =   _mapper.Map<OBYosInfoDto>(yos).apiBilgileri.Any(a => a.api == apiName);
+            {
+                //Check if yos apibilgileri object contains desired api
+                doesYosProvidesApi = _mapper.Map<OBYosInfoDto>(yos).apiBilgileri.Any(a => a.api == apiName);
             }
+
             result.Data = doesYosProvidesApi;
         }
         catch (Exception e)
@@ -125,9 +131,36 @@ public class YosInfoService : IYosInfoService
             result.Result = false;
             result.Message = e.Message;
         }
+
         return result;
     }
 
 
-    
+    public async Task<ApiResult> IsYosSubscsribed(string yosKod, string eventType, string sourceType)
+    {
+        ApiResult result = new();
+        try
+        {
+            result.Data = true;
+            bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
+                s.ModuleName == OpenBankingConstants.ModuleName.HHS
+                && s.YOSCode == yosKod
+                && s.OBEventSubscriptionTypes.Any(t =>
+                    t.SourceType == sourceType
+                    && t.EventType == eventType));
+            if (isSubscriped == false)
+            {
+                //Yos does not have subscription
+                result.Data = false;
+                return result;
+            }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
 }

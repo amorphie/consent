@@ -1304,21 +1304,24 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     public async Task<IResult> UpdatePaymentState(
         [FromServices] ConsentDbContext context,
         [FromServices] IOBEventService obEventService,
+        [FromServices] IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         try
         {
+            //Get payment system record.
             PaymentRecordDto model = await httpContext.Deserialize<PaymentRecordDto>();
             if (model != null
                 && model.message?.data?.TRAN_BRANCH_CODE == OpenBankingConstants.PaymentServiceInformation.PaymentServiceBranchCode
                 && !string.IsNullOrEmpty(model.message.data.TRAN_DATE)
                 && !string.IsNullOrEmpty(model.message.data.RECORD_STATUS))
-            {
-                string recordStatus = model.message.data.RECORD_STATUS;
+            {//Check must fields
+                string recordStatus = model.message.data.RECORD_STATUS;//New status
                 DateTime tranDate = DateTime.ParseExact(model.message.data.TRAN_DATE, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
                 DateTime utcTranDate = DateTime.SpecifyKind(tranDate, DateTimeKind.Utc);
                 DateTime lastUpdateDate = DateTime.ParseExact(model.message.data.LAST_UPDATE_DATE, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                 int refNum = model.message.data.REF_NUM;
+                //Get related payment order entity
                 var paymentOrderEntity =  context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
                                                                  && o.PSNDate != null).AsEnumerable().FirstOrDefault(o =>
                                                                   DateTime.ParseExact(o.PSNDate,"yyyy-MM-dd HH:mm:ss",null).Date == utcTranDate.Date);
@@ -1344,10 +1347,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                       paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
                       context.OBPaymentOrders.Update(paymentOrderEntity);
                       await context.SaveChangesAsync();
-                      //Do event process
-                      await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(), additionalData.katilimciBlg,
+                      //If YOS has subscription, Do event process
+                      ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(paymentOrderEntity.YosCode,
                           OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
-
+                      if (yosHasSubscription.Result
+                          && (bool)yosHasSubscription.Data)
+                      {//Yos has subscrition. Do event process.
+                          await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(), additionalData.katilimciBlg,
+                              OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
+                      }
                   }
                  
               }

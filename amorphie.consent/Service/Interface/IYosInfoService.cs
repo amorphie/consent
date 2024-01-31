@@ -44,4 +44,13 @@ public interface IYosInfoService
     public Task<ApiResult> CheckIfYosProvidesDesiredApi(string yosCode,
         string apiName);
 
+    /// <summary>
+    /// Check if yos has subscription
+    /// </summary>
+    /// <param name="yosKod">Yos to be checked</param>
+    /// <param name="eventType">Event Type</param>
+    /// <param name="sourceType">Source Type</param>
+    /// <returns>If YOS has subscription for given event type and source type</returns>
+    public Task<ApiResult> IsYosSubscsribed(string yosKod, string eventType, string sourceType);
+
 }
