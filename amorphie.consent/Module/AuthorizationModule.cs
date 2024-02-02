@@ -69,7 +69,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.ConsentType == consentType
                     && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                            && authAccountConsentStatusList.Contains(c.State)
-                           && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
+                           && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate >= today))
                         || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();
@@ -116,7 +116,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.UserTCKN == userTCKN
                     && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                          && authAccountConsentStatusList.Contains(c.State)
-                         && c.OBAccountReferences.Any(r => r.LastValidAccessDate >= today))
+                         && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate >= today))
                         || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();

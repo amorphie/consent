@@ -56,7 +56,7 @@ public class AccountService : IAccountService
             if (activeConsent != null)
             {//filter accounts
                 accounts = accounts.Where(a =>
-                    activeConsent.OBAccountReferences.Any(r => r.AccountReferences.Contains(a.hspTml.hspRef))).ToList();
+                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(a.hspTml.hspRef))).ToList();
                 accounts = accounts.Select(a =>
                 {
                     a.rizaNo = activeConsent.Id.ToString();
@@ -110,7 +110,7 @@ public class AccountService : IAccountService
             {   OpenBankingConstants.IzinTur.TemelHesapBilgisi,
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             }); //Get account consent from db
-            if (activeConsent != null && activeConsent.OBAccountReferences.Any(r => r.AccountReferences.Contains(account.hspTml.hspRef)))
+            if (activeConsent != null && activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(account.hspTml.hspRef)))
             {//Set rizaNo
                 account.rizaNo = activeConsent.Id.ToString();
             }
@@ -148,7 +148,7 @@ public class AccountService : IAccountService
             if (activeConsent != null)
             {//filter balances
                 balances = balances.Where(b =>
-                    activeConsent.OBAccountReferences.Any(r => r.AccountReferences.Contains(b.hspRef))).ToList();
+                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(b.hspRef))).ToList();
             }
             else
             {//User has got no authorized account consent
@@ -213,7 +213,7 @@ public class AccountService : IAccountService
             {   OpenBankingConstants.IzinTur.BakiyeBilgisi
             }); //Get account consent from db
             if (activeConsent == null
-                || activeConsent.OBAccountReferences.Any(r => r.AccountReferences.Contains(balance.hspRef)) == false)
+                || activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(balance.hspRef)) == false)
             {//No authorized account for balance
                 balance = null;
             }
@@ -246,13 +246,12 @@ public class AccountService : IAccountService
     private async Task<Consent?> GetActiveAccountConsent(string customerId, List<string> permissions)
     {
         var activeConsent = (await _context.Consents
-            .Include(c => c.OBAccountReferences)
-            .Include(c => c.ObConsentIdentityInfos)
+            .Include(c => c.OBAccountConsentDetails)
             .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                       && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
-                                      && c.ObConsentIdentityInfos.Any(i => i.IdentityData == customerId))
+                                      && c.OBAccountConsentDetails.Any(i => i.IdentityData == customerId)).AsNoTracking()
                                       .ToListAsync())
-                                      ?.Where(c => c.OBAccountReferences.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+                                      ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
             .FirstOrDefault();
         return activeConsent;
     }

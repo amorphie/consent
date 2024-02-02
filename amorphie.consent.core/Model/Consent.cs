@@ -17,9 +17,11 @@ public class Consent : EntityBase
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
     public DateTime StateModifiedAt { get; set; }
+    public string? StateCancelDetailCode { get; set; }
     public virtual ICollection<Token> Tokens { get; set; }
-    public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
-    public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
+    public virtual ICollection<OBAccountConsentDetail> OBAccountConsentDetails { get; set; }
+    // public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
+    // public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
     public virtual ICollection<OBPaymentOrder> PaymentOrders { get; set; }
 
     [NotMapped]

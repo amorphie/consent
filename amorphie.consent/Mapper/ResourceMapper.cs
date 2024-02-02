@@ -86,7 +86,9 @@ namespace amorphie.consent.Mapper
              .ForMember(dest => dest.gecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime))
              .ForMember(dest => dest.yenilemeBelirteci, opt => opt.MapFrom(src => src.TokenValue))
              .ForMember(dest => dest.yenilemeBelirteciGecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime));
-
+            
+            CreateMap<OBAccountConsentDetail, OBAccountConsentDetailDto>();
+            
             CreateMap<HesapBilgisiRizaIstegiHHSDto, HesapBilgisiRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
@@ -97,7 +99,6 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
-            CreateMap<OBAccountReference, OBAccountReferenceDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
             CreateMap<AbonelikTipleriDto, OBEventSubscriptionType>()
                 .ForMember(dest => dest.EventType, opt => opt.MapFrom(src => src.olayTipi))

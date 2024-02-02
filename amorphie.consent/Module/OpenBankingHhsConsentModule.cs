@@ -142,7 +142,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Get entity from db
             var entity = await context.Consents
                 .AsNoTracking()
-                .Include(c => c.OBAccountReferences)
+                .Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                         && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             var accountConsent = mapper.Map<HHSAccountConsentDto>(entity);
@@ -880,6 +880,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await ProcessAccountConsentToCancelOrEnd(saveAccountReference.Id, context);
             //Get consent from db
             var consentEntity = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == saveAccountReference.Id
                 && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
 
@@ -899,18 +900,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.StateModifiedAt = DateTime.UtcNow;
             consentEntity.ModifiedAt = DateTime.UtcNow;
 
-            //Open banking account reference entity
-            OBAccountReference accountReferenceEntity = new OBAccountReference()
-            {
-                ConsentId = consentEntity.Id,
-                AccountReferences = saveAccountReference.AccountReferences,
-                PermissionTypes = additionalData.hspBlg.iznBlg.iznTur.ToList(),
-                LastValidAccessDate = additionalData.hspBlg.iznBlg.erisimIzniSonTrh,
-                TransactionInquiryStartTime = additionalData.hspBlg.iznBlg.hesapIslemBslZmn,
-                TransactionInquiryEndTime = additionalData.hspBlg.iznBlg.hesapIslemBtsZmn
-            };
-
-            context.OBAccountReferences.Add(accountReferenceEntity);
+            //Set account reference
+            var detail = consentEntity.OBAccountConsentDetails.FirstOrDefault();
+            detail.AccountReferences = saveAccountReference.AccountReferences;
+            detail.ModifiedAt = DateTime.UtcNow;
+            context.OBAccountConsentDetails.Update(detail);
             context.Consents.Update(consentEntity);
             await context.SaveChangesAsync();
             //If ayrikGKD, post olay-dinleme to YOS
@@ -965,7 +959,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
             //Cancel Yetki Bekleniyor state consents.
             CancelWaitingApproveConsents(context, activeAccountConsents);
-
+            var header = ModuleHelper.GetHeader(httpContext);
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
@@ -993,15 +987,32 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
             consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
-            consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
+            consentEntity.OBAccountConsentDetails = new List<OBAccountConsentDetail>
             {
                 new()
-                {//Get consent identity data to identity entity 
+                {//Set consent detail 
                     IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
                     IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
                     InstitutionIdentityData = hesapBilgisiRizasi.kmlk.krmKmlkVrs,
                     InstitutionIdentityType = hesapBilgisiRizasi.kmlk.krmKmlkTur,
-                    UserType = hesapBilgisiRizasi.kmlk.ohkTur
+                    UserType = hesapBilgisiRizasi.kmlk.ohkTur,
+                    HhsCode = hesapBilgisiRizasi.katilimciBlg.hhsKod,
+                    YosCode = hesapBilgisiRizasi.katilimciBlg.yosKod,
+                    AuthMethod = hesapBilgisiRizasi.gkd.yetYntm,
+                    ForwardingAddress = hesapBilgisiRizasi.gkd.yonAdr,
+                    HhsForwardingAddress = hesapBilgisiRizasi.gkd.hhsYonAdr,
+                    DiscreteGKDDefinitionType = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimTip,
+                    DiscreteGKDDefinitionValue = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimDeger,
+                    AuthCompletionTime = hesapBilgisiRizasi.gkd.yetTmmZmn,
+                    PermissionTypes = hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.ToList(),
+                    LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime(),
+                    TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn?.ToUniversalTime(),
+                    TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn?.ToUniversalTime(),
+                    OhkMessage = hesapBilgisiRizasi.hspBlg.ayrBlg?.ohkMsj,
+                    XRequestId = header.XRequestID ?? string.Empty,
+                    XGroupId = header.XGroupID ?? string.Empty,
+                    CreatedAt= DateTime.UtcNow,
+                    ModifiedAt = DateTime.UtcNow
                 }
             };
             context.Consents.Add(consentEntity);
@@ -1042,7 +1053,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
             //Check consent
-            await ProcessPaymentConsentToCancelOrEnd(id, context, tokenService);
+            await ProcessAccountConsentToCancelOrEnd(id, context);
 
             //get consent entity from db
             var entity = await context.Consents
@@ -1063,6 +1074,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = DateTime.UtcNow;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = DateTime.UtcNow;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
 
@@ -1145,17 +1157,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingPayment;
             consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
-            consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
-            {
-                new OBConsentIdentityInfo()
-                {//Get consent identity data to identity entity 
-                    IdentityData = odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs ?? string.Empty,
-                    IdentityType = odemeEmriRizasi.odmBsltm.kmlk.kmlkTur ?? string.Empty,
-                    InstitutionIdentityData = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs,
-                    InstitutionIdentityType = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur,
-                    UserType = odemeEmriRizasi.odmBsltm.kmlk.ohkTur
-                }
-            };
+            // consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
+            // {
+            //     new OBConsentIdentityInfo()
+            //     {//Get consent identity data to identity entity 
+            //         IdentityData = odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs ?? string.Empty,
+            //         IdentityType = odemeEmriRizasi.odmBsltm.kmlk.kmlkTur ?? string.Empty,
+            //         InstitutionIdentityData = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs,
+            //         InstitutionIdentityType = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur,
+            //         UserType = odemeEmriRizasi.odmBsltm.kmlk.ohkTur
+            //     }
+            // };
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
             if (isAyrikGKD)
@@ -1277,7 +1289,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private static void SetPaymentSystemNumberFields(OdemeEmriHHSDto odemeEmriDto, OBPaymentOrder orderEntity)
     {
         var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray() ?? null;
-        orderEntity.PSNDate =  systemNumberItems?[0] ?? null;
+        orderEntity.PSNDate = systemNumberItems?[0] ?? null;
         orderEntity.PSNYosCode = systemNumberItems?[1] ?? null;
         if (systemNumberItems?[2] == null
             || string.IsNullOrEmpty(systemNumberItems[2]))
@@ -1322,43 +1334,43 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 DateTime lastUpdateDate = DateTime.ParseExact(model.message.data.LAST_UPDATE_DATE, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                 int refNum = model.message.data.REF_NUM;
                 //Get related payment order entity
-                var paymentOrderEntity =  context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
+                var paymentOrderEntity = context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
                                                                  && o.PSNDate != null).AsEnumerable().FirstOrDefault(o =>
-                                                                  DateTime.ParseExact(o.PSNDate,"yyyy-MM-dd HH:mm:ss",null).Date == utcTranDate.Date);
-              if (paymentOrderEntity != null)
-              {
-                  if (paymentOrderEntity.PaymentServiceUpdateTime != null 
-                      && DateTime.ParseExact(paymentOrderEntity.PaymentServiceUpdateTime,"yyyy-MM-dd HH:mm:ss.fff",null) > lastUpdateDate)
-                  {//Payment order updated with latest record
-                      //TODO:Ozlem log this case
-                      return Results.Ok();
-                  }
-                  //Calculate new state
-                  var paymentState = GetPaymentState(recordStatus, paymentOrderEntity.PaymentSystem,paymentOrderEntity.PaymentState);
-                  if (paymentState != paymentOrderEntity.PaymentState) //Payment state changed
-                  {
-                      //Update payment message
-                      var additionalData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
-                      additionalData.odmBsltm.odmAyr.odmDrm = paymentState;
-                      //Update payment order data
-                      paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
-                      paymentOrderEntity.PaymentServiceUpdateTime = model.message.data.LAST_UPDATE_DATE;
-                      paymentOrderEntity.PaymentState = paymentState;
-                      paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
-                      context.OBPaymentOrders.Update(paymentOrderEntity);
-                      await context.SaveChangesAsync();
-                      //If YOS has subscription, Do event process
-                      ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(paymentOrderEntity.YosCode,
-                          OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
-                      if (yosHasSubscription.Result
-                          && (bool)yosHasSubscription.Data)
-                      {//Yos has subscrition. Do event process.
-                          await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(), additionalData.katilimciBlg,
-                              OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
-                      }
-                  }
-                 
-              }
+                                                                  DateTime.ParseExact(o.PSNDate, "yyyy-MM-dd HH:mm:ss", null).Date == utcTranDate.Date);
+                if (paymentOrderEntity != null)
+                {
+                    if (paymentOrderEntity.PaymentServiceUpdateTime != null
+                        && DateTime.ParseExact(paymentOrderEntity.PaymentServiceUpdateTime, "yyyy-MM-dd HH:mm:ss.fff", null) > lastUpdateDate)
+                    {//Payment order updated with latest record
+                     //TODO:Ozlem log this case
+                        return Results.Ok();
+                    }
+                    //Calculate new state
+                    var paymentState = GetPaymentState(recordStatus, paymentOrderEntity.PaymentSystem, paymentOrderEntity.PaymentState);
+                    if (paymentState != paymentOrderEntity.PaymentState) //Payment state changed
+                    {
+                        //Update payment message
+                        var additionalData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
+                        additionalData.odmBsltm.odmAyr.odmDrm = paymentState;
+                        //Update payment order data
+                        paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                        paymentOrderEntity.PaymentServiceUpdateTime = model.message.data.LAST_UPDATE_DATE;
+                        paymentOrderEntity.PaymentState = paymentState;
+                        paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
+                        context.OBPaymentOrders.Update(paymentOrderEntity);
+                        await context.SaveChangesAsync();
+                        //If YOS has subscription, Do event process
+                        ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(paymentOrderEntity.YosCode,
+                            OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
+                        if (yosHasSubscription.Result
+                            && (bool)yosHasSubscription.Data)
+                        {//Yos has subscrition. Do event process.
+                            await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(), additionalData.katilimciBlg,
+                                OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
+                        }
+                    }
+
+                }
             }
             return Results.Ok();
         }
@@ -2329,7 +2341,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var activeAccountConsents = await context.Consents.Where(c =>
                 c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                 && activeAccountConsentStatusList.Contains(c.State)
-                && c.ObConsentIdentityInfos.Any(i => i.IdentityData == rizaIstegi.kmlk.kmlkVrs
+                && c.OBAccountConsentDetails.Any(i => i.IdentityData == rizaIstegi.kmlk.kmlkVrs
                                                      && i.IdentityType == rizaIstegi.kmlk.kmlkTur
                                                      && i.UserType == rizaIstegi.kmlk.ohkTur))
             .ToListAsync();
@@ -2389,6 +2401,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = today;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = today;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return;
@@ -2409,6 +2422,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = today;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = today;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             //There is no access token, so no need to call revoke.
@@ -2454,6 +2468,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = today;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = today;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return;
@@ -2474,6 +2489,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = today;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = today;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             //There is no access token, so no need to call revoke.
@@ -2495,6 +2511,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.ModifiedAt = today;
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = today;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             //There is a token, revoke the token
