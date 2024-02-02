@@ -20,6 +20,7 @@ public class Consent : EntityBase
     public string? StateCancelDetailCode { get; set; }
     public virtual ICollection<Token> Tokens { get; set; }
     public virtual ICollection<OBAccountConsentDetail> OBAccountConsentDetails { get; set; }
+    public virtual ICollection<OBPaymentConsentDetail> OBPaymentConsentDetails { get; set; }
     // public virtual ICollection<OBAccountReference> OBAccountReferences { get; set; }
     // public virtual ICollection<OBConsentIdentityInfo> ObConsentIdentityInfos { get; set; }
     public virtual ICollection<OBPaymentOrder> PaymentOrders { get; set; }

@@ -774,6 +774,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check consent
             await ProcessPaymentConsentToCancelOrEnd(savePCStatusSenderAccount.Id, context, tokenService);
             var entity = await context.Consents
+                .Include(c => c.OBPaymentConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == savePCStatusSenderAccount.Id
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             //Check consent validity
@@ -783,13 +784,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+            //Set account reference
+            var detail = entity.OBPaymentConsentDetails.FirstOrDefault();
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
             //Check and set sender account
             if (additionalData.odmBsltm.gon == null
                 || (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
                     && string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef)))
             {
                 additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
+                detail.SenderTitle = savePCStatusSenderAccount.SenderAccount?.unv;
+                detail.SenderAccountNumber = savePCStatusSenderAccount.SenderAccount?.hspNo;
+                detail.SenderAccountReference = savePCStatusSenderAccount.SenderAccount?.hspRef;
+                detail.ModifiedAt = DateTime.UtcNow;
+                context.OBPaymentConsentDetails.Update(detail);
             }
 
             //Set permission data
@@ -799,8 +807,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.State = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-
             context.Consents.Update(entity);
+            
             await context.SaveChangesAsync();
             //If ayrikGKD, post olay-dinleme to YOS
             if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
@@ -989,31 +997,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ClientCode = string.Empty;
             consentEntity.OBAccountConsentDetails = new List<OBAccountConsentDetail>
             {
-                new()
-                {//Set consent detail 
-                    IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
-                    IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
-                    InstitutionIdentityData = hesapBilgisiRizasi.kmlk.krmKmlkVrs,
-                    InstitutionIdentityType = hesapBilgisiRizasi.kmlk.krmKmlkTur,
-                    UserType = hesapBilgisiRizasi.kmlk.ohkTur,
-                    HhsCode = hesapBilgisiRizasi.katilimciBlg.hhsKod,
-                    YosCode = hesapBilgisiRizasi.katilimciBlg.yosKod,
-                    AuthMethod = hesapBilgisiRizasi.gkd.yetYntm,
-                    ForwardingAddress = hesapBilgisiRizasi.gkd.yonAdr,
-                    HhsForwardingAddress = hesapBilgisiRizasi.gkd.hhsYonAdr,
-                    DiscreteGKDDefinitionType = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimTip,
-                    DiscreteGKDDefinitionValue = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimDeger,
-                    AuthCompletionTime = hesapBilgisiRizasi.gkd.yetTmmZmn,
-                    PermissionTypes = hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.ToList(),
-                    LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime(),
-                    TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn?.ToUniversalTime(),
-                    TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn?.ToUniversalTime(),
-                    OhkMessage = hesapBilgisiRizasi.hspBlg.ayrBlg?.ohkMsj,
-                    XRequestId = header.XRequestID ?? string.Empty,
-                    XGroupId = header.XGroupID ?? string.Empty,
-                    CreatedAt= DateTime.UtcNow,
-                    ModifiedAt = DateTime.UtcNow
-                }
+                GenerateAccountConsentDetailObject(hesapBilgisiRizasi, header)
             };
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
@@ -1030,6 +1014,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
+   
 
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1130,6 +1115,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!paymentServiceResponse.Result)//Error in service
                 return Results.BadRequest(paymentServiceResponse.Message);
 
+            var header = ModuleHelper.GetHeader(httpContext);//Get header
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
@@ -1157,17 +1143,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingPayment;
             consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
-            // consentEntity.ObConsentIdentityInfos = new List<OBConsentIdentityInfo>
-            // {
-            //     new OBConsentIdentityInfo()
-            //     {//Get consent identity data to identity entity 
-            //         IdentityData = odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs ?? string.Empty,
-            //         IdentityType = odemeEmriRizasi.odmBsltm.kmlk.kmlkTur ?? string.Empty,
-            //         InstitutionIdentityData = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs,
-            //         InstitutionIdentityType = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur,
-            //         UserType = odemeEmriRizasi.odmBsltm.kmlk.ohkTur
-            //     }
-            // };
+            
+            consentEntity.OBPaymentConsentDetails = new List<OBPaymentConsentDetail>
+            {
+                GeneratePaymentConsentDetailObject(odemeEmriRizasi, header)
+            };
+            
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
             if (isAyrikGKD)
@@ -1183,7 +1164,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
     }
-
+    
 
     /// <summary>
     /// Payment order consent post process.
@@ -2639,4 +2620,102 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return true;
     }
+    
+     /// <summary>
+    /// Generates accountconsentdetail object of account consent
+    /// </summary>
+    /// <param name="hesapBilgisiRizasi">Hesap bilgisi rizasi object</param>
+    /// <param name="header">Request header</param>
+    /// <returns>Accountconsentdetail object </returns>
+    private static OBAccountConsentDetail GenerateAccountConsentDetailObject(HesapBilgisiRizasiHHSDto hesapBilgisiRizasi, RequestHeaderDto header)
+    {
+        return new()
+        {//Set consent detail 
+            IdentityData = hesapBilgisiRizasi.kmlk.kmlkVrs,
+            IdentityType = hesapBilgisiRizasi.kmlk.kmlkTur,
+            InstitutionIdentityData = hesapBilgisiRizasi.kmlk.krmKmlkVrs,
+            InstitutionIdentityType = hesapBilgisiRizasi.kmlk.krmKmlkTur,
+            UserType = hesapBilgisiRizasi.kmlk.ohkTur,
+            HhsCode = hesapBilgisiRizasi.katilimciBlg.hhsKod,
+            YosCode = hesapBilgisiRizasi.katilimciBlg.yosKod,
+            AuthMethod = hesapBilgisiRizasi.gkd.yetYntm,
+            ForwardingAddress = hesapBilgisiRizasi.gkd.yonAdr,
+            HhsForwardingAddress = hesapBilgisiRizasi.gkd.hhsYonAdr,
+            DiscreteGKDDefinitionType = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimTip,
+            DiscreteGKDDefinitionValue = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimDeger,
+            AuthCompletionTime = hesapBilgisiRizasi.gkd.yetTmmZmn,
+            PermissionTypes = hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.ToList(),
+            LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime(),
+            TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn?.ToUniversalTime(),
+            TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn?.ToUniversalTime(),
+            OhkMessage = hesapBilgisiRizasi.hspBlg.ayrBlg?.ohkMsj,
+            XRequestId = header.XRequestID ?? string.Empty,
+            XGroupId = header.XGroupID ?? string.Empty,
+            CreatedAt= DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+    }
+
+     /// <summary>
+     /// Generates paymentconsentdetail object of payment consent
+     /// </summary>
+     /// <param name="odemeEmriRizasi">Payment Consent</param>
+     /// <param name="header">Request header</param>
+     /// <returns>paymentconsentdetail object</returns>
+     private static OBPaymentConsentDetail GeneratePaymentConsentDetailObject(OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi, RequestHeaderDto header)
+    {
+        return new()
+        {//Set consent detail 
+            IdentityData = odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs,
+            IdentityType = odemeEmriRizasi.odmBsltm.kmlk.kmlkTur,
+            InstitutionIdentityData = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs,
+            InstitutionIdentityType = odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur,
+            UserType = odemeEmriRizasi.odmBsltm.kmlk.ohkTur,
+            HhsCode = odemeEmriRizasi.katilimciBlg.hhsKod,
+            YosCode = odemeEmriRizasi.katilimciBlg.yosKod,
+            AuthMethod = odemeEmriRizasi.gkd.yetYntm,
+            ForwardingAddress = odemeEmriRizasi.gkd.yonAdr,
+            HhsForwardingAddress = odemeEmriRizasi.gkd.hhsYonAdr,
+            DiscreteGKDDefinitionType = odemeEmriRizasi.gkd.ayrikGkd?.ohkTanimTip,
+            DiscreteGKDDefinitionValue = odemeEmriRizasi.gkd.ayrikGkd?.ohkTanimDeger,
+            AuthCompletionTime = odemeEmriRizasi.gkd.yetTmmZmn,
+                    
+            Currency = odemeEmriRizasi.odmBsltm.islTtr.prBrm,
+            Amount = odemeEmriRizasi.odmBsltm.islTtr.ttr,
+                    
+            SenderTitle = odemeEmriRizasi.odmBsltm.gon?.unv,
+            SenderAccountNumber = odemeEmriRizasi.odmBsltm.gon?.hspNo,
+            SenderAccountReference = odemeEmriRizasi.odmBsltm.gon?.hspRef,
+                    
+            ReceiverTitle = odemeEmriRizasi.odmBsltm.alc.unv,
+            ReceiverAccountNumber = odemeEmriRizasi.odmBsltm.alc.hspNo,
+            KolasType = odemeEmriRizasi.odmBsltm.alc.kolas?.kolasTur,
+            KolasValue = odemeEmriRizasi.odmBsltm.alc.kolas?.kolasDgr,
+            KolasRefNum = odemeEmriRizasi.odmBsltm.alc.kolas?.kolasRefNo,
+            KolasAccountType = odemeEmriRizasi.odmBsltm.alc.kolas?.kolasHspTur,
+                    
+            QRCodeRef = odemeEmriRizasi.odmBsltm.kkod?.kkodRef,
+            QRCodeFlowType = odemeEmriRizasi.odmBsltm.kkod?.kkodRef,
+            QRCodeProducerCode = odemeEmriRizasi.odmBsltm.kkod?.kkodUrtcKod,
+                    
+            PaymentSource = odemeEmriRizasi.odmBsltm.odmAyr.odmKynk,
+            PaymentPurpose = odemeEmriRizasi.odmBsltm.odmAyr.odmAmc,
+            ReferenceInformation = odemeEmriRizasi.odmBsltm.odmAyr.refBlg,
+            OHKMessage = odemeEmriRizasi.odmBsltm.odmAyr.ohkMsj,
+            PaymentSystem = odemeEmriRizasi.odmBsltm.odmAyr.odmStm,
+            ExpectedPaymentDate = odemeEmriRizasi.odmBsltm.odmAyr.bekOdmZmn,
+            PaymentDescription = odemeEmriRizasi.odmBsltm.odmAyr.odmAcklm,
+                   
+            WorkplaceCategoryCode = odemeEmriRizasi.isyOdmBlg?.isyKtgKod,
+            SubWorkplaceCategoryCode = odemeEmriRizasi.isyOdmBlg?.altIsyKtgKod,
+            GeneralWorkplaceNumber = odemeEmriRizasi.isyOdmBlg?.genelUyeIsyeriNo,
+                    
+            XRequestId = header.XRequestID ?? string.Empty,
+            XGroupId = header.XGroupID ?? string.Empty,
+            CreatedAt= DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+    }
+
+    
 }
