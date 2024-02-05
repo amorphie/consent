@@ -197,4 +197,53 @@ public static class SeedExtension
         });
 
     }
+
+  public static void SeedOBPermissionTypes(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="01",
+            Description ="Temel Hesap Bilgisi",
+            Language = "tr-TR"
+        });
+        modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="02",
+            Description ="Ayrıntılı Hesap Bilgisi",
+            Language = "tr-TR"
+        });
+        modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="03",
+            Description ="Bakiye Bilgisi",
+            Language = "tr-TR"
+        });
+         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="04",
+            Description ="Temel İşlem (Hesap Hareketleri) Bilgisi",
+            Language = "tr-TR"
+        });
+        modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="05",
+            Description ="Ayrıntılı İşlem Bilgisi",
+            Language = "tr-TR"
+        });
+        modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
+        {
+            Id = Guid.NewGuid(),
+            Code ="06",
+            Description ="Anlık Bakiye Bildirimi",
+            Language = "tr-TR"
+        });
+
+    }
+
+
 }
