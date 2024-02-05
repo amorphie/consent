@@ -369,6 +369,15 @@ public static class OpenBankingConstants
     {
         public const int PaymentServiceBranchCode = 1000;
     }
+    
+    public static class  AccountServiceParameters
+    {
+        public const int syfKytSayi = 100;
+        public const int syfNo = 1;
+        public const string srlmKrtr = "hspRef";
+        public const string srlmYon = "A";
+        
+    }
 
     
     

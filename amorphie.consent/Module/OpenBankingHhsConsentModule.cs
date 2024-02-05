@@ -45,12 +45,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
-        routeGroupBuilder.MapGet("/hesaplar/{customerId}", GetAccounts);
+        routeGroupBuilder.MapGet("/GetHesaplarByTCKN/{userTCKN}", GetAccounts);
+        routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}", GetAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/bakiye", GetBalances);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}/bakiye", GetBalanceByHspRef);
         routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef);
-        routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}", GetAuthorizedAccounts);
+       
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}", GetAuthorizedAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/bakiye", GetAuthorizedBalances);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef);
@@ -251,9 +252,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
     /// <summary>
-    /// Get all accounts from service 
+    /// Get all accounts from service by user tckn.
+    /// This method does not do any control. Implemented to test account service. 
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">User TCKN</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
@@ -266,7 +268,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetAccounts(string customerId,
+    public async Task<IResult> GetAccounts(string userTCKN,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
@@ -282,7 +284,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            ApiResult accountApiResult = await accountService.GetAccounts(customerId);
+            ApiResult accountApiResult = await accountService.GetAccounts(userTCKN);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -298,7 +300,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get authorized accounts from service 
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Automapper object</param>
     /// <param name="accountService">Account service class</param>
@@ -311,7 +312,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetAuthorizedAccounts(string customerId,
+    public async Task<IResult> GetAuthorizedAccounts([FromQuery]int? syfKytSayi,
+        [FromQuery] int? syfNo,
+        [FromQuery] string? srlmKrtr,
+        [FromQuery] string? srlmYon,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
@@ -321,13 +325,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,header);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            ApiResult accountApiResult = await accountService.GetAuthorizedAccounts(customerId);
+            string userTCKN = header.UserReference;
+            ApiResult accountApiResult = await accountService.GetAuthorizedAccounts(userTCKN);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);

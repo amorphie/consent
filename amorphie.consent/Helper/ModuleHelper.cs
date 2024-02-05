@@ -39,6 +39,10 @@ public static class ModuleHelper
         {
             header.PSUInitiated = traceValue;
         }
+        if (httpContext.Request.Headers.TryGetValue("user_reference", out traceValue))
+        {
+            header.UserReference = traceValue;
+        }
         return header;
     }
 

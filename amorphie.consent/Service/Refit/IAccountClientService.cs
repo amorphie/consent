@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.Enum;
 using Refit;
 
 namespace amorphie.consent.Service.Refit;
@@ -11,8 +12,12 @@ public interface IAccountClientService
     Task<bool> IsCustomer(string customerId);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{customerId}")]
-    Task<List<HesapBilgileriDto>> GetAccounts(string customerId);
+    [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    Task<List<HesapBilgileriDto>> GetAccounts(string customerId, 
+        int? syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int? syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
+        string? srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
+        string? srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
