@@ -241,14 +241,11 @@ public class BKMService : IBKMService
         switch (bkmServiceScope)
         {
             case OpenBankingConstants.BKMServiceScope.OlayDinleme:
+            case OpenBankingConstants.BKMServiceScope.YosRead:
                 clientId = _configuration["BKM:HHSClientId"];
                 clientSecret = _configuration["BKM:HHSClientSecret"];
                 break;
             case OpenBankingConstants.BKMServiceScope.HhsRead:
-                clientId = _configuration["BKM:HHSClientId"];
-                clientSecret = _configuration["BKM:HHSClientSecret"];
-                break;
-            case OpenBankingConstants.BKMServiceScope.YosRead:
                 clientId = _configuration["BKM:YOSClientId"];
                 clientSecret = _configuration["BKM:YOSClientSecret"];
                 break;

@@ -55,7 +55,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}", GetAuthorizedAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/bakiye", GetAuthorizedBalances);
         routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef);
-        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsent).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsentFromYos).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHS/{rizaNo}", DeleteAccountConsentFromHHS);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentConsentPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
@@ -1060,7 +1061,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    protected async Task<IResult> DeleteAccountConsent(Guid id,
+    protected async Task<IResult> DeleteAccountConsentFromYos(Guid id,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService,
@@ -1070,8 +1071,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header:header);
             if (!headerValidation.Result)
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
@@ -1081,8 +1083,61 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //get consent entity from db
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id 
+                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                && c.Variant == header.XASPSPCode);
             ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity);//Check data validation
+            if (!dataValidationResult.Result)
+            {//Data not valid
+                return Results.BadRequest(dataValidationResult.Message);
+            }
+
+            //Update consent rıza bilgileri properties
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            additionalData.rzBlg.rizaIptDtyKod =
+                OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleYOSUzerindenIptal;
+            additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            entity.StateModifiedAt = DateTime.UtcNow;
+            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+
+            //Revoke token
+            await tokenService.RevokeConsentToken(id);
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    protected async Task<IResult> DeleteAccountConsentFromHHS(Guid id,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Get header fields
+            var header = ModuleHelper.GetHeader(httpContext);
+            //Check consent to cancel&/end
+            await ProcessAccountConsentToCancelOrEnd(id, context);
+
+            //get consent entity from db
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == id
+                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
+            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsentFromHHS(entity,header.UserReference);//Check data validation
             if (!dataValidationResult.Result)
             {//Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
@@ -1111,7 +1166,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
 
 
 
@@ -2121,6 +2175,41 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Account consent status not valid to marked as deleted";
             return result;
         }
+        return result;
+    }
+    
+    /// <summary>
+    /// Check if consent is valid to be deleted
+    /// </summary>
+    /// <param name="entity">To be checked entity</param>
+    /// <param name="userTCKN">Processing user tckn</param>
+    /// <returns>Data validation result</returns>
+    private ApiResult IsDataValidToDeleteAccountConsentFromHHS(Consent? entity,string? userTCKN)
+    {
+        ApiResult result = new();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "No desired consent in system.";
+            return result;
+        }
+        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
+        {
+            //State not valid to set as deleted
+            result.Result = false;
+            result.Message = "Account consent status not valid to marked as deleted";
+            return result;
+        }
+
+        var hesapBilgisiRizasi = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+        if (hesapBilgisiRizasi?.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN 
+            && hesapBilgisiRizasi.kmlk.kmlkVrs != userTCKN)
+        {
+            result.Result = false;
+            result.Message = "Consent does not belong to this user.";
+            return result;
+        }
+        
         return result;
     }
 
