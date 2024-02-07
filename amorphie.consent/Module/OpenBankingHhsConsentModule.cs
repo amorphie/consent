@@ -40,7 +40,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-        routeGroupBuilder.MapGet("/GetAccountConsents", GetAccountConsentsByUserTCKN);
+        routeGroupBuilder.MapGet("/GetAuthorizedAccountConsents", GetAuthorizedAccountConsentsByUserTCKN);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
         routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
@@ -73,12 +73,24 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     #region HHS
     
     
-    public async Task<IResult> GetAccountConsentsByUserTCKN(
+    /// <summary>
+    /// Get users account consents from all yos
+    /// </summary>
+    /// <param name="dbContext"></param>
+    /// <param name="mapper"></param>
+    /// <param name="accountService"></param>
+    /// <param name="configuration"></param>
+    /// <param name="yosInfoService"></param>
+    /// <param name="httpContext"></param>
+    /// <returns>Account consent list of user</returns>
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    public async Task<IResult> GetAuthorizedAccountConsentsByUserTCKN(
         [FromServices] ConsentDbContext dbContext,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBAuthorizationService authorizationService,
         HttpContext httpContext)
     {
         try
@@ -89,11 +101,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 return Results.Unauthorized();
             }
-            var userAccountConsents = await GetAuthUsedAccountConsentsOfUser(dbContext, userTCKN);
+
+           ApiResult getConsentsResponse = await authorizationService.GetAuthUsedAccountConsentsOfUser(userTCKN);
+           if (getConsentsResponse.Result == false)
+           {//Error in getting consents
+               return Results.Problem(getConsentsResponse.Message);
+           }
+            var userAccountConsents = (List<Consent>?)getConsentsResponse.Data;
             if (!(userAccountConsents?.Any() ?? false))
             {//No authorized account consent in the system
                 return Results.NotFound();
             }
+            //Get consent details
             var consentDetails = await GetAccountConsentDetails(userTCKN, userAccountConsents,dbContext,mapper);
             return Results.Ok(consentDetails);
         }
@@ -345,6 +364,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedAccounts([FromQuery]int? syfKytSayi,
         [FromQuery] int? syfNo,
         [FromQuery] string? srlmKrtr,
@@ -366,8 +386,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            string userTCKN = header.UserReference;
-            ApiResult accountApiResult = await accountService.GetAuthorizedAccounts(userTCKN);
+            //Get authorized accounts
+            ApiResult accountApiResult = await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -1085,7 +1105,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .FirstOrDefaultAsync(c => c.Id == id 
                 && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                && c.Variant == header.XASPSPCode);
+                && c.Variant == header.XTPPCode);
             ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity);//Check data validation
             if (!dataValidationResult.Result)
             {//Data not valid
@@ -2336,7 +2356,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     ///  Checks if header is varlid.
     /// Checks required fields.
-    /// Checks 
+    /// Checks hhskod yoskod if katilimciBlg parameter is set.
     /// </summary>
     /// <param name="context">Context</param>
     /// <param name="configuration">Configuration instance</param>
@@ -2459,31 +2479,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return activeAccountConsents;
     }
     
-    /// <summary>
-    /// Get users yetkikullanildi state of account consents
-    /// </summary>
-    /// <param name="userTCKN"></param>
-    /// <param name="context"></param>
-    /// <returns>User's account consents</returns>
-    private async Task<List<Consent>> GetAuthUsedAccountConsentsOfUser(ConsentDbContext context, string userTCKN)
-    {
-        var consentState = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-        var today = DateTime.UtcNow;
-        //Active account consents in db
-        var activeAccountConsents = await context.Consents
-            .Include(c => c.OBAccountConsentDetails)
-            .AsNoTracking()
-            .Where(c =>
-                c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                && c.State == consentState
-                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
-                                                      && i.IdentityType == OpenBankingConstants.KimlikTur.TCKN
-                                                      && i.LastValidAccessDate > today
-                                                      && i.UserType == OpenBankingConstants.OHKTur.Bireysel))
-            .ToListAsync();
-        return activeAccountConsents;
-    }
-
     /// <summary>
     /// Check account consent to end or cancel
     /// according to state, state modified date, last valid date

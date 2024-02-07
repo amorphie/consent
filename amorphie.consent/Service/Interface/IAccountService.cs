@@ -14,10 +14,12 @@ public interface IAccountService
 
     /// <summary>
     /// Get authorized accounts of customer
+    /// Checks user's account consent. If any, get accounts
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">User TCKN</param>
+    /// <param name="yosCode"></param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(string customerId);
+    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode);
 
     /// <summary>
     /// Get account of customer by account referenece number
