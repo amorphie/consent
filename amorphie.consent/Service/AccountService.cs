@@ -52,7 +52,7 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             };
             //Get account consent from database
-            var authConsentResult = await _authorizationService.GetAuthorizedAccountConsent(userTCKN,  yosCode: yosCode,permissions: permisssions);
+            var authConsentResult = await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode, permissions: permisssions);
             if (authConsentResult.Result == false
                 || authConsentResult.Data == null)
             {
@@ -110,13 +110,28 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccountByHspRef(string customerId, string hspRef)
+    public async Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef)
     {
         ApiResult result = new();
         try
         {
+
+            var permisssions = new List<string>()
+            {
+                OpenBankingConstants.IzinTur.TemelHesapBilgisi,
+                OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
+            };
+            //Get account consent from database
+            var authConsentResult = await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode, permissions: permisssions);
+            if (authConsentResult.Result == false
+                || authConsentResult.Data == null)
+            {
+                //Error or no consent in db
+                return authConsentResult;
+            }
+
             //Get account of customer from service
-            HesapBilgileriDto? account = await _accountClientService.GetAccountByHspRef(customerId, hspRef);
+            HesapBilgileriDto? account = await _accountClientService.GetAccountByHspRef(userTCKN, hspRef);
             if (account == null)
             {
                 //No account
@@ -124,13 +139,9 @@ public class AccountService : IAccountService
                 return result;
             }
 
-            var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
-            {
-                OpenBankingConstants.IzinTur.TemelHesapBilgisi,
-                OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
-            }); //Get account consent from db
+            var activeConsent =   (Consent)authConsentResult.Data;
             if (activeConsent != null &&
-                activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(account.hspTml.hspRef)))
+                activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(account.hspTml.hspRef) ?? false))
             {
                 //Set rizaNo
                 account.rizaNo = activeConsent.Id.ToString();

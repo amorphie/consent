@@ -31,10 +31,11 @@ public interface IAccountService
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">Customer Id</param>
+    /// <param name="yosCode"></param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
-    Task<ApiResult> GetAuthorizedAccountByHspRef(string customerId, string hspRef);
+    Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef);
 
     /// <summary>
     /// Get balances of customer
