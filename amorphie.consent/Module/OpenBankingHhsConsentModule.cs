@@ -1128,7 +1128,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Revoke token
             await tokenService.RevokeConsentToken(id);
-            return Results.Ok();
+            return Results.NoContent();
         }
         catch (Exception ex)
         {
@@ -1179,7 +1179,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Revoke token
             await tokenService.RevokeConsentToken(id);
-            return Results.Ok();
+            return Results.NoContent();
         }
         catch (Exception ex)
         {
@@ -2889,7 +2889,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
              {
                  ConsentId = consent.Id,
                  AccountReferences = consent.OBAccountConsentDetails?.FirstOrDefault()?.AccountReferences ?? new List<string>(),
-                // YosInfo = mapper.Map<OBYosInfoDto>(yosList.FirstOrDefault(y => y.Kod == hesapBilgisiRizasi.katilimciBlg.yosKod))
+                 YosInfo = mapper.Map<OBYosInfoDto>(yosList.FirstOrDefault(y => y.Kod == hesapBilgisiRizasi.katilimciBlg.yosKod))
              };
              detailedConsent.PermissionDetail = new PermissionInformationDto()
              {
