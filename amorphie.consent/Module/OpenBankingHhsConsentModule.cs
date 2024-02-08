@@ -1138,7 +1138,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
-    protected async Task<IResult> DeleteAccountConsentFromHHS(Guid id,
+    protected async Task<IResult> DeleteAccountConsentFromHHS(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService,
@@ -1151,11 +1151,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Get header fields
             var header = ModuleHelper.GetHeader(httpContext);
             //Check consent to cancel&/end
-            await ProcessAccountConsentToCancelOrEnd(id, context);
+            await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
 
             //get consent entity from db
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == id
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
                 && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             ApiResult dataValidationResult = IsDataValidToDeleteAccountConsentFromHHS(entity,header.UserReference);//Check data validation
             if (!dataValidationResult.Result)
@@ -1178,7 +1178,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await context.SaveChangesAsync();
 
             //Revoke token
-            await tokenService.RevokeConsentToken(id);
+            await tokenService.RevokeConsentToken(rizaNo);
             return Results.NoContent();
         }
         catch (Exception ex)
