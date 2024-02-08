@@ -47,7 +47,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetHesaplarByTCKN/{userTCKN}", GetAccounts);
-        routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts);
+        routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}", GetAccountByHspRef);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/bakiye", GetBalances);
         routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}/bakiye", GetBalanceByHspRef);
