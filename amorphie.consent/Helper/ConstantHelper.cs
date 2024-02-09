@@ -47,6 +47,15 @@ public static class ConstantHelper
     }
 
     /// <summary>
+    /// Get authorized account consent status 
+    /// </summary>
+    /// <returns>Authorized account consent status</returns>
+    public static string GetAuthorizedConsentStatusForAccount()
+    {
+       return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+    }
+
+    /// <summary>
     /// Get authorized payment consent status list 
     /// </summary>
     /// <returns>Authorized payment consent status list</returns>
@@ -55,6 +64,17 @@ public static class ConstantHelper
         return new List<string>()
         {
             OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu
+        };
+    }
+
+    /// <summary>
+    /// Gets consent next step status list when consent is authorized
+    /// </summary>
+    /// <returns>Consent next step status list</returns>
+    public static List<string> GetConsentNexStepFromAuthorizedStatusList()
+    {
+        return new List<string>() { OpenBankingConstants.RizaDurumu.YetkiKullanildi,
+            OpenBankingConstants.RizaDurumu.YetkiIptal
         };
     }
 

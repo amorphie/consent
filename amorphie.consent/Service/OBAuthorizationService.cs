@@ -6,6 +6,7 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.data;
 using amorphie.consent.data.Migrations;
+using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using AutoMapper;
@@ -61,13 +62,13 @@ public class OBAuthorizationService : IOBAuthorizationService
         ApiResult result = new();
         try
         {
-            var consentState = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+            var consentState = ConstantHelper.GetAuthorizedConsentStatusForAccount();
             var today = DateTime.UtcNow;
             var activeConsent = (await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                                && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                                && c.State == consentState
                                 && c.Variant == yosCode
                                 && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
                                                                       && i.IdentityType ==

@@ -64,8 +64,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
-        routeGroupBuilder.MapPost("/UpdatePaymentConsentStatusForUsage", UpdatePaymentConsentStatusForUsage);
-        routeGroupBuilder.MapPost("/UpdateAccountConsentStatusForUsage", UpdateAccountConsentStatusForUsage);
+        routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("updatePaymentState", UpdatePaymentState);
     }
@@ -832,6 +831,49 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
 
+     /// <summary>
+    /// Updates consent state for authorization usage
+    /// </summary>
+    /// <param name="updateConsentState">To be updated consent data</param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="tokenService"></param>
+    /// <returns></returns>
+    public async Task<IResult> UpdateConsentStatusForUsage([FromBody] UpdateConsentStateDto updateConsentState,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
+    {
+        try
+        {
+            //Get entity from db
+            var entity = await context.Consents
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id);
+            if (entity == null)
+            {
+                return Results.NoContent();
+            }
+
+            if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+            {//Account consent
+                return await UpdateAccountConsentStatusForUsage(updateConsentState, context, mapper);
+            }
+            else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+            {//Payment consent
+                return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, mapper,tokenService);
+            }
+            else
+            {//Not related type
+                return Results.BadRequest("Consent type not valid");
+            }
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
     /// <summary>
     /// Updates consent state for authorization usage
     /// </summary>
@@ -840,10 +882,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="mapper"></param>
     /// <param name="tokenService"></param>
     /// <returns></returns>
-    public async Task<IResult> UpdatePaymentConsentStatusForUsage([FromBody] UpdateConsentStateDto updateConsentState,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] ITokenService tokenService)
+    private async Task<IResult> UpdatePaymentConsentStatusForUsage(UpdateConsentStateDto updateConsentState,
+        ConsentDbContext context,
+        IMapper mapper,
+        ITokenService tokenService)
     {
         try
         {
@@ -958,9 +1000,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns></returns>
-    public async Task<IResult> UpdateAccountConsentStatusForUsage([FromBody] UpdateConsentStateDto updateConsentState,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper)
+    private async Task<IResult> UpdateAccountConsentStatusForUsage(UpdateConsentStateDto updateConsentState,
+        ConsentDbContext context,
+        IMapper mapper)
     {
         try
         {
@@ -2455,6 +2497,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Consent state not valid to process";
             return result;
         }
+         //Consent state parameter not valid
+        if(string.IsNullOrEmpty(updateConsentState.State)
+        ||  !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
+        {
+            result.Result = false;
+            result.Message = "Consent state parameter value is not valid";
+            return result;
+        }
 
         return result;
     }
@@ -2480,6 +2530,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             result.Result = false;
             result.Message = "Consent state not valid to process";
+            return result;
+        }
+
+        //Consent state parameter not valid
+        if(string.IsNullOrEmpty(updateConsentState.State)
+        ||  !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
+        {
+            result.Result = false;
+            result.Message = "Consent state parameter value is not valid";
             return result;
         }
 
