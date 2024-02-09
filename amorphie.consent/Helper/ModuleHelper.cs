@@ -55,10 +55,12 @@ public static class ModuleHelper
     /// <param name="header">Data to be checked</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
     /// <returns>If header is valid</returns>
     public static async Task<bool> IsHeaderValid(RequestHeaderDto header,
         IConfiguration configuration,
-        IYosInfoService yosInfoService)
+        IYosInfoService yosInfoService,
+        bool? isUserRequired = false)
     {
 
         if (string.IsNullOrEmpty(header.PSUInitiated)
@@ -88,6 +90,14 @@ public static class ModuleHelper
         {//No yos data in the system
             return false;
         }
+
+        if (isUserRequired.HasValue 
+            && isUserRequired.Value
+            && string.IsNullOrEmpty(header.UserReference))
+        {
+            return false;
+        }
+        
         return true;
     }
 

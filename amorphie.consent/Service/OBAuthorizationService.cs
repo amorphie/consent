@@ -88,4 +88,44 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
+    
+    
+    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, string yosCode, List<string> consentTypes)
+    {
+        ApiResult result = new();
+        try
+        {
+            var today = DateTime.UtcNow;
+            var activeConsent = await _context.Consents
+                .Include(c => c.OBAccountConsentDetails)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id
+                                     && consentTypes.Contains(c.ConsentType)
+                                     && c.State == consentState
+                                     && c.Variant == yosCode
+                                     && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
+                                                                           && i.IdentityType ==
+                                                                           OpenBankingConstants.KimlikTur.TCKN
+                                                                           && i.LastValidAccessDate > today
+                                                                           && i.UserType == OpenBankingConstants.OHKTur
+                                                                               .Bireysel
+                                                                           && i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+                                     || c.OBPaymentConsentDetails.Any(i => i.IdentityData == userTCKN
+                                                                           && i.IdentityType ==
+                                                                           OpenBankingConstants.KimlikTur.TCKN
+                                                                           && i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
+                                                                           && i.UserType == OpenBankingConstants.OHKTur
+                                                                               .Bireysel)));             
+
+            result.Data = activeConsent;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
 }
