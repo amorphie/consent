@@ -812,7 +812,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 RizaNo = consent.Id,
                 ConsentType = consent.ConsentType,
-                ForwardingUrl = GetConsentForwardingAddress(consent.ConsentType,configuration)
+                ForwardingUrl = GetConsentForwardingAddress(consent.ConsentType,consent.Id, configuration)
             };
             return Results.Ok(response);
         }
@@ -822,17 +822,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-    private string GetConsentForwardingAddress(string consentType,IConfiguration configuration)
+    private string GetConsentForwardingAddress(string consentType,Guid id, IConfiguration configuration)
     {
         string url = string.Empty;
         //Set forwarding address according to consent type
         if (consentType == ConsentConstants.ConsentType.OpenBankingAccount)
         {
-            url = configuration["OB_AccountProjectURL"] ?? string.Empty;
+            url = string.Format(configuration["OB_AccountProjectURL"], id) ?? string.Empty;
         }
         else if (consentType == ConsentConstants.ConsentType.OpenBankingPayment)
         {
-            url = configuration["OB_PaymentProjectURL"] ?? string.Empty;
+            url = string.Format(configuration["OB_PaymentProjectURL"],id) ?? string.Empty;
         }
         return url;
 
