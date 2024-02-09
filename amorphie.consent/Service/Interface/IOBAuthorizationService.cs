@@ -35,10 +35,9 @@ public interface IOBAuthorizationService
     /// <param name="id"></param>
     /// <param name="userTCKN"></param>
     /// <param name="consentState"></param>
-    /// <param name="yosCode"></param>
     /// <param name="consentTypes"></param>
     /// <returns>Consent data</returns>
-    public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, string yosCode,
+    public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState,
         List<string> consentTypes);
 
 }
