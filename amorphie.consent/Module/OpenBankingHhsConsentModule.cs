@@ -364,6 +364,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(accountApiResult.Message);
             }
 
+            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
