@@ -758,12 +758,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    
+    
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetConsentWebViewInfo(
         Guid rizaNo,
@@ -778,12 +774,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             var header = ModuleHelper.GetHeader(httpContext);
-            //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, isUserRequired:true);
-            if (!headerValidation.Result)
+            if (string.IsNullOrEmpty(header.UserReference))
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                return Results.BadRequest("Header userreference can not be empty");
             }
             //Check consent
             await ProcessConsentToCancelOrEnd(rizaNo, dbContext, tokenService);
