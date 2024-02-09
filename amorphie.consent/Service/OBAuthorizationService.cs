@@ -90,7 +90,7 @@ public class OBAuthorizationService : IOBAuthorizationService
     }
     
     
-    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, string yosCode, List<string> consentTypes)
+    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, List<string> consentTypes)
     {
         ApiResult result = new();
         try
@@ -102,7 +102,6 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .FirstOrDefaultAsync(c => c.Id == id
                                      && consentTypes.Contains(c.ConsentType)
                                      && c.State == consentState
-                                     && c.Variant == yosCode
                                      && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
                                                                            && i.IdentityType ==
                                                                            OpenBankingConstants.KimlikTur.TCKN

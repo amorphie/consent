@@ -787,7 +787,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Get consent
             var getConsentResult = await authorizationService.GetConsentReadonly(id: rizaNo, userTCKN: userTCKN,
                 consentState: OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
-                yosCode: header.XTPPCode,
                 consentTypes: consentTypes);
 
             if (getConsentResult.Result == false)
