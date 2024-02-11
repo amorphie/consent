@@ -1201,7 +1201,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    protected async Task<IResult> DeleteAccountConsentFromYos(Guid id,
+    protected async Task<IResult> DeleteAccountConsentFromYos(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] ITokenService tokenService,
@@ -1214,7 +1214,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header, isUserRequired:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -1222,11 +1222,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Check consent
-            await ProcessAccountConsentToCancelOrEnd(id, context);
+            await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
 
             //get consent entity from db
             var entity = await context.Consents
-                .FirstOrDefaultAsync(c => c.Id == id
+                .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                           && c.Variant == header.XTPPCode);
             ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity); //Check data validation
