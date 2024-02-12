@@ -14,10 +14,10 @@ public interface IAccountClientService
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
     Task<List<HesapBilgileriDto>> GetAccounts(string customerId, 
-        int? syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
-        int? syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
-        string? srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
-        string? srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
+        int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
+        string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
+        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
@@ -25,7 +25,11 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye?syfKytSayi=5&syfNo=1&srlmKrtr=hspRef&srlmYon=A")]
-    Task<List<BakiyeBilgileriDto>> GetBalances(string customerId);
+    Task<List<BakiyeBilgileriDto>> GetBalances(string customerId,
+        int? syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int? syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
+        string? srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
+        string? srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye/{hspRef}")]

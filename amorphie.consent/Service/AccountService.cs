@@ -23,25 +23,8 @@ public class AccountService : IAccountService
         _authorizationService = authorizationService;
         _context = context;
     }
-
-    public async Task<ApiResult> GetAccounts(string customerId)
-    {
-        ApiResult result = new();
-        try
-        {
-            //Get accounts of customer from service
-            result.Data = await _accountClientService.GetAccounts(customerId);
-        }
-        catch (Exception e)
-        {
-            result.Result = false;
-            result.Message = e.Message;
-        }
-
-        return result;
-    }
-
-    public async Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode)
+    
+    public async Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon)
     {
         ApiResult result = new();
         try
@@ -52,7 +35,9 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             };
             //Get account consent from database
-            var authConsentResult = await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode, permissions: permisssions);
+            var authConsentResult =
+                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+                    permissions: permisssions);
             if (authConsentResult.Result == false
                 || authConsentResult.Data == null)
             {
@@ -60,8 +45,11 @@ public class AccountService : IAccountService
                 return authConsentResult;
             }
 
+            // Build account service parameters
+            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN);
+            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon);
             if (!accounts?.Any() ?? false)
             {
                 //No account
@@ -92,37 +80,20 @@ public class AccountService : IAccountService
         return result;
     }
 
-
-    public async Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef)
-    {
-        ApiResult result = new();
-        try
-        {
-            //Get account of customer from service
-            result.Data = await _accountClientService.GetAccountByHspRef(customerId, hspRef);
-        }
-        catch (Exception e)
-        {
-            result.Result = false;
-            result.Message = e.Message;
-        }
-
-        return result;
-    }
-
     public async Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef)
     {
         ApiResult result = new();
         try
         {
-
             var permisssions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.TemelHesapBilgisi,
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             };
             //Get account consent from database
-            var authConsentResult = await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode, permissions: permisssions);
+            var authConsentResult =
+                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+                    permissions: permisssions);
             if (authConsentResult.Result == false
                 || authConsentResult.Data == null)
             {
@@ -139,9 +110,10 @@ public class AccountService : IAccountService
                 return result;
             }
 
-            var activeConsent =   (Consent)authConsentResult.Data;
+            var activeConsent = (Consent)authConsentResult.Data;
             if (activeConsent != null &&
-                activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(account.hspTml.hspRef) ?? false))
+                activeConsent.OBAccountConsentDetails.Any(r =>
+                    r.AccountReferences?.Contains(account.hspTml.hspRef) ?? false))
             {
                 //Set rizaNo
                 account.rizaNo = activeConsent.Id.ToString();
@@ -163,13 +135,28 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(string customerId)
+    public async Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode)
     {
         ApiResult result = new();
         try
         {
+            var permisssions = new List<string>()
+            {
+                OpenBankingConstants.IzinTur.BakiyeBilgisi
+            };
+            //Get account consent from database
+            var authConsentResult =
+                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+                    permissions: permisssions);
+            if (authConsentResult.Result == false
+                || authConsentResult.Data == null)
+            {
+                //Error or no consent in db
+                return authConsentResult;
+            }
+
             //Get balances of customer from service
-            List<BakiyeBilgileriDto> balances = await _accountClientService.GetBalances(customerId);
+            List<BakiyeBilgileriDto> balances = await _accountClientService.GetBalances(userTCKN);
             if (!balances?.Any() ?? false)
             {
                 //No balance
@@ -178,75 +165,46 @@ public class AccountService : IAccountService
             }
 
             //Get account consent from db
-            var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
+            var activeConsent = (Consent)authConsentResult.Data;
+
+            //filter balances
+            balances = balances.Where(b =>
+                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
+                .ToList();
+
+            result.Data = balances;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN , string yosCode,  string hspRef)
+    {
+        ApiResult result = new();
+        try
+        {
+            var permisssions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
-            });
-            if (activeConsent != null)
+            };
+            //Get account consent from database
+            var authConsentResult =
+                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+                    permissions: permisssions);
+            if (authConsentResult.Result == false
+                || authConsentResult.Data == null)
             {
-                //filter balances
-                balances = balances.Where(b =>
-                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(b.hspRef))).ToList();
+                //Error or no consent in db
+                return authConsentResult;
             }
-            else
-            {
-                //User has got no authorized account consent
-                balances.Clear();
-            }
-
-            result.Data = balances;
-        }
-        catch (Exception e)
-        {
-            result.Result = false;
-            result.Message = e.Message;
-        }
-
-        return result;
-    }
-
-    public async Task<ApiResult> GetBalances(string customerId)
-    {
-        ApiResult result = new();
-        try
-        {
-            //Get balances of customer from service
-            List<BakiyeBilgileriDto> balances = await _accountClientService.GetBalances(customerId);
-            result.Data = balances;
-        }
-        catch (Exception e)
-        {
-            result.Result = false;
-            result.Message = e.Message;
-        }
-
-        return result;
-    }
-
-    public async Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef)
-    {
-        ApiResult result = new();
-        try
-        {
+            
             //Get balance by account reference number of customer from service
-            result.Data = await _accountClientService.GetBalanceByHspRef(customerId, hspRef);
-        }
-        catch (Exception e)
-        {
-            result.Result = false;
-            result.Message = e.Message;
-        }
-
-        return result;
-    }
-
-    public async Task<ApiResult> GetAuthorizedBalanceByHspRef(string customerId, string hspRef)
-    {
-        ApiResult result = new();
-        try
-        {
-            //Get balance by account reference number of customer from service
-            BakiyeBilgileriDto? balance = await _accountClientService.GetBalanceByHspRef(customerId, hspRef);
+            BakiyeBilgileriDto? balance = await _accountClientService.GetBalanceByHspRef(userTCKN, hspRef);
             if (balance == null)
             {
                 //No balance
@@ -254,18 +212,13 @@ public class AccountService : IAccountService
                 return result;
             }
 
-            var activeConsent = await GetActiveAccountConsent(customerId, new List<string>()
-            {
-                OpenBankingConstants.IzinTur.BakiyeBilgisi
-            }); //Get account consent from db
-            if (activeConsent == null
-                || activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences.Contains(balance.hspRef)) ==
-                false)
+            var activeConsent = (Consent)authConsentResult.Data;
+            if (!(activeConsent != null
+                && activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(balance.hspRef) ?? false)))
             {
                 //No authorized account for balance
                 balance = null;
             }
-
             result.Data = balance;
         }
         catch (Exception e)
@@ -293,17 +246,16 @@ public class AccountService : IAccountService
 
         return result;
     }
-
-    private async Task<Consent?> GetActiveAccountConsent(string customerId, List<string> permissions)
+    
+    private void SetDefaultAccountServiceParameters(
+        ref int? syfKytSayi,
+        ref int? syfNo,
+        ref string? srlmKrtr,
+        ref string? srlmYon)
     {
-        var activeConsent = (await _context.Consents
-                .Include(c => c.OBAccountConsentDetails)
-                .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                            && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
-                            && c.OBAccountConsentDetails.Any(i => i.IdentityData == customerId)).AsNoTracking()
-                .ToListAsync())
-            ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
-            .FirstOrDefault();
-        return activeConsent;
+        syfKytSayi ??= OpenBankingConstants.AccountServiceParameters.syfKytSayi;
+        syfNo ??= OpenBankingConstants.AccountServiceParameters.syfNo;
+        srlmKrtr ??= OpenBankingConstants.AccountServiceParameters.srlmKrtr;
+        srlmYon ??= OpenBankingConstants.AccountServiceParameters.srlmYon;
     }
 }

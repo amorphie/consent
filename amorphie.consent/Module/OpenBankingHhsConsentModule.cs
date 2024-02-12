@@ -47,14 +47,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
-        routeGroupBuilder.MapGet("/GetHesaplarByTCKN/{userTCKN}", GetAccounts);
         routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/hesaplar/{hspRef}", GetAuthorizedAccountByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/{customerId}/bakiye", GetBalances);
-        routeGroupBuilder.MapGet("/hesaplar/{customerId}/{hspRef}/bakiye", GetBalanceByHspRef);
-        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef);
-        routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/bakiye", GetAuthorizedBalances);
-        routeGroupBuilder.MapGet("/hesaplarAuthorized/{customerId}/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef);
+        routeGroupBuilder.MapGet("/hesaplar/bakiye", GetAuthorizedBalances).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsentFromYos)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHS/{rizaNo}", DeleteAccountConsentFromHHS);
@@ -233,8 +230,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedAccountByHspRef(
-        string customerId,
         string hspRef,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -269,54 +266,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-    /// <summary>
-    /// Get all accounts from service by user tckn.
-    /// This method does not do any control. Implemented to test account service. 
-    /// </summary>
-    /// <param name="userTCKN">User TCKN</param>
-    /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
-    /// <param name="accountService">Account service class</param>
-    /// <param name="configuration">Configuration object</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
-    /// <returns>Account list of customer -  List of HesapBilgileriDto type of objects</returns>
-    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetAccounts(string userTCKN,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IAccountService accountService,
-        [FromServices] IConfiguration configuration,
-        [FromServices] IYosInfoService yosInfoService,
-        HttpContext httpContext)
-    {
-        try
-        {
-            //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
-            if (!headerValidation.Result)
-            {
-                //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
-            }
-
-            ApiResult accountApiResult = await accountService.GetAccounts(userTCKN);
-            if (!accountApiResult.Result)
-            {
-                return Results.BadRequest(accountApiResult.Message);
-            }
-
-            return Results.Ok(accountApiResult.Data);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
     /// <summary>
     /// Get authorized accounts from service 
@@ -358,7 +307,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode);
+                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode, syfKytSayi,syfNo,srlmKrtr,srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -372,58 +321,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-
-    /// <summary>
-    /// Get account's balance information from service with hspref 
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <param name="hspRef">Hesap ref</param>
-    /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
-    /// <param name="accountService">Account service class</param>
-    /// <param name="configuration">Configuration object</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
-    /// <returns>account balance information of hspref - BakiyeBilgileriDto type of object</returns>
-    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetBalanceByHspRef(
-        string customerId,
-        string hspRef,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IAccountService accountService,
-        [FromServices] IConfiguration configuration,
-        [FromServices] IYosInfoService yosInfoService,
-        HttpContext httpContext)
-    {
-        try
-        {
-            //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
-            if (!headerValidation.Result)
-            {
-                //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
-            }
-
-            ApiResult accountApiResult = await accountService.GetBalanceByHspRef(customerId, hspRef);
-            if (!accountApiResult.Result)
-            {
-                return Results.BadRequest(accountApiResult.Message);
-            }
-
-            return Results.Ok(accountApiResult.Data);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
+    
 
     /// <summary>
     /// Get account's balance information from service with hspref 
@@ -442,8 +340,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedBalanceByHspRef(
-        string customerId,
         string hspRef,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -454,15 +352,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetBalanceByHspRef(customerId, hspRef);
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalanceByHspRef(header.UserReference,yosCode:header.XTPPCode,hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -475,6 +374,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+    
 
     /// <summary>
     /// Get all balances from service 
@@ -492,7 +392,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetBalances(string customerId,
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    public async Task<IResult> GetAuthorizedBalances([FromQuery] int? syfKytSayi,
+        [FromQuery] int? syfNo,
+        [FromQuery] string? srlmKrtr,
+        [FromQuery] string? srlmYon,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
@@ -502,68 +406,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetBalances(customerId);
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,header.XTPPCode);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-
-            return Results.Ok(accountApiResult.Data);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Get all balances from service 
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
-    /// <param name="accountService">Account service class</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
-    /// <returns>Balance list of customer -  List of BakiyeBilgileriDto type of objects</returns>
-    [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    public async Task<IResult> GetAuthorizedBalances(string customerId,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IAccountService accountService,
-        [FromServices] IConfiguration configuration,
-        [FromServices] IYosInfoService yosInfoService,
-        HttpContext httpContext)
-    {
-        try
-        {
-            //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
-            if (!headerValidation.Result)
-            {
-                //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
-            }
-
-            ApiResult accountApiResult = await accountService.GetBalances(customerId);
-            if (!accountApiResult.Result)
-            {
-                return Results.BadRequest(accountApiResult.Message);
-            }
-
+            
+            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
@@ -1251,7 +1109,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await context.SaveChangesAsync();
 
             //Revoke token
-            await tokenService.RevokeConsentToken(id);
+            await tokenService.RevokeConsentToken(rizaNo);
             return Results.NoContent();
         }
         catch (Exception ex)
