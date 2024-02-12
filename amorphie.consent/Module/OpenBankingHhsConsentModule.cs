@@ -43,15 +43,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/GetConsentWebViewInfo/{rizaNo}", GetConsentWebViewInfo);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById);
-        routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById);
+        routeGroupBuilder.MapGet("/odeme-emri-rizasi/{rizaNo}", GetPaymentConsentById)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/odeme-emri/{odemeEmriNo}", GetPaymentOrderConsentById)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/GetAccountConsentById/{rizaNo}", GetAccountConsentByIdForUI);
         routeGroupBuilder.MapGet("/GetPaymentConsentById/{rizaNo}", GetPaymentConsentByIdForUI);
         routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/{hspRef}", GetAuthorizedAccountByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/bakiye", GetAuthorizedBalances).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef).AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}", GetAuthorizedAccountByHspRef)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/bakiye", GetAuthorizedBalances)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
+        routeGroupBuilder.MapGet("/hesaplar/{hspRef}/islemler", GetTransactionsByHspRef)
+            .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsentFromYos)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHS/{rizaNo}", DeleteAccountConsentFromHHS);
@@ -212,7 +218,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-   
+
     /// <summary>
     /// Get account information from service with hspref 
     /// </summary>
@@ -244,7 +250,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -252,7 +259,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccountByHspRef(header.UserReference,yosCode:header.XTPPCode,hspRef); //Get data from service
+                await accountService.GetAuthorizedAccountByHspRef(header.UserReference, yosCode: header.XTPPCode,
+                    hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -298,7 +306,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -307,7 +316,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode, syfKytSayi,syfNo,srlmKrtr,srlmYon);
+                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode, syfKytSayi, syfNo,
+                    srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -321,7 +331,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 
     /// <summary>
     /// Get account's balance information from service with hspref 
@@ -354,14 +364,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalanceByHspRef(header.UserReference,yosCode:header.XTPPCode,hspRef); //Get data from service
+            ApiResult accountApiResult =
+                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference, yosCode: header.XTPPCode,
+                    hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -374,7 +387,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 
     /// <summary>
     /// Get all balances from service 
@@ -408,19 +421,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isUserRequired:true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,header.XTPPCode, syfKytSayi,syfNo,srlmKrtr,srlmYon);
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,
+                header.XTPPCode, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-            
+
             ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
@@ -525,8 +540,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-            var serializedData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
-            return Results.Ok(serializedData);
+            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentConsent);
+            return Results.Ok(paymentConsent);
         }
         catch (Exception ex)
         {
@@ -550,6 +566,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetPaymentOrderConsentById(Guid odemeEmriNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -559,8 +576,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,header,isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -616,8 +634,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
-    
+
+
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetConsentWebViewInfo(
         Guid rizaNo,
@@ -637,6 +655,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 return Results.BadRequest("Header userreference can not be empty");
             }
+
             //Check consent
             await ProcessConsentToCancelOrEnd(rizaNo, dbContext, tokenService);
             string userTCKN = header.UserReference; //get logged in user tckn
@@ -648,7 +667,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 consentTypes: consentTypes);
 
             if (getConsentResult.Result == false)
-            { //Error in getting consents
+            {
+                //Error in getting consents
                 return Results.Problem(getConsentResult.Message);
             }
 
@@ -658,12 +678,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //No consent in the system
                 return Results.NotFound();
             }
+
             //Generate response
             ConsentWebViewInfoDto response = new ConsentWebViewInfoDto()
             {
                 RizaNo = consent.Id,
                 ConsentType = consent.ConsentType,
-                ForwardingUrl = GetConsentForwardingAddress(consent.ConsentType,consent.Id, configuration)
+                ForwardingUrl = GetConsentForwardingAddress(consent.ConsentType, consent.Id, configuration)
             };
             return Results.Ok(response);
         }
@@ -673,7 +694,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-    private string GetConsentForwardingAddress(string consentType,Guid id, IConfiguration configuration)
+    private string GetConsentForwardingAddress(string consentType, Guid id, IConfiguration configuration)
     {
         string url = string.Empty;
         //Set forwarding address according to consent type
@@ -683,14 +704,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         else if (consentType == ConsentConstants.ConsentType.OpenBankingPayment)
         {
-            url = string.Format(configuration["OB_PaymentProjectURL"],id) ?? string.Empty;
+            url = string.Format(configuration["OB_PaymentProjectURL"], id) ?? string.Empty;
         }
-        return url;
 
+        return url;
     }
 
 
-     /// <summary>
+    /// <summary>
     /// Updates consent state for authorization usage
     /// </summary>
     /// <param name="updateConsentState">To be updated consent data</param>
@@ -715,15 +736,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-            {//Account consent
+            {
+                //Account consent
                 return await UpdateAccountConsentStatusForUsage(updateConsentState, context, mapper);
             }
             else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
-            {//Payment consent
-                return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, mapper,tokenService);
+            {
+                //Payment consent
+                return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, mapper, tokenService);
             }
             else
-            {//Not related type
+            {
+                //Not related type
                 return Results.BadRequest("Consent type not valid");
             }
         }
@@ -732,7 +756,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Updates consent state for authorization usage
     /// </summary>
@@ -1072,7 +1096,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header, isUserRequired:true);
+                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header,
+                    isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -1257,7 +1282,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Send notification to user
                 //TODO:Özlem call send notification
             }
-
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriRizasi);
             //Send consent to YOS without hhsmsrfttr property
             return Results.Ok(mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi));
         }
@@ -2356,9 +2381,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Consent state not valid to process";
             return result;
         }
-         //Consent state parameter not valid
-        if(string.IsNullOrEmpty(updateConsentState.State)
-        ||  !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
+
+        //Consent state parameter not valid
+        if (string.IsNullOrEmpty(updateConsentState.State)
+            || !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
         {
             result.Result = false;
             result.Message = "Consent state parameter value is not valid";
@@ -2393,8 +2419,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Consent state parameter not valid
-        if(string.IsNullOrEmpty(updateConsentState.State)
-        ||  !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
+        if (string.IsNullOrEmpty(updateConsentState.State)
+            || !ConstantHelper.GetConsentNexStepFromAuthorizedStatusList().Contains(updateConsentState.State))
         {
             result.Result = false;
             result.Message = "Consent state parameter value is not valid";
@@ -2472,7 +2498,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             header = ModuleHelper.GetHeader(context);
         }
 
-        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, isUserRequired:isUserRequired))
+        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, isUserRequired: isUserRequired))
         {
             result.Result = false;
             result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
@@ -2769,15 +2795,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         var consent = await context.Consents.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == rizaNo);
-        if (consent != null )
+        if (consent != null)
         {
             if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-            { 
+            {
                 await ProcessAccountConsentToCancelOrEnd(rizaNo: rizaNo, context: context);
             }
             else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
             {
-                await ProcessPaymentConsentToCancelOrEnd(rizaNo: rizaNo, context: context, tokenService:tokenService);
+                await ProcessPaymentConsentToCancelOrEnd(rizaNo: rizaNo, context: context, tokenService: tokenService);
             }
         }
     }
