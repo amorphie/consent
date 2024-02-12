@@ -44,20 +44,21 @@ public class AccountService : IAccountService
                 //Error or no consent in db
                 return authConsentResult;
             }
-
+            var activeConsent = (Consent)authConsentResult.Data;
+            bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d => d.PermissionTypes?.Contains( OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
+            
             // Build account service parameters
             SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
             
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon);
+            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon, permissionType: havingDetailPermission ? "D": null);
             if (!accounts?.Any() ?? false)
             {
                 //No account
                 result.Data = accounts;
                 return result;
             }
-
-            var activeConsent = (Consent)authConsentResult.Data;
+            
             //filter accounts
             accounts = accounts.Where(a =>
                     activeConsent.OBAccountConsentDetails.Any(d =>
@@ -135,7 +136,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode)
+    public async Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon)
     {
         ApiResult result = new();
         try
@@ -154,9 +155,10 @@ public class AccountService : IAccountService
                 //Error or no consent in db
                 return authConsentResult;
             }
-
+            // Build account service parameters
+            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
             //Get balances of customer from service
-            List<BakiyeBilgileriDto> balances = await _accountClientService.GetBalances(userTCKN);
+            List<BakiyeBilgileriDto> balances = await _accountClientService.GetBalances(userTCKN, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon);
             if (!balances?.Any() ?? false)
             {
                 //No balance

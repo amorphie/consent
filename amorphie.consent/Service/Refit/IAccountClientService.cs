@@ -17,7 +17,8 @@ public interface IAccountClientService
         int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
-        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
+        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon,
+        [Header("izinTur")] string permissionType = null);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]

@@ -415,7 +415,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,header.XTPPCode);
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,header.XTPPCode, syfKytSayi,syfNo,srlmKrtr,srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);

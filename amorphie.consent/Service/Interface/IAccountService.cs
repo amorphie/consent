@@ -12,6 +12,10 @@ public interface IAccountService
     /// </summary>
     /// <param name="userTCKN">User TCKN</param>
     /// <param name="yosCode"></param>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page number</param>
+    /// <param name="srlmKrtr">Order by name</param>
+    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
     Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon);
     
@@ -30,8 +34,12 @@ public interface IAccountService
     /// </summary>
     /// <param name="userTCKN">User tckn</param>
     /// <param name="yosCode">Yos Code</param>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page number</param>
+    /// <param name="srlmKrtr">Order by name</param>
+    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode);
+    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon);
     
 
     /// <summary>
