@@ -1282,9 +1282,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Send notification to user
                 //TODO:Özlem call send notification
             }
-            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriRizasi);
+
+            var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi);
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, resObject);
             //Send consent to YOS without hhsmsrfttr property
-            return Results.Ok(mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi));
+            return Results.Ok(resObject);
         }
         catch (Exception ex)
         {
@@ -1926,6 +1928,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
+            return result;
+        }
+
+        //Check isyOdmBlg data
+        if (rizaIstegi.isyOdmBlg != null
+            && ((!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.isyKtgKod) && rizaIstegi.isyOdmBlg.isyKtgKod.Length != 4 )
+                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.altIsyKtgKod) && rizaIstegi.isyOdmBlg.altIsyKtgKod.Length != 4 )
+                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.genelUyeIsyeriNo) && rizaIstegi.isyOdmBlg.genelUyeIsyeriNo.Length != 8 )))
+        {
+            result.Result = false;
+            result.Message = "TR.OHVPS.Resource.InvalidFormat.  isyOdmBlg value validation error.";
             return result;
         }
 
