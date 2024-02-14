@@ -56,6 +56,16 @@ public interface IAccountService
     /// </summary>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Transactions of Given Account Reference</returns>
-    Task<ApiResult> GetTransactionsByHspRef(string hspRef);
+    public Task<ApiResult> GetTransactionsByHspRef(string userTCKN, string yosCode, string hspRef,
+        string psuInitiated,
+        DateTime hesapIslemBslTrh,
+        DateTime hesapIslemBtsTrh,
+        string? minIslTtr,
+        string? mksIslTtr,
+        string? brcAlc,
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon);
 
 }

@@ -374,9 +374,15 @@ public static class OpenBankingConstants
     {
         public const int syfKytSayi = 100;
         public const int syfNo = 1;
-        public const string srlmKrtr = "hspRef";
+        public const string srlmKrtrAccount = "hspRef";
+        public const string srlmKrtrTransaction = "islGrckZaman";
         public const string srlmYon = "A";
         
+    }
+
+    public static class RegexPatterns
+    {
+        public const string amount = @"^\d{1,18}$|^\d{1,18}\.\d{1,5}$";
     }
 
     

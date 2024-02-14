@@ -463,6 +463,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     public async Task<IResult> GetTransactionsByHspRef(
         string hspRef,
+        [FromQuery] DateTime hesapIslemBslTrh,
+        [FromQuery] DateTime hesapIslemBtsTrh,
+        [FromQuery] string? minIslTtr,
+        [FromQuery] string? mksIslTtr,
+        [FromQuery] string? brcAlc,
+        [FromQuery] int? syfKytSayi,
+        [FromQuery] int? syfNo,
+        [FromQuery] string? srlmKrtr,
+        [FromQuery] string? srlmYon,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
@@ -472,20 +481,26 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,header, isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
+            
 
-            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(hspRef);
+            //Get transactions from service
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(header.UserReference, header.XTPPCode,
+                hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh,minIslTtr,mksIslTtr,brcAlc,
+                syfKytSayi, syfNo,
+                srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
-            {
+            {//Error in service
                 return Results.BadRequest(accountApiResult.Message);
             }
-
+            
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
@@ -493,6 +508,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+    
 
 
     /// <summary>
@@ -2484,8 +2500,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return result;
     }
-
-
+    
+    
     /// <summary>
     ///  Checks if header is varlid.
     /// Checks required fields.

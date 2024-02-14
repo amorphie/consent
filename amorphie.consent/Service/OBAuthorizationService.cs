@@ -90,6 +90,40 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
     
+    public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions, string accountRef)
+    {
+        ApiResult result = new();
+        try
+        {
+            var consentState = ConstantHelper.GetAuthorizedConsentStatusForAccount();
+            var today = DateTime.UtcNow;
+            var activeConsent = (await _context.Consents
+                    .Include(c => c.OBAccountConsentDetails)
+                    .AsNoTracking()
+                    .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                                && c.State == consentState
+                                && c.Variant == yosCode
+                                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
+                                                                      && i.IdentityType ==
+                                                                      OpenBankingConstants.KimlikTur.TCKN
+                                                                      && i.LastValidAccessDate > today
+                                                                      && i.UserType == OpenBankingConstants.OHKTur.Bireysel
+                                                                      && i.AccountReferences != null
+                                                                      && i.AccountReferences.Contains(accountRef)))
+                    .ToListAsync())
+                ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+                .FirstOrDefault();
+            result.Data = activeConsent;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+    
     
     public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, List<string> consentTypes)
     {

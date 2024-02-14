@@ -28,6 +28,19 @@ public interface IOBAuthorizationService
     public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN,string yosCode, List<string> permissions);
 
     /// <summary>
+    /// Get User's authorized account consent.
+    /// Consent state must be  yetki kullanildi.
+    /// Checks yos code, account ref and permissions.
+    /// </summary>
+    /// <param name="userTCKN">User TCKN number</param>
+    /// <param name="yosCode">Yos Code - Bank Code</param>
+    /// <param name="permissions">Required Permissions</param>
+    /// <param name="accountRef">Account ref</param>
+    /// <returns>User's authorized consent</returns>
+    public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions,
+        string accountRef);
+
+    /// <summary>
     /// Get user consent by checking id, state, yosCode, consentType
     /// Checks consent identity value with given userTCKN.
     /// This metod works for Bireysel consents.
