@@ -45,13 +45,14 @@ public class AccountService : IAccountService
                 return authConsentResult;
             }
             var activeConsent = (Consent)authConsentResult.Data;
+            //Set header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d => d.PermissionTypes?.Contains( OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
-            
+            var permissionType = havingDetailPermission ? "D" : "T";
             // Build account service parameters
             SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
             
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon, permissionType: havingDetailPermission ? "D": null);
+            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, permissionType, syfKytSayi.Value,syfNo.Value,srlmKrtr,srlmYon);
             if (!accounts?.Any() ?? false)
             {
                 //No account

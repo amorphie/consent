@@ -12,13 +12,13 @@ public interface IAccountClientService
     Task<bool> IsCustomer(string customerId);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&izinTur={izinTur}")]
     Task<List<HesapBilgileriDto>> GetAccounts(string customerId, 
+        string izinTur,
         int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtr,
-        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon,
-        [Header("izinTur")] string permissionType = null);
+        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
