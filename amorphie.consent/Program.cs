@@ -27,6 +27,9 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.Net.Http.Headers;
 using System;
 using Dapr;
+using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +59,47 @@ string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
+
+});
+
+
+var defaultHeadersToBeLogged = new List<string>
+{
+    "Content-Type",
+    "Host",
+    "X-Zeebe-Job-Key",
+    "xdeviceid",
+    "X-Device-Id",
+    "xtokenid",
+    "X-Token-Id",
+    "Transfer-Encoding",
+    "X-Forwarded-Host",
+    "X-Forwarded-For"
+};
+
+builder.Services.AddHttpLogging(logging =>
+{
+
+    logging.LoggingFields = HttpLoggingFields.All;
+
+    //logging.RequestHeaders.Concat(headersToBeLogged);
+
+    defaultHeadersToBeLogged.ForEach(p => logging.RequestHeaders.Add(p));
+ 
+    logging.MediaTypeOptions.AddText("application/javascript");
+
+    logging.RequestBodyLogLimit = 4096;
+
+    logging.ResponseBodyLogLimit = 4096;
+
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Logging.ClearProviders();
+builder.Host.UseSerilog((_, serviceProvider, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration);
 
 });
 
@@ -147,8 +191,7 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapSubscribeHandler();
 });
-
-
+app.UseHttpLogging();
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
 await client.SaveStateAsync("amorphie-state", "messages", jsonData);
