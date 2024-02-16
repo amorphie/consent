@@ -99,8 +99,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            
             var header = ModuleHelper.GetHeader(httpContext);
-            string userTCKN = header.UserReference; //get logged in user tckn
+            string? userTCKN = header.UserReference; //get logged in user tckn
             if (string.IsNullOrEmpty(userTCKN))
             {
                 return Results.Unauthorized();
@@ -1329,6 +1330,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentOrderPost([FromBody] OdemeEmriIstegiHHSDto odemeEmriIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1347,11 +1349,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
+            if (dataValidationResult.Data == null)
+            {//Odeme emri rizası entity can not be taken
+                return Results.BadRequest("Payment Order Consent can not be found in the system");
+            }
 
             //Send payment order to payment service
             ApiResult paymentServiceResponse = await paymentService.SendOdemeEmri(odemeEmriIstegi);
             if (!paymentServiceResponse.Result) //Error in service
                 return Results.BadRequest(paymentServiceResponse.Message);
+            if (paymentServiceResponse.Data == null)
+            {
+                //TODO:Özlem ödeme servisinden cevap gelmediği zaman ne olacak.
+                return Results.Problem("No response from payment system");
+            }
             //TODO:Özlem error oluşma caseleri için konuş
 
             OdemeEmriHHSDto odemeEmriDto = (OdemeEmriHHSDto)paymentServiceResponse.Data;
@@ -1980,7 +1991,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var header = ModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
         result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: odemeEmriIstegi.katilimciBlg);
+            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired:true);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2139,6 +2150,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
+        
+        if (!string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur) 
+            && odemeEmriIstegi.odmBsltm.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
+            && odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs != header.UserReference)
+        {
+            result.Result = false;
+            result.Message = "odmBsltm.kmlk.kmlkVrs does not match processing user tckn";
+            return result;
+        }
 
         //Do OdemeEmriRizasi validations
         var odemeEmriRizasiConsent = await context.Consents
@@ -2161,7 +2181,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Consent state not valid to process. Consent state have to be YetkiKullanildi";
             return result;
         }
-
+        
+       
+        
         var odemeEmriRizasi = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(odemeEmriRizasiConsent.AdditionalData);
         if (odemeEmriRizasi == null)
         {
