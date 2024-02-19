@@ -89,8 +89,9 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
-    
-    public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions, string accountRef)
+
+    public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions,
+        string accountRef)
     {
         ApiResult result = new();
         try
@@ -107,7 +108,8 @@ public class OBAuthorizationService : IOBAuthorizationService
                                                                       && i.IdentityType ==
                                                                       OpenBankingConstants.KimlikTur.TCKN
                                                                       && i.LastValidAccessDate > today
-                                                                      && i.UserType == OpenBankingConstants.OHKTur.Bireysel
+                                                                      && i.UserType == OpenBankingConstants.OHKTur
+                                                                          .Bireysel
                                                                       && i.AccountReferences != null
                                                                       && i.AccountReferences.Contains(accountRef)))
                     .ToListAsync())
@@ -123,9 +125,38 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
+
     
-    
-    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState, List<string> consentTypes)
+    public async Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode)
+    {
+        ApiResult result = new();
+        try
+        {
+            var activeAccountConsentStatusList =
+                ConstantHelper.GetActiveAccountConsentStatusList(); //Get active status list
+            //Active account consents in db
+            var activeAccountConsents = await _context.Consents.Where(c =>
+                    c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                    && activeAccountConsentStatusList.Contains(c.State)
+                    && c.OBAccountConsentDetails.Any(i => i.IdentityData == identity.kmlkVrs
+                                                          && i.IdentityType == identity.kmlkTur
+                                                          && i.UserType == identity.ohkTur
+                                                          && i.YosCode == yosCode))
+                .ToListAsync();
+            result.Data = activeAccountConsents;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
+
+    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState,
+        List<string> consentTypes)
     {
         ApiResult result = new();
         try
@@ -135,21 +166,23 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .Include(c => c.OBAccountConsentDetails)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id
-                                     && consentTypes.Contains(c.ConsentType)
-                                     && c.State == consentState
-                                     && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
-                                                                           && i.IdentityType ==
-                                                                           OpenBankingConstants.KimlikTur.TCKN
-                                                                           && i.LastValidAccessDate > today
-                                                                           && i.UserType == OpenBankingConstants.OHKTur
-                                                                               .Bireysel
-                                                                           && i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-                                     || c.OBPaymentConsentDetails.Any(i => i.IdentityData == userTCKN
-                                                                           && i.IdentityType ==
-                                                                           OpenBankingConstants.KimlikTur.TCKN
-                                                                           && i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
-                                                                           && i.UserType == OpenBankingConstants.OHKTur
-                                                                               .Bireysel)));             
+                                          && consentTypes.Contains(c.ConsentType)
+                                          && c.State == consentState
+                                          && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
+                                                  && i.IdentityType ==
+                                                  OpenBankingConstants.KimlikTur.TCKN
+                                                  && i.LastValidAccessDate > today
+                                                  && i.UserType == OpenBankingConstants.OHKTur
+                                                      .Bireysel
+                                                  && i.Consent.ConsentType ==
+                                                  ConsentConstants.ConsentType.OpenBankingAccount)
+                                              || c.OBPaymentConsentDetails.Any(i => i.IdentityData == userTCKN
+                                                  && i.IdentityType ==
+                                                  OpenBankingConstants.KimlikTur.TCKN
+                                                  && i.Consent.ConsentType ==
+                                                  ConsentConstants.ConsentType.OpenBankingPayment
+                                                  && i.UserType == OpenBankingConstants.OHKTur
+                                                      .Bireysel)));
 
             result.Data = activeConsent;
         }
@@ -161,5 +194,4 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
-
 }

@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Model;
@@ -53,4 +54,13 @@ public interface IOBAuthorizationService
     public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState,
         List<string> consentTypes);
 
+
+    /// <summary>
+    /// Get active account consents of user - Yetki Bekleniyor, Yetkilendirildi, Yetki Kullanıldı states
+    /// Checks identity with consent identity properties
+    /// </summary>
+    /// <param name="identity">Identity object in account consent</param>
+    /// <param name="yosCode">Yos code</param>
+    /// <returns>Get active account consents response</returns>
+    public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
 }

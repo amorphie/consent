@@ -99,7 +99,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
-            
             var header = ModuleHelper.GetHeader(httpContext);
             string? userTCKN = header.UserReference; //get logged in user tckn
             if (string.IsNullOrEmpty(userTCKN))
@@ -484,24 +483,27 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,header, isUserRequired: true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
                 return Results.BadRequest(headerValidation.Message);
             }
-            
+
 
             //Get transactions from service
-            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(header.UserReference, header.XTPPCode,
-                hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh,minIslTtr,mksIslTtr,brcAlc,
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(header.UserReference,
+                header.XTPPCode,
+                hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh, minIslTtr, mksIslTtr, brcAlc,
                 syfKytSayi, syfNo,
                 srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
-            {//Error in service
+            {
+                //Error in service
                 return Results.BadRequest(accountApiResult.Message);
             }
-            
+
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
@@ -509,7 +511,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
 
 
     /// <summary>
@@ -595,7 +596,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,header,isUserRequired: true);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -1020,6 +1022,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBAuthorizationService authorizationService,
         HttpContext httpContext)
     {
         try
@@ -1033,16 +1036,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(checkValidationResult.Message);
             }
 
-            //Get user's active account consents from db
-            var activeAccountConsents = await GetActiveAccountConsentsOfUser(rizaIstegi, context);
-            if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any authorized or authused state consent
+            //Get user's active account consents from db and process them
+            var checkAccountConsentResult = await CheckAccountConsents(authorizationService, rizaIstegi, context);
+            if (!checkAccountConsentResult.Result)
+            {
+                return Results.Problem(checkValidationResult.Message);
+            }
+
+            var activeAccountConsents = (List<Consent>?)checkAccountConsentResult.Data;
+            if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any yetkilendirildi, yetki kullanıldı state consent
             {
                 return Results.BadRequest(
                     "TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
             }
-
-            //Cancel Yetki Bekleniyor state consents.
-            CancelWaitingApproveConsents(context, activeAccountConsents);
+            
             var header = ModuleHelper.GetHeader(httpContext);
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
@@ -1349,8 +1356,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
+
             if (dataValidationResult.Data == null)
-            {//Odeme emri rizası entity can not be taken
+            {
+                //Odeme emri rizası entity can not be taken
                 return Results.BadRequest("Payment Order Consent can not be found in the system");
             }
 
@@ -1960,9 +1969,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check isyOdmBlg data
         if (rizaIstegi.isyOdmBlg != null
-            && ((!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.isyKtgKod) && rizaIstegi.isyOdmBlg.isyKtgKod.Length != 4 )
-                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.altIsyKtgKod) && rizaIstegi.isyOdmBlg.altIsyKtgKod.Length != 4 )
-                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.genelUyeIsyeriNo) && rizaIstegi.isyOdmBlg.genelUyeIsyeriNo.Length != 8 )))
+            && ((!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.isyKtgKod) && rizaIstegi.isyOdmBlg.isyKtgKod.Length != 4)
+                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.altIsyKtgKod) &&
+                    rizaIstegi.isyOdmBlg.altIsyKtgKod.Length != 4)
+                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.genelUyeIsyeriNo) &&
+                    rizaIstegi.isyOdmBlg.genelUyeIsyeriNo.Length != 8)))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  isyOdmBlg value validation error.";
@@ -1991,7 +2002,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var header = ModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
         result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired:true);
+            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2150,8 +2161,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
-        
-        if (!string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur) 
+
+        if (!string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
             && odemeEmriIstegi.odmBsltm.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
             && odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs != header.UserReference)
         {
@@ -2181,9 +2192,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Consent state not valid to process. Consent state have to be YetkiKullanildi";
             return result;
         }
-        
-       
-        
+
+
         var odemeEmriRizasi = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(odemeEmriRizasiConsent.AdditionalData);
         if (odemeEmriRizasi == null)
         {
@@ -2522,8 +2532,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return result;
     }
-    
-    
+
+
     /// <summary>
     ///  Checks if header is varlid.
     /// Checks required fields.
@@ -2619,43 +2629,61 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="activeAccountConsents">Consents to be checked</param>
     /// <returns>Any consent that yetkilendirildi or yetkikullanildi states</returns>
-    private bool AnyAuthAndUsedConsents(List<Consent> activeAccountConsents)
+    private bool AnyAuthAndUsedConsents(List<Consent>? activeAccountConsents)
     {
-        var authAndUsed = activeAccountConsents
+        var authAndUsed = activeAccountConsents?
             .Any(c => c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
-                      || c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi);
+                      || c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false;
         if (authAndUsed)
         {
-            //TODO:Ozlem yetki süresi dolmuş ise iptal edilmeli
             return true;
         }
-
         return false;
     }
 
 
+   
     /// <summary>
-    /// Get active account consents of user
-    /// Checks identity with consent identity properties
+    /// Process account consent states
+    /// Get active account consents. Cancel Yetki Bekleniyor state consents.
+    /// Check yetki kullanıldı, yetkilendirildi state consents validity
     /// </summary>
+    /// <param name="authorizationService"></param>
     /// <param name="rizaIstegi"></param>
     /// <param name="context"></param>
     /// <returns></returns>
-    private async Task<List<Consent>> GetActiveAccountConsentsOfUser(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+    private async Task<ApiResult> CheckAccountConsents(IOBAuthorizationService authorizationService,
+        HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         ConsentDbContext context)
     {
-        var activeAccountConsentStatusList =
-            ConstantHelper.GetActiveAccountConsentStatusList(); //Get active status list
+        ApiResult result = new ApiResult();
+        var getConsentsResult =
+            await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod);
+        if (getConsentsResult.Result == false)
+        {
+            //Error getting consents
+            result.Result = false;
+            result.Message = "Error checking current consents";
+            return result;
+        }
+
         //Active account consents in db
-        var activeAccountConsents = await context.Consents.Where(c =>
-                c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                && activeAccountConsentStatusList.Contains(c.State)
-                && c.OBAccountConsentDetails.Any(i => i.IdentityData == rizaIstegi.kmlk.kmlkVrs
-                                                      && i.IdentityType == rizaIstegi.kmlk.kmlkTur
-                                                      && i.UserType == rizaIstegi.kmlk.ohkTur
-                                                      && i.YosCode == rizaIstegi.katilimciBlg.yosKod))
-            .ToListAsync();
-        return activeAccountConsents;
+        var activeAccountConsents = (List<Consent>?)getConsentsResult.Data;
+        if (!(activeAccountConsents?.Any() ?? false))
+        {
+            //No active consent
+            return result;
+        }
+
+        //Cancel Yetki Bekleniyor state consents.
+        CancelWaitingApproveConsents(context, activeAccountConsents);
+        activeAccountConsents = activeAccountConsents.Where(c =>
+            c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+            || c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi).ToList();
+
+        await ProcessAccountConsentToCancelOrEnd(activeAccountConsents, context);
+        result.Data = activeAccountConsents;
+        return result;
     }
 
     /// <summary>
@@ -2681,65 +2709,82 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return;
         }
 
-        var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
-        //comment from document
-        //Erişimin Geçerli Olduğu Son Tarih geldiğinde Rıza durumu Yetki Kullanıldı’dan Yetki Sonlandırıldı durumuna çekilmelidir. K ⇨ S
-        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
-            && additionalData.hspBlg.iznBlg.erisimIzniSonTrh < today)
-        {
-            //Consent given time is up. End the consent
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
-            additionalData.rzBlg.gnclZmn = today;
-            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
-            entity.ModifiedAt = today;
-            entity.State = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
-            entity.StateModifiedAt = today;
-            context.Consents.Update(entity);
-            await context.SaveChangesAsync();
-            return;
-        }
+        await ProcessAccountConsentToCancelOrEnd(new List<Consent>() { entity }, context);
+    }
 
-        //comment from document
-        //5 dakikadan uzun süredir “Yetki Bekleniyor” durumunda kalan kayıtların durumları güncellenir. 
-        //Yetki Bekleniyor ⇨ Rıza İptal / Süre Aşımı : Yetki Bekleniyor B ⇨ I / 04 
-        if (entity.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor
-            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
-        {
-            //Consent is in yetki bekleniyor state more than 5 minutes
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
-            additionalData.rzBlg.rizaIptDtyKod =
-                OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_YetkiBekleniyor;
-            additionalData.rzBlg.gnclZmn = today;
-            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
-            entity.ModifiedAt = today;
-            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
-            entity.StateModifiedAt = today;
-            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
-            context.Consents.Update(entity);
-            await context.SaveChangesAsync();
-            return;
-        }
 
-        //comment from document
-        //5 dakikadan uzun süredir “Yetkilendirildi” durumunda kalan kayıtlar güncellenir. 
-        //Yetkilendirildi ⇨ Rıza İptal / Süre Aşımı: Yetkilendirildi B ⇨ I / 05
-        if (entity.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
-            && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+    private async Task ProcessAccountConsentToCancelOrEnd(List<Consent> consents, ConsentDbContext context)
+    {
+        var today = DateTime.UtcNow;
+
+        foreach (var entity in consents)
         {
-            //Consent is in yetkilendirildi state more than 5 minutes
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
-            additionalData.rzBlg.rizaIptDtyKod =
-                OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_Yetkilendirildi;
-            additionalData.rzBlg.gnclZmn = today;
-            entity.AdditionalData = JsonSerializer.Serialize(additionalData);
-            entity.ModifiedAt = today;
-            entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
-            entity.StateModifiedAt = today;
-            entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
-            context.Consents.Update(entity);
-            await context.SaveChangesAsync();
-            //There is no access token, so no need to call revoke.
-            return;
+            if (entity == null
+                || string.IsNullOrEmpty(entity.AdditionalData)
+                || entity.State == OpenBankingConstants.RizaDurumu.YetkiIptal
+                || entity.State == OpenBankingConstants.RizaDurumu.YetkiSonlandirildi)
+            {
+                //Consent life ended. There is nothing to do.
+                continue;
+            }
+
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            //comment from document
+            //Erişimin Geçerli Olduğu Son Tarih geldiğinde Rıza durumu Yetki Kullanıldı’dan Yetki Sonlandırıldı durumuna çekilmelidir. K ⇨ S
+            if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                && additionalData.hspBlg.iznBlg.erisimIzniSonTrh < today)
+            {
+                //Consent given time is up. End the consent
+                additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
+                additionalData.rzBlg.gnclZmn = today;
+                entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                entity.ModifiedAt = today;
+                entity.State = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
+                entity.StateModifiedAt = today;
+                context.Consents.Update(entity);
+                await context.SaveChangesAsync();
+            }
+
+            //comment from document
+            //5 dakikadan uzun süredir “Yetki Bekleniyor” durumunda kalan kayıtların durumları güncellenir. 
+            //Yetki Bekleniyor ⇨ Rıza İptal / Süre Aşımı : Yetki Bekleniyor B ⇨ I / 04 
+            else if (entity.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor
+                     && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+            {
+                //Consent is in yetki bekleniyor state more than 5 minutes
+                additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData.rzBlg.rizaIptDtyKod =
+                    OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_YetkiBekleniyor;
+                additionalData.rzBlg.gnclZmn = today;
+                entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                entity.ModifiedAt = today;
+                entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                entity.StateModifiedAt = today;
+                entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+                context.Consents.Update(entity);
+                await context.SaveChangesAsync();
+            }
+
+            //comment from document
+            //5 dakikadan uzun süredir “Yetkilendirildi” durumunda kalan kayıtlar güncellenir. 
+            //Yetkilendirildi ⇨ Rıza İptal / Süre Aşımı: Yetkilendirildi B ⇨ I / 05
+            else if (entity.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
+                     && additionalData.rzBlg.gnclZmn.AddMinutes(5) < today)
+            {
+                //Consent is in yetkilendirildi state more than 5 minutes
+                additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData.rzBlg.rizaIptDtyKod =
+                    OpenBankingConstants.RizaIptalDetayKodu.SureAsimi_Yetkilendirildi;
+                additionalData.rzBlg.gnclZmn = today;
+                entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                entity.ModifiedAt = today;
+                entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                entity.StateModifiedAt = today;
+                entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+                context.Consents.Update(entity);
+                await context.SaveChangesAsync();
+                //There is no access token, so no need to call revoke.
+            }
         }
     }
 
