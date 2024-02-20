@@ -461,6 +461,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetTransactionsByHspRef(
         string hspRef,
         [FromQuery] DateTime hesapIslemBslTrh,
