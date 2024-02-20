@@ -7,6 +7,8 @@ USER amorphie-consentuser
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 COPY . .
+
+ENV DOTNET_NUGET_SIGNATURE_VERIFICATION=false
 RUN dotnet restore "./amorphie.consent/amorphie.consent.csproj"
 
 WORKDIR "/app/."
