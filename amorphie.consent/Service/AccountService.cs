@@ -312,7 +312,7 @@ public class AccountService : IAccountService
     /// <param name="srlmKrtr"></param>
     /// <param name="srlmYon"></param>
     /// <returns></returns>
-    private ApiResult IsDataValidToGetTransactionsByHspRef(Consent consent, 
+    private ApiResult   IsDataValidToGetTransactionsByHspRef(Consent consent, 
         string psuInitiated,
         DateTime hesapIslemBslTrh, 
         DateTime hesapIslemBtsTrh, 
@@ -354,7 +354,7 @@ public class AccountService : IAccountService
         {
             if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel )
             {
-                if (hesapIslemBslTrh.AddMonths(1) > hesapIslemBtsTrh)
+                if (hesapIslemBslTrh.AddMonths(1) < hesapIslemBtsTrh)
                 {
                     result.Result = false;
                     result.Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.";
@@ -363,7 +363,7 @@ public class AccountService : IAccountService
             }
             else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal )
             {
-                if (hesapIslemBslTrh.AddDays(7) > hesapIslemBtsTrh)
+                if (hesapIslemBslTrh.AddDays(7) < hesapIslemBtsTrh)
                 {
                     result.Result = false;
                     result.Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.";
