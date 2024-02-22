@@ -52,7 +52,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapGet("/hesaplar", GetAuthorizedAccounts).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/hesaplar/{hspRef}", GetAuthorizedAccountByHspRef)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapGet("/hesaplar/bakiye", GetAuthorizedBalances)
+        routeGroupBuilder.MapGet("/bakiye", GetAuthorizedBalances)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapGet("/hesaplar/{hspRef}/bakiye", GetAuthorizedBalanceByHspRef)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
