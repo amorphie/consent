@@ -155,7 +155,7 @@ public class AccountService : IAccountService
             // Build account service parameters
             SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
             //Get balances of customer from service
-            List<BakiyeBilgileriDto> balances =
+            List<BakiyeBilgileriDto>? balances =
                 await _accountClientService.GetBalances(userTCKN, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
             if (!balances?.Any() ?? false)
             {
@@ -168,10 +168,10 @@ public class AccountService : IAccountService
             var activeConsent = (Consent)authConsentResult.Data;
 
             //filter balances
-            balances = balances.Where(b =>
+            balances = balances?.Where(b =>
                     activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
                 .ToList();
-
+            balances = balances?.Select(b => { b.bky.krdHsp = null; return b; }).ToList() ?? null;
             result.Data = balances;
         }
         catch (Exception e)
