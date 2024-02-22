@@ -31,8 +31,8 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientCode={clientCode}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
         routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
-        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
-        routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizateForLogin);
+        routeGroupBuilder.MapGet("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
+        routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
     }
 
     /// <summary>
@@ -157,14 +157,11 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
       long userTCKN,
       long scopeTCKN,
       [FromServices] ConsentDbContext context,
-      [FromServices] IContractService contractService,
-      [FromServices] IMapper mapper,
       [FromServices] IConfiguration configuration,
       HttpContext httpContext)
     {
         try
         {
-            var response = new ContractResponseDto();
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == clientCode
@@ -176,7 +173,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
             if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
             {//Authorized user
-                return Results.Ok(response);
+                return Results.Ok();
             }
             //unauthroized
             return Results.Unauthorized();
@@ -190,10 +187,8 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
 
 
-    public async Task<IResult> AuthorizateForLogin([FromBody] SaveConsentForLoginDto saveConsent,
+    public async Task<IResult> AuthorizeForLogin([FromBody] SaveConsentForLoginDto saveConsent,
       [FromServices] ConsentDbContext context,
-      [FromServices] IContractService contractService,
-      [FromServices] IMapper mapper,
       [FromServices] IConfiguration configuration,
       HttpContext httpContext)
     {
@@ -214,7 +209,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             }
 
             //If any yetkibekleniyor state consent, update 
-            var consent = consents.FirstOrDefault(c => c.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor);
+            var consent = consents?.FirstOrDefault(c => c.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor);
             if (consent != null)//Update consent
             {
                 consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
