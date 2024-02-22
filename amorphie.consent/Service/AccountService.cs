@@ -171,7 +171,6 @@ public class AccountService : IAccountService
             balances = balances?.Where(b =>
                     activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
                 .ToList();
-            balances = balances?.Select(b => { b.bky.krdHsp = null; return b; }).ToList() ?? null;
             result.Data = balances;
         }
         catch (Exception e)
