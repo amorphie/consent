@@ -1,9 +1,5 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.Authorization;
-using amorphie.consent.core.DTO.Contract;
-using amorphie.consent.core.DTO.Contract.ContractInstance;
-using amorphie.consent.core.DTO.Contract.DocumentInstance;
-using amorphie.consent.core.DTO.Contract.TemplateRender;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
@@ -31,7 +27,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckAuthorization/clientCode={clientCode}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}", CheckAuthorization);
         routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
-        routeGroupBuilder.MapGet("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin);
+        routeGroupBuilder.MapGet("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}", CheckAuthorizationForLogin);
         routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
     }
 
