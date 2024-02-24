@@ -91,13 +91,13 @@ public static class ModuleHelper
             return false;
         }
 
-        if (isUserRequired.HasValue 
+        if (isUserRequired.HasValue
             && isUserRequired.Value
             && string.IsNullOrEmpty(header.UserReference))
         {
             return false;
         }
-        
+
         return true;
     }
 
@@ -145,10 +145,14 @@ public static class ModuleHelper
     /// <param name="httpContext"></param>
     /// <param name="configuration"></param>
     /// <param name="body">Message body</param>
-    public static void SetXJwsSignatureHeader(HttpContext httpContext, IConfiguration configuration, object body)
+    public static void SetXJwsSignatureHeader(HttpContext httpContext, IConfiguration configuration, object? body)
     {
-        var headerPropData = GetXJwsSignature(body, configuration);
-        httpContext.Response.Headers.Add("X-JWS-Signature", headerPropData);
+        if (body != null)
+        {
+            var headerPropData = GetXJwsSignature(body, configuration);
+            // Check if the header already exists before adding
+            httpContext.Response.Headers["X-JWS-Signature"] = headerPropData;
+        }
     }
 
     public static string GetXJwsSignature(object body, IConfiguration configuration)
@@ -197,7 +201,7 @@ public static class ModuleHelper
     /// <returns>RSA Key</returns>
     private static RSA LoadPrivateKeyFromVault(IConfiguration configuration)
     {
-        string pemContents = configuration["HHS_PrivateKey"];
+        string? pemContents = configuration["HHS_PrivateKey"];
         var key = RSA.Create();
         key.ImportFromPem(pemContents);
         return key;
@@ -217,19 +221,19 @@ public static class ModuleHelper
             return Convert.ToHexString(bytes);
         }
     }
-    
+
     public static void SetLinkHeader(HttpContext httpContext, IConfiguration configuration)
     {
-        
-     string linkHeaderValue = string.Join(", ",
-    "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=6&syfKytSayi=100>; rel=\"next\"",
-    "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=4&syfKytSayi=100>; rel=\"prev\"",
-    "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=14&syfKytSayi=100>; rel=\"last\"",
-    "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
 
-    linkHeaderValue = linkHeaderValue.Replace("\r", "").Replace("\n", "");
+        string linkHeaderValue = string.Join(", ",
+       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=6&syfKytSayi=100>; rel=\"next\"",
+       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=4&syfKytSayi=100>; rel=\"prev\"",
+       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=14&syfKytSayi=100>; rel=\"last\"",
+       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
 
-     
+        linkHeaderValue = linkHeaderValue.Replace("\r", "").Replace("\n", "");
+
+
         httpContext.Response.Headers.Add("Link", linkHeaderValue);
     }
 
