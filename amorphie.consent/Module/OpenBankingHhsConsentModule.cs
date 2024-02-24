@@ -1388,8 +1388,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             orderEntity.XRequestId = header.XRequestID ?? string.Empty;
             orderEntity.XGroupId = header.XRequestID ?? string.Empty;
             context.OBPaymentOrders.Add(orderEntity);
-
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync();//Save order
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, orderEntity);
             return Results.Ok(odemeEmriDto);
         }
         catch (Exception ex)
