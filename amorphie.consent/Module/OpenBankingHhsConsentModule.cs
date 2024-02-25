@@ -608,6 +608,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.OBPaymentOrders
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == odemeEmriNo);
+            
+            if(entity == null)
+            {
+                return Results.NotFound();
+            }
             ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
             if (!isDataValidResult.Result) //Error in data validation
             {
@@ -615,6 +620,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             var serializedData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(entity.AdditionalData);
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, serializedData);
             return Results.Ok(serializedData);
         }
         catch (Exception ex)
@@ -1425,8 +1431,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             orderEntity.XRequestId = header.XRequestID ?? string.Empty;
             orderEntity.XGroupId = header.XRequestID ?? string.Empty;
             context.OBPaymentOrders.Add(orderEntity);
-
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync();//Save order
+            ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriDto);
             return Results.Ok(odemeEmriDto);
         }
         catch (Exception ex)
