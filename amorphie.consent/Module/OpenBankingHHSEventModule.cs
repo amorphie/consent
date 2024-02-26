@@ -1,24 +1,18 @@
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
-using amorphie.consent.core.Search;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using amorphie.core.Swagger;
 using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using amorphie.consent.core.DTO;
-using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
@@ -42,7 +36,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
         routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
-        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{consentId}", DoEventProcess);
+        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventProcess);
         routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
 
@@ -313,6 +307,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                           && s.IsActive);
+            if (entity == null)
+            {
+                return Results.NotFound();
+            }
 
             //Delete OBEventSubscriptionTypes
             context.OBEventSubscriptionTypes.RemoveRange(entity.OBEventSubscriptionTypes);
@@ -377,6 +375,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                           && s.IsActive);
+            if (entity == null)
+            {
+                return Results.NotFound();
+            }
             ApiResult dataValidationResult = IsDataValidToDeleteEventSubsrciption(entity); //Check data validation
             if (!dataValidationResult.Result)
             {
@@ -401,9 +403,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     #endregion
 
     protected async Task<IResult> DoEventProcess(
-        Guid eventId,
         string eventType,
         string sourceType,
+        Guid eventId,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
@@ -525,7 +527,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         ApiResult result = new();
 
         //Check message required basic properties
-        if (olayAbonelikIstegi.katilimciBlg is null
+        if (olayAbonelikIstegi?.katilimciBlg is null
             || olayAbonelikIstegi.abonelikTipleri?.Any() is null or false
            )
         {
@@ -742,7 +744,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         ApiResult result = new();
 
         //Check message required basic properties
-        if (olayIstegi.katilimciBlg is null
+        if (olayIstegi?.katilimciBlg is null
             || olayIstegi.olaylar?.Any() is null or false
             || olayIstegi.olaylar.Count != 1
            )
