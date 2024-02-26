@@ -407,83 +407,24 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
-        [FromServices] IYosInfoService yosInfoService,
-        [FromServices] IBKMService bkmService,
+        [FromServices] OBEventService eventService,
         HttpContext httpContext)
     {
         try
         {
             //Get event from database
             var eventEntity = await context.OBEvents.FirstOrDefaultAsync(e => e.Id == eventId
-                                                                              && e.DeliveryStatus ==
-                                                                              OpenBankingConstants.EventDeliveryStatus
-                                                                                  .Processing);
+                                                                              && e.EventType == eventType
+                                                                              && e.SourceType == sourceType
+                                                                              && e.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                                                              && e.DeliveryStatus ==OpenBankingConstants.EventDeliveryStatus.Processing);
             if (eventEntity == null)
             {
                 return Results.NotFound();
             }
-
-            //Get event retry information
-            var eventRetryInformation = await context.OBEventTypeSourceTypeRelations
-                .AsNoTracking()
-                .Where(r =>
-                    r.EventType == eventType
-                    && r.SourceType == sourceType
-                    && r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
-                .FirstOrDefaultAsync();
-            if (eventRetryInformation == null)
-            {
-                return Results.BadRequest("Invalid event type source type relation");
-            }
-
-            //Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.
-            if (eventRetryInformation.RetryCount == null)
-            {
-                if (eventEntity.TryCount != 0)
-                {
-                    //Mark as undeliverable
-                    eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
-                    context.OBEvents.Update(eventEntity);
-                    await context.SaveChangesAsync();
-                    return Results.Ok();
-                }
-            }
-
-            //Check if event will retry
-            int entityTryCount = eventEntity.TryCount ?? 0;
-            int maxRetryCount = eventRetryInformation.RetryCount ?? 1;
-            if (entityTryCount < maxRetryCount)
-            {
-                //Send message to yos
-                var olayIstegi = mapper.Map<OlayIstegiDto>(eventEntity);
-                var bkmServiceResponse = await bkmService.SendEventToYos(olayIstegi);
-                if (bkmServiceResponse.Result) //Success from service
-                {
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully;
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
-                    eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.LastTryTime = DateTime.UtcNow;
-                    eventEntity.TryCount = entityTryCount + 1;
-                }
-                else
-                {
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400);
-                    eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.LastTryTime = DateTime.UtcNow;
-                    eventEntity.TryCount = entityTryCount + 1;
-                    if (eventEntity.TryCount >= maxRetryCount)
-                    {
-                        //Mark as undeliverable
-                        eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
-                    }
-                }
-
-                context.OBEvents.Update(eventEntity);
-                await context.SaveChangesAsync();
-            }
-
-            return Results.Ok();
+            //Process event, if ok, send event to yos
+            return await eventService.SendEventToYos(eventEntity);
+          
         }
         catch (Exception ex)
         {
