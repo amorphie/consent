@@ -1,12 +1,12 @@
-using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 
 namespace amorphie.consent.Helper;
 
-public static class ErrorResponseHelper
+public static class OBErrorResponseHelper
 {
-    public static CustomErrorResponse BuildErrorResponse(string path, int httpCode, string httpMessage, string moreInformation, string moreInformationTr, List<FieldError> fieldErrors = null, string errorCode = null)
+    public static OBCustomErrorResponseDto BuildErrorResponse(string path, int httpCode, string httpMessage, string moreInformation, string moreInformationTr, List<FieldError> fieldErrors = null, string errorCode = null)
     {
-        return new CustomErrorResponse
+        return new OBCustomErrorResponseDto
         {
             Path = path,
             Id = Guid.NewGuid().ToString(),

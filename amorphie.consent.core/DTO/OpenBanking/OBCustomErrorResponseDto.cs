@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 
-namespace amorphie.consent.core.DTO;
+namespace amorphie.consent.core.DTO.OpenBanking;
 
-public class CustomErrorResponse
+public class OBCustomErrorResponseDto
 {
     public string Path { get; set; }
     public string Id { get; set; }

@@ -61,7 +61,7 @@ public class PaymentService : IPaymentService
         {
             //Send odemeemri to servie
             OdemeEmriServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
-            if (string.IsNullOrEmpty(serviceResponse.error))//Success
+            if (serviceResponse.error == null)//Success
             {
                 OdemeEmriHHSDto odemeEmriRizasi = new OdemeEmriHHSDto()
                 {
@@ -76,7 +76,8 @@ public class PaymentService : IPaymentService
             else
             {//Error in service
                 result.Result = false;
-                result.Message = serviceResponse.error;
+                result.Data = serviceResponse.error;
+                result.Message = serviceResponse.error.MoreInformationTr;
             }
         }
         catch (Exception e)

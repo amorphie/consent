@@ -1372,13 +1372,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Send payment order to payment service
             ApiResult paymentServiceResponse = await paymentService.SendOdemeEmri(odemeEmriIstegi);
-            if (!paymentServiceResponse.Result) //Error in service
-                return Results.BadRequest(paymentServiceResponse.Message);
             if (paymentServiceResponse.Data == null)
             {
                 //TODO:Özlem ödeme servisinden cevap gelmediği zaman ne olacak.
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, "No response from payment system");
                 return Results.Problem("No response from payment system");
             }
+            if (!paymentServiceResponse.Result) //Error in service
+            {
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentServiceResponse.Data);
+                return Results.BadRequest(paymentServiceResponse.Data);
+            }
+            
             //TODO:Özlem error oluşma caseleri için konuş
 
             OdemeEmriHHSDto odemeEmriDto = (OdemeEmriHHSDto)paymentServiceResponse.Data;
