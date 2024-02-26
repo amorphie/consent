@@ -24,69 +24,73 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
-           CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
+            CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)));
+                opt => opt.MapFrom(src =>
+                    JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
-           // CreateMap<Token, TokenModel>().ReverseMap();
-            CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens)).ReverseMap();
+            // CreateMap<Token, TokenModel>().ReverseMap();
+            CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens))
+                .ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
-            .ConstructUsing((src, ctx) =>
-            {
-                var erisimToken = new Token
+                .ConstructUsing((src, ctx) =>
                 {
-                    TokenValue = src.erisimBelirteci,
-                    TokenType = "Access Token",
-                    ExpireTime = src.gecerlilikSuresi,
-                    ConsentId = src.ConsentId
-                };
-
-                var yenilemeToken = new Token
-                {
-                    TokenValue = src.yenilemeBelirteci,
-                    TokenType = "Refresh Token",
-                    ExpireTime = src.yenilemeBelirteciGecerlilikSuresi,
-                    ConsentId = src.ConsentId
-                };
-                return (erisimToken, yenilemeToken);
-            }).ReverseMap();
-
-            CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
-            .ConstructUsing((src, ctx) =>
-            {
-                Token? erisimToken = null;
-                Token? yenilemeToken = null;
-                if (src.erisimBelirteci != null)
-                {
-                    erisimToken = new Token
+                    var erisimToken = new Token
                     {
                         TokenValue = src.erisimBelirteci,
                         TokenType = "Access Token",
                         ExpireTime = src.gecerlilikSuresi,
                         ConsentId = src.ConsentId
                     };
-                }
-                if (src.yenilemeBelirteci != null)
-                {
-                    yenilemeToken = new Token
+
+                    var yenilemeToken = new Token
                     {
                         TokenValue = src.yenilemeBelirteci,
                         TokenType = "Refresh Token",
                         ExpireTime = src.yenilemeBelirteciGecerlilikSuresi,
                         ConsentId = src.ConsentId
                     };
-                }
-                return (erisimToken, yenilemeToken);
-            }).ReverseMap();
+                    return (erisimToken, yenilemeToken);
+                }).ReverseMap();
+
+            CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
+                .ConstructUsing((src, ctx) =>
+                {
+                    Token? erisimToken = null;
+                    Token? yenilemeToken = null;
+                    if (src.erisimBelirteci != null)
+                    {
+                        erisimToken = new Token
+                        {
+                            TokenValue = src.erisimBelirteci,
+                            TokenType = "Access Token",
+                            ExpireTime = src.gecerlilikSuresi,
+                            ConsentId = src.ConsentId
+                        };
+                    }
+
+                    if (src.yenilemeBelirteci != null)
+                    {
+                        yenilemeToken = new Token
+                        {
+                            TokenValue = src.yenilemeBelirteci,
+                            TokenType = "Refresh Token",
+                            ExpireTime = src.yenilemeBelirteciGecerlilikSuresi,
+                            ConsentId = src.ConsentId
+                        };
+                    }
+
+                    return (erisimToken, yenilemeToken);
+                }).ReverseMap();
             CreateMap<Token, OpenBankingTokenDto>()
-             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-             .ForMember(dest => dest.erisimBelirteci, opt => opt.MapFrom(src => src.TokenValue))
-             .ForMember(dest => dest.gecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime))
-             .ForMember(dest => dest.yenilemeBelirteci, opt => opt.MapFrom(src => src.TokenValue))
-             .ForMember(dest => dest.yenilemeBelirteciGecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime));
-            
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.erisimBelirteci, opt => opt.MapFrom(src => src.TokenValue))
+                .ForMember(dest => dest.gecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime))
+                .ForMember(dest => dest.yenilemeBelirteci, opt => opt.MapFrom(src => src.TokenValue))
+                .ForMember(dest => dest.yenilemeBelirteciGecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime));
+
             CreateMap<HesapBilgisiRizaIstegiHHSDto, HesapBilgisiRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
@@ -112,15 +116,17 @@ namespace amorphie.consent.Mapper
             CreateMap<OBEvent, OlayIstegiDto>()
                 .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
                 .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
-                .ForMember(dest => dest.olaylar, opt => opt.MapFrom(src => src.OBEventItems));
-            CreateMap<OBEventItem, OlaylarDto>()
-                .ForMember(dest => dest.kaynakTipi, opt => opt.MapFrom(src => src.SourceType))
-                .ForMember(dest => dest.kaynakNo, opt => opt.MapFrom(src => src.SourceNumber))
-                .ForMember(dest => dest.olayTipi, opt => opt.MapFrom(src => src.EventType))
-                .ForMember(dest => dest.olayNo, opt => opt.MapFrom(src => src.EventNumber))
-                .ForMember(dest => dest.olayZamani, opt => opt.MapFrom(src => src.EventDate));
-
-
+                .ForMember(dest => dest.olaylar, opt => opt.MapFrom(src =>
+                 new List<OlaylarDto> // Assuming olaylar is a List<OlaylarDto>
+                 {
+                    new OlaylarDto
+                    {
+                        kaynakTipi = src.SourceType,
+                        kaynakNo = src.SourceNumber,
+                        olayTipi = src.EventType,
+                        olayNo = src.EventNumber,
+                        olayZamani = src.EventDate
+                    }}));
             CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
                 .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
@@ -134,19 +140,21 @@ namespace amorphie.consent.Mapper
             CreateMap<OBYosInfoDto, OBYosInfo>()
                 .ForMember(dest => dest.Adresler, opt => opt.MapFrom(src => src.adresler))
                 .ForMember(dest => dest.LogoBilgileri, opt => opt.MapFrom(src => src.logoBilgileri)).ReverseMap();
-            
+
             CreateMap<OBHhsInfo, OBHhsInfoDto>()
                 .ForMember(dest => dest.apiBilgileri,
                     opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgiDto>(), src => src.ApiBilgileri))
                 .ForMember(dest => dest.logoBilgileri,
-                    opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri)).ReverseMap();
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri))
+                .ReverseMap();
             CreateMap<OBYosInfo, OBYosInfoDto>()
                 .ForMember(dest => dest.adresler,
                     opt => opt.ConvertUsing(new JsonToListTypeConverter<AdresDto>(), src => src.Adresler))
                 .ForMember(dest => dest.logoBilgileri,
                     opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri))
                 .ForMember(dest => dest.apiBilgileri,
-                    opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgiDto>(), src => src.ApiBilgileri)).ReverseMap();
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgiDto>(), src => src.ApiBilgileri))
+                .ReverseMap();
             CreateMap<ApiResult, List<OBHhsInfoDto>>()
                 .ConvertUsing(src => src.Data as List<OBHhsInfoDto>);
             CreateMap<ApiResult, List<OBYosInfoDto>>()
@@ -157,6 +165,7 @@ namespace amorphie.consent.Mapper
                 .ConvertUsing(src => src.Data as OBHhsInfoDto);
         }
     }
+
     public class JsonToListTypeConverter<T> : IValueConverter<string, List<T>>
     {
         public List<T> Convert(string source, ResolutionContext context)

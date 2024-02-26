@@ -31,7 +31,7 @@ public class OBEventService : IOBEventService
     }
 
 
-     public async Task DoEventProcess(
+    public async Task DoEventProcess(
         string consentId,
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
@@ -39,9 +39,8 @@ public class OBEventService : IOBEventService
     {
         try
         {
-            
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-            
+
             //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
@@ -61,22 +60,7 @@ public class OBEventService : IOBEventService
             {
                 //Send message to yos
                 var eventEntity = (OBEvent)insertResult.Data;
-                var olayIstegi = _mapper.Map<OlayIstegiDto>(eventEntity);
-                var bkmServiceResponse = await _bkmService.SendEventToYos(olayIstegi);
-                if (bkmServiceResponse.Result)//Success from service
-                {
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
-                    eventEntity.ModifiedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400);
-                    eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.LastTryTime = DateTime.UtcNow;
-                    eventEntity.TryCount = (eventEntity.TryCount ?? 0) + 1;
-                }
-                _context.OBEvents.Update(eventEntity);
-                await _context.SaveChangesAsync();
+                await SendEventToYos(eventEntity);
             }
         }
         catch (Exception ex)
@@ -84,10 +68,89 @@ public class OBEventService : IOBEventService
             //TODO:Ozlem log this case
         }
     }
-     
 
+    public async Task<IResult> SendEventToYos(OBEvent eventEntity)
+    {
+        try
+        {
+            //Get event retry information
+            var eventRetryInformation = await _context.OBEventTypeSourceTypeRelations
+                .AsNoTracking()
+                .Where(r =>
+                    r.EventType == eventEntity.EventType
+                    && r.SourceType == eventEntity.SourceType
+                    && r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
+                .FirstOrDefaultAsync();
+            if (eventRetryInformation == null)
+            {
+                return Results.BadRequest("Invalid event type source type relation");
+            }
 
-      private async Task<ApiResult> CreateOBEventEntityObject(string consentId,
+            //Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.
+            if (eventRetryInformation.RetryCount == null)
+            {
+                if (eventEntity.TryCount != 0)
+                {
+                    //Mark as undeliverable
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    _context.OBEvents.Update(eventEntity);
+                    await _context.SaveChangesAsync();
+                    return Results.Ok();
+                }
+            }
+
+            //Check if event will retry
+            int entityTryCount = eventEntity.TryCount ?? 0;
+            int maxRetryCount = eventRetryInformation.RetryCount ?? 1;
+            if (entityTryCount < maxRetryCount)
+            {
+                //Send message to yos
+                var olayIstegi = _mapper.Map<OlayIstegiDto>(eventEntity);
+                var bkmServiceResponse = await _bkmService.SendEventToYos(olayIstegi);
+                if (bkmServiceResponse.Result) //Success from service
+                {
+                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully;
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                    eventEntity.LastTryTime = DateTime.UtcNow;
+                    eventEntity.TryCount = entityTryCount + 1;
+                }
+                else
+                {
+                    eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 400);
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                    eventEntity.LastTryTime = DateTime.UtcNow;
+                    eventEntity.TryCount = entityTryCount + 1;
+                    if (eventEntity.TryCount >= maxRetryCount)
+                    {
+                        //Mark as undeliverable
+                        eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    }
+                }
+                _context.OBEvents.Update(eventEntity);
+                await _context.SaveChangesAsync();
+            }
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            //TODO:Ozlem log this case
+            return Results.Problem(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Creates and insert event entity according to given data
+    /// </summary>
+    /// <param name="consentId"></param>
+    /// <param name="katilimciBilgisi"></param>
+    /// <param name="eventType"></param>
+    /// <param name="sourceType"></param>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <returns>Event Entity create response</returns>
+    private async Task<ApiResult> CreateOBEventEntityObject(string consentId,
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
         string sourceType,
@@ -111,28 +174,20 @@ public class OBEventService : IOBEventService
         {
             HHSCode = katilimciBilgisi.hhsKod,
             YOSCode = katilimciBilgisi.yosKod,
-            IsUndeliverable = false,
-            TryCount = relation.RetryCount,
+            DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Processing,
+            TryCount = 0,
             LastTryTime = null,
             ModuleName = OpenBankingConstants.ModuleName.HHS,
             CreatedAt = DateTime.UtcNow,
-            ModifiedAt = DateTime.UtcNow,
-            OBEventItems = new List<OBEventItem>()
+            ModifiedAt = DateTime.UtcNow
         };
         context.OBEvents.Add(eventEntity); //Add to get Id
-        //TODO:Özlem if balance update code
-        var itemEntity = new OBEventItem()
-        {
-            OBEventId = eventEntity.Id,
-            EventType = eventType,
-            SourceType = sourceType,
-            SourceNumber = consentId.ToString(),
-            EventDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow,
-            ModifiedAt = DateTime.UtcNow,
-        };
-        context.OBEventItems.Add(itemEntity); //Add to get id
-        itemEntity.EventNumber = itemEntity.Id.ToString();
+        eventEntity.EventNumber = eventEntity.Id.ToString(); //TODO:Özlem balance için değişebilir
+        eventEntity.EventType = eventType;
+        eventEntity.SourceType = sourceType;
+        eventEntity.SourceNumber = consentId;
+        eventEntity.EventDate = DateTime.UtcNow;
+
         //Generate yos post message
         var postMessage = mapper.Map<OlayIstegiDto>(eventEntity);
         eventEntity.AdditionalData = JsonSerializer.Serialize(postMessage);
@@ -140,5 +195,4 @@ public class OBEventService : IOBEventService
         result.Data = eventEntity;
         return result;
     }
-    
 }
