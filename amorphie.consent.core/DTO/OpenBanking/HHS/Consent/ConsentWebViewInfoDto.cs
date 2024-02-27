@@ -8,7 +8,7 @@ namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
 public class ConsentWebViewInfoDto
 {
-    public Guid RizaNo { get;set; }
+    public Guid RizaNo { get; set; }
     public string ConsentType { get; set; }
     public string ForwardingUrl { get; set; }
 }

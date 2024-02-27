@@ -194,7 +194,7 @@ public class AccountService : IAccountService
             //Get account consent from database
             var authConsentResult =
                 await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
-                    permissions: permisssions, accountRef:hspRef);
+                    permissions: permisssions, accountRef: hspRef);
             if (authConsentResult.Result == false
                 || authConsentResult.Data == null)
             {
@@ -249,22 +249,22 @@ public class AccountService : IAccountService
                 //Error or no consent in db
                 return authConsentResult;
             }
-            
+
             var activeConsent = (Consent)authConsentResult.Data;
             //Check if post data is valid to process.
             var checkValidationResult =
                 IsDataValidToGetTransactionsByHspRef(activeConsent, psuInitiated, hesapIslemBslTrh,
-                    hesapIslemBtsTrh,minIslTtr,
+                    hesapIslemBtsTrh, minIslTtr,
                     mksIslTtr,
-                    brcAlc,syfKytSayi,
-                    syfNo,srlmKrtr,
+                    brcAlc, syfKytSayi,
+                    syfNo, srlmKrtr,
                     srlmYon);
             if (!checkValidationResult.Result)
             {
                 //Data not valid
                 return checkValidationResult;
             }
-            
+
             //Set header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
                 d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) ?? false);
@@ -273,7 +273,7 @@ public class AccountService : IAccountService
             SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
 
             //Get transactions by account reference number from service
-            result.Data = await _accountClientService.GetTransactionsByHspRef(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, permissionType, syfKytSayi.Value, syfNo.Value,srlmKrtr,srlmYon,minIslTtr,mksIslTtr,brcAlc);
+            result.Data = await _accountClientService.GetTransactionsByHspRef(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, permissionType, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon, minIslTtr, mksIslTtr, brcAlc);
         }
         catch (Exception e)
         {
@@ -295,7 +295,7 @@ public class AccountService : IAccountService
         srlmKrtr ??= OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount;
         srlmYon ??= OpenBankingConstants.AccountServiceParameters.srlmYon;
     }
-    
+
     /// <summary>
     /// Checks if parameters valid to get transactions
     /// </summary>
@@ -311,16 +311,16 @@ public class AccountService : IAccountService
     /// <param name="srlmKrtr"></param>
     /// <param name="srlmYon"></param>
     /// <returns></returns>
-    private ApiResult   IsDataValidToGetTransactionsByHspRef(Consent consent, 
+    private ApiResult IsDataValidToGetTransactionsByHspRef(Consent consent,
         string psuInitiated,
-        DateTime hesapIslemBslTrh, 
-        DateTime hesapIslemBtsTrh, 
+        DateTime hesapIslemBslTrh,
+        DateTime hesapIslemBtsTrh,
         string? minIslTtr,
         string? mksIslTtr,
-        string? brcAlc, 
-        int? syfKytSayi, 
-        int? syfNo, 
-        string? srlmKrtr, 
+        string? brcAlc,
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
         string? srlmYon)
     {
         ApiResult result = new();
@@ -340,8 +340,8 @@ public class AccountService : IAccountService
             result.Message = "hesapIslemBtsTrh can not be later than enquiry datetime.";
             return result;
         }
-        
-        if ( hesapIslemBtsTrh < hesapIslemBslTrh )
+
+        if (hesapIslemBtsTrh < hesapIslemBslTrh)
         {
             result.Result = false;
             result.Message = "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.";
@@ -351,7 +351,7 @@ public class AccountService : IAccountService
         //ÖHK tarafından tetiklenen sorgularda; hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay,kurumsal ÖHK’lar için ise en fazla 1 hafta olabilir.
         if (psuInitiated == OpenBankingConstants.PSUInitiated.OHKStarted)
         {
-            if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel )
+            if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel)
             {
                 if (hesapIslemBslTrh.AddMonths(1) < hesapIslemBtsTrh)
                 {
@@ -360,7 +360,7 @@ public class AccountService : IAccountService
                     return result;
                 }
             }
-            else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal )
+            else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal)
             {
                 if (hesapIslemBslTrh.AddDays(7) < hesapIslemBtsTrh)
                 {
@@ -370,10 +370,10 @@ public class AccountService : IAccountService
                 }
             }
         }
-        
+
         //YÖS tarafından sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir. Bu yüzden hesapIslemBtsTrh-24 saat’ten daha uzun bir aralık sorgulanamaz olmalıdır.
         if (psuInitiated == OpenBankingConstants.PSUInitiated.SystemStarted
-            && (hesapIslemBtsTrh - hesapIslemBslTrh).TotalHours > 24 )
+            && (hesapIslemBtsTrh - hesapIslemBslTrh).TotalHours > 24)
         {
             result.Result = false;
             result.Message = "hesapIslemBtsTrh hesapIslemBslTrh can not be later than enquiry datetime.";
@@ -407,22 +407,22 @@ public class AccountService : IAccountService
             return result;
         }
 
-        if (!string.IsNullOrEmpty(srlmKrtr) 
-            &&  OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction != srlmKrtr )
+        if (!string.IsNullOrEmpty(srlmKrtr)
+            && OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction != srlmKrtr)
         {
             result.Result = false;
             result.Message = "srlmKrtr value is not valid.";
             return result;
         }
-        
-        if (!string.IsNullOrEmpty(srlmYon) 
+
+        if (!string.IsNullOrEmpty(srlmYon)
             && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
         {
             result.Result = false;
             result.Message = "srlmYon value is not valid.";
             return result;
         }
-     
+
         return result;
     }
 

@@ -660,7 +660,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
           || (bool)yosInfoResponse.Data == false)
         {//Yos does not have required roles
             result.Result = false;
-            result.Message ="Yos does not have desired roles.";
+            result.Message = "Yos does not have desired roles.";
             return result;
         }
 
@@ -767,7 +767,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
           || (bool)yosInfoResponse.Data == false)
         {//Yos does not have required roles
             result.Result = false;
-            result.Message ="Yos does not have desired roles.";
+            result.Message = "Yos does not have desired roles.";
             return result;
         }
 

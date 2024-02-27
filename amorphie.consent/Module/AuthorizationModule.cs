@@ -289,7 +289,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ContractIstegiIleIptal;
                 return c;
             }).ToList();
-            
+
             if (consents != null && consents.Any())
             {
                 context.Consents.UpdateRange(consents);

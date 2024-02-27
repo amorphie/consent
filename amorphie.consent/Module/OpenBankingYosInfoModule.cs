@@ -118,8 +118,8 @@ public class OpenBankingYosInfoModule : BaseBBTRoute<OBYosInfoDto, OBYosInfo, Co
 
                 yosInfo.LogoBilgileri = JsonConvert.SerializeObject(obYosInfoDto.logoBilgileri);
                 yosInfo.ApiBilgileri = JsonConvert.SerializeObject(obYosInfoDto.apiBilgileri);
-                yosInfo.Adresler=JsonConvert.SerializeObject(obYosInfoDto.adresler);
-                yosInfo.ModifiedAt=DateTime.UtcNow;
+                yosInfo.Adresler = JsonConvert.SerializeObject(obYosInfoDto.adresler);
+                yosInfo.ModifiedAt = DateTime.UtcNow;
 
                 context.OBYosInfos.Update(yosInfo);
             }

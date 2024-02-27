@@ -126,7 +126,7 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
-    
+
     public async Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode)
     {
         ApiResult result = new();

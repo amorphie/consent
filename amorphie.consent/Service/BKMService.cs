@@ -31,7 +31,7 @@ public class BKMService : IBKMService
     public async Task<ApiResult> GetHhs(string hhsKod)
     {
         ApiResult apiResult = new();
-     try
+        try
         {
             ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.HhsRead);
             if (!tokenServiceResponse.Result)
@@ -39,7 +39,7 @@ public class BKMService : IBKMService
 
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
 
-            var httpResponse = await _bkmClientService.GetHhs(authorizationValue,hhsKod);
+            var httpResponse = await _bkmClientService.GetHhs(authorizationValue, hhsKod);
 
             if (!httpResponse.IsSuccessStatusCode)
             {
@@ -60,10 +60,10 @@ public class BKMService : IBKMService
         }
         return apiResult;
     }
-     public async Task<ApiResult> GetYos(string yosKod)
+    public async Task<ApiResult> GetYos(string yosKod)
     {
         ApiResult apiResult = new();
-     try
+        try
         {
             ApiResult tokenServiceResponse = await GetToken(OpenBankingConstants.BKMServiceScope.YosRead);
             if (!tokenServiceResponse.Result)
@@ -71,7 +71,7 @@ public class BKMService : IBKMService
 
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
 
-            var httpResponse = await _bkmClientService.GetYos(authorizationValue,yosKod);
+            var httpResponse = await _bkmClientService.GetYos(authorizationValue, yosKod);
 
             if (!httpResponse.IsSuccessStatusCode)
             {
@@ -206,9 +206,9 @@ public class BKMService : IBKMService
             if (!tokenServiceResponse.Result)//Error in service
                 return tokenServiceResponse;
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
-            var xjwsHeader= ModuleHelper.GetXJwsSignature(olayIstegi,_configuration);
+            var xjwsHeader = ModuleHelper.GetXJwsSignature(olayIstegi, _configuration);
             //Send event to YOS
-            var httpResponse= await _bkmClientService.SendEventToYos(authorizationValue,
+            var httpResponse = await _bkmClientService.SendEventToYos(authorizationValue,
                 Guid.NewGuid().ToString(),
                 olayIstegi.katilimciBlg.hhsKod,
                 olayIstegi.katilimciBlg.yosKod,

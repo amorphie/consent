@@ -12,7 +12,7 @@ public class OBAccountConsentDetail : EntityBase
     public string? InstitutionIdentityType { get; set; }
     public string? InstitutionIdentityData { get; set; }
     public string UserType { get; set; }
-    
+
     public string HhsCode { get; set; }
     public string YosCode { get; set; }
     public string? AuthMethod { get; set; }

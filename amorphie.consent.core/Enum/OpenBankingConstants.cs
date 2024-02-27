@@ -327,26 +327,26 @@ public static class OpenBankingConstants
         public const string HHS = "HHS";
         public const string BKM = "BKM";
     }
-    
+
     public static class EventTypeSourceTypeRelationYosRole
     {
         public const string OBH = "ÖBH";
         public const string HBH = "HBH";
     }
-    
+
     public static class BKMServiceRole
     {
         public const string OBHS = "obhs";
         public const string HBHS = "hbhs";
     }
-    
+
     public static class BKMServiceScope
     {
         public const string OlayDinleme = "olay_dinleme";
         public const string HhsRead = "hhs_read";
         public const string YosRead = "yos_read";
     }
-    
+
 
     public static class YosApi
     {
@@ -365,20 +365,20 @@ public static class OpenBankingConstants
         public const string UpdatePaymentStatusTopicName = "EFT.SGOD_MASTER_OPENBANKING";
 
     }
-    
+
     public static class PaymentServiceInformation
     {
         public const int PaymentServiceBranchCode = 1000;
     }
-    
-    public static class  AccountServiceParameters
+
+    public static class AccountServiceParameters
     {
         public const int syfKytSayi = 100;
         public const int syfNo = 1;
         public const string srlmKrtrAccount = "hspRef";
         public const string srlmKrtrTransaction = "islGrckZaman";
         public const string srlmYon = "A";
-        
+
     }
 
     public static class RegexPatterns
@@ -386,7 +386,7 @@ public static class OpenBankingConstants
         public const string amount = @"^\d{1,18}$|^\d{1,18}\.\d{1,5}$";
     }
 
-    
-    
+
+
 
 }

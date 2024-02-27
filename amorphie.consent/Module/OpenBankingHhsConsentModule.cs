@@ -608,8 +608,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.OBPaymentOrders
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == odemeEmriNo);
-            
-            if(entity == null)
+
+            if (entity == null)
             {
                 return Results.NotFound();
             }
@@ -1056,7 +1056,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(
                     "TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
             }
-            
+
             var header = ModuleHelper.GetHeader(httpContext);
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
@@ -1383,7 +1383,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentServiceResponse.Data);
                 return Results.BadRequest(paymentServiceResponse.Data);
             }
-            
+
             //TODO:Özlem error oluşma caseleri için konuş
 
             OdemeEmriHHSDto odemeEmriDto = (OdemeEmriHHSDto)paymentServiceResponse.Data;
@@ -2654,7 +2654,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
 
-   
+
     /// <summary>
     /// Process account consent states
     /// Get active account consents. Cancel Yetki Bekleniyor state consents.

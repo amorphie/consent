@@ -31,17 +31,17 @@ public class OBEventService : IOBEventService
     }
 
 
-     public async Task DoEventProcess(
-        string consentId,
-        KatilimciBilgisiDto katilimciBilgisi,
-        string eventType,
-        string sourceType)
+    public async Task DoEventProcess(
+       string consentId,
+       KatilimciBilgisiDto katilimciBilgisi,
+       string eventType,
+       string sourceType)
     {
         try
         {
-            
+
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-            
+
             //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
@@ -84,15 +84,15 @@ public class OBEventService : IOBEventService
             //TODO:Ozlem log this case
         }
     }
-     
 
 
-      private async Task<ApiResult> CreateOBEventEntityObject(string consentId,
-        KatilimciBilgisiDto katilimciBilgisi,
-        string eventType,
-        string sourceType,
-        ConsentDbContext context,
-        IMapper mapper)
+
+    private async Task<ApiResult> CreateOBEventEntityObject(string consentId,
+      KatilimciBilgisiDto katilimciBilgisi,
+      string eventType,
+      string sourceType,
+      ConsentDbContext context,
+      IMapper mapper)
     {
         ApiResult result = new();
         //Get eventtype source type relation from database
@@ -140,5 +140,5 @@ public class OBEventService : IOBEventService
         result.Data = eventEntity;
         return result;
     }
-    
+
 }

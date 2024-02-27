@@ -82,7 +82,7 @@ builder.Services.AddHttpLogging(logging =>
     //logging.RequestHeaders.Concat(headersToBeLogged);
 
     defaultHeadersToBeLogged.ForEach(p => logging.RequestHeaders.Add(p));
- 
+
     logging.MediaTypeOptions.AddText("application/javascript");
 
     logging.RequestBodyLogLimit = 4096;
@@ -142,15 +142,15 @@ builder.Services
     .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
 
-    builder.Services
-    .AddRefitClient<IMessagingGateway>()
-    .ConfigureHttpClient(c =>
-    {
-        c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
-                                throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => handler)
-    .AddPolicyHandler(retryPolicy);
+builder.Services
+.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+})
+.ConfigurePrimaryHttpMessageHandler(() => handler)
+.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {

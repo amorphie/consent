@@ -22,13 +22,13 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
-           CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
+            CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
+                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
-           // CreateMap<Token, TokenModel>().ReverseMap();
+            // CreateMap<Token, TokenModel>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens)).ReverseMap();
             CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
             .ConstructUsing((src, ctx) =>
@@ -84,7 +84,7 @@ namespace amorphie.consent.Mapper
              .ForMember(dest => dest.gecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime))
              .ForMember(dest => dest.yenilemeBelirteci, opt => opt.MapFrom(src => src.TokenValue))
              .ForMember(dest => dest.yenilemeBelirteciGecerlilikSuresi, opt => opt.MapFrom(src => src.ExpireTime));
-            
+
             CreateMap<HesapBilgisiRizaIstegiHHSDto, HesapBilgisiRizasiHHSDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
@@ -122,7 +122,7 @@ namespace amorphie.consent.Mapper
             CreateMap<OBYosInfoDto, OBYosInfo>()
                 .ForMember(dest => dest.Adresler, opt => opt.MapFrom(src => src.adresler))
                 .ForMember(dest => dest.LogoBilgileri, opt => opt.MapFrom(src => src.logoBilgileri)).ReverseMap();
-            
+
             CreateMap<OBHhsInfo, OBHhsInfoDto>()
                 .ForMember(dest => dest.apiBilgileri,
                     opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgiDto>(), src => src.ApiBilgileri))
