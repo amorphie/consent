@@ -14,6 +14,8 @@ public class OBCustomErrorResponseDto
     [JsonProperty(NullValueHandling = NullValueHandling.Include)]
     public List<FieldError> FieldErrors { get; set; }
     public string ErrorCode { get; set; }
+
+
 }
 
 public class FieldError
@@ -24,3 +26,4 @@ public class FieldError
     public string Message { get; set; }
     public string Code { get; set; }
 }
+

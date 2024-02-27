@@ -5,6 +5,7 @@ using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Refit;
 
 namespace amorphie.consent.Service;
 
@@ -60,7 +61,8 @@ public class PaymentService : IPaymentService
         try
         {
             //Send odemeemri to servie
-            OdemeEmriServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
+            OdemeEmriServiceResponseDto serviceResponse = new OdemeEmriServiceResponseDto();
+            serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
             if (serviceResponse.error == null)//Success
             {
                 OdemeEmriHHSDto odemeEmriRizasi = new OdemeEmriHHSDto()
@@ -77,8 +79,17 @@ public class PaymentService : IPaymentService
             {//Error in service
                 result.Result = false;
                 result.Data = serviceResponse.error;
-                result.Message = serviceResponse.error.MoreInformationTr;
+                result.Message = serviceResponse.error.moreInformationTr;
             }
+        }
+        catch (ApiException ex)
+        {
+            // Handle the ApiException
+            var errorResponse = await ex.GetContentAsAsync<OdemeEmriServiceResponseDto>();
+            // Process the error response
+            result.Result = false;
+            result.Data = errorResponse?.error;
+            result.Message = errorResponse?.error?.moreInformationTr;
         }
         catch (Exception e)
         {
