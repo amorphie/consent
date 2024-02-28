@@ -82,6 +82,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("StateCancelDetailCode")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StateModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -106,15 +109,20 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("Consents");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountConsentDetail", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<List<string>>("AccountReferences")
-                        .IsRequired()
                         .HasColumnType("text[]");
+
+                    b.Property<DateTime?>("AuthCompletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AuthMethod")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("ConsentId")
                         .HasColumnType("uuid");
@@ -128,52 +136,21 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("LastValidAccessDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("DiscreteGKDDefinitionType")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("DiscreteGKDDefinitionValue")
+                        .HasColumnType("text");
 
-                    b.Property<Guid>("ModifiedBy")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ForwardingAddress")
+                        .HasColumnType("text");
 
-                    b.Property<Guid?>("ModifiedByBehalfOf")
-                        .HasColumnType("uuid");
-
-                    b.Property<List<string>>("PermissionTypes")
+                    b.Property<string>("HhsCode")
                         .IsRequired()
-                        .HasColumnType("text[]");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime?>("TransactionInquiryEndTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("TransactionInquiryStartTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConsentId");
-
-                    b.ToTable("OBAccountReferences");
-                });
-
-            modelBuilder.Entity("amorphie.consent.core.Model.OBConsentIdentityInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ConsentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CreatedByBehalfOf")
-                        .HasColumnType("uuid");
+                    b.Property<string>("HhsForwardingAddress")
+                        .HasColumnType("text");
 
                     b.Property<string>("IdentityData")
                         .IsRequired()
@@ -189,6 +166,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("InstitutionIdentityType")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("LastValidAccessDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -198,7 +178,32 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("OhkMessage")
+                        .HasColumnType("text");
+
+                    b.Property<List<string>>("PermissionTypes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<DateTime?>("TransactionInquiryEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TransactionInquiryStartTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("XGroupId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("XRequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("YosCode")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -206,7 +211,117 @@ namespace amorphie.consent.data.Migrations
 
                     b.HasIndex("ConsentId");
 
-                    b.ToTable("OBConsentIdentityInfos");
+                    b.ToTable("OBAccountConsentDetails");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdditionalData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HHSCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("IsUndeliverable")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastTryTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ModuleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ResponseCode")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("YOSCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OBEvents");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBEventItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OBEventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OBEventId");
+
+                    b.ToTable("OBEventItems");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscription", b =>
@@ -241,6 +356,10 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ModuleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("XRequestId")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -330,6 +449,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsImmediateNotification")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -363,196 +485,228 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBEventTypeSourceTypeRelations");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("8bf4a8dd-1531-4ca8-bed9-cfc4ae035bee"),
-                            APIToGetData = "GET /odeme-emri/{odemeEmriNo}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(870),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Tüm ödeme durum değişikliklerinde",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(870),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "odemeEmriNo",
-                            SourceType = "ODEME_EMRI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("55cf6777-4542-4e26-bfb5-8df4600e4e5c"),
-                            APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(910),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Rıza iptal detay kodu ‘02’ : Kullanıcı İsteği ile HHS üzerinden İptal durumunda",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(910),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("17322cb5-20e5-4046-bddb-78e84d30b6e4"),
-                            APIToGetData = "GET /hesaplar/{hspRef}/bakiye",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(940),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Bakiye nesnesindeki tutarla ilgili bir bilgi değiştiğinde ve HBH rızası içerisinde \"06-Anlık Bakiye Bildirimi\" izin türü varsa oluşturulur.\n\nMevcutta alınmış rızalar için bakiye kaynak tipi özelinde 06 izin türü gerektiğinden; mevcut rızanın yenilenmesine dair müşteriye bilgilendirme yapılarak 06 izin türünü kapsayan yeni rıza alınması süreci YÖS tarafından gerçekleştirilebilir.\n\nBloke tutar değişikliği için olay oluşturma ve bildirimi HHS inisiyatifindedir.\n\nKrdHsp içerisinde yer alan kulKrdTtr değerinin değiştiği durumda olay bildirim gönderilmesi gerekmektedir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Maksimum 10 dakika içerisinde",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(940),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryPolicy = "Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.",
-                            SourceNumber = "hspRef",
-                            SourceType = "BAKIYE",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("f766cd71-265a-4de0-8d0e-40d02effc336"),
-                            APIToGetData = "",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(970),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "İlgili API İlke ve kurallarına eklendiğinde güncellenecektir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(970),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "",
-                            SourceType = "COKLU_ISLEM_TALEBI ( bulk-data)",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("85a73a7d-7519-4c1b-bb9a-099bbbdb3686"),
-                            APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=O",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(990),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARILI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(990),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "ODEME_EMRI_RIZASI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("cc538bf8-fb05-4515-9a69-d017e9e3228e"),
-                            APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=H",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1010),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARILI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1010),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("80a51750-7100-4d54-85c8-442774f8494c"),
-                            APIToGetData = "GET /odeme-emri-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1040),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARISIZ",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1040),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "ODEME_EMRI_RIZASI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("e7778043-2ac8-4136-b93f-abe79d720203"),
-                            APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1060),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARISIZ",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1060),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("80a30b1d-406c-4fba-bdb4-29d66bdc664f"),
-                            APIToGetData = "GET /hhs/{hhsKod}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1110),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS bilgilerinde değişiklik olduğunda, YÖS'ün hhsKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir",
-                            EventNotificationReporter = "BKM",
-                            EventNotificationTime = "Anlık",
-                            EventType = "HHS_YOS_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1110),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 5,
-                            RetryPolicy = "5 Dakika - 3 Deneme",
-                            SourceNumber = "hhsKod",
-                            SourceType = "HHS",
-                            YOSRole = "YÖS"
-                        },
-                        new
-                        {
-                            Id = new Guid("1421ba33-e7ae-4c59-9182-fc68d4e82bb2"),
-                            APIToGetData = "GET /yos/{yosKod}",
-                            CreatedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1130),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "YÖS bilgilerinde değişiklik olduğunda, HHS'nin yosKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir.",
-                            EventNotificationReporter = "BKM",
-                            EventNotificationTime = "Anlık",
-                            EventType = "HHS_YOS_GUNCELLENDI",
-                            ModifiedAt = new DateTime(2024, 1, 11, 8, 41, 0, 460, DateTimeKind.Utc).AddTicks(1130),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 5,
-                            RetryPolicy = "5 Dakika - 3 Deneme",
-                            SourceNumber = "yosKod",
-                            SourceType = "YÖS",
-                            YOSRole = "HHS"
-                        });
+            modelBuilder.Entity("amorphie.consent.core.Model.OBHhsInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcikAnahtar")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AyrikGKD")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Durum")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Marka")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unv")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OBHhsInfos");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentConsentDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Amount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("AuthCompletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AuthMethod")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ConsentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscreteGKDDefinitionType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscreteGKDDefinitionValue")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ExpectedPaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ForwardingAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GeneralWorkplaceNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HhsCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("HhsForwardingAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdentityData")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdentityType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionIdentityData")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionIdentityType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KolasAccountType")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("KolasRefNum")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("KolasType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KolasValue")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OHKMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentPurpose")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSystem")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("QRCodeFlowType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("QRCodeProducerCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("QRCodeRef")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReceiverAccountNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReceiverTitle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenceInformation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderAccountNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderAccountReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderTitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubWorkplaceCategoryCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("WorkplaceCategoryCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XGroupId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("XRequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("YosCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsentId");
+
+                    b.ToTable("OBPaymentConsentDetails");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentOrder", b =>
@@ -565,7 +719,7 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ConsentDetailType")
+                    b.Property<string>("Amount")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -581,6 +735,20 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ExpectedPaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GeneralWorkplaceNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HhsCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -590,12 +758,71 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("OHKMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PSNDate")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PSNRefNum")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PSNYosCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentPurpose")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentServiceUpdateTime")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentState")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSystem")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSystemNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenceInformation")
+                        .HasColumnType("text");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SubWorkplaceCategoryCode")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("WorkplaceCategoryCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XGroupId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("XRequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("YosCode")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -604,7 +831,74 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("OBPaymentOrders");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBYosInfo", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.OBPermissionType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OBPermissionTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("1f087662-8852-4861-8177-3e08a578edc9"),
+                            Code = "01",
+                            Description = "Temel Hesap Bilgisi",
+                            Language = "tr-TR"
+                        },
+                        new
+                        {
+                            Id = new Guid("58377714-1a5c-48ba-b05a-dc367c7a3abe"),
+                            Code = "02",
+                            Description = "Ayrıntılı Hesap Bilgisi",
+                            Language = "tr-TR"
+                        },
+                        new
+                        {
+                            Id = new Guid("6d64db7b-eea7-46c5-b6a9-d1550057daf6"),
+                            Code = "03",
+                            Description = "Bakiye Bilgisi",
+                            Language = "tr-TR"
+                        },
+                        new
+                        {
+                            Id = new Guid("9d06d0b8-485c-429e-9ea8-62ba9556665b"),
+                            Code = "04",
+                            Description = "Temel İşlem (Hesap Hareketleri) Bilgisi",
+                            Language = "tr-TR"
+                        },
+                        new
+                        {
+                            Id = new Guid("c346aa62-4e11-4b99-9ded-7cd1242ccc0b"),
+                            Code = "05",
+                            Description = "Ayrıntılı İşlem Bilgisi",
+                            Language = "tr-TR"
+                        },
+                        new
+                        {
+                            Id = new Guid("a00598a9-ed10-4912-890e-5d34843b9656"),
+                            Code = "06",
+                            Description = "Anlık Bakiye Bildirimi",
+                            Language = "tr-TR"
+                        });
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBSystemEvent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -619,6 +913,27 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("HHSCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastTryTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -628,31 +943,94 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("ModifiedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("acikAnahtar")
+                    b.Property<string>("ModuleName")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<List<string>>("adresler")
-                        .IsRequired()
-                        .HasColumnType("text[]");
+                    b.Property<int?>("ResponseCode")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("kod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<List<string>>("logoBilgileri")
-                        .IsRequired()
-                        .HasColumnType("text[]");
-
-                    b.Property<string>("marka")
+                    b.Property<string>("SourceNumber")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<List<string>>("roller")
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("TryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("XRequestId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("YOSCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OBSystemEvents");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBYosInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcikAnahtar")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Adresler")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Durum")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoBilgileri")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Marka")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ModifiedByBehalfOf")
+                        .HasColumnType("uuid");
+
+                    b.Property<List<string>>("Roller")
                         .IsRequired()
                         .HasColumnType("text[]");
 
-                    b.Property<string>("unv")
+                    b.Property<string>("Unv")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -716,10 +1094,10 @@ namespace amorphie.consent.data.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountReference", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.OBAccountConsentDetail", b =>
                 {
                     b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
-                        .WithMany("OBAccountReferences")
+                        .WithMany("OBAccountConsentDetails")
                         .HasForeignKey("ConsentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -727,15 +1105,15 @@ namespace amorphie.consent.data.Migrations
                     b.Navigation("Consent");
                 });
 
-            modelBuilder.Entity("amorphie.consent.core.Model.OBConsentIdentityInfo", b =>
+            modelBuilder.Entity("amorphie.consent.core.Model.OBEventItem", b =>
                 {
-                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
-                        .WithMany("ObConsentIdentityInfos")
-                        .HasForeignKey("ConsentId")
+                    b.HasOne("amorphie.consent.core.Model.OBEvent", "OBEvent")
+                        .WithMany("OBEventItems")
+                        .HasForeignKey("OBEventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Consent");
+                    b.Navigation("OBEvent");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscriptionType", b =>
@@ -747,6 +1125,17 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired();
 
                     b.Navigation("OBEventSubscription");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentConsentDetail", b =>
+                {
+                    b.HasOne("amorphie.consent.core.Model.Consent", "Consent")
+                        .WithMany("OBPaymentConsentDetails")
+                        .HasForeignKey("ConsentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consent");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBPaymentOrder", b =>
@@ -773,13 +1162,18 @@ namespace amorphie.consent.data.Migrations
 
             modelBuilder.Entity("amorphie.consent.core.Model.Consent", b =>
                 {
-                    b.Navigation("OBAccountReferences");
+                    b.Navigation("OBAccountConsentDetails");
 
-                    b.Navigation("ObConsentIdentityInfos");
+                    b.Navigation("OBPaymentConsentDetails");
 
                     b.Navigation("PaymentOrders");
 
                     b.Navigation("Tokens");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>
+                {
+                    b.Navigation("OBEventItems");
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEventSubscription", b =>

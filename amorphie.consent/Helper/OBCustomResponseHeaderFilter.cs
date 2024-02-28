@@ -26,6 +26,10 @@ public class OBCustomResponseHeaderFilter : IEndpointFilter
         {
             context.HttpContext.Response.Headers.Add("X-TPP-Code", traceValue);
         }
+        if (context.HttpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
+        {
+            context.HttpContext.Response.Headers.Add("X-Group-ID", traceValue);
+        }
         return await next(context);
     }
 

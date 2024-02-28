@@ -5,6 +5,7 @@ using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Refit;
 
 namespace amorphie.consent.Service;
 
@@ -30,7 +31,7 @@ public class PaymentService : IPaymentService
             OdemeEmriRizasiServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
             if (string.IsNullOrEmpty(serviceResponse.error))//Success
             {
-                OdemeEmriRizasiHHSDto odemeEmriRizasi = new OdemeEmriRizasiHHSDto()
+                OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi = new OdemeEmriRizasiWithMsrfTtrHHSDto()
                 {
                     isyOdmBlg = serviceResponse.isyOdmBlg,
                     rzBlg = serviceResponse.rzBlg,
@@ -60,8 +61,9 @@ public class PaymentService : IPaymentService
         try
         {
             //Send odemeemri to servie
-            OdemeEmriServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
-            if (string.IsNullOrEmpty(serviceResponse.error))//Success
+            OdemeEmriServiceResponseDto serviceResponse = new OdemeEmriServiceResponseDto();
+            serviceResponse = await _paymentClientService.SendOdemeEmri(odemeEmriIstegi);
+            if (serviceResponse.error == null)//Success
             {
                 OdemeEmriHHSDto odemeEmriRizasi = new OdemeEmriHHSDto()
                 {
@@ -76,8 +78,18 @@ public class PaymentService : IPaymentService
             else
             {//Error in service
                 result.Result = false;
-                result.Message = serviceResponse.error;
+                result.Data = serviceResponse.error;
+                result.Message = serviceResponse.error.moreInformationTr;
             }
+        }
+        catch (ApiException ex)
+        {
+            // Handle the ApiException
+            var errorResponse = await ex.GetContentAsAsync<OdemeEmriServiceResponseDto>();
+            // Process the error response
+            result.Result = false;
+            result.Data = errorResponse?.error;
+            result.Message = errorResponse?.error?.moreInformationTr;
         }
         catch (Exception e)
         {

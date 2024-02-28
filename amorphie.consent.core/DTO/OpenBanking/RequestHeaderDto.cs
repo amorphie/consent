@@ -9,4 +9,6 @@ public class RequestHeaderDto
     public string? XASPSPCode { get; set; }
     public string? XTPPCode { get; set; }
     public string? PSUInitiated { get; set; }
+
+    public string? UserReference { get; set; }
 }

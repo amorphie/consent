@@ -16,6 +16,5 @@ public class OdemeBaslatmaResponseOEDto
     public AliciHesapDto alc { get; set; }
     public KarekodDto? kkod { get; set; }
     public OdemeAyrintilariDetailedDto odmAyr { get; set; }
-    public TutarDto? obhsMsrfTtr { get; set; }
     public TutarDto? hhsMsrfTtr { get; set; }
 }

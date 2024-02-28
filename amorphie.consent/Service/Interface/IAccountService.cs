@@ -5,70 +5,67 @@ namespace amorphie.consent.Service.Interface;
 
 public interface IAccountService
 {
-    /// <summary>
-    /// Get accounts of customer from account service
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <returns>Account list of customer</returns>
-    Task<ApiResult> GetAccounts(string customerId);
 
     /// <summary>
     /// Get authorized accounts of customer
+    /// Checks user's account consent. If any, get accounts
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">User TCKN</param>
+    /// <param name="yosCode"></param>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page number</param>
+    /// <param name="srlmKrtr">Order by name</param>
+    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(string customerId);
+    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
-    /// <summary>
-    /// Get account of customer by account referenece number
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <param name="hspRef">Account Referans Number</param>
-    /// <returns>Customer Account of Given Reference</returns>
-    Task<ApiResult> GetAccountByHspRef(string customerId, string hspRef);
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">Customer Id</param>
+    /// <param name="yosCode"></param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
-    Task<ApiResult> GetAuthorizedAccountByHspRef(string customerId, string hspRef);
+    Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef);
 
-    /// <summary>
-    /// Get balances of customer
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetBalances(string customerId);
 
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">User tckn</param>
+    /// <param name="yosCode">Yos Code</param>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page number</param>
+    /// <param name="srlmKrtr">Order by name</param>
+    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(string customerId);
+    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
-    /// <summary>
-    /// Get balence of customer by account reference number
-    /// </summary>
-    /// <param name="customerId">Customer Id</param>
-    /// <param name="hspRef">Account Referans Number</param>
-    /// <returns>Customer Account Balance of Given Account Reference</returns>
-    Task<ApiResult> GetBalanceByHspRef(string customerId, string hspRef);
 
     /// <summary>
     /// Get balence of customer by account reference number if authorized
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="userTCKN">User tckn</param>
+    /// <param name="yosCode">Yos Code</param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
-    Task<ApiResult> GetAuthorizedBalanceByHspRef(string customerId, string hspRef);
+    Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN, string yosCode, string hspRef);
 
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Transactions of Given Account Reference</returns>
-    Task<ApiResult> GetTransactionsByHspRef(string hspRef);
+    public Task<ApiResult> GetTransactionsByHspRef(string userTCKN, string yosCode, string hspRef,
+        string psuInitiated,
+        DateTime hesapIslemBslTrh,
+        DateTime hesapIslemBtsTrh,
+        string? minIslTtr,
+        string? mksIslTtr,
+        string? brcAlc,
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon);
 
 }

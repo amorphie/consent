@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dapr-debug-amorphie-consent",
-            "program": "${workspaceFolder}/amorphie.consent/bin/Debug/net7.0/amorphie.consent.dll",
+            "program": "${workspaceFolder}/amorphie.consent/bin/Debug/net8.0/amorphie.consent.dll",
             "args": [],
             "cwd": "${workspaceFolder}/amorphie.consent",
             "stopAtEntry": false,
@@ -24,7 +24,9 @@
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
                 "uriFormat": "%s/swagger/",
-            }
+
+            },
+            "requireExactSource": false
         },
         {
             "name": "amorphie-consent-hub",

@@ -6,6 +6,6 @@ public class OdemeEmriRizasiServiceResponseDto
     public RizaBilgileriDto rzBlg { get; set; }
     public KatilimciBilgisiDto katilimciBlg { get; set; }
     public GkdRequestDto gkd { get; set; }
-    public OdemeBaslatmaDto odmBsltm { get; set; }
+    public OdemeBaslatmaWithMsrfTtrDto odmBsltm { get; set; }
     public IsyeriOdemeBilgileriDto? isyOdmBlg { get; set; }
 }

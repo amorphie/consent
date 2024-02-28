@@ -8,6 +8,5 @@ public class OdemeBaslatmaRequestDto
     public AliciHesapRequestDto alc { get; set; }
     public KarekodDto? kkod { get; set; }
     public OdemeAyrintilariRequestDto odmAyr { get; set; }
-    public TutarDto? obhsMsrfTtr { get; set; }
 
 }

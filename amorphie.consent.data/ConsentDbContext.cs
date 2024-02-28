@@ -58,14 +58,17 @@ public class ConsentDbContext : DbContext
 
     public DbSet<Consent> Consents { get; set; }
     public DbSet<Token> Tokens { get; set; }
-    public DbSet<OBAccountReference> OBAccountReferences { get; set; }
-    public DbSet<OBConsentIdentityInfo> OBConsentIdentityInfos { get; set; }
+    public DbSet<OBAccountConsentDetail> OBAccountConsentDetails { get; set; }
+    public DbSet<OBPaymentConsentDetail> OBPaymentConsentDetails { get; set; }
     public DbSet<OBPaymentOrder> OBPaymentOrders { get; set; }
     public DbSet<OBYosInfo> OBYosInfos { get; set; }
-    // public DbSet<OBEvent> OBEvents { get; set; }
-    // public DbSet<OBSystemEvent> OBSystemEvents { get; set; }
+    public DbSet<OBEvent> OBEvents { get; set; }
+    public DbSet<OBEventItem> OBEventItems { get; set; }
+    public DbSet<OBSystemEvent> OBSystemEvents { get; set; }
     public DbSet<OBEventSubscription> OBEventSubscriptions { get; set; }
     public DbSet<OBEventSubscriptionType> OBEventSubscriptionTypes { get; set; }
     public DbSet<OBEventTypeSourceTypeRelation> OBEventTypeSourceTypeRelations { get; set; }
+    public DbSet<OBHhsInfo> OBHhsInfos { get; set; }
+    public DbSet<OBPermissionType> OBPermissionTypes { get; set; }
 
 }

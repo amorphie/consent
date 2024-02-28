@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using amorphie.consent.core.DTO;
-using amorphie.consent.core.DTO.Contract;
-using amorphie.consent.core.DTO.Contract.DocumentInstance;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -19,16 +17,15 @@ namespace amorphie.consent.Mapper
     {
         public ResourceMapper()
         {
-            CreateMap<OBYosInfo, OBYosInfoDto>().ReverseMap();
             CreateMap<Consent, ConsentDto>().ReverseMap();
             CreateMap<Consent, HesapBilgisiRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
+                 opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
             CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiHHSDto>(src.AdditionalData)));
+                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)));
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();
@@ -92,12 +89,12 @@ namespace amorphie.consent.Mapper
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<IzinBilgisiRequestDto, IzinBilgisiDto>();
             CreateMap<HesapBilgisiRequestDto, HesapBilgisiDto>();
-
             CreateMap<OdemeEmriRizaIstegiHHSDto, OdemeEmriRizasiHHSDto>();
+            CreateMap<OdemeEmriRizasiWithMsrfTtrHHSDto, OdemeEmriRizasiHHSDto>();
+            CreateMap<OdemeBaslatmaWithMsrfTtrDto, OdemeBaslatmaDto>();
             CreateMap<GkdRequestDto, GkdDto>();
             CreateMap<OdemeBaslatmaRequestDto, OdemeBaslatmaDto>();
             CreateMap<AliciHesapRequestDto, AliciHesapDto>();
-            CreateMap<OBAccountReference, OBAccountReferenceDto>();
             CreateMap<OdemeAyrintilariRequestDto, OdemeAyrintilariDto>();
             CreateMap<AbonelikTipleriDto, OBEventSubscriptionType>()
                 .ForMember(dest => dest.EventType, opt => opt.MapFrom(src => src.olayTipi))
@@ -110,18 +107,54 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.olusturmaZamani, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.guncellemeZamani, opt => opt.MapFrom(src => src.ModifiedAt))
                 .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
+            CreateMap<OBEvent, OlayIstegiDto>()
+                .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
+                .ForMember(dest => dest.olaylar, opt => opt.MapFrom(src => src.OBEventItems));
+            CreateMap<OBEventItem, OlaylarDto>()
+                .ForMember(dest => dest.kaynakTipi, opt => opt.MapFrom(src => src.SourceType))
+                .ForMember(dest => dest.kaynakNo, opt => opt.MapFrom(src => src.SourceNumber))
+                .ForMember(dest => dest.olayTipi, opt => opt.MapFrom(src => src.EventType))
+                .ForMember(dest => dest.olayNo, opt => opt.MapFrom(src => src.EventNumber))
+                .ForMember(dest => dest.olayZamani, opt => opt.MapFrom(src => src.EventDate));
 
+            CreateMap<OBYosInfo, OBYosInfoDto>().ReverseMap();
+            CreateMap<OBYosInfoDto, OBYosInfo>()
+                .ForMember(dest => dest.Adresler, opt => opt.MapFrom(src => src.adresler))
+                .ForMember(dest => dest.LogoBilgileri, opt => opt.MapFrom(src => src.logoBilgileri)).ReverseMap();
 
+            CreateMap<OBHhsInfo, OBHhsInfoDto>()
+                .ForMember(dest => dest.apiBilgileri,
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<HhsApiBilgiDto>(), src => src.ApiBilgileri))
+                .ForMember(dest => dest.logoBilgileri,
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri)).ReverseMap();
+            CreateMap<OBYosInfo, OBYosInfoDto>()
+                .ForMember(dest => dest.adresler,
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<AdresDto>(), src => src.Adresler))
+                .ForMember(dest => dest.logoBilgileri,
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<LogoBilgisiDto>(), src => src.LogoBilgileri))
+                .ForMember(dest => dest.apiBilgileri,
+                    opt => opt.ConvertUsing(new JsonToListTypeConverter<YosApiBilgiDto>(), src => src.ApiBilgileri)).ReverseMap();
+            CreateMap<ApiResult, List<OBHhsInfoDto>>()
+                .ConvertUsing(src => src.Data as List<OBHhsInfoDto>);
+            CreateMap<ApiResult, List<OBYosInfoDto>>()
+                .ConvertUsing(src => src.Data as List<OBYosInfoDto>);
+            CreateMap<ApiResult, OBYosInfoDto>()
+                .ConvertUsing(src => src.Data as OBYosInfoDto);
+            CreateMap<ApiResult, OBHhsInfoDto>()
+                .ConvertUsing(src => src.Data as OBHhsInfoDto);
+        }
+    }
+    public class JsonToListTypeConverter<T> : IValueConverter<string, List<T>>
+    {
+        public List<T> Convert(string source, ResolutionContext context)
+        {
+            if (string.IsNullOrEmpty(source))
+            {
+                return new List<T>();
+            }
 
-            CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
-                .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
-                .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
-                .ForMember(dest => dest.documentCode, opt => opt.MapFrom(src => src.DocumentCode))
-                .ForMember(dest => dest.documentVersion, opt => opt.MapFrom(src => src.DocumentVersion))
-                .ForMember(dest => dest.fileName, opt => opt.MapFrom(src => src.FileName))
-                .ForMember(dest => dest.fileContextType, opt => opt.MapFrom(src => src.FileContextType))
-                .ForMember(dest => dest.fileType, opt => opt.MapFrom(src => src.FileType));
-
+            return System.Text.Json.JsonSerializer.Deserialize<List<T>>(source) ?? new List<T>();
         }
     }
 }

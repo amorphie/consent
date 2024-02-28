@@ -3,10 +3,8 @@ using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using amorphie.consent.Validator;
-using amorphie.core.Extension;
 using amorphie.core.HealthCheck;
 using amorphie.core.Identity;
-using amorphie.core.security.Extensions;
 using amorphie.core.Swagger;
 using amorphie.template.HealthCheck;
 using AutoMapper;
@@ -23,6 +21,13 @@ using Polly.Extensions.Http;
 using Polly.Retry;
 using Polly.Timeout;
 using Refit;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.Net.Http.Headers;
+using System;
+using amorphie.core.Extension;
+using Dapr;
+using Microsoft.AspNetCore.HttpLogging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +38,10 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
-builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IBKMService, BKMService>();
+builder.Services.AddScoped<IPushService, PushService>();
+builder.Services.AddScoped<IOBEventService, OBEventService>();
+builder.Services.AddScoped<IOBAuthorizationService, OBAuthorizationService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -42,12 +50,53 @@ builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
-Console.WriteLine($"PostgreSql: {postgreSql}");
+var pfxPassword = builder.Configuration["PfxPassword"];
 string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
+
+});
+
+
+var defaultHeadersToBeLogged = new List<string>
+{
+    "Content-Type",
+    "Host",
+    "X-Zeebe-Job-Key",
+    "xdeviceid",
+    "X-Device-Id",
+    "xtokenid",
+    "X-Token-Id",
+    "Transfer-Encoding",
+    "X-Forwarded-Host",
+    "X-Forwarded-For"
+};
+
+builder.Services.AddHttpLogging(logging =>
+{
+
+    logging.LoggingFields = HttpLoggingFields.All;
+
+    //logging.RequestHeaders.Concat(headersToBeLogged);
+
+    defaultHeadersToBeLogged.ForEach(p => logging.RequestHeaders.Add(p));
+
+    logging.MediaTypeOptions.AddText("application/javascript");
+
+    logging.RequestBodyLogLimit = 4096;
+
+    logging.ResponseBodyLogLimit = 4096;
+
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Logging.ClearProviders();
+builder.Host.UseSerilog((_, serviceProvider, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration);
 
 });
 
@@ -79,12 +128,29 @@ builder.Services
                                 throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
+X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
+var handler = new HttpClientHandler();
+handler.ClientCertificates.Add(certificate);
+
 builder.Services
-    .AddRefitClient<IContractClientService>()
+    .AddRefitClient<IBKMClientService>()
     .ConfigureHttpClient(c =>
-        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:ContractServiceURL"] ??
-                                throw new ArgumentNullException("Parameter is not suplied.", "ContractServiceURL")))
+    {
+        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:BkmUrl"] ??
+                                throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
+
+builder.Services
+.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+})
+.ConfigurePrimaryHttpMessageHandler(() => handler)
+.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {
@@ -100,6 +166,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
+
 builder.Services.AddDbContext<ConsentDbContext>
     (options => options.UseNpgsql(postgreSql, b => b.MigrationsAssembly("amorphie.consent.data")));
 // builder.Services.AddDbContext<ConsentDbContext>
@@ -109,7 +176,13 @@ builder.Services.AddDbContext<ConsentDbContext>
 
 var app = builder.Build();
 app.UseAllElasticApm(app.Configuration);
-
+app.UseCloudEvents();
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapSubscribeHandler();
+});
+app.UseHttpLogging();
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
 await client.SaveStateAsync("amorphie-state", "messages", jsonData);

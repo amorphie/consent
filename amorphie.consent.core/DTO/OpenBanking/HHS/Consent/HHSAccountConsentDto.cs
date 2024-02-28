@@ -9,5 +9,4 @@ namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 public class HHSAccountConsentDto : HHSConsentDto
 {
     public HesapBilgisiRizasiHHSDto AdditionalData { get; set; }
-    public ICollection<OBAccountReferenceDto> OBAccountReferences { get; set; }
 }

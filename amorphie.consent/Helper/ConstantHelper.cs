@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Helper;
@@ -47,6 +48,15 @@ public static class ConstantHelper
     }
 
     /// <summary>
+    /// Get authorized account consent status 
+    /// </summary>
+    /// <returns>Authorized account consent status</returns>
+    public static string GetAuthorizedConsentStatusForAccount()
+    {
+        return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+    }
+
+    /// <summary>
     /// Get authorized payment consent status list 
     /// </summary>
     /// <returns>Authorized payment consent status list</returns>
@@ -55,6 +65,17 @@ public static class ConstantHelper
         return new List<string>()
         {
             OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu
+        };
+    }
+
+    /// <summary>
+    /// Gets consent next step status list when consent is authorized
+    /// </summary>
+    /// <returns>Consent next step status list</returns>
+    public static List<string> GetConsentNexStepFromAuthorizedStatusList()
+    {
+        return new List<string>() { OpenBankingConstants.RizaDurumu.YetkiKullanildi,
+            OpenBankingConstants.RizaDurumu.YetkiIptal
         };
     }
 
@@ -199,6 +220,15 @@ public static class ConstantHelper
     }
 
     /// <summary>
+    /// Get BrcAlc constants values list
+    /// </summary>
+    /// <returns>BrcAlc constants values list</returns>
+    public static List<string> GetBrcAlcList()
+    {
+        return typeof(OpenBankingConstants.BrcAlc).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
     /// Get KaynakTip constants values list
     /// </summary>
     /// <returns>KaynakTip constants values list</returns>
@@ -207,6 +237,28 @@ public static class ConstantHelper
         return typeof(OpenBankingConstants.KaynakTip).GetAllPublicConstantValues<string>();
     }
 
+    /// <summary>
+    /// Get SrlmYon constants values list
+    /// </summary>
+    /// <returns>SrlmYon constants values list</returns>
+    public static List<string> GetSrlmYonList()
+    {
+        return typeof(OpenBankingConstants.SrlmYon).GetAllPublicConstantValues<string>();
+    }
+
+    /// <summary>
+    /// Checks amount data pattern
+    /// </summary>
+    /// <param name="ttr">MksIslTtr data</param>
+    /// <returns>Is amount pattern is valid </returns>
+    public static bool IsValidAmount(string ttr)
+    {
+        // Define the regular expression pattern
+        string pattern = OpenBankingConstants.RegexPatterns.amount;
+
+        // Check if the input matches the pattern
+        return Regex.IsMatch(ttr, pattern);
+    }
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {
