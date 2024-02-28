@@ -232,7 +232,7 @@ public static class ModuleHelper
        "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
 
         linkHeaderValue = linkHeaderValue.Replace("\r", "").Replace("\n", "");
-        httpContext.Response.Headers["Link"]= linkHeaderValue;
+        httpContext.Response.Headers["Link"] = linkHeaderValue;
     }
 
 }

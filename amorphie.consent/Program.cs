@@ -38,7 +38,6 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
-builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IOBEventService, OBEventService>();
@@ -83,7 +82,7 @@ builder.Services.AddHttpLogging(logging =>
     //logging.RequestHeaders.Concat(headersToBeLogged);
 
     defaultHeadersToBeLogged.ForEach(p => logging.RequestHeaders.Add(p));
- 
+
     logging.MediaTypeOptions.AddText("application/javascript");
 
     logging.RequestBodyLogLimit = 4096;
@@ -129,12 +128,6 @@ builder.Services
                                 throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
     .AddPolicyHandler(retryPolicy);
 
-builder.Services
-    .AddRefitClient<IContractClientService>()
-    .ConfigureHttpClient(c =>
-        c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:ContractServiceURL"] ??
-                                throw new ArgumentNullException("Parameter is not suplied.", "ContractServiceURL")))
-    .AddPolicyHandler(retryPolicy);
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
 var handler = new HttpClientHandler();
 handler.ClientCertificates.Add(certificate);
@@ -149,15 +142,15 @@ builder.Services
     .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
 
-    builder.Services
-    .AddRefitClient<IMessagingGateway>()
-    .ConfigureHttpClient(c =>
-    {
-        c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
-                                throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => handler)
-    .AddPolicyHandler(retryPolicy);
+builder.Services
+.AddRefitClient<IMessagingGateway>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+})
+.ConfigurePrimaryHttpMessageHandler(() => handler)
+.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {

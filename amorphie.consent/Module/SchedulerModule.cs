@@ -24,15 +24,15 @@ public class SchedulerModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapPost("amorphie-scheduler",Scheduler);
+        routeGroupBuilder.MapPost("amorphie-scheduler", Scheduler);
     }
     [HttpPost("/amorphie-scheduler")]
-   public async Task<IResult> Scheduler(
+    public async Task<IResult> Scheduler(
    )
-{
-    Console.WriteLine("Scheduler çalıştı.");
+    {
+        Console.WriteLine("Scheduler çalıştı.");
 
-    return Results.Ok("Scheduler Çalıştı");
-}
-    
+        return Results.Ok("Scheduler Çalıştı");
+    }
+
 }

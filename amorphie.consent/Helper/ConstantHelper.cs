@@ -53,7 +53,7 @@ public static class ConstantHelper
     /// <returns>Authorized account consent status</returns>
     public static string GetAuthorizedConsentStatusForAccount()
     {
-       return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+        return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OlayTip).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get BrcAlc constants values list
     /// </summary>
@@ -236,7 +236,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KaynakTip).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Get SrlmYon constants values list
     /// </summary>
@@ -245,7 +245,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.SrlmYon).GetAllPublicConstantValues<string>();
     }
-    
+
     /// <summary>
     /// Checks amount data pattern
     /// </summary>

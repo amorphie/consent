@@ -24,7 +24,7 @@ public class ListAccountConsentDto
 /// Account detail by hsapRef.
 /// Contains account information and balance information if balance permission is given.
 /// </summary>
-public class AccountDetailDto 
+public class AccountDetailDto
 {
     /// <summary>
     /// Account service response by hsapref

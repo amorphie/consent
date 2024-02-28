@@ -13,9 +13,9 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&izinTur={izinTur}")]
-    Task<List<HesapBilgileriDto>> GetAccounts(string customerId, 
+    Task<List<HesapBilgileriDto>> GetAccounts(string customerId,
         string izinTur,
-        int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
         string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
@@ -27,7 +27,7 @@ public interface IAccountClientService
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
     Task<List<BakiyeBilgileriDto>> GetBalances(string customerId,
-        int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
         string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
@@ -42,7 +42,7 @@ public interface IAccountClientService
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
         string izinTur,
-        int syfKytSayi =OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
         string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon,

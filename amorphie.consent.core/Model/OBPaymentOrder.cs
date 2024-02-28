@@ -25,13 +25,13 @@ public class OBPaymentOrder : EntityBase
     public string? OHKMessage { get; set; }
     public string PaymentSystem { get; set; }
     public DateTime? ExpectedPaymentDate { get; set; }
-    public string? WorkplaceCategoryCode  { get; set; }
-    public string? SubWorkplaceCategoryCode  { get; set; }
-    public string? GeneralWorkplaceNumber  { get; set; }
+    public string? WorkplaceCategoryCode { get; set; }
+    public string? SubWorkplaceCategoryCode { get; set; }
+    public string? GeneralWorkplaceNumber { get; set; }
     public string? PaymentServiceUpdateTime { get; set; }
     public string XRequestId { get; set; }
     public string XGroupId { get; set; }
-    
+
     [ForeignKey("ConsentId")]
     public Consent Consent { get; set; }
 }

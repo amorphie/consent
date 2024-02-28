@@ -26,7 +26,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="permissions">Required Permissions</param>
     /// <returns>User's authorized consent</returns>
-    public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN,string yosCode, List<string> permissions);
+    public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions);
 
     /// <summary>
     /// Get User's authorized account consent.

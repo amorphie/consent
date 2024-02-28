@@ -17,8 +17,8 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon);
-    
+    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
@@ -27,7 +27,7 @@ public interface IAccountService
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
     Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef);
-    
+
 
     /// <summary>
     /// Get authorized balances of customer
@@ -39,8 +39,8 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode,int? syfKytSayi,int? syfNo,string? srlmKrtr,string? srlmYon);
-    
+    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+
 
     /// <summary>
     /// Get balence of customer by account reference number if authorized
@@ -49,7 +49,7 @@ public interface IAccountService
     /// <param name="yosCode">Yos Code</param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
-    Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN , string yosCode,  string hspRef);
+    Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN, string yosCode, string hspRef);
 
     /// <summary>
     /// Get transactions of account reference number
