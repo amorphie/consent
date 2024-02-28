@@ -409,7 +409,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
-        [FromServices] OBEventService eventService,
+        [FromServices] IOBEventService eventService,
         HttpContext httpContext)
     {
         try

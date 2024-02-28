@@ -125,14 +125,6 @@ namespace amorphie.consent.Mapper
                         olayNo = src.EventNumber,
                         olayZamani = src.EventDate
                     }}));
-            CreateMap<ContractDocumentDto, DocumentInstanceRequestDto>()
-                .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
-                .ForMember(dest => dest.reference, opt => opt.MapFrom(src => src.Reference))
-                .ForMember(dest => dest.documentCode, opt => opt.MapFrom(src => src.DocumentCode))
-                .ForMember(dest => dest.documentVersion, opt => opt.MapFrom(src => src.DocumentVersion))
-                .ForMember(dest => dest.fileName, opt => opt.MapFrom(src => src.FileName))
-                .ForMember(dest => dest.fileContextType, opt => opt.MapFrom(src => src.FileContextType))
-                .ForMember(dest => dest.fileType, opt => opt.MapFrom(src => src.FileType));
 
             CreateMap<OBYosInfo, OBYosInfoDto>().ReverseMap();
             CreateMap<OBYosInfoDto, OBYosInfo>()
