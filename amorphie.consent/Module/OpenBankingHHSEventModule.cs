@@ -23,9 +23,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
     }
 
-    public override string[]? PropertyCheckList => new string[] { "HHSCode", "YOSCode" };
+    public override string[] PropertyCheckList => new[] { "HHSCode", "YOSCode" };
 
-    public override string? UrlFragment => "OpenBankingHHSEvent";
+    public override string UrlFragment => "OpenBankingHHSEvent";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
@@ -36,7 +36,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
         routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
-        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventProcess);
+        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventSchedularProcess);
         routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
 
@@ -402,7 +402,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
     #endregion
 
-    protected async Task<IResult> DoEventProcess(
+    protected async Task<ApiResult> DoEventSchedularProcess(
         string eventType,
         string sourceType,
         Guid eventId,
@@ -412,8 +412,12 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IOBEventService eventService,
         HttpContext httpContext)
     {
+        ApiResult result = new();
+        var eventResult = new EventApiResultDto();
+        result.Data = eventResult;
         try
         {
+          
             //Get event from database
             var eventEntity = await context.OBEvents.FirstOrDefaultAsync(e => e.Id == eventId
                                                                               && e.EventType == eventType
@@ -421,8 +425,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                                                               && e.ModuleName == OpenBankingConstants.ModuleName.HHS
                                                                               && e.DeliveryStatus ==OpenBankingConstants.EventDeliveryStatus.Processing);
             if (eventEntity == null)
-            {
-                return Results.NotFound();
+            {//No desired event in system
+                eventResult.ContinueTry = false;
+                eventResult.StatusCode = Results.NoContent().GetHashCode();
+                return result;
             }
             //Process event, if ok, send event to yos
             return await eventService.SendEventToYos(eventEntity);
@@ -430,7 +436,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         }
         catch (Exception ex)
         {
-            return Results.Problem($"An error occurred: {ex.Message}");
+            //TODO:Özlem log this case
+            result.Result = false;
+            eventResult.StatusCode = Results.Problem().GetHashCode();
+            return result;
         }
     }
 
@@ -514,6 +523,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
     /// <param name="olayAbonelikIstegi">To be checked data</param>
+    /// <param name="context"></param>
     /// <param name="configuration">Config object</param>
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Context object to get header parameters</param>
@@ -618,9 +628,11 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
     /// <param name="olayAbonelik">To be checked data</param>
+    /// <param name="context"></param>
     /// <param name="configuration">Config object</param>
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Context object to get header parameters</param>
+    /// <param name="olayAbonelikNo"></param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
         string olayAbonelikNo,
@@ -805,6 +817,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <param name="context">Context</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">Yos service instance</param>
+    /// <param name="header"></param>
     /// <param name="katilimciBlg">Katilimci data object default value with null</param>
     /// <returns>Validation result</returns>
     private async Task<ApiResult> IsHeaderDataValid(HttpContext context,

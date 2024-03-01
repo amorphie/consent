@@ -70,8 +70,11 @@ public class OBEventService : IOBEventService
         }
     }
 
-    public async Task<IResult> SendEventToYos(OBEvent eventEntity)
+    public async Task<ApiResult> SendEventToYos(OBEvent eventEntity)
     {
+        ApiResult result = new();
+        var eventResult = new EventApiResultDto();
+        result.Data = eventResult;
         try
         {
             //Get event retry information
@@ -84,7 +87,11 @@ public class OBEventService : IOBEventService
                 .FirstOrDefaultAsync();
             if (eventRetryInformation == null)
             {
-                return Results.BadRequest("Invalid event type source type relation");
+                result.Result = false;
+                result.Message =  "Invalid event type source type relation";
+                eventResult.ContinueTry = true;
+                eventResult.StatusCode = Results.BadRequest().GetHashCode();
+                return result;
             }
 
             //Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.
@@ -97,7 +104,8 @@ public class OBEventService : IOBEventService
                     eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
                     _context.OBEvents.Update(eventEntity);
                     await _context.SaveChangesAsync();
-                    return Results.Ok();
+                    eventResult.ContinueTry = false;//sending process completed
+                    return result;
                 }
             }
 
@@ -116,6 +124,7 @@ public class OBEventService : IOBEventService
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     eventEntity.LastTryTime = DateTime.UtcNow;
                     eventEntity.TryCount = entityTryCount + 1;
+                    eventResult.ContinueTry = false;//sending process completed
                 }
                 else
                 {
@@ -127,17 +136,34 @@ public class OBEventService : IOBEventService
                     {
                         //Mark as undeliverable
                         eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                        eventResult.ContinueTry = false;//sending process completed
                     }
                 }
                 _context.OBEvents.Update(eventEntity);
                 await _context.SaveChangesAsync();
             }
-            return Results.Ok();
+            else
+            {//Try count limit exceed. Do not send, set as undeliverable.
+                if (eventEntity.DeliveryStatus ==  OpenBankingConstants.EventDeliveryStatus.Processing)
+                {
+                    //Mark as undeliverable
+                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    eventEntity.ModifiedAt = DateTime.UtcNow;
+                    _context.OBEvents.Update(eventEntity);
+                    await _context.SaveChangesAsync();
+                    eventResult.ContinueTry = false;//sending process completed
+                }
+            }
+
+            eventResult.StatusCode = Results.Ok().GetHashCode();
+            return result;
         }
         catch (Exception ex)
         {
             //TODO:Ozlem log this case
-            return Results.Problem(ex.Message);
+            eventResult.StatusCode = Results.Problem().GetHashCode();
+            result.Result = false;
+            return result;
         }
     }
 
