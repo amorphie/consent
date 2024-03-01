@@ -1,10 +1,10 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.2 AS base
 WORKDIR /app
 
 RUN adduser -u 5679 --disabled-password --gecos "" amorphie-consentuser && chown -R amorphie-consentuser:amorphie-consentuser /app
 USER amorphie-consentuser
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.200 AS build
 WORKDIR /app
 COPY . .
 
