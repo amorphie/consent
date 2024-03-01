@@ -155,7 +155,7 @@ public class OBAuthorizationService : IOBAuthorizationService
     }
 
 
-    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState,
+    public async Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN,
         List<string> consentTypes)
     {
         ApiResult result = new();
@@ -167,7 +167,6 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id
                                           && consentTypes.Contains(c.ConsentType)
-                                          && c.State == consentState
                                           && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
                                                   && i.IdentityType ==
                                                   OpenBankingConstants.KimlikTur.TCKN
