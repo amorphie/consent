@@ -9,7 +9,6 @@ namespace amorphie.consent.Service.Interface;
 
 public interface IOBEventService
 {
-
     /// <summary>
     /// Do Event process of openbanking.
     /// Save event and eventitem entities into db
@@ -19,12 +18,14 @@ public interface IOBEventService
     /// <param name="katilimciBilgisi">Katilimci Bilgisi object of consent data</param>
     /// <param name="eventType">Event Type</param>
     /// <param name="sourceType">Source Type</param>
+    /// <param name="sourceNumber"></param>
     /// <returns></returns>
     public Task DoEventProcess(
         string consentId,
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
-        string sourceType);
+        string sourceType,
+        string sourceNumber);
     
     public Task<ApiResult> SendEventToYos(OBEvent eventEntity);
 }

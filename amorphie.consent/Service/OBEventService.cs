@@ -35,17 +35,16 @@ public class OBEventService : IOBEventService
         string consentId,
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
-        string sourceType)
+        string sourceType,
+        string sourceNumber = null)
     {
         try
         {
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-
-
-            //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
+            
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
-                await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, _context, _mapper);
+                await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, sourceNumber, _context, _mapper);
             if (!insertResult.Result || insertResult.Data == null)
             {
                 //TODO:Ozlem log this case
@@ -174,6 +173,7 @@ public class OBEventService : IOBEventService
     /// <param name="katilimciBilgisi"></param>
     /// <param name="eventType"></param>
     /// <param name="sourceType"></param>
+    /// <param name="sourceNumber"></param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <returns>Event Entity create response</returns>
@@ -181,6 +181,7 @@ public class OBEventService : IOBEventService
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
         string sourceType,
+        string sourceNumber,
         ConsentDbContext context,
         IMapper mapper)
     {
@@ -195,7 +196,20 @@ public class OBEventService : IOBEventService
                 "EventType SourceType relation not found in system.";
             return result;
         }
-
+        
+        //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
+        var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType 
+                                                  && e.SourceType == e.SourceType 
+                                                  && e.SourceNumber == sourceNumber 
+                                                  && e.YOSCode == katilimciBilgisi.yosKod
+                                                  && e.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                                  && e.DeliveryStatus != OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully);
+        if (anyEventInDb)
+        {
+            result.Result = false;
+            result.Message = "Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir.";
+            return result;
+        }
         //Create event entity
         OBEvent eventEntity = new OBEvent()
         {
@@ -209,10 +223,10 @@ public class OBEventService : IOBEventService
             ModifiedAt = DateTime.UtcNow
         };
         context.OBEvents.Add(eventEntity); //Add to get Id
-        eventEntity.EventNumber = eventEntity.Id.ToString(); //TODO:Özlem balance için değişebilir
+        eventEntity.EventNumber = eventEntity.Id.ToString(); 
         eventEntity.EventType = eventType;
         eventEntity.SourceType = sourceType;
-        eventEntity.SourceNumber = consentId;
+        eventEntity.SourceNumber = sourceNumber;
         eventEntity.EventDate = DateTime.UtcNow;
 
         //Generate yos post message
