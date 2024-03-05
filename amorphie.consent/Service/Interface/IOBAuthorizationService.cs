@@ -42,17 +42,15 @@ public interface IOBAuthorizationService
         string accountRef);
 
     /// <summary>
-    /// Get user consent by checking id, state, yosCode, consentType
+    /// Get user consent by checking id, consentType
     /// Checks consent identity value with given userTCKN.
     /// This metod works for Bireysel consents.
     /// </summary>
     /// <param name="id"></param>
     /// <param name="userTCKN"></param>
-    /// <param name="consentState"></param>
     /// <param name="consentTypes"></param>
     /// <returns>Consent data</returns>
-    public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, string consentState,
-        List<string> consentTypes);
+    public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, List<string> consentTypes);
 
 
     /// <summary>

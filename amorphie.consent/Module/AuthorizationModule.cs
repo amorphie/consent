@@ -36,6 +36,8 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             CheckAuthorizationForLogin);
         routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
         routeGroupBuilder.MapDelete("/CancelLoginConsents", CancelLoginConsents);
+        //Added for comensis test environment
+        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin_Test);
     }
 
     /// <summary>
@@ -296,6 +298,46 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 await context.SaveChangesAsync();
             }
             return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// This method will be removed when commensis started to use preprod for test
+    /// </summary>
+    /// <param name="clientCode"></param>
+    /// <param name="roleId"></param>
+    /// <param name="userTCKN"></param>
+    /// <param name="scopeTCKN"></param>
+    /// <param name="context"></param>
+    /// <param name="contractService"></param>
+    /// <param name="mapper"></param>
+    /// <param name="configuration"></param>
+    /// <param name="httpContext"></param>
+    /// <returns></returns>
+    public async Task<IResult> CheckAuthorizationForLogin_Test(
+      string clientCode,
+      Guid roleId,
+      long userTCKN,
+      long scopeTCKN,
+      [FromServices] ConsentDbContext context,
+      [FromServices] IMapper mapper,
+      [FromServices] IConfiguration configuration,
+      HttpContext httpContext)
+    {
+        try
+        {
+            var response = new
+            {
+                IsAuthorized = true,
+                ContractDocuments = (ICollection<object>?)null
+            };
+            return Results.Ok(response);
+
         }
         catch (Exception ex)
         {
