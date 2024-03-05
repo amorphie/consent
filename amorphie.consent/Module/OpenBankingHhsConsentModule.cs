@@ -684,11 +684,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Check consent
             await ProcessConsentToCancelOrEnd(rizaNo, dbContext, tokenService);
-            
+
             string userTCKN = header.UserReference; //get logged in user tckn
             List<string> consentTypes = new List<string>()
                 { ConsentConstants.ConsentType.OpenBankingAccount, ConsentConstants.ConsentType.OpenBankingPayment };
-            var consentState= OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
+            var consentState = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             //Get consent
             var getConsentResult = await authorizationService.GetConsentReadonly(id: rizaNo, userTCKN: userTCKN,
                 consentTypes: consentTypes);
