@@ -316,14 +316,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode, syfKytSayi, syfNo,
+                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference, header.XTPPCode, syfKytSayi, syfNo,
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-
-            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
