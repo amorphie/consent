@@ -26,6 +26,6 @@ public interface IOBEventService
         string eventType,
         string sourceType,
         string sourceNumber);
-    
+
     public Task<ApiResult> SendEventToYos(OBEvent eventEntity);
 }

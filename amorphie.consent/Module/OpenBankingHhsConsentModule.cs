@@ -898,7 +898,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
             {
                 await obEventService.DoEventProcess(entity.Id.ToString(), additionalData.katilimciBlg,
-                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi,entity.Id.ToString());
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi, entity.Id.ToString());
             }
 
             return Results.Ok(resultData);
@@ -1006,7 +1006,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
             {
                 await obEventService.DoEventProcess(consentEntity.Id.ToString(), additionalData.katilimciBlg,
-                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,consentEntity.Id.ToString());
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi, consentEntity.Id.ToString());
             }
 
             return Results.Ok();
