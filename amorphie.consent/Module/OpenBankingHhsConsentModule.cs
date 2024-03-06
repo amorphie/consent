@@ -684,12 +684,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Check consent
             await ProcessConsentToCancelOrEnd(rizaNo, dbContext, tokenService);
+
             string userTCKN = header.UserReference; //get logged in user tckn
             List<string> consentTypes = new List<string>()
                 { ConsentConstants.ConsentType.OpenBankingAccount, ConsentConstants.ConsentType.OpenBankingPayment };
+            var consentState = OpenBankingConstants.RizaDurumu.YetkiBekleniyor;
             //Get consent
             var getConsentResult = await authorizationService.GetConsentReadonly(id: rizaNo, userTCKN: userTCKN,
-                consentState: OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
                 consentTypes: consentTypes);
 
             if (getConsentResult.Result == false)
@@ -700,11 +701,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var consent = (Consent?)getConsentResult.Data;
             if (consent == null)
-            {
-                //No consent in the system
-                return Results.NotFound();
+            {//No consent in system
+                return Results.NoContent();
             }
 
+            if (consent.State != consentState)
+            {//Consent durumu uygun değil.
+                if (consent.State == OpenBankingConstants.RizaDurumu.YetkiIptal)
+                {
+                    return new CustomStatusCodeResult(454, "Consent is cancelled. It should be completed within 5 minutes. Try again.");
+                }
+                return new CustomStatusCodeResult(454, "Invalid consent to process. Try again.");
+            }
             //Generate response
             ConsentWebViewInfoDto response = new ConsentWebViewInfoDto()
             {
