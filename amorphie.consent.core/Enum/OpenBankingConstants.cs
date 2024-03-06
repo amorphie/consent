@@ -340,7 +340,7 @@ public static class OpenBankingConstants
         public const int Undeliverable = 2;
         public const int CompletedSuccessfully = 3;
     }
-    
+
     public static class BKMServiceRole
     {
         public const string OBHS = "obhs";

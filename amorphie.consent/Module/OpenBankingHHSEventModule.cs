@@ -178,7 +178,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 .Skip(skipCount)
                 .Take(100)
                 .ToList();
-          
+
             OlayIstegiDto responseObject = new OlayIstegiDto()
             {
                 katilimciBlg = new KatilimciBilgisiDto()
@@ -418,13 +418,13 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         result.Data = eventResult;
         try
         {
-          
+
             //Get event from database
             var eventEntity = await context.OBEvents.FirstOrDefaultAsync(e => e.Id == eventId
                                                                               && e.EventType == eventType
                                                                               && e.SourceType == sourceType
                                                                               && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                                              && e.DeliveryStatus ==OpenBankingConstants.EventDeliveryStatus.Processing);
+                                                                              && e.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Processing);
             if (eventEntity == null)
             {//No desired event in system
                 eventResult.ContinueTry = false;
@@ -433,14 +433,14 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             }
             //Process event, if ok, send event to yos
             return await eventService.SendEventToYos(eventEntity);
-          
+
         }
         catch (Exception ex)
         {
             //TODO:Özlem log this case
             result.Result = false;
             result.Message = ex.Message;
-            eventResult.StatusCode =  (int)HttpStatusCode.InternalServerError;
+            eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
             return result;
         }
     }

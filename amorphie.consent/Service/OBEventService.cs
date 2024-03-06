@@ -42,7 +42,7 @@ public class OBEventService : IOBEventService
         try
         {
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-            
+
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
                 await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, sourceNumber, _context, _mapper);
@@ -88,9 +88,9 @@ public class OBEventService : IOBEventService
             if (eventRetryInformation == null)
             {
                 result.Result = false;
-                result.Message =  "Invalid event type source type relation";
+                result.Message = "Invalid event type source type relation";
                 eventResult.ContinueTry = true;
-                eventResult.StatusCode =  (int)HttpStatusCode.BadRequest;
+                eventResult.StatusCode = (int)HttpStatusCode.BadRequest;
                 return result;
             }
 
@@ -144,7 +144,7 @@ public class OBEventService : IOBEventService
             }
             else
             {//Try count limit exceed. Do not send, set as undeliverable.
-                if (eventEntity.DeliveryStatus ==  OpenBankingConstants.EventDeliveryStatus.Processing)
+                if (eventEntity.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Processing)
                 {
                     //Mark as undeliverable
                     eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
@@ -155,13 +155,13 @@ public class OBEventService : IOBEventService
                 }
             }
 
-            eventResult.StatusCode =  (int)HttpStatusCode.OK;
+            eventResult.StatusCode = (int)HttpStatusCode.OK;
             return result;
         }
         catch (Exception ex)
         {
             //TODO:Ozlem log this case
-            eventResult.StatusCode =  (int)HttpStatusCode.InternalServerError;
+            eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
             result.Result = false;
             result.Message = ex.Message;
             return result;
@@ -198,11 +198,11 @@ public class OBEventService : IOBEventService
                 "EventType SourceType relation not found in system.";
             return result;
         }
-        
+
         //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
-        var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType 
-                                                  && e.SourceType == e.SourceType 
-                                                  && e.SourceNumber == sourceNumber 
+        var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType
+                                                  && e.SourceType == e.SourceType
+                                                  && e.SourceNumber == sourceNumber
                                                   && e.YOSCode == katilimciBilgisi.yosKod
                                                   && e.ModuleName == OpenBankingConstants.ModuleName.HHS
                                                   && e.DeliveryStatus != OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully);
@@ -225,7 +225,7 @@ public class OBEventService : IOBEventService
             ModifiedAt = DateTime.UtcNow
         };
         context.OBEvents.Add(eventEntity); //Add to get Id
-        eventEntity.EventNumber = eventEntity.Id.ToString(); 
+        eventEntity.EventNumber = eventEntity.Id.ToString();
         eventEntity.EventType = eventType;
         eventEntity.SourceType = sourceType;
         eventEntity.SourceNumber = sourceNumber;
