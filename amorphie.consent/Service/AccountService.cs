@@ -53,18 +53,26 @@ public class AccountService : IAccountService
                 d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
             var permissionType = havingDetailPermission ? "D" : "T";
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
 
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, permissionType,
-                syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
-            if (!accounts?.Any() ?? false)
+            var serviceResponse = await _accountClientService.GetAccounts(userTCKN, permissionType,
+                resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            if (serviceResponse is null 
+                ||  serviceResponse.hesapBilgileri is null
+                || !serviceResponse.hesapBilgileri.Any())
             {
                 //No account
-                result.Data = accounts;
+                result.Data = null;
                 return result;
             }
 
+            List<HesapBilgileriDto> accounts = serviceResponse.hesapBilgileri;
             //filter accounts
             accounts = accounts.Where(a =>
                     activeConsent.OBAccountConsentDetails.Any(d =>
@@ -75,7 +83,6 @@ public class AccountService : IAccountService
                 a.rizaNo = activeConsent.Id.ToString();
                 return a;
             }).ToList();
-
             result.Data = accounts;
         }
         catch (Exception e)
@@ -153,10 +160,15 @@ public class AccountService : IAccountService
             }
 
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
             //Get balances of customer from service
             List<BakiyeBilgileriDto>? balances =
-                await _accountClientService.GetBalances(userTCKN, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
+                await _accountClientService.GetBalances(userTCKN, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
             if (!balances?.Any() ?? false)
             {
                 //No balance
@@ -284,6 +296,20 @@ public class AccountService : IAccountService
         return result;
     }
 
+    private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon)
+    {
+        return (
+            syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+            syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
+            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
+            srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
+        );
+    }
+    
     private void SetDefaultAccountServiceParameters(
         ref int? syfKytSayi,
         ref int? syfNo,
