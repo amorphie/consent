@@ -1,6 +1,4 @@
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.Service.Interface;
@@ -19,25 +17,26 @@ public static class ModuleHelper
     public static RequestHeaderDto GetHeader(HttpContext httpContext)
     {
         RequestHeaderDto header = new RequestHeaderDto();
+        
         if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var traceValue))
         {
-            header.XRequestID = traceValue;
+            header.XRequestID = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
         {
-            header.XGroupID = traceValue;
+            header.XGroupID =  traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-ASPSP-Code", out traceValue))
         {
-            header.XASPSPCode = traceValue;
+            header.XASPSPCode =  traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-TPP-Code", out traceValue))
         {
-            header.XTPPCode = traceValue;
+            header.XTPPCode =  traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("PSU-Initiated", out traceValue))
         {
-            header.PSUInitiated = traceValue;
+            header.PSUInitiated =  traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("user_reference", out traceValue))
         {
@@ -179,7 +178,7 @@ public static class ModuleHelper
 
         // Load private key from file
         var key = LoadPrivateKeyFromVault(configuration);
-        return Jose.JWT.Encode(payload: data, key: key, JwsAlgorithm.RS256, extraHeaders: jwtHeader);
+        return JWT.Encode(payload: data, key: key, JwsAlgorithm.RS256, extraHeaders: jwtHeader);
     }
 
     private static RSA LoadPrivateKeyFromPemFile(string pemFilePath)
