@@ -334,6 +334,13 @@ public static class OpenBankingConstants
         public const string HBH = "HBH";
     }
 
+    public static class EventDeliveryStatus
+    {
+        public const int Processing = 1;
+        public const int Undeliverable = 2;
+        public const int CompletedSuccessfully = 3;
+    }
+
     public static class BKMServiceRole
     {
         public const string OBHS = "obhs";
