@@ -13,6 +13,7 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
+using System.Net;
 
 namespace amorphie.consent.Module;
 
@@ -427,7 +428,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             if (eventEntity == null)
             {//No desired event in system
                 eventResult.ContinueTry = false;
-                eventResult.StatusCode = Results.NoContent().GetHashCode();
+                eventResult.StatusCode = (int)HttpStatusCode.NoContent;
                 return result;
             }
             //Process event, if ok, send event to yos
@@ -438,7 +439,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         {
             //TODO:Özlem log this case
             result.Result = false;
-            eventResult.StatusCode = Results.Problem().GetHashCode();
+            result.Message = ex.Message;
+            eventResult.StatusCode =  (int)HttpStatusCode.InternalServerError;
             return result;
         }
     }

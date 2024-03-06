@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
@@ -36,7 +37,7 @@ public class OBEventService : IOBEventService
         KatilimciBilgisiDto katilimciBilgisi,
         string eventType,
         string sourceType,
-        string sourceNumber = null)
+        string sourceNumber)
     {
         try
         {
@@ -63,7 +64,7 @@ public class OBEventService : IOBEventService
                 await SendEventToYos(eventEntity);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             //TODO:Ozlem log this case
         }
@@ -89,7 +90,7 @@ public class OBEventService : IOBEventService
                 result.Result = false;
                 result.Message =  "Invalid event type source type relation";
                 eventResult.ContinueTry = true;
-                eventResult.StatusCode = Results.BadRequest().GetHashCode();
+                eventResult.StatusCode =  (int)HttpStatusCode.BadRequest;
                 return result;
             }
 
@@ -154,14 +155,15 @@ public class OBEventService : IOBEventService
                 }
             }
 
-            eventResult.StatusCode = Results.Ok().GetHashCode();
+            eventResult.StatusCode =  (int)HttpStatusCode.OK;
             return result;
         }
         catch (Exception ex)
         {
             //TODO:Ozlem log this case
-            eventResult.StatusCode = Results.Problem().GetHashCode();
+            eventResult.StatusCode =  (int)HttpStatusCode.InternalServerError;
             result.Result = false;
+            result.Message = ex.Message;
             return result;
         }
     }
