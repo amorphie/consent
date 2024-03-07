@@ -17,26 +17,26 @@ public static class ModuleHelper
     public static RequestHeaderDto GetHeader(HttpContext httpContext)
     {
         RequestHeaderDto header = new RequestHeaderDto();
-        
+
         if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var traceValue))
         {
             header.XRequestID = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
         {
-            header.XGroupID =  traceValue.ToString();
+            header.XGroupID = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-ASPSP-Code", out traceValue))
         {
-            header.XASPSPCode =  traceValue.ToString();
+            header.XASPSPCode = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("X-TPP-Code", out traceValue))
         {
-            header.XTPPCode =  traceValue.ToString();
+            header.XTPPCode = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("PSU-Initiated", out traceValue))
         {
-            header.PSUInitiated =  traceValue.ToString();
+            header.PSUInitiated = traceValue.ToString();
         }
         if (httpContext.Request.Headers.TryGetValue("user_reference", out traceValue))
         {
