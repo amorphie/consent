@@ -138,7 +138,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext,string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -469,7 +469,7 @@ public class AccountService : IAccountService
         string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
         SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
-    
+
     /// <summary>
     /// Set header x-total-count and link properties
     /// </summary>
