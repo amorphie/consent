@@ -183,11 +183,6 @@ public class AccountService : IAccountService
             balances = balances?.Where(b =>
                     activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
                 .ToList();
-            balances = balances?.Select(b =>
-            {
-                b.bky.krdHsp = null;
-                return b;
-            }).ToList();
             result.Data = balances;
             //Set header total count and link properties
             SetHeaderLinkForBalance(httpContext, serviceResponse.toplamBakiyeSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
