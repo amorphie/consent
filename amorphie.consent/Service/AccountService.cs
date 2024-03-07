@@ -138,7 +138,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -167,15 +167,15 @@ public class AccountService : IAccountService
                 srlmYon
             );
             //Get balances of customer from service
-            List<BakiyeBilgileriDto>? balances =
-                await _accountClientService.GetBalances(userTCKN, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
-            if (!balances?.Any() ?? false)
+            var serviceResponse = await _accountClientService.GetBalances(userTCKN, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            if (serviceResponse is null)
             {
                 //No balance
-                result.Data = balances;
+                result.Data = null;
                 return result;
             }
 
+            List<BakiyeBilgileriDto>? balances = serviceResponse.bakiyeBilgileri;
             //Get account consent from db
             var activeConsent = (Consent)authConsentResult.Data;
 
@@ -184,6 +184,8 @@ public class AccountService : IAccountService
                     activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
                 .ToList();
             result.Data = balances;
+            //Set header total count and link properties
+            SetHeaderLinkForBalance(httpContext, serviceResponse.toplamBakiyeSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -464,6 +466,36 @@ public class AccountService : IAccountService
     private static void SetHeaderLinkForAccount(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
         string srlmKrtr, string srlmYon)
     {
+        string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
+        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    private static void SetHeaderLinkForBalance(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
+        string srlmKrtr, string srlmYon)
+    {
+        string basePath = $"ohvps/hbh/s1.1/bakiye?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
+        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="basePath"></param>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    private static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
+    {
         httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
         if (totalCount == 0)
         {//No record
@@ -471,9 +503,6 @@ public class AccountService : IAccountService
         }
 
         int lastPageNumber = totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0);//Calculte lastpage number
-        //syfKytSayi=25& syfNo=1& srlmKrtr= hspRef & srlmYon=A
-        string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
-
         // Construct the Link header value with conditional inclusion of "first" and "last" cases
         string linkHeaderValue = string.Join(", ",
             (syfNo != 1) ? $"</{basePath}&syfNo=1>;rel=\"first\"" : null,
@@ -484,6 +513,5 @@ public class AccountService : IAccountService
         linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
         httpContext.Response.Headers["Link"] = linkHeaderValue;
     }
-
 
 }

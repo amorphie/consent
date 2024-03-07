@@ -32,6 +32,7 @@ public interface IAccountService
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
+    /// <param name="httpContext"></param>
     /// <param name="userTCKN">User tckn</param>
     /// <param name="yosCode">Yos Code</param>
     /// <param name="syfKytSayi">Page size</param>
@@ -39,7 +40,7 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
 
     /// <summary>

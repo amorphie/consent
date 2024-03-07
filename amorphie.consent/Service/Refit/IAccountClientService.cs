@@ -26,7 +26,7 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
-    Task<List<BakiyeBilgileriDto>> GetBalances(string customerId,
+    Task<ListBakiyeBilgileriDto?> GetBalances(string customerId,
         int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
         int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
         string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,

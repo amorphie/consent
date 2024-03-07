@@ -278,6 +278,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get authorized accounts from service 
     /// </summary>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Automapper object</param>
     /// <param name="accountService">Account service class</param>
@@ -316,7 +320,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference, header.XTPPCode, syfKytSayi, syfNo,
+                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference!, header.XTPPCode, syfKytSayi, syfNo,
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
@@ -371,7 +375,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference, yosCode: header.XTPPCode,
+                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference!, yosCode: header.XTPPCode,
                     hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
@@ -388,8 +392,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     /// <summary>
-    /// Get all balances from service 
+    /// Get all balances from service, filter by authorized accounts
     /// </summary>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page Nunber</param>
+    /// <param name="srlmKrtr">Sorting By</param>
+    /// <param name="srlmYon">Order By</param>
     /// <param name="customerId">Customer Id</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
@@ -427,14 +435,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, header.UserReference!,
                 header.XTPPCode, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-
-            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
