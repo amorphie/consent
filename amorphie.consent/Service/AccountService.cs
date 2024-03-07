@@ -25,7 +25,7 @@ public class AccountService : IAccountService
         _context = context;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -53,30 +53,37 @@ public class AccountService : IAccountService
                 d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
             var permissionType = havingDetailPermission ? "D" : "T";
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
 
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, permissionType,
-                syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
-            if (!accounts?.Any() ?? false)
+            var serviceResponse = await _accountClientService.GetAccounts(userTCKN, permissionType,
+                resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            if (serviceResponse is null)
             {
                 //No account
-                result.Data = accounts;
+                result.Data = null;
                 return result;
             }
 
+            List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
             //filter accounts
-            accounts = accounts.Where(a =>
+            accounts = accounts?.Where(a =>
                     activeConsent.OBAccountConsentDetails.Any(d =>
                         d.AccountReferences?.Contains(a.hspTml.hspRef) ?? false))
                 .ToList();
-            accounts = accounts.Select(a =>
+            accounts = accounts?.Select(a =>
             {
                 a.rizaNo = activeConsent.Id.ToString();
                 return a;
             }).ToList();
-
             result.Data = accounts;
+            //Set header total count and link properties
+            SetHeaderLinkForAccount(httpContext, serviceResponse.toplamHesapSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -153,10 +160,15 @@ public class AccountService : IAccountService
             }
 
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
             //Get balances of customer from service
             List<BakiyeBilgileriDto>? balances =
-                await _accountClientService.GetBalances(userTCKN, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
+                await _accountClientService.GetBalances(userTCKN, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
             if (!balances?.Any() ?? false)
             {
                 //No balance
@@ -282,6 +294,20 @@ public class AccountService : IAccountService
         }
 
         return result;
+    }
+
+    private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon)
+    {
+        return (
+            syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+            syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
+            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
+            srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
+        );
     }
 
     private void SetDefaultAccountServiceParameters(
@@ -424,6 +450,39 @@ public class AccountService : IAccountService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    private static void SetHeaderLinkForAccount(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
+        string srlmKrtr, string srlmYon)
+    {
+        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
+        if (totalCount == 0)
+        {//No record
+            return;
+        }
+
+        int lastPageNumber = totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0);//Calculte lastpage number
+        //syfKytSayi=25& syfNo=1& srlmKrtr= hspRef & srlmYon=A
+        string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
+
+        // Construct the Link header value with conditional inclusion of "first" and "last" cases
+        string linkHeaderValue = string.Join(", ",
+            (syfNo != 1) ? $"</{basePath}&syfNo=1>;rel=\"first\"" : null,
+            (syfNo > 1) ? $"</{basePath}&syfNo={syfNo - 1}>;rel=\"prev\"" : null,
+            (syfNo < lastPageNumber) ? $"</{basePath}&syfNo={syfNo + 1}>;rel=\"next\"" : null,
+            (syfNo != lastPageNumber) ? $"</{basePath}&syfNo={lastPageNumber}>;rel=\"last\"" : null);
+
+        linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
+        httpContext.Response.Headers["Link"] = linkHeaderValue;
     }
 
 

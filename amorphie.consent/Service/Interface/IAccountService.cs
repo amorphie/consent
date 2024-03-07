@@ -5,11 +5,11 @@ namespace amorphie.consent.Service.Interface;
 
 public interface IAccountService
 {
-
     /// <summary>
     /// Get authorized accounts of customer
     /// Checks user's account consent. If any, get accounts
     /// </summary>
+    /// <param name="httpContext"></param>
     /// <param name="userTCKN">User TCKN</param>
     /// <param name="yosCode"></param>
     /// <param name="syfKytSayi">Page size</param>
@@ -17,7 +17,7 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
     /// <summary>
     /// Get account of customer by account referenece number if authorized
