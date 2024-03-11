@@ -65,6 +65,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("updatePaymentState", UpdatePaymentState);
+         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
