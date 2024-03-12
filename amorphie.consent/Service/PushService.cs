@@ -1,30 +1,74 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.MessagingGateway;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.Service.Interface;
+using amorphie.consent.Service.Refit;
+using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 public class PushService : IPushService
 {
     private readonly IMessagingGateway _postPushService;
-    public PushService(IMessagingGateway postPushService)
+    private readonly ITagService _tagService;
+    private readonly IDeviceRecord _deviceRecord;
+    private readonly IMapper _mapper;
+    public PushService(IMessagingGateway postPushService, IMapper mapper, IDeviceRecord deviceRecord, ITagService tagService)
     {
         _postPushService = postPushService;
+        _tagService = tagService;
+        _deviceRecord = deviceRecord;
+        _mapper = mapper;
     }
-    public Task<IResult> OpenBankingSendPush(KimlikDto data, string consentId)
+    public async Task<IResult> OpenBankingSendPush(KimlikDto data, Guid consentId)
     {
-        if (data.kmlkVrs != null)
+        // var number = _tagService.GetCustomer(data.kmlkVrs);
+        var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
+        List<dynamic> customParameters = new();
+        customParameters.Add(new
         {
+            ConsentId = consentId.ToString(),
+            Type = "OpenBanking"
+        });
+        if (deviceRecordData.Result)
+        {
+            var sendPush = new SendPushDto
+            {
+                Sender = "AutoDetect",
+                CitizenshipNo = data.kmlkVrs,
+                Template = "OpenBankingTest",
+                TemplateParams = $"{{\"Type\":\"OpenBanking\",\"ConsentId\":\"{consentId}\"}}",
+                CustomParameters = JsonConvert.SerializeObject(customParameters),
+                SaveInbox = false,
+                Process = new ProcessInfo
+                {
+                    Name = "Açık Bankacılık",
+                    ItemId = consentId.ToString(),
+                    Action = "Eylem",
+                    Identity = "Kimlik"
+                }
+            };
+            var result = await _postPushService.SendPush(sendPush);
+
+            return Results.Ok();
+        }
+        else
+        {
+            var number = await _tagService.GetCustomer(data.kmlkVrs);
+            PhoneNumberDto phoneNumber = new();
+            var telNo = _mapper.Map(number, phoneNumber);
+
             var smsRequest = new SmsRequestDto
             {
                 Sender = "AutoDetect",
                 SmsType = "Otp",
                 Phone = new PhoneInfoDto
                 {
-                    CountryCode = 90,
-                    Prefix = 539,
-                    Number = 2314593,
+                    CountryCode = Int32.Parse(telNo.country),
+                    Prefix = Int32.Parse(telNo.prefix),
+                    Number = Int32.Parse(telNo.number),
                 },
                 Content = "şifresi ile giriş yapabilirsiniz",
                 Process = new ProcessInfoDto()
@@ -33,28 +77,8 @@ public class PushService : IPushService
                     Identity = "Otp Login"
                 },
             };
-            _postPushService.SendSms(smsRequest);
-            return Task.FromResult(Results.Ok() as IResult);
-        }
-        else
-        {
-            var sendPush = new SendPushDto
-            {
-                Sender = "AutoDetect",
-                CitizenshipNo = data.kmlkVrs,
-                Template = "Test 1",
-                TemplateParams = "",
-                SaveInbox = false,
-                Process = new ProcessInfo
-                {
-                    Name = "Açık Bankacılık",
-                    ItemId = consentId,
-                    Action = "Eylem",
-                    Identity = "Kimlik"
-                }
-            };
-            _postPushService.SendPush(sendPush);
-            return Task.FromResult(Results.Ok() as IResult);
+            await _postPushService.SendSms(smsRequest);
+            return Results.Ok();
         }
     }
 }
