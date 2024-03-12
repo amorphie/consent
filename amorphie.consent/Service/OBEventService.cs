@@ -17,14 +17,17 @@ public class OBEventService : IOBEventService
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
     private readonly IBKMService _bkmService;
+    private readonly ILogger<OBEventService> _logger;
 
     public OBEventService(ConsentDbContext context,
         IMapper mapper,
-        IBKMService bkmService)
+        IBKMService bkmService,
+        ILogger<OBEventService> logger)
     {
         _context = context;
         _mapper = mapper;
         _bkmService = bkmService;
+        _logger = logger;
     }
 
 
@@ -38,14 +41,14 @@ public class OBEventService : IOBEventService
         try
         {
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-
+            
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
                 await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, sourceNumber, _context, _mapper);
             if (!insertResult.Result || insertResult.Data == null)
             {
-                //TODO:Ozlem log this case
                 //Event could not be created in database
+                _logger.LogError("Event could not be created in database");
                 return;
             }
 
@@ -60,9 +63,9 @@ public class OBEventService : IOBEventService
                 await SendEventToYos(eventEntity);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            //TODO:Ozlem log this case
+            _logger.LogError(ex,"Error in DoEventProcess");
         }
     }
 
@@ -85,7 +88,7 @@ public class OBEventService : IOBEventService
             {
                 result.Result = false;
                 result.Message = "Invalid event type source type relation";
-                eventResult.ContinueTry = true;
+                eventResult.ContinueTry = false;
                 eventResult.StatusCode = (int)HttpStatusCode.BadRequest;
                 return result;
             }
@@ -156,7 +159,7 @@ public class OBEventService : IOBEventService
         }
         catch (Exception ex)
         {
-            //TODO:Ozlem log this case
+            _logger.LogError(ex, "Error in sending event to yos");
             eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
             result.Result = false;
             result.Message = ex.Message;
