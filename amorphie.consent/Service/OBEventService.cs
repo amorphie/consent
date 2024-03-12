@@ -3,15 +3,11 @@ using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.data;
-using amorphie.consent.data.Migrations;
 using amorphie.consent.Service.Interface;
-using amorphie.consent.Service.Refit;
 using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.consent.Service;
@@ -199,9 +195,9 @@ public class OBEventService : IOBEventService
             return result;
         }
 
-        //TODO:Özlem Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
+        //Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
         var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType
-                                                  && e.SourceType == e.SourceType
+                                                  && e.SourceType == sourceType
                                                   && e.SourceNumber == sourceNumber
                                                   && e.YOSCode == katilimciBilgisi.yosKod
                                                   && e.ModuleName == OpenBankingConstants.ModuleName.HHS

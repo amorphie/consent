@@ -11,11 +11,22 @@ public interface IOBAuthorizationService
 
     /// <summary>
     /// Get users yetkikullanildi state of account consents
+    /// Also Checks consent validity date
     /// </summary>
     /// <param name="userTCKN">Consent owner tckn</param>
     /// <param name="context"></param>
     /// <returns>User's account consents</returns>
     public Task<ApiResult> GetAuthUsedAccountConsentsOfUser(string userTCKN);
+
+    /// <summary>
+    /// Get yetki kullanıldı state of account consent by given id and permission.
+    /// Also Checks consent validity date
+    /// </summary>
+    /// <param name="consentId">Consent Id</param>
+    /// <param name="accountRef">To be checked account ref</param>
+    /// <param name="permissions">Desired permissions</param>
+    /// <returns>Account consent</returns>
+    public Task<ApiResult> GetAuthUsedAccountConsent(string consentId, string accountRef, List<string> permissions);
 
     /// <summary>
     /// Get User's authorized account consent.
