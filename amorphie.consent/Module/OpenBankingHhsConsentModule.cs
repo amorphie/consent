@@ -64,8 +64,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapPost("updatePaymentState", UpdatePaymentState);
-         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
+        routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
+        routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -1481,7 +1481,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [Topic(OpenBankingConstants.KafkaInformation.KafkaName,
         OpenBankingConstants.KafkaInformation.TopicName_PaymentStatusUpdated, true)]
     [HttpPost]
-    public async Task<IResult> UpdatePaymentState(
+    public async Task<IResult> PaymentStateChanged(
         [FromServices] ConsentDbContext context,
         [FromServices] IOBEventService obEventService,
         [FromServices] IYosInfoService yosInfoService,
@@ -1563,20 +1563,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
 
-  [Topic(OpenBankingConstants.KafkaInformation.KafkaName,
-        OpenBankingConstants.KafkaInformation.TopicName_BalanceUpdated, true)]
+    [Topic(OpenBankingConstants.KafkaInformation.KafkaName,
+          OpenBankingConstants.KafkaInformation.TopicName_BalanceUpdated, true)]
     [HttpPost]
     public async Task<IResult> BalanceChanged(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IOBEventService obEventService,
-        [FromServices] IOBAuthorizationService authorizationService,
-        HttpContext httpContext)
+          [FromServices] ConsentDbContext context,
+          [FromServices] IOBEventService obEventService,
+          [FromServices] IOBAuthorizationService authorizationService,
+          [FromServices] ILogger<OpenBankingHHSConsentModule> logger,
+          HttpContext httpContext)
     {
         try
         {
             //Get payment system record.
             BalanceChangedKafkaRecordDto? kafkaRecord = await httpContext.Deserialize<BalanceChangedKafkaRecordDto>();
-            if (kafkaRecord != null
+            if (kafkaRecord is { message.data: not null }
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.OPEN_BANKING_CONSENT_NUMBER)
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.HESAP_REF)
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.INSTANT_BALANCE_NOTIFICATION_PERMISSION)
@@ -1597,21 +1598,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
                 if (getConsentResult.Data == null)
                 {//No consent in system
+                    logger.LogWarning("Message read from Kafka. But no related consent data in system. {@KafkaRecord}", kafkaRecord);
                     return Results.NoContent();
                 }
                 var consent = (Consent)getConsentResult.Data;
                 var consentDetail = consent.OBAccountConsentDetails.FirstOrDefault();
                 if (consentDetail != null)
                 {//Do event process
-                    await obEventService.DoEventProcess(consent.Id.ToString(), new KatilimciBilgisiDto(){ hhsKod = consentDetail.HhsCode, yosKod = consentDetail.YosCode},
+                    await obEventService.DoEventProcess(consent.Id.ToString(), new KatilimciBilgisiDto() { hhsKod = consentDetail.HhsCode, yosKod = consentDetail.YosCode },
                         OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.Bakiye,
                         kafkaRecord.message.data.HESAP_REF);
                 }
-               
+
             }
             else
             {//Kafka record data is not  valid
-                //TODO:Ozlem Log this case
+                logger.LogWarning("Message read from Kafka. But not valid. {@KafkaRecord}", kafkaRecord);
                 return Results.BadRequest();
             }
 
@@ -1619,6 +1621,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error processing BalanceChanged request.");
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
