@@ -925,6 +925,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check consent validity for cancel consent
             await ProcessAccountConsentToCancelOrEnd(updateConsentState.Id, context);
             var entity = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             //Check consent validity
@@ -935,14 +936,26 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Set permissions
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Consent additional data is empty");
+            }
+            var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail is null)
+            {
+                return Results.BadRequest("Consent detail is empty");
+            }
             additionalData.rzBlg.rizaDrm = updateConsentState.State;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+            consentDetail.SendToServiceTryCount = 0;
+            consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-
+            
+            context.OBAccountConsentDetails.Update(consentDetail);
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -986,7 +999,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent state and additional data
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consentEntity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consentEntity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Consent additional data is empty");
+            }
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             consentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
@@ -996,6 +1013,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Set account reference
             var detail = consentEntity.OBAccountConsentDetails.FirstOrDefault();
+            if (detail is null)
+            {
+                return Results.BadRequest("Consent detail is empty");
+            }
             detail.AccountReferences = saveAccountReference.AccountReferences;
             detail.ModifiedAt = DateTime.UtcNow;
             context.OBAccountConsentDetails.Update(detail);
@@ -1007,7 +1028,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 await obEventService.DoEventProcess(consentEntity.Id.ToString(), additionalData.katilimciBlg,
                     OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi, consentEntity.Id.ToString());
             }
-
             return Results.Ok();
         }
         catch (Exception ex)

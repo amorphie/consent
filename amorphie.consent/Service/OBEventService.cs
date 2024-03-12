@@ -97,7 +97,7 @@ public class OBEventService : IOBEventService
                 {
                     //Mark as undeliverable
                     eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                     _context.OBEvents.Update(eventEntity);
                     await _context.SaveChangesAsync();
                     eventResult.ContinueTry = false;//sending process completed
@@ -115,7 +115,7 @@ public class OBEventService : IOBEventService
                 var bkmServiceResponse = await _bkmService.SendEventToYos(olayIstegi);
                 if (bkmServiceResponse.Result) //Success from service
                 {
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully;
                     eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     eventEntity.LastTryTime = DateTime.UtcNow;
@@ -131,7 +131,7 @@ public class OBEventService : IOBEventService
                     if (eventEntity.TryCount >= maxRetryCount)
                     {
                         //Mark as undeliverable
-                        eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                        eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                         eventResult.ContinueTry = false;//sending process completed
                     }
                 }
@@ -140,10 +140,10 @@ public class OBEventService : IOBEventService
             }
             else
             {//Try count limit exceed. Do not send, set as undeliverable.
-                if (eventEntity.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Processing)
+                if (eventEntity.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Processing)
                 {
                     //Mark as undeliverable
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     _context.OBEvents.Update(eventEntity);
                     await _context.SaveChangesAsync();
@@ -201,7 +201,7 @@ public class OBEventService : IOBEventService
                                                   && e.SourceNumber == sourceNumber
                                                   && e.YOSCode == katilimciBilgisi.yosKod
                                                   && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                  && e.DeliveryStatus != OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully);
+                                                  && e.DeliveryStatus != OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully);
         if (anyEventInDb)
         {
             result.Result = false;
@@ -213,7 +213,7 @@ public class OBEventService : IOBEventService
         {
             HHSCode = katilimciBilgisi.hhsKod,
             YOSCode = katilimciBilgisi.yosKod,
-            DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Processing,
+            DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing,
             TryCount = 0,
             LastTryTime = null,
             ModuleName = OpenBankingConstants.ModuleName.HHS,

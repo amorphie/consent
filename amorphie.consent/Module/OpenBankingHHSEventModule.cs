@@ -37,7 +37,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
         routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
         routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
-        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventSchedularProcess);
+        routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventSchedulerProcess);
         routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
 
@@ -163,7 +163,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                     : queryTime;
             int skipCount = syfNo.HasValue && syfNo.Value > 1 ? ((syfNo.Value - 1) * 100) : 0;
             var eventItems = (await context.OBEvents.Where(e =>
-                        e.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Undeliverable
+                        e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Undeliverable
                         && e.HHSCode == subscription.HHSCode
                         && e.YOSCode == subscription.YOSCode
                         && e.ModuleName == OpenBankingConstants.ModuleName.HHS
@@ -403,7 +403,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
     #endregion
 
-    protected async Task<ApiResult> DoEventSchedularProcess(
+    protected async Task<ApiResult> DoEventSchedulerProcess(
         string eventType,
         string sourceType,
         Guid eventId,
@@ -411,6 +411,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IOBEventService eventService,
+        [FromServices] ILogger<OpenBankingHHSEventModule> logger,
         HttpContext httpContext)
     {
         ApiResult result = new();
@@ -424,7 +425,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                                                               && e.EventType == eventType
                                                                               && e.SourceType == sourceType
                                                                               && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                                              && e.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Processing);
+                                                                              && e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Processing);
             if (eventEntity == null)
             {//No desired event in system
                 eventResult.ContinueTry = false;
@@ -437,7 +438,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         }
         catch (Exception ex)
         {
-            //TODO:Özlem log this case
+            logger.LogError(ex, "Error processing event scheduler");
             result.Result = false;
             result.Message = ex.Message;
             eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
