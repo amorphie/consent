@@ -1,5 +1,4 @@
 using amorphie.consent.core.DTO;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
 
 namespace amorphie.consent.Service.Interface;
 
@@ -55,9 +54,21 @@ public interface IAccountService
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
+    /// <param name="yosCode"></param>
     /// <param name="hspRef">Account Referans Number</param>
+    /// <param name="psuInitiated"></param>
+    /// <param name="hesapIslemBslTrh"></param>
+    /// <param name="hesapIslemBtsTrh"></param>
+    /// <param name="minIslTtr"></param>
+    /// <param name="mksIslTtr"></param>
+    /// <param name="brcAlc"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    /// <param name="userTCKN"></param>
     /// <returns>Transactions of Given Account Reference</returns>
-    public Task<ApiResult> GetTransactionsByHspRef(string userTCKN, string yosCode, string hspRef,
+    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext,string userTCKN, string yosCode, string hspRef,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,

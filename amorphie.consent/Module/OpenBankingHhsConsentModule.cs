@@ -491,7 +491,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
             //Get transactions from service
-            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(header.UserReference!,
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, header.UserReference!,
                 header.XTPPCode,
                 hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh, minIslTtr, mksIslTtr, brcAlc,
                 syfKytSayi, syfNo,
