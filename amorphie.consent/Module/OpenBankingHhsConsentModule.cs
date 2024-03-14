@@ -954,7 +954,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-            
+
             context.OBAccountConsentDetails.Update(consentDetail);
             context.Consents.Update(entity);
             await context.SaveChangesAsync();

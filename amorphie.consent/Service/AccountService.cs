@@ -297,7 +297,7 @@ public class AccountService : IAccountService
             );
             minIslTtr = (minIslTtr == string.Empty) ? null : minIslTtr;
             mksIslTtr = (mksIslTtr == string.Empty) ? null : mksIslTtr;
-            brcAlc =  (brcAlc == string.Empty) ? null : brcAlc;
+            brcAlc = (brcAlc == string.Empty) ? null : brcAlc;
             var serviceResponse = await _accountClientService.GetTransactionsByHspRef(
                 hspRef,
                 hesapIslemBslTrh.ToString("o"),
@@ -319,7 +319,7 @@ public class AccountService : IAccountService
                 result.Data = null;
                 return result;
             }
-            result.Data =  serviceResponse;
+            result.Data = serviceResponse;
             //Set header total count and link properties
             SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
 
@@ -332,7 +332,7 @@ public class AccountService : IAccountService
 
         return result;
     }
-    
+
 
     private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
         int? syfKytSayi,

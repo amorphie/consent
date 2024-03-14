@@ -41,7 +41,7 @@ public class OBEventService : IOBEventService
         try
         {
             //TODO:Özlem bu servisin başarılı olmaması durumu için ne yapılmalı düşün
-            
+
             //Generates OBEvent and OBEventItem entities in db.
             ApiResult insertResult =
                 await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, sourceNumber, _context, _mapper);
@@ -65,7 +65,7 @@ public class OBEventService : IOBEventService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,"Error in DoEventProcess");
+            _logger.LogError(ex, "Error in DoEventProcess");
         }
     }
 

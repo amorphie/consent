@@ -28,11 +28,11 @@ public class OBAccountConsentDetail : EntityBase
     public string? OhkMessage { get; set; }
     public string XRequestId { get; set; } = string.Empty;
     public string XGroupId { get; set; } = string.Empty;
-    
+
     public int? SendToServiceTryCount { get; set; }
     public DateTime? SendToServiceLastTryTime { get; set; }
     public int? SendToServiceDeliveryStatus { get; set; }
-    
+
     [ForeignKey("ConsentId")]
     public Consent Consent { get; set; }
 }
