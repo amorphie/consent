@@ -24,14 +24,22 @@ public class PushService : IPushService
     }
     public async Task<IResult> OpenBankingSendPush(KimlikDto data, Guid consentId)
     {
-        // var number = _tagService.GetCustomer(data.kmlkVrs);
-        var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
-        List<dynamic> customParameters = new();
-        customParameters.Add(new
+        string targetUrl;
+        var templateParameters = new Dictionary<string, object>();
+        var number = await _tagService.GetCustomer(data.kmlkVrs);
+        PhoneNumberDto phoneNumber = new();
+        var telNo = _mapper.Map(number, phoneNumber);
+        if (telNo.isOn == "X")
         {
-            ConsentId = consentId.ToString(),
-            Type = "OpenBanking"
-        });
+            targetUrl = $"ontest://openbanking?consentno={consentId}";
+        }
+        else
+        {
+            targetUrl = $"burgantest://openbanking?consentno={consentId}";
+        }
+        templateParameters["targetUrl"] = targetUrl;
+        var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
+
         if (deviceRecordData.Result)
         {
             var sendPush = new SendPushDto
@@ -39,8 +47,8 @@ public class PushService : IPushService
                 Sender = "AutoDetect",
                 CitizenshipNo = data.kmlkVrs,
                 Template = "OpenBankingTest",
-                TemplateParams = $"{{\"Type\":\"OpenBanking\",\"ConsentId\":\"{consentId}\"}}",
-                CustomParameters = JsonConvert.SerializeObject(customParameters),
+                TemplateParams = JsonConvert.SerializeObject(templateParameters),
+                CustomParameters = "",
                 SaveInbox = false,
                 Process = new ProcessInfo
                 {
@@ -56,9 +64,7 @@ public class PushService : IPushService
         }
         else
         {
-            var number = await _tagService.GetCustomer(data.kmlkVrs);
-            PhoneNumberDto phoneNumber = new();
-            var telNo = _mapper.Map(number, phoneNumber);
+
 
             var smsRequest = new SmsRequestDto
             {
