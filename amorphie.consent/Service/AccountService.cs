@@ -319,7 +319,7 @@ public class AccountService : IAccountService
                 result.Data = null;
                 return result;
             }
-            result.Data = serviceResponse.isller;
+            result.Data =  serviceResponse;
             //Set header total count and link properties
             SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
 

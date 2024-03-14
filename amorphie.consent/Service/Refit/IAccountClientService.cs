@@ -38,7 +38,7 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{hspRef}/islemler")]
-    Task<IslemBilgileriDto?> GetTransactionsByHspRef(
+    Task<IslemBilgileriServiceResponseDto?> GetTransactionsByHspRef(
         string hspRef,
         string hesapIslemBslTrh,
         string hesapIslemBtsTrh,

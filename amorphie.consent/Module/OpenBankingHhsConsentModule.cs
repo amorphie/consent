@@ -502,7 +502,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(accountApiResult.Message);
             }
 
-            return Results.Ok(accountApiResult.Data);
+            return Results.Ok(mapper.Map<IslemBilgileriDto>(accountApiResult.Data));
         }
         catch (Exception ex)
         {
