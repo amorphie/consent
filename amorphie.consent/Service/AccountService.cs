@@ -300,8 +300,8 @@ public class AccountService : IAccountService
             brcAlc =  (brcAlc == string.Empty) ? null : brcAlc;
             var serviceResponse = await _accountClientService.GetTransactionsByHspRef(
                 hspRef,
-                hesapIslemBslTrh.ToString("o", CultureInfo.InvariantCulture),
-                hesapIslemBtsTrh.ToString("o", CultureInfo.InvariantCulture),
+                hesapIslemBslTrh.ToString("o"),
+                hesapIslemBtsTrh.ToString("o"),
                 resolvedSyfKytSayi,
                 resolvedSyfNo,
                 resolvedSrlmKrtr,

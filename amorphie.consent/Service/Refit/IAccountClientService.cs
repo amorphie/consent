@@ -40,8 +40,8 @@ public interface IAccountClientService
     [Get("/hesaplar/{hspRef}/islemler")]
     Task<IslemBilgileriDto?> GetTransactionsByHspRef(
         string hspRef,
-        [AliasAs("hesapIslemBslTrh")] string hesapIslemBslTrh,
-        [AliasAs("hesapIslemBtsTrh")] string hesapIslemBtsTrh,
+        string hesapIslemBslTrh,
+        string hesapIslemBtsTrh,
         [AliasAs("syfKytSayi")] int syfKytSayi,
         [AliasAs("syfNo")] int syfNo,
         [AliasAs("srlmKrtr")] string srlmKrtr,
