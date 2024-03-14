@@ -1,3 +1,4 @@
+using System.Globalization;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
@@ -234,7 +235,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext,string userTCKN, string yosCode, string hspRef, string psuInitiated,DateTime hesapIslemBslTrh,
+    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
         string? minIslTtr,
         string? mksIslTtr,
@@ -267,9 +268,9 @@ public class AccountService : IAccountService
             //Check if post data is valid to process.
             var checkValidationResult =
                 IsDataValidToGetTransactionsByHspRef(activeConsent,
-                    psuInitiated, 
+                    psuInitiated,
                     hesapIslemBslTrh,
-                    hesapIslemBtsTrh, 
+                    hesapIslemBtsTrh,
                     minIslTtr,
                     mksIslTtr,
                     brcAlc,
@@ -294,18 +295,33 @@ public class AccountService : IAccountService
                 srlmKrtr,
                 srlmYon
             );
-            string requestUrl = GetTransactionRequestUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr,
-                resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
-            //Get transactions by account reference number from service
-            var serviceResponse = await _accountClientService.GetTransactionsByHspRef(requestUrl, permissionType, ohkTur,psuInitiated);
+            minIslTtr = (minIslTtr == string.Empty) ? null : minIslTtr;
+            mksIslTtr = (mksIslTtr == string.Empty) ? null : mksIslTtr;
+            brcAlc =  (brcAlc == string.Empty) ? null : brcAlc;
+            var serviceResponse = await _accountClientService.GetTransactionsByHspRef(
+                hspRef,
+                hesapIslemBslTrh.ToString("o", CultureInfo.InvariantCulture),
+                hesapIslemBtsTrh.ToString("o", CultureInfo.InvariantCulture),
+                resolvedSyfKytSayi,
+                resolvedSyfNo,
+                resolvedSrlmKrtr,
+                resolvedSrlmYon,
+                minIslTtr,
+                mksIslTtr,
+                brcAlc,
+                permissionType,
+                ohkTur,
+                psuInitiated);
+
             if (serviceResponse is null)
             {
                 //No transaction
                 result.Data = null;
                 return result;
             }
+            result.Data = serviceResponse.isller;
             //Set header total count and link properties
-            SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh,hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon,minIslTtr,mksIslTtr,brcAlc);
+            SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
 
         }
         catch (Exception e)
@@ -316,44 +332,7 @@ public class AccountService : IAccountService
 
         return result;
     }
-
-    /// <summary>
-    /// Transaction service request url generator according to query parameters.
-    /// </summary>
-    /// <param name="hspRef"></param>
-    /// <param name="hesapIslemBslTrh"></param>
-    /// <param name="hesapIslemBtsTrh"></param>
-    /// <param name="resolvedSyfKytSayi"></param>
-    /// <param name="resolvedSyfNo"></param>
-    /// <param name="resolvedSrlmKrtr"></param>
-    /// <param name="resolvedSrlmYon"></param>
-    /// <param name="minIslTtr"></param>
-    /// <param name="mksIslTtr"></param>
-    /// <param name="brcAlc"></param>
-    /// <returns></returns>
-    private string GetTransactionRequestUrl(string hspRef,DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, int resolvedSyfKytSayi, int resolvedSyfNo, string resolvedSrlmKrtr, string resolvedSrlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
-    {
-        string requestUrl = $"/hesaplar/{hspRef}/islemler?hesapIslemBslTrh={hesapIslemBslTrh}&hesapIslemBtsTrh={hesapIslemBtsTrh}&syfKytSayi={resolvedSyfKytSayi}&syfNo={resolvedSyfNo}&srlmKrtr={resolvedSrlmKrtr}&srlmYon={resolvedSrlmYon}";
-
-        if (minIslTtr != null)
-        {
-            requestUrl += $"&minIslTtr={minIslTtr}";
-        }
-
-        if (mksIslTtr != null)
-        {
-            requestUrl += $"&mksIslTtr={mksIslTtr}";
-        }
-
-        if (brcAlc != null)
-        {
-            requestUrl += $"&brcAlc={brcAlc}";
-        }
-
-        return requestUrl;
-    }
     
- 
 
     private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
         int? syfKytSayi,
@@ -369,7 +348,7 @@ public class AccountService : IAccountService
         );
     }
 
-    
+
 
     /// <summary>
     /// Checks if parameters valid to get transactions
@@ -546,7 +525,7 @@ public class AccountService : IAccountService
     /// <param name="minIslTtr"></param>
     /// <param name="mksIslTtr"></param>
     /// <param name="brcAlc"></param>
-    private static void SetHeaderLinkForTransaction(HttpContext httpContext, int totalCount, string hspRef,DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
+    private static void SetHeaderLinkForTransaction(HttpContext httpContext, int totalCount, string hspRef, DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
     {
         string basePath = GetTransactionBaseUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, srlmKrtr, srlmYon,
             minIslTtr, mksIslTtr, brcAlc);
@@ -580,7 +559,7 @@ public class AccountService : IAccountService
         linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
         httpContext.Response.Headers["Link"] = linkHeaderValue;
     }
-    
+
     /// <summary>
     /// Generates transaction call base url according to query paramaters
     /// </summary>
@@ -593,7 +572,7 @@ public class AccountService : IAccountService
     /// <param name="mksIslTtr"></param>
     /// <param name="brcAlc"></param>
     /// <returns>Transaction get call base url</returns>
-    private static string GetTransactionBaseUrl(string hspRef,DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, string resolvedSrlmKrtr, string resolvedSrlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
+    private static string GetTransactionBaseUrl(string hspRef, DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, string resolvedSrlmKrtr, string resolvedSrlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
     {
         string requestUrl = $"ohvps/hbh/s1.1/hesaplar/{hspRef}/islemler?hesapIslemBslTrh={hesapIslemBslTrh}&hesapIslemBtsTrh={hesapIslemBtsTrh}&srlmKrtr={resolvedSrlmKrtr}&srlmYon={resolvedSrlmYon}";
 

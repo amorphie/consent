@@ -37,6 +37,21 @@ public interface IAccountClientService
     Task<BakiyeBilgileriDto?> GetBalanceByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("")]
-    Task<IslemBilgileriDto?> GetTransactionsByHspRef( [Query] string requestUrl, [Header("izinTur")] string permissionType, [Header("ohkTur")] string ohkTur, [Header("PSU-Initiated")] string psuInitiated);
+    [Get("/hesaplar/{hspRef}/islemler")]
+    Task<IslemBilgileriDto?> GetTransactionsByHspRef(
+        string hspRef,
+        [AliasAs("hesapIslemBslTrh")] string hesapIslemBslTrh,
+        [AliasAs("hesapIslemBtsTrh")] string hesapIslemBtsTrh,
+        [AliasAs("syfKytSayi")] int syfKytSayi,
+        [AliasAs("syfNo")] int syfNo,
+        [AliasAs("srlmKrtr")] string srlmKrtr,
+        [AliasAs("srlmYon")] string srlmYon,
+        [AliasAs("minIslTtr")] string? minIslTtr,
+        [AliasAs("mksIslTtr")] string? mksIslTtr,
+        [AliasAs("brcAlc")] string? brcAlc,
+        [Header("izinTur")] string permissionType,
+        [Header("ohkTur")] string ohkTur,
+        [Header("PSU-Initiated")] string psuInitiated);
+
+
 }
