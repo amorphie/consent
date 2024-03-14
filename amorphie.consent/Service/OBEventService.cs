@@ -17,14 +17,17 @@ public class OBEventService : IOBEventService
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
     private readonly IBKMService _bkmService;
+    private readonly ILogger<OBEventService> _logger;
 
     public OBEventService(ConsentDbContext context,
         IMapper mapper,
-        IBKMService bkmService)
+        IBKMService bkmService,
+        ILogger<OBEventService> logger)
     {
         _context = context;
         _mapper = mapper;
         _bkmService = bkmService;
+        _logger = logger;
     }
 
 
@@ -44,8 +47,8 @@ public class OBEventService : IOBEventService
                 await CreateOBEventEntityObject(consentId, katilimciBilgisi, eventType, sourceType, sourceNumber, _context, _mapper);
             if (!insertResult.Result || insertResult.Data == null)
             {
-                //TODO:Ozlem log this case
                 //Event could not be created in database
+                _logger.LogError("Event could not be created in database");
                 return;
             }
 
@@ -60,9 +63,9 @@ public class OBEventService : IOBEventService
                 await SendEventToYos(eventEntity);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            //TODO:Ozlem log this case
+            _logger.LogError(ex, "Error in DoEventProcess");
         }
     }
 
@@ -85,7 +88,7 @@ public class OBEventService : IOBEventService
             {
                 result.Result = false;
                 result.Message = "Invalid event type source type relation";
-                eventResult.ContinueTry = true;
+                eventResult.ContinueTry = false;
                 eventResult.StatusCode = (int)HttpStatusCode.BadRequest;
                 return result;
             }
@@ -97,7 +100,7 @@ public class OBEventService : IOBEventService
                 {
                     //Mark as undeliverable
                     eventEntity.ModifiedAt = DateTime.UtcNow;
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                     _context.OBEvents.Update(eventEntity);
                     await _context.SaveChangesAsync();
                     eventResult.ContinueTry = false;//sending process completed
@@ -115,7 +118,7 @@ public class OBEventService : IOBEventService
                 var bkmServiceResponse = await _bkmService.SendEventToYos(olayIstegi);
                 if (bkmServiceResponse.Result) //Success from service
                 {
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully;
                     eventEntity.ResponseCode = (int)(bkmServiceResponse.Data ?? 200);
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     eventEntity.LastTryTime = DateTime.UtcNow;
@@ -131,7 +134,7 @@ public class OBEventService : IOBEventService
                     if (eventEntity.TryCount >= maxRetryCount)
                     {
                         //Mark as undeliverable
-                        eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                        eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                         eventResult.ContinueTry = false;//sending process completed
                     }
                 }
@@ -140,10 +143,10 @@ public class OBEventService : IOBEventService
             }
             else
             {//Try count limit exceed. Do not send, set as undeliverable.
-                if (eventEntity.DeliveryStatus == OpenBankingConstants.EventDeliveryStatus.Processing)
+                if (eventEntity.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Processing)
                 {
                     //Mark as undeliverable
-                    eventEntity.DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Undeliverable;
+                    eventEntity.DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                     eventEntity.ModifiedAt = DateTime.UtcNow;
                     _context.OBEvents.Update(eventEntity);
                     await _context.SaveChangesAsync();
@@ -156,7 +159,7 @@ public class OBEventService : IOBEventService
         }
         catch (Exception ex)
         {
-            //TODO:Ozlem log this case
+            _logger.LogError(ex, "Error in sending event to yos");
             eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
             result.Result = false;
             result.Message = ex.Message;
@@ -201,7 +204,7 @@ public class OBEventService : IOBEventService
                                                   && e.SourceNumber == sourceNumber
                                                   && e.YOSCode == katilimciBilgisi.yosKod
                                                   && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                  && e.DeliveryStatus != OpenBankingConstants.EventDeliveryStatus.CompletedSuccessfully);
+                                                  && e.DeliveryStatus != OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully);
         if (anyEventInDb)
         {
             result.Result = false;
@@ -213,7 +216,7 @@ public class OBEventService : IOBEventService
         {
             HHSCode = katilimciBilgisi.hhsKod,
             YOSCode = katilimciBilgisi.yosKod,
-            DeliveryStatus = OpenBankingConstants.EventDeliveryStatus.Processing,
+            DeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing,
             TryCount = 0,
             LastTryTime = null,
             ModuleName = OpenBankingConstants.ModuleName.HHS,
