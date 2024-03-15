@@ -1108,7 +1108,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
                 await pushService.OpenBankingSendPush(hesapBilgisiRizasi.kmlk, consentEntity.Id);
             }
 
@@ -1265,6 +1264,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
         try
@@ -1324,7 +1324,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
+                await pushService.OpenBankingSendPush(odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id);
             }
 
             var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi);
