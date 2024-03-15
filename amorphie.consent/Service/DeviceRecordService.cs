@@ -1,6 +1,6 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.Service.Refit;
-
+namespace amorphie.consent.Service;
 public class DeviceRecordService : IDeviceRecord
 {
     private readonly IDeviceRecordClientService _deviceRecordClientService;

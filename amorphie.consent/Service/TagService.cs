@@ -1,6 +1,6 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.Service.Refit;
-
+namespace amorphie.consent.Service;
 public class TagService : ITagService
 {
     private readonly ITagClientService _tagService;

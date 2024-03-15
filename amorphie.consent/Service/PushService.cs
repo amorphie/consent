@@ -8,7 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-
+namespace amorphie.consent.Service;
 public class PushService : IPushService
 {
     private readonly IMessagingGateway _postPushService;
@@ -29,7 +29,7 @@ public class PushService : IPushService
         ApiResult result = new();
         try
         {
-            string targetUrl;
+            string targetUrl = String.Empty;
             var templateParameters = new Dictionary<string, object>();
             var number = await _tagService.GetCustomer(data.kmlkVrs);
             PhoneNumberDto phoneNumber = new();
