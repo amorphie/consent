@@ -31,11 +31,11 @@ public class PushService : IPushService
         var telNo = _mapper.Map(number, phoneNumber);
         if (telNo.isOn == "X")
         {
-            targetUrl = $"ontest://openbanking?consentno={consentId}";
+            targetUrl = $"onmobil://openbanking?consentno={consentId}";
         }
         else
         {
-            targetUrl = $"burgantest://openbanking?consentno={consentId}";
+            targetUrl = $"burgan://openbanking?consentno={consentId}";
         }
         templateParameters["targetUrl"] = targetUrl;
         var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
@@ -79,7 +79,7 @@ public class PushService : IPushService
                 Content = "şifresi ile giriş yapabilirsiniz",
                 Process = new ProcessInfoDto()
                 {
-                    Name = "OpenBanking Money Transfer",
+                    Name = targetUrl,
                     Identity = "Otp Login"
                 },
             };
