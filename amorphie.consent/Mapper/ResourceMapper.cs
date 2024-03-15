@@ -7,6 +7,7 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.OpenBanking.YOS;
+using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.Model;
 using AutoMapper;
 using Newtonsoft.Json;
@@ -154,6 +155,8 @@ namespace amorphie.consent.Mapper
                 .ConvertUsing(src => src.Data as OBYosInfoDto);
             CreateMap<ApiResult, OBHhsInfoDto>()
                 .ConvertUsing(src => src.Data as OBHhsInfoDto);
+            CreateMap<ApiResult, PhoneNumberDto>()
+                .ConvertUsing(src => src.Data as PhoneNumberDto);
         }
     }
 

@@ -16,6 +16,8 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using Dapr;
+using System.Linq;
+using amorphie.consent.Service.Refit;
 
 namespace amorphie.consent.Module;
 
@@ -588,6 +590,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
         try
@@ -1057,7 +1060,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBAuthorizationService authorizationService,
-        HttpContext httpContext)
+        HttpContext httpContext,
+        [FromServices] IPushService pushService
+)
     {
         try
         {
@@ -1123,7 +1128,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
+                await pushService.OpenBankingSendPush(hesapBilgisiRizasi.kmlk, consentEntity.Id);
             }
 
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
@@ -1279,6 +1284,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
         try
@@ -1338,7 +1344,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
+                await pushService.OpenBankingSendPush(odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id);
             }
 
             var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi);
