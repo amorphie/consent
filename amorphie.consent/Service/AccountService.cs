@@ -48,10 +48,30 @@ public class AccountService : IAccountService
             }
 
             var activeConsent = (Consent)authConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Message = "Consent detail missing";
+                return result;
+            }
+            if (consentDetail.AccountReferences == null
+                || consentDetail.AccountReferences.Count == 0)
+            {
+                result.Result = false;
+                result.Message = "Consent does not have any authorized account reference.";
+                return result;
+            }
             //Set header values
-            bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
-                d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
-            var permissionType = havingDetailPermission ? "D" : "T";
+            bool havingDetailPermission = consentDetail.PermissionTypes.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi);
+            var permissionType = havingDetailPermission ? OpenBankingConstants.AccountServiceParameters.izinTurDetay
+                : OpenBankingConstants.AccountServiceParameters.izinTurTemel;
+            //Create service request body object
+            var requestObject = new GetHesapBilgileriRequestDto()
+            {
+                hspRefs = consentDetail.AccountReferences
+            };
+            
             // Build account service parameters
             var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
                 syfKytSayi,
@@ -61,8 +81,13 @@ public class AccountService : IAccountService
             );
 
             //Get accounts of customer from service
-            var serviceResponse = await _accountClientService.GetAccounts(userTCKN, permissionType,
-                resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
+                accountRefs:requestObject,
+                customerId:userTCKN,
+                syfKytSayi: resolvedSyfKytSayi, 
+                syfNo: resolvedSyfNo, 
+                srlmKrtr: resolvedSrlmKrtr,
+                srlmYon: resolvedSrlmYon);
             if (serviceResponse is null)
             {
                 //No account
@@ -71,11 +96,6 @@ public class AccountService : IAccountService
             }
 
             List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
-            //filter accounts
-            accounts = accounts?.Where(a =>
-                    activeConsent.OBAccountConsentDetails.Any(d =>
-                        d.AccountReferences?.Contains(a.hspTml.hspRef) ?? false))
-                .ToList();
             accounts = accounts?.Select(a =>
             {
                 a.rizaNo = activeConsent.Id.ToString();

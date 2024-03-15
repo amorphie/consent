@@ -12,9 +12,10 @@ public interface IAccountClientService
     Task<bool> IsCustomer(string customerId);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&izinTur={izinTur}")]
-    Task<ListHesapBilgileriDto?> GetAccounts(string customerId,
-        string izinTur,
+    [Post("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    Task<ListHesapBilgileriDto?> GetAccounts( [Header("izinTur")] string izinTur,
+        [Body] GetHesapBilgileriRequestDto accountRefs,
+        string customerId,
         int syfKytSayi,
         int syfNo,
         string srlmKrtr,

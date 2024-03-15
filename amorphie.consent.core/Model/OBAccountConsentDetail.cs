@@ -20,7 +20,7 @@ public class OBAccountConsentDetail : EntityBase
     public string? DiscreteGKDDefinitionType { get; set; }
     public string? DiscreteGKDDefinitionValue { get; set; }
     public DateTime? AuthCompletionTime { get; set; }
-    public List<string> PermissionTypes { get; set; } = new List<string>();
+    public List<string> PermissionTypes { get; set; } = new();
     public DateTime LastValidAccessDate { get; set; }
     public DateTime? TransactionInquiryStartTime { get; set; }
     public DateTime? TransactionInquiryEndTime { get; set; }
