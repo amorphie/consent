@@ -70,7 +70,7 @@ public class AccountService : IAccountService
             {
                 hspRefs = consentDetail.AccountReferences
             };
-            
+
             // Build account service parameters
             var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
                 syfKytSayi,
@@ -81,10 +81,10 @@ public class AccountService : IAccountService
 
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
-                accountRefs:requestObject,
-                customerId:userTCKN,
-                syfKytSayi: resolvedSyfKytSayi, 
-                syfNo: resolvedSyfNo, 
+                accountRefs: requestObject,
+                customerId: userTCKN,
+                syfKytSayi: resolvedSyfKytSayi,
+                syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
             if (serviceResponse is null)
@@ -177,7 +177,7 @@ public class AccountService : IAccountService
                 //Error or no consent in db
                 return authConsentResult;
             }
-            
+
             var activeConsent = (Consent)authConsentResult.Data;
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
             if (consentDetail == null)
@@ -207,10 +207,10 @@ public class AccountService : IAccountService
                 hspRefs = consentDetail.AccountReferences
             };
             //Get balances of customer from service
-            var serviceResponse = await _accountClientService.GetBalances(accountRefs:requestObject,
-                customerId:userTCKN,
-                syfKytSayi: resolvedSyfKytSayi, 
-                syfNo: resolvedSyfNo, 
+            var serviceResponse = await _accountClientService.GetBalances(accountRefs: requestObject,
+                customerId: userTCKN,
+                syfKytSayi: resolvedSyfKytSayi,
+                syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
             if (serviceResponse is null)
