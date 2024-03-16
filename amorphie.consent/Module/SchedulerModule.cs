@@ -28,6 +28,7 @@ public class SchedulerModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
     }
     [HttpPost("/amorphie-scheduler")]
     public async Task<IResult> Scheduler(
+        PushService pushService
    )
     {
         Console.WriteLine("Scheduler çalıştı.");

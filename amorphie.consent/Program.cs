@@ -39,9 +39,11 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IBKMService, BKMService>();
-builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IOBEventService, OBEventService>();
 builder.Services.AddScoped<IOBAuthorizationService, OBAuthorizationService>();
+builder.Services.AddSingleton<ITagService, TagService>();
+builder.Services.AddSingleton<IPushService, PushService>();
+builder.Services.AddSingleton<IDeviceRecord, DeviceRecordService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -127,6 +129,12 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
     .AddPolicyHandler(retryPolicy);
+builder.Services
+.AddRefitClient<IDeviceRecordClientService>()
+.ConfigureHttpClient(c =>
+    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
+.AddPolicyHandler(retryPolicy);
 
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
 var handler = new HttpClientHandler();
@@ -141,6 +149,16 @@ builder.Services
     })
     .ConfigurePrimaryHttpMessageHandler(() => handler)
     .AddPolicyHandler(retryPolicy);
+
+builder.Services
+.AddRefitClient<ITagClientService>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TagUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
+})
+.ConfigurePrimaryHttpMessageHandler(() => handler)
+.AddPolicyHandler(retryPolicy);
 
 builder.Services
 .AddRefitClient<IMessagingGateway>()
