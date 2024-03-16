@@ -1,4 +1,3 @@
-using System.Globalization;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
@@ -67,7 +66,7 @@ public class AccountService : IAccountService
             var permissionType = havingDetailPermission ? OpenBankingConstants.AccountServiceParameters.izinTurDetay
                 : OpenBankingConstants.AccountServiceParameters.izinTurTemel;
             //Create service request body object
-            var requestObject = new GetHesapBilgileriRequestDto()
+            var requestObject = new GetByAccountRefRequestDto()
             {
                 hspRefs = consentDetail.AccountReferences
             };
@@ -178,6 +177,22 @@ public class AccountService : IAccountService
                 //Error or no consent in db
                 return authConsentResult;
             }
+            
+            var activeConsent = (Consent)authConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Message = "Consent detail missing";
+                return result;
+            }
+            if (consentDetail.AccountReferences == null
+                || consentDetail.AccountReferences.Count == 0)
+            {
+                result.Result = false;
+                result.Message = "Consent does not have any authorized account reference.";
+                return result;
+            }
 
             // Build account service parameters
             var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
@@ -186,8 +201,18 @@ public class AccountService : IAccountService
                 srlmKrtr,
                 srlmYon
             );
+            //Create service request body object
+            var requestObject = new GetByAccountRefRequestDto()
+            {
+                hspRefs = consentDetail.AccountReferences
+            };
             //Get balances of customer from service
-            var serviceResponse = await _accountClientService.GetBalances(userTCKN, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            var serviceResponse = await _accountClientService.GetBalances(accountRefs:requestObject,
+                customerId:userTCKN,
+                syfKytSayi: resolvedSyfKytSayi, 
+                syfNo: resolvedSyfNo, 
+                srlmKrtr: resolvedSrlmKrtr,
+                srlmYon: resolvedSrlmYon);
             if (serviceResponse is null)
             {
                 //No balance
@@ -196,13 +221,6 @@ public class AccountService : IAccountService
             }
 
             List<BakiyeBilgileriDto>? balances = serviceResponse.bakiyeBilgileri;
-            //Get account consent from db
-            var activeConsent = (Consent)authConsentResult.Data;
-
-            //filter balances
-            balances = balances?.Where(b =>
-                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
-                .ToList();
             result.Data = balances;
             //Set header total count and link properties
             SetHeaderLinkForBalance(httpContext, serviceResponse.toplamBakiyeSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
