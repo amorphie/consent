@@ -385,6 +385,8 @@ public static class OpenBankingConstants
         public const string srlmKrtrAccount = "hspRef";
         public const string srlmKrtrTransaction = "islGrckZaman";
         public const string srlmYon = "A";
+        public const string izinTurDetay = "D";
+        public const string izinTurTemel = "T";
 
     }
 
