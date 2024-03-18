@@ -867,7 +867,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 return Results.BadRequest(isDataValidResult.Message);
             }
-            
+
             var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity!.AdditionalData);
             //Check and set sender account
             if (additionalData!.odmBsltm.gon == null
@@ -1262,14 +1262,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Revoke token
             await tokenService.RevokeConsentToken(rizaNo);
-            
+
             //Send event to yos
             await eventService.DoEventProcess(entity.Id.ToString(),
                 additionalData.katilimciBlg,
                eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
                sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
                sourceNumber: entity.Id.ToString());
-            
+
             return Results.Ok();
         }
         catch (Exception ex)

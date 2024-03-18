@@ -201,7 +201,7 @@ public class OBEventService : IOBEventService
             //Save entity changes
             _context.OBSystemEvents.Update(systemEventEntity);
             await _context.SaveChangesAsync();
-            
+
             return continueTry;
         }
         catch (Exception ex)
@@ -211,7 +211,7 @@ public class OBEventService : IOBEventService
         }
     }
 
-    
+
     /// <summary>
     /// Creates and insert event entity according to given data
     /// </summary>

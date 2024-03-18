@@ -455,7 +455,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 if (!systemEventEntity.IsCompleted) //Already processed
                 {
                     //Do system event process
-                   await eventService.DoHhsSystemEventProcess(systemEventEntity.Id);
+                    await eventService.DoHhsSystemEventProcess(systemEventEntity.Id);
                 }
 
                 return Results.Accepted();
@@ -551,7 +551,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         var continueTry = true;
         try
         {
-           return await eventService.DoHhsSystemEventProcess(systemEventId);
+            return await eventService.DoHhsSystemEventProcess(systemEventId);
         }
         catch (Exception ex)
         {

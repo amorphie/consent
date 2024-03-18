@@ -189,7 +189,7 @@ public class YosInfoService : IYosInfoService
                 result.Message = "Yos info is empty";
                 return result;
             }
-            
+
             var yosInfoEntity = await _context.OBYosInfos
                 .FirstOrDefaultAsync(y => y.Kod == yosCode);
 
