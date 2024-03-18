@@ -10,6 +10,7 @@ using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace amorphie.consent.Service;
 
@@ -17,12 +18,18 @@ public class YosInfoService : IYosInfoService
 {
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IBKMService _bkmService;
+    private readonly ILogger<OBEventService> _logger;
 
     public YosInfoService(ConsentDbContext context,
-        IMapper mapper)
+        IMapper mapper,
+        IBKMService bkmService,
+        ILogger<OBEventService> logger)
     {
         _context = context;
         _mapper = mapper;
+        _bkmService = bkmService;
+        _logger = logger;
     }
 
 
@@ -154,6 +161,61 @@ public class YosInfoService : IYosInfoService
                 result.Data = false;
                 return result;
             }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
+    public async Task<ApiResult> SaveYos(string yosCode)
+    {
+        ApiResult result = new();
+        try
+        {
+            //Get yos from bkm
+            var getYosResult = await _bkmService.GetYos(yosCode);
+            if (!getYosResult.Result)//error in service
+            {
+                return getYosResult;
+            }
+
+            if (getYosResult.Data == null)//Yos data is null
+            {
+                result.Result = false;
+                result.Message = "Yos info is empty";
+                return result;
+            }
+            
+            var yosInfoEntity = await _context.OBYosInfos
+                .FirstOrDefaultAsync(y => y.Kod == yosCode);
+
+            OBYosInfoDto yosInfoDto = (OBYosInfoDto)getYosResult.Data;
+            if (yosInfoEntity != null)//Update current yos
+            {
+                yosInfoDto.Id = yosInfoEntity.Id;
+                _mapper.Map(yosInfoDto, yosInfoEntity);
+
+                yosInfoEntity.LogoBilgileri = JsonConvert.SerializeObject(yosInfoDto.logoBilgileri);
+                yosInfoEntity.ApiBilgileri = JsonConvert.SerializeObject(yosInfoDto.apiBilgileri);
+                yosInfoEntity.Adresler = JsonConvert.SerializeObject(yosInfoDto.adresler);
+                yosInfoEntity.ModifiedAt = DateTime.UtcNow;
+
+                _context.OBYosInfos.Update(yosInfoEntity);
+            }
+            else
+            {//Insert yos
+                yosInfoEntity = _mapper.Map<OBYosInfo>(yosInfoDto);
+                yosInfoEntity.LogoBilgileri = JsonConvert.SerializeObject(yosInfoDto.logoBilgileri);
+                yosInfoEntity.ApiBilgileri = JsonConvert.SerializeObject(yosInfoDto.apiBilgileri);
+                yosInfoEntity.CreatedAt = DateTime.UtcNow;
+                yosInfoEntity.ModifiedAt = DateTime.UtcNow;
+                _context.OBYosInfos.Add(yosInfoEntity);
+            }
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {

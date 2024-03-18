@@ -378,6 +378,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             {
                 return Results.NotFound();
             }
+
             ApiResult dataValidationResult = IsDataValidToDeleteEventSubsrciption(entity); //Check data validation
             if (!dataValidationResult.Result)
             {
@@ -401,52 +402,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
     #endregion
 
-    protected async Task<EventApiResultDto> DoEventSchedulerProcess(
-        string eventType,
-        string sourceType,
-        Guid eventId,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IConfiguration configuration,
-        [FromServices] IOBEventService eventService,
-        [FromServices] ILogger<OpenBankingHHSEventModule> logger,
-        HttpContext httpContext)
-    {
-        var eventResult = new EventApiResultDto();
-        try
-        {
-
-            //Get event from database
-            var eventEntity = await context.OBEvents.FirstOrDefaultAsync(e => e.Id == eventId
-                                                                              && e.EventType == eventType
-                                                                              && e.SourceType == sourceType
-                                                                              && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                                              && e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Processing);
-            if (eventEntity == null)
-            {//No desired event in system
-                eventResult.ContinueTry = false;
-                eventResult.StatusCode = (int)HttpStatusCode.NoContent;
-                return eventResult;
-            }
-            //Process event, if ok, send event to yos
-            var sendToYosResult = await eventService.SendEventToYos(eventEntity);
-            if (sendToYosResult.Data != null)
-            {
-                return (EventApiResultDto)sendToYosResult.Data;
-            }
-            return eventResult;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error processing event scheduler");
-            eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
-            return eventResult;
-        }
-    }
-
 
     /// <summary>
-    /// does post sistem-olay-dinleme process.
+    /// BKM calls this method post sistem-olay-dinleme process.
     /// Creates system event record.
     /// </summary>
     /// <param name="olayIstegi">To be created system event request object</param>
@@ -454,7 +412,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <param name="mapper"></param>
     /// <param name="configuration"></param>
     /// <param name="yosInfoService"></param>
+    /// <param name="yosInfoModule"></param>
+    /// <param name="logger"></param>
     /// <param name="httpContext"></param>
+    /// <param name="eventService"></param>
     /// <returns>Does successfully get the system event message</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -464,6 +425,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBEventService eventService,
+        [FromServices] ILogger<OpenBankingHHSEventModule> logger,
         HttpContext httpContext)
     {
         try
@@ -480,20 +443,26 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
             //Check if any system record in database with same data
             var header = ModuleHelper.GetHeader(httpContext); //Get header object
-            var anyDBRecords = await context.OBSystemEvents.AnyAsync(se =>
+            var systemEventEntity = await context.OBSystemEvents.FirstOrDefaultAsync(se =>
                 se.YOSCode == olayIstegi.katilimciBlg.yosKod
                 && se.ModuleName == OpenBankingConstants.ModuleName.HHS
                 && se.EventType == olayIstegi.olaylar[0].olayTipi
                 && se.SourceType == olayIstegi.olaylar[0].kaynakTipi
                 && se.SourceNumber == olayIstegi.olaylar[0].kaynakNo
                 && se.XRequestId == header.XRequestID);
-            if (anyDBRecords)
+            if (systemEventEntity != null) //Event already in system
             {
+                if (!systemEventEntity.IsCompleted) //Already processed
+                {
+                    //Do system event process
+                   await eventService.DoHhsSystemEventProcess(systemEventEntity.Id);
+                }
+
                 return Results.Accepted();
             }
 
             //Generate entity object
-            var systemEventEntity = new OBSystemEvent()
+            systemEventEntity = new OBSystemEvent()
             {
                 YOSCode = olayIstegi.katilimciBlg.yosKod,
                 HHSCode = olayIstegi.katilimciBlg.hhsKod,
@@ -505,17 +474,89 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 EventNumber = olayIstegi.olaylar[0].olayNo,
                 SourceType = olayIstegi.olaylar[0].kaynakTipi,
                 SourceNumber = olayIstegi.olaylar[0].kaynakNo,
+                TryCount = 0,
                 CreatedAt = DateTime.UtcNow,
                 ModifiedAt = DateTime.UtcNow
             };
             //save entity
             context.OBSystemEvents.Add(systemEventEntity);
             await context.SaveChangesAsync();
+
+            //Do system event process
+            await eventService.DoHhsSystemEventProcess(systemEventEntity.Id);
             return Results.Accepted();
         }
         catch (Exception ex)
         {
             return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    protected async Task<EventApiResultDto> DoEventSchedulerProcess(
+        string eventType,
+        string sourceType,
+        Guid eventId,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IOBEventService eventService,
+        [FromServices] ILogger<OpenBankingHHSEventModule> logger,
+        HttpContext httpContext)
+    {
+        var eventResult = new EventApiResultDto();
+        try
+        {
+            //Get event from database
+            var eventEntity = await context.OBEvents.FirstOrDefaultAsync(e => e.Id == eventId
+                                                                              && e.EventType == eventType
+                                                                              && e.SourceType == sourceType
+                                                                              && e.ModuleName ==
+                                                                              OpenBankingConstants.ModuleName.HHS
+                                                                              && e.DeliveryStatus ==
+                                                                              OpenBankingConstants.RecordDeliveryStatus
+                                                                                  .Processing);
+            if (eventEntity == null)
+            {
+                //No desired event in system
+                eventResult.ContinueTry = false;
+                eventResult.StatusCode = (int)HttpStatusCode.NoContent;
+                return eventResult;
+            }
+
+            //Process event, if ok, send event to yos
+            var sendToYosResult = await eventService.SendEventToYos(eventEntity);
+            if (sendToYosResult.Data != null)
+            {
+                return (EventApiResultDto)sendToYosResult.Data;
+            }
+
+            return eventResult;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing event scheduler");
+            eventResult.StatusCode = (int)HttpStatusCode.InternalServerError;
+            return eventResult;
+        }
+    }
+
+
+    protected async Task<bool> DoHhsSystemEventSchedulerProcess(
+        Guid systemEventId,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IOBEventService eventService,
+        [FromServices] ILogger<OpenBankingHHSEventModule> logger)
+    {
+        var continueTry = true;
+        try
+        {
+           return await eventService.DoHhsSystemEventProcess(systemEventId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing system event.");
+            return continueTry;
         }
     }
 
