@@ -16,8 +16,6 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using Dapr;
-using System.Linq;
-using amorphie.consent.Service.Refit;
 
 namespace amorphie.consent.Module;
 
@@ -1809,7 +1807,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1993,7 +1991,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -2184,7 +2182,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(odemeEmriIstegi.gkd))
+        if (!IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -3055,10 +3053,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Checks if gkd data is valid
     /// </summary>
     /// <param name="gkd">To be checked data</param>
+    /// <param name="kimlik">Identity Information in consent</param>
     /// <returns>Is gkd data valid</returns>
-    private static bool IsGkdValid(GkdDto gkd)
+    private static bool IsGkdValid(GkdDto gkd, KimlikDto kimlik)
     {
-        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
+        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr }, kimlik)
                && gkd.yetTmmZmn != DateTime.MinValue;
     }
 
@@ -3066,8 +3065,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Checks if gkd data is valid
     /// </summary>
     /// <param name="gkd">To be checked data</param>
+    /// <param name="kimlik">Identity Information in consent</param>
     /// <returns>Is gkd data valid</returns>
-    private static bool IsGkdValid(GkdRequestDto gkd)
+    private static bool IsGkdValid(GkdRequestDto gkd, KimlikDto kimlik)
     {
         if (!string.IsNullOrEmpty(gkd.yetYntm)) //YetYntm is set
         {
@@ -3123,6 +3123,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                         if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 26)
                             return false;
                         break;
+                }
+                //From Document:
+                //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
+                //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
+                //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
+                if (kimlik.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
+                    && kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger)
+                {
+                    return false;
                 }
             }
         }
