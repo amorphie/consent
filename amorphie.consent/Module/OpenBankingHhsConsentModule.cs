@@ -869,16 +869,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 return Results.BadRequest(isDataValidResult.Message);
             }
-
-            //Set account reference
-            var detail = entity.OBPaymentConsentDetails.FirstOrDefault();
-            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
+            
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity!.AdditionalData);
             //Check and set sender account
-            if (additionalData.odmBsltm.gon == null
+            if (additionalData!.odmBsltm.gon == null
                 || (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
                     && string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef)))
             {
                 additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
+                //Set account reference
+                var detail = entity!.OBPaymentConsentDetails.FirstOrDefault();
+                if (detail == null)
+                {
+                    return Results.Problem("There is no payment consent detail data in the system.");
+                }
                 detail.SenderTitle = savePCStatusSenderAccount.SenderAccount?.unv;
                 detail.SenderAccountNumber = savePCStatusSenderAccount.SenderAccount?.hspNo;
                 detail.SenderAccountReference = savePCStatusSenderAccount.SenderAccount?.hspRef;
@@ -902,7 +906,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 await obEventService.DoEventProcess(entity.Id.ToString(), additionalData.katilimciBlg,
                     OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi, entity.Id.ToString());
             }
-
             return Results.Ok(resultData);
         }
         catch (Exception ex)
@@ -2654,10 +2657,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check if sender account is already selected in db
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+        if (additionalData == null)
+        {
+            result.Result = false;
+            result.Message = "Consent additional data is empty";
+            return result;
+        }
+        //Check if sender account is set in db
         bool isSenderAccountSet = !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspNo) ||
                                   !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspRef);
         if (!isSenderAccountSet
             && (savePcStatusSenderAccount.SenderAccount == null
+                || string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.unv)
                 || (string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
                     && string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspNo))))
         {
