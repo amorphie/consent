@@ -23,7 +23,7 @@ public class OpenBankingHhsSchedulerModule : BaseBBTRoute<OpenBankingConsentDto,
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapPost("/SendAccountConsentToAccountService/{consentId}",SendAccountConsentToAccountService);
+        routeGroupBuilder.MapPost("/SendAccountConsentToAccountService/{consentId}", SendAccountConsentToAccountService);
     }
 
 

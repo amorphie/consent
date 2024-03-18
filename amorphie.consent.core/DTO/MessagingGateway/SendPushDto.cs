@@ -6,6 +6,8 @@ namespace amorphie.consent.core.DTO.MessagingGateway
         public string CitizenshipNo { get; set; }
         public string Template { get; set; }
         public string TemplateParams { get; set; }
+        public string CustomParameters { get; set; }
+
         public bool SaveInbox { get; set; }
         public ProcessInfo Process { get; set; }
     }
