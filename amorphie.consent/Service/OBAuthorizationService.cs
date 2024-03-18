@@ -57,6 +57,39 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
+    public async Task<ApiResult> GetAuthUsedAccountConsent(string consentId, string accountRef, List<string> permissions)
+    {
+        ApiResult result = new();
+        try
+        {
+            var consentState = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
+            var today = DateTime.UtcNow;
+            var activeConsent = (await _context.Consents
+                    .Include(c => c.OBAccountConsentDetails)
+                    .AsNoTracking()
+                    .Where(c => c.Id.ToString() == consentId
+                                && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                                && c.State == consentState
+                                && c.OBAccountConsentDetails.Any(i =>
+                                    i.LastValidAccessDate > today
+                                    && i.UserType == OpenBankingConstants.OHKTur.Bireysel
+                                    && i.AccountReferences != null
+                                    && i.AccountReferences.Contains(accountRef)))
+                    .ToListAsync())
+                ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+                .FirstOrDefault();
+            result.Data = activeConsent;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
+
     public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions)
     {
         ApiResult result = new();

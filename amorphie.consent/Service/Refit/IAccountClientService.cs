@@ -12,41 +12,48 @@ public interface IAccountClientService
     Task<bool> IsCustomer(string customerId);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&izinTur={izinTur}")]
-    Task<List<HesapBilgileriDto>> GetAccounts(string customerId,
-        string izinTur,
-        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
-        int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
-        string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
-        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
+    [Post("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    Task<ListHesapBilgileriDto?> GetAccounts([Header("izinTur")] string izinTur,
+        [Body] GetByAccountRefRequestDto accountRefs,
+        string customerId,
+        int syfKytSayi,
+        int syfNo,
+        string srlmKrtr,
+        string srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
     Task<HesapBilgileriDto?> GetAccountByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
-    Task<List<BakiyeBilgileriDto>> GetBalances(string customerId,
-        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
-        int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
-        string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
-        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon);
+    [Post("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    Task<ListBakiyeBilgileriDto?> GetBalances([Body] GetByAccountRefRequestDto accountRefs,
+        string customerId,
+        int syfKytSayi,
+        int syfNo,
+        string srlmKrtr,
+        string srlmYon);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye/{hspRef}")]
     Task<BakiyeBilgileriDto?> GetBalanceByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Get("/hesaplar/{hspRef}/islemler?hesapIslemBslTrh={hesapIslemBslTrh}&hesapIslemBtsTrh={hesapIslemBtsTrh}&syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&izinTur={izinTur}")]
-    Task<IslemBilgileriDto?> GetTransactionsByHspRef(string hspRef,
-        DateTime hesapIslemBslTrh,
-        DateTime hesapIslemBtsTrh,
-        string izinTur,
-        int syfKytSayi = OpenBankingConstants.AccountServiceParameters.syfKytSayi,
-        int syfNo = OpenBankingConstants.AccountServiceParameters.syfNo,
-        string srlmKrtr = OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
-        string srlmYon = OpenBankingConstants.AccountServiceParameters.srlmYon,
-        [Header("minIslTtr")] string minIslTtr = null,
-        [Header("mksIslTtr")] string mksIslTtr = null,
-        [Header("brcAlc")] string brcAlc = null);
+    [Get("/hesaplar/{hspRef}/islemler")]
+    Task<IslemBilgileriServiceResponseDto?> GetTransactionsByHspRef(
+        string hspRef,
+        string hesapIslemBslTrh,
+        string hesapIslemBtsTrh,
+        [AliasAs("syfKytSayi")] int syfKytSayi,
+        [AliasAs("syfNo")] int syfNo,
+        [AliasAs("srlmKrtr")] string srlmKrtr,
+        [AliasAs("srlmYon")] string srlmYon,
+        [AliasAs("minIslTtr")] string? minIslTtr,
+        [AliasAs("mksIslTtr")] string? mksIslTtr,
+        [AliasAs("brcAlc")] string? brcAlc,
+        [Header("izinTur")] string permissionType,
+        [Header("ohkTur")] string ohkTur,
+        [Header("PSU-Initiated")] string psuInitiated);
+
+
 }

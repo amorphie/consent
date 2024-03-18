@@ -10,9 +10,9 @@ public static class HttpContextExtensions
     /// <param name="httpContext">HttpContext</param>
     /// <typeparam name="TModel">Serialized object type</typeparam>
     /// <returns>Serialized object</returns>
-    public static async Task<TModel> Deserialize<TModel>(this HttpContext httpContext)
+    public static async Task<TModel?> Deserialize<TModel>(this HttpContext httpContext)
     {
-        TModel model = default(TModel);
+        TModel? model;
         using (StreamReader reader = new StreamReader(httpContext.Request.Body))
         {
             string jsonContent = await reader.ReadToEndAsync();

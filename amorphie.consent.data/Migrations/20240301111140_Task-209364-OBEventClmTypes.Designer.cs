@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240301111140_Task-209364-OBEventClmTypes")]
+    partial class Task209364OBEventClmTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -184,15 +187,6 @@ namespace amorphie.consent.data.Migrations
                     b.Property<List<string>>("PermissionTypes")
                         .IsRequired()
                         .HasColumnType("text[]");
-
-                    b.Property<int?>("SendToServiceDeliveryStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("SendToServiceLastTryTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("SendToServiceTryCount")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("TransactionInquiryEndTime")
                         .HasColumnType("timestamp with time zone");

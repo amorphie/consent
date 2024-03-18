@@ -1,15 +1,14 @@
 using amorphie.consent.core.DTO;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
 
 namespace amorphie.consent.Service.Interface;
 
 public interface IAccountService
 {
-
     /// <summary>
     /// Get authorized accounts of customer
     /// Checks user's account consent. If any, get accounts
     /// </summary>
+    /// <param name="httpContext"></param>
     /// <param name="userTCKN">User TCKN</param>
     /// <param name="yosCode"></param>
     /// <param name="syfKytSayi">Page size</param>
@@ -17,7 +16,7 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
     /// <summary>
     /// Get account of customer by account referenece number if authorized
@@ -32,6 +31,7 @@ public interface IAccountService
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
+    /// <param name="httpContext"></param>
     /// <param name="userTCKN">User tckn</param>
     /// <param name="yosCode">Yos Code</param>
     /// <param name="syfKytSayi">Page size</param>
@@ -39,7 +39,7 @@ public interface IAccountService
     /// <param name="srlmKrtr">Order by name</param>
     /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
 
     /// <summary>
@@ -54,9 +54,21 @@ public interface IAccountService
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
+    /// <param name="yosCode"></param>
     /// <param name="hspRef">Account Referans Number</param>
+    /// <param name="psuInitiated"></param>
+    /// <param name="hesapIslemBslTrh"></param>
+    /// <param name="hesapIslemBtsTrh"></param>
+    /// <param name="minIslTtr"></param>
+    /// <param name="mksIslTtr"></param>
+    /// <param name="brcAlc"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    /// <param name="userTCKN"></param>
     /// <returns>Transactions of Given Account Reference</returns>
-    public Task<ApiResult> GetTransactionsByHspRef(string userTCKN, string yosCode, string hspRef,
+    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode, string hspRef,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,

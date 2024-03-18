@@ -6,7 +6,6 @@ using amorphie.consent.data;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
-using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.consent.Service;
 
@@ -25,7 +24,7 @@ public class AccountService : IAccountService
         _context = context;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccounts(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -48,35 +47,62 @@ public class AccountService : IAccountService
             }
 
             var activeConsent = (Consent)authConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Message = "Consent detail missing";
+                return result;
+            }
+            if (consentDetail.AccountReferences == null
+                || consentDetail.AccountReferences.Count == 0)
+            {
+                result.Result = false;
+                result.Message = "Consent does not have any authorized account reference.";
+                return result;
+            }
             //Set header values
-            bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
-                d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi) ?? false);
-            var permissionType = havingDetailPermission ? "D" : "T";
+            bool havingDetailPermission = consentDetail.PermissionTypes.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi);
+            var permissionType = havingDetailPermission ? OpenBankingConstants.AccountServiceParameters.izinTurDetay
+                : OpenBankingConstants.AccountServiceParameters.izinTurTemel;
+            //Create service request body object
+            var requestObject = new GetByAccountRefRequestDto()
+            {
+                hspRefs = consentDetail.AccountReferences
+            };
+
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
 
             //Get accounts of customer from service
-            List<HesapBilgileriDto> accounts = await _accountClientService.GetAccounts(userTCKN, permissionType,
-                syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
-            if (!accounts?.Any() ?? false)
+            var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
+                accountRefs: requestObject,
+                customerId: userTCKN,
+                syfKytSayi: resolvedSyfKytSayi,
+                syfNo: resolvedSyfNo,
+                srlmKrtr: resolvedSrlmKrtr,
+                srlmYon: resolvedSrlmYon);
+            if (serviceResponse is null)
             {
                 //No account
-                result.Data = accounts;
+                result.Data = null;
                 return result;
             }
 
-            //filter accounts
-            accounts = accounts.Where(a =>
-                    activeConsent.OBAccountConsentDetails.Any(d =>
-                        d.AccountReferences?.Contains(a.hspTml.hspRef) ?? false))
-                .ToList();
-            accounts = accounts.Select(a =>
+            List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
+            accounts = accounts?.Select(a =>
             {
                 a.rizaNo = activeConsent.Id.ToString();
                 return a;
             }).ToList();
-
             result.Data = accounts;
+            //Set header total count and link properties
+            SetHeaderLinkForAccount(httpContext, serviceResponse.toplamHesapSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -131,7 +157,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -152,26 +178,52 @@ public class AccountService : IAccountService
                 return authConsentResult;
             }
 
-            // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
-            //Get balances of customer from service
-            List<BakiyeBilgileriDto>? balances =
-                await _accountClientService.GetBalances(userTCKN, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon);
-            if (!balances?.Any() ?? false)
+            var activeConsent = (Consent)authConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
             {
-                //No balance
-                result.Data = balances;
+                result.Result = false;
+                result.Message = "Consent detail missing";
+                return result;
+            }
+            if (consentDetail.AccountReferences == null
+                || consentDetail.AccountReferences.Count == 0)
+            {
+                result.Result = false;
+                result.Message = "Consent does not have any authorized account reference.";
                 return result;
             }
 
-            //Get account consent from db
-            var activeConsent = (Consent)authConsentResult.Data;
+            // Build account service parameters
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
+            //Create service request body object
+            var requestObject = new GetByAccountRefRequestDto()
+            {
+                hspRefs = consentDetail.AccountReferences
+            };
+            //Get balances of customer from service
+            var serviceResponse = await _accountClientService.GetBalances(accountRefs: requestObject,
+                customerId: userTCKN,
+                syfKytSayi: resolvedSyfKytSayi,
+                syfNo: resolvedSyfNo,
+                srlmKrtr: resolvedSrlmKrtr,
+                srlmYon: resolvedSrlmYon);
+            if (serviceResponse is null)
+            {
+                //No balance
+                result.Data = null;
+                return result;
+            }
 
-            //filter balances
-            balances = balances?.Where(b =>
-                    activeConsent.OBAccountConsentDetails.Any(r => r.AccountReferences?.Contains(b.hspRef) ?? false))
-                .ToList();
+            List<BakiyeBilgileriDto>? balances = serviceResponse.bakiyeBilgileri;
             result.Data = balances;
+            //Set header total count and link properties
+            SetHeaderLinkForBalance(httpContext, serviceResponse.toplamBakiyeSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -221,7 +273,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetTransactionsByHspRef(string userTCKN, string yosCode, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
+    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
         string? minIslTtr,
         string? mksIslTtr,
@@ -253,11 +305,15 @@ public class AccountService : IAccountService
             var activeConsent = (Consent)authConsentResult.Data;
             //Check if post data is valid to process.
             var checkValidationResult =
-                IsDataValidToGetTransactionsByHspRef(activeConsent, psuInitiated, hesapIslemBslTrh,
-                    hesapIslemBtsTrh, minIslTtr,
+                IsDataValidToGetTransactionsByHspRef(activeConsent,
+                    psuInitiated,
+                    hesapIslemBslTrh,
+                    hesapIslemBtsTrh,
+                    minIslTtr,
                     mksIslTtr,
-                    brcAlc, syfKytSayi,
-                    syfNo, srlmKrtr,
+                    brcAlc,
+                    syfKytSayi,
+                    srlmKrtr,
                     srlmYon);
             if (!checkValidationResult.Result)
             {
@@ -265,15 +321,46 @@ public class AccountService : IAccountService
                 return checkValidationResult;
             }
 
-            //Set header values
+            //Get header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
                 d.PermissionTypes?.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) ?? false);
             var permissionType = havingDetailPermission ? "D" : "T";
+            string ohkTur = activeConsent.OBAccountConsentDetails.FirstOrDefault()?.UserType ?? OpenBankingConstants.OHKTur.Bireysel;
             // Build account service parameters
-            SetDefaultAccountServiceParameters(ref syfKytSayi, ref syfNo, ref srlmKrtr, ref srlmYon);
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
+            minIslTtr = (minIslTtr == string.Empty) ? null : minIslTtr;
+            mksIslTtr = (mksIslTtr == string.Empty) ? null : mksIslTtr;
+            brcAlc = (brcAlc == string.Empty) ? null : brcAlc;
+            var serviceResponse = await _accountClientService.GetTransactionsByHspRef(
+                hspRef,
+                hesapIslemBslTrh.ToString("o"),
+                hesapIslemBtsTrh.ToString("o"),
+                resolvedSyfKytSayi,
+                resolvedSyfNo,
+                resolvedSrlmKrtr,
+                resolvedSrlmYon,
+                minIslTtr,
+                mksIslTtr,
+                brcAlc,
+                permissionType,
+                ohkTur,
+                psuInitiated);
 
-            //Get transactions by account reference number from service
-            result.Data = await _accountClientService.GetTransactionsByHspRef(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, permissionType, syfKytSayi.Value, syfNo.Value, srlmKrtr, srlmYon, minIslTtr, mksIslTtr, brcAlc);
+            if (serviceResponse is null)
+            {
+                //No transaction
+                result.Data = null;
+                return result;
+            }
+            result.Data = serviceResponse;
+            //Set header total count and link properties
+            SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
+
         }
         catch (Exception e)
         {
@@ -284,17 +371,22 @@ public class AccountService : IAccountService
         return result;
     }
 
-    private void SetDefaultAccountServiceParameters(
-        ref int? syfKytSayi,
-        ref int? syfNo,
-        ref string? srlmKrtr,
-        ref string? srlmYon)
+
+    private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon)
     {
-        syfKytSayi ??= OpenBankingConstants.AccountServiceParameters.syfKytSayi;
-        syfNo ??= OpenBankingConstants.AccountServiceParameters.syfNo;
-        srlmKrtr ??= OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount;
-        srlmYon ??= OpenBankingConstants.AccountServiceParameters.srlmYon;
+        return (
+            syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+            syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
+            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
+            srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
+        );
     }
+
+
 
     /// <summary>
     /// Checks if parameters valid to get transactions
@@ -307,7 +399,6 @@ public class AccountService : IAccountService
     /// <param name="mksIslTtr"></param>
     /// <param name="brcAlc"></param>
     /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
     /// <param name="srlmKrtr"></param>
     /// <param name="srlmYon"></param>
     /// <returns></returns>
@@ -319,7 +410,6 @@ public class AccountService : IAccountService
         string? mksIslTtr,
         string? brcAlc,
         int? syfKytSayi,
-        int? syfNo,
         string? srlmKrtr,
         string? srlmYon)
     {
@@ -426,5 +516,120 @@ public class AccountService : IAccountService
         return result;
     }
 
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    private static void SetHeaderLinkForAccount(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
+        string srlmKrtr, string srlmYon)
+    {
+        string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
+        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    private static void SetHeaderLinkForBalance(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
+        string srlmKrtr, string srlmYon)
+    {
+        string basePath = $"ohvps/hbh/s1.1/bakiye?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
+        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="hesapIslemBtsTrh"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
+    /// <param name="hspRef"></param>
+    /// <param name="hesapIslemBslTrh"></param>
+    /// <param name="minIslTtr"></param>
+    /// <param name="mksIslTtr"></param>
+    /// <param name="brcAlc"></param>
+    private static void SetHeaderLinkForTransaction(HttpContext httpContext, int totalCount, string hspRef, DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
+    {
+        string basePath = GetTransactionBaseUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, srlmKrtr, srlmYon,
+            minIslTtr, mksIslTtr, brcAlc);
+        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+    }
+
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="basePath"></param>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    private static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
+    {
+        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
+        if (totalCount == 0)
+        {//No record
+            return;
+        }
+
+        int lastPageNumber = totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0);//Calculte lastpage number
+        // Construct the Link header value with conditional inclusion of "first" and "last" cases
+        string linkHeaderValue = string.Join(", ",
+            (syfNo != 1) ? $"</{basePath}&syfNo=1>;rel=\"first\"" : null,
+            (syfNo > 1) ? $"</{basePath}&syfNo={syfNo - 1}>;rel=\"prev\"" : null,
+            (syfNo < lastPageNumber) ? $"</{basePath}&syfNo={syfNo + 1}>;rel=\"next\"" : null,
+            (syfNo != lastPageNumber) ? $"</{basePath}&syfNo={lastPageNumber}>;rel=\"last\"" : null);
+
+        linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
+        httpContext.Response.Headers["Link"] = linkHeaderValue;
+    }
+
+    /// <summary>
+    /// Generates transaction call base url according to query paramaters
+    /// </summary>
+    /// <param name="hspRef"></param>
+    /// <param name="hesapIslemBslTrh"></param>
+    /// <param name="hesapIslemBtsTrh"></param>
+    /// <param name="resolvedSrlmKrtr"></param>
+    /// <param name="resolvedSrlmYon"></param>
+    /// <param name="minIslTtr"></param>
+    /// <param name="mksIslTtr"></param>
+    /// <param name="brcAlc"></param>
+    /// <returns>Transaction get call base url</returns>
+    private static string GetTransactionBaseUrl(string hspRef, DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, string resolvedSrlmKrtr, string resolvedSrlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
+    {
+        string requestUrl = $"ohvps/hbh/s1.1/hesaplar/{hspRef}/islemler?hesapIslemBslTrh={hesapIslemBslTrh}&hesapIslemBtsTrh={hesapIslemBtsTrh}&srlmKrtr={resolvedSrlmKrtr}&srlmYon={resolvedSrlmYon}";
+
+        if (minIslTtr != null)
+        {
+            requestUrl += $"&minIslTtr={minIslTtr}";
+        }
+
+        if (mksIslTtr != null)
+        {
+            requestUrl += $"&mksIslTtr={mksIslTtr}";
+        }
+
+        if (brcAlc != null)
+        {
+            requestUrl += $"&brcAlc={brcAlc}";
+        }
+
+        return requestUrl;
+    }
 
 }

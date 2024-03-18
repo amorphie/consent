@@ -9,18 +9,15 @@ using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using amorphie.consent.core.DTO;
-using amorphie.core.Base;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
-using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Dapr;
 using System.Linq;
+using amorphie.consent.Service.Refit;
 
 namespace amorphie.consent.Module;
 
@@ -69,7 +66,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
-        routeGroupBuilder.MapPost("updatePaymentState", UpdatePaymentState);
+        routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
+        routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -176,7 +174,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
             return Results.Ok(accountConsent);
         }
@@ -222,7 +220,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get account information from service with hspref 
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
     /// <param name="hspRef">Hesap ref</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
@@ -259,7 +256,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccountByHspRef(header.UserReference, yosCode: header.XTPPCode,
+                await accountService.GetAuthorizedAccountByHspRef(header.UserReference!, yosCode: header.XTPPCode,
                     hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
@@ -278,6 +275,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get authorized accounts from service 
     /// </summary>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Automapper object</param>
     /// <param name="accountService">Account service class</param>
@@ -316,14 +317,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(header.UserReference, header.XTPPCode, syfKytSayi, syfNo,
+                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference!, header.XTPPCode, syfKytSayi, syfNo,
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-
-            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
@@ -336,7 +335,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get account's balance information from service with hspref 
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
     /// <param name="hspRef">Hesap ref</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
@@ -373,7 +371,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference, yosCode: header.XTPPCode,
+                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference!, yosCode: header.XTPPCode,
                     hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
@@ -390,9 +388,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     /// <summary>
-    /// Get all balances from service 
+    /// Get all balances from service, filter by authorized accounts
     /// </summary>
-    /// <param name="customerId">Customer Id</param>
+    /// <param name="syfKytSayi">Page size</param>
+    /// <param name="syfNo">Page Nunber</param>
+    /// <param name="srlmKrtr">Sorting By</param>
+    /// <param name="srlmYon">Order By</param>
     /// <param name="context">Context DB object</param>
     /// <param name="mapper">Aoutomapper object</param>
     /// <param name="accountService">Account service class</param>
@@ -429,14 +430,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Message);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(header.UserReference,
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, header.UserReference!,
                 header.XTPPCode, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
             }
-
-            ModuleHelper.SetLinkHeader(httpContext, configuration);
             return Results.Ok(accountApiResult.Data);
         }
         catch (Exception ex)
@@ -494,7 +493,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
             //Get transactions from service
-            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(header.UserReference,
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, header.UserReference!,
                 header.XTPPCode,
                 hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh, minIslTtr, mksIslTtr, brcAlc,
                 syfKytSayi, syfNo,
@@ -505,7 +504,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(accountApiResult.Message);
             }
 
-            return Results.Ok(accountApiResult.Data);
+            return Results.Ok(mapper.Map<IslemBilgileriDto>(accountApiResult.Data));
         }
         catch (Exception ex)
         {
@@ -559,7 +558,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity!.AdditionalData);
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentConsent);
             return Results.Ok(paymentConsent);
         }
@@ -591,6 +590,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
         try
@@ -734,11 +734,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Set forwarding address according to consent type
         if (consentType == ConsentConstants.ConsentType.OpenBankingAccount)
         {
-            url = string.Format(configuration["OB_AccountProjectURL"], id) ?? string.Empty;
+            url = string.Format(configuration["OB_AccountProjectURL"] ?? string.Empty, id);
         }
         else if (consentType == ConsentConstants.ConsentType.OpenBankingPayment)
         {
-            url = string.Format(configuration["OB_PaymentProjectURL"], id) ?? string.Empty;
+            url = string.Format(configuration["OB_PaymentProjectURL"] ?? string.Empty, id);
         }
 
         return url;
@@ -777,7 +777,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
             {
                 //Payment consent
-                return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, mapper, tokenService);
+                return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, tokenService);
             }
             else
             {
@@ -796,12 +796,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="updateConsentState">To be updated consent data</param>
     /// <param name="context"></param>
-    /// <param name="mapper"></param>
     /// <param name="tokenService"></param>
     /// <returns></returns>
     private async Task<IResult> UpdatePaymentConsentStatusForUsage(UpdateConsentStateDto updateConsentState,
         ConsentDbContext context,
-        IMapper mapper,
         ITokenService tokenService)
     {
         try
@@ -819,7 +817,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Set permissions
-            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Payment consent data can not be deserialized.");
+            }
             additionalData.rzBlg.rizaDrm = updateConsentState.State;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
@@ -898,7 +900,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
             {
                 await obEventService.DoEventProcess(entity.Id.ToString(), additionalData.katilimciBlg,
-                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi);
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi, entity.Id.ToString());
             }
 
             return Results.Ok(resultData);
@@ -926,6 +928,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check consent validity for cancel consent
             await ProcessAccountConsentToCancelOrEnd(updateConsentState.Id, context);
             var entity = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             //Check consent validity
@@ -936,14 +939,26 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Set permissions
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Consent additional data is empty");
+            }
+            var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail is null)
+            {
+                return Results.BadRequest("Consent detail is empty");
+            }
             additionalData.rzBlg.rizaDrm = updateConsentState.State;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+            consentDetail.SendToServiceTryCount = 0;
+            consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
 
+            context.OBAccountConsentDetails.Update(consentDetail);
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
@@ -987,7 +1002,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent state and additional data
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consentEntity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consentEntity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Consent additional data is empty");
+            }
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.Yetkilendirildi;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             consentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
@@ -997,6 +1016,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Set account reference
             var detail = consentEntity.OBAccountConsentDetails.FirstOrDefault();
+            if (detail is null)
+            {
+                return Results.BadRequest("Consent detail is empty");
+            }
             detail.AccountReferences = saveAccountReference.AccountReferences;
             detail.ModifiedAt = DateTime.UtcNow;
             context.OBAccountConsentDetails.Update(detail);
@@ -1006,9 +1029,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (additionalData.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
             {
                 await obEventService.DoEventProcess(consentEntity.Id.ToString(), additionalData.katilimciBlg,
-                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi);
+                    OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi, consentEntity.Id.ToString());
             }
-
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1038,7 +1060,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBAuthorizationService authorizationService,
-        HttpContext httpContext)
+        HttpContext httpContext,
+        [FromServices] IPushService pushService
+)
     {
         try
         {
@@ -1104,7 +1128,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
+                await pushService.OpenBankingSendPush(hesapBilgisiRizasi.kmlk, consentEntity.Id);
             }
 
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
@@ -1260,6 +1284,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
         try
@@ -1319,7 +1344,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                //TODO:Özlem call send notification
+                await pushService.OpenBankingSendPush(odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id);
             }
 
             var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi);
@@ -1480,9 +1505,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     [Topic(OpenBankingConstants.KafkaInformation.KafkaName,
-        OpenBankingConstants.KafkaInformation.UpdatePaymentStatusTopicName, true)]
+        OpenBankingConstants.KafkaInformation.TopicName_PaymentStatusUpdated, true)]
     [HttpPost]
-    public async Task<IResult> UpdatePaymentState(
+    public async Task<IResult> PaymentStateChanged(
         [FromServices] ConsentDbContext context,
         [FromServices] IOBEventService obEventService,
         [FromServices] IYosInfoService yosInfoService,
@@ -1548,7 +1573,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                             await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(),
                                 additionalData.katilimciBlg,
                                 OpenBankingConstants.OlayTip.KaynakGuncellendi,
-                                OpenBankingConstants.KaynakTip.OdemeEmri);
+                                OpenBankingConstants.KaynakTip.OdemeEmri,
+                                paymentOrderEntity.Id.ToString());
                         }
                     }
                 }
@@ -1561,6 +1587,72 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+
+
+    [Topic(OpenBankingConstants.KafkaInformation.KafkaName,
+          OpenBankingConstants.KafkaInformation.TopicName_BalanceUpdated, true)]
+    [HttpPost]
+    public async Task<IResult> BalanceChanged(
+          [FromServices] ConsentDbContext context,
+          [FromServices] IOBEventService obEventService,
+          [FromServices] IOBAuthorizationService authorizationService,
+          [FromServices] ILogger<OpenBankingHHSConsentModule> logger,
+          HttpContext httpContext)
+    {
+        try
+        {
+            //Get payment system record.
+            BalanceChangedKafkaRecordDto? kafkaRecord = await httpContext.Deserialize<BalanceChangedKafkaRecordDto>();
+            if (kafkaRecord is { message.data: not null }
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.OPEN_BANKING_CONSENT_NUMBER)
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.HESAP_REF)
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.INSTANT_BALANCE_NOTIFICATION_PERMISSION)
+                && kafkaRecord.message.data.INSTANT_BALANCE_NOTIFICATION_PERMISSION == OpenBankingConstants.BalanceChangedServiceYesNo.Yes
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.OPEN_BANKING_SHARE_PERMISSION)
+                && kafkaRecord.message.data.OPEN_BANKING_SHARE_PERMISSION == OpenBankingConstants.BalanceChangedServiceYesNo.Yes)
+            {
+                //Get active account consent
+                var getConsentResult = await authorizationService.GetAuthUsedAccountConsent(
+                    kafkaRecord.message.data.OPEN_BANKING_CONSENT_NUMBER,
+                    kafkaRecord.message.data.HESAP_REF,
+                    new List<string>() { OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi });
+
+                if (!getConsentResult.Result)
+                {//Error in service
+                    return Results.Problem(getConsentResult.Message);
+                }
+
+                if (getConsentResult.Data == null)
+                {//No consent in system
+                    logger.LogWarning("Message read from Kafka. But no related consent data in system. {@KafkaRecord}", kafkaRecord);
+                    return Results.NoContent();
+                }
+                var consent = (Consent)getConsentResult.Data;
+                var consentDetail = consent.OBAccountConsentDetails.FirstOrDefault();
+                if (consentDetail != null)
+                {//Do event process
+                    await obEventService.DoEventProcess(consent.Id.ToString(), new KatilimciBilgisiDto() { hhsKod = consentDetail.HhsCode, yosKod = consentDetail.YosCode },
+                        OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.Bakiye,
+                        kafkaRecord.message.data.HESAP_REF);
+                }
+
+            }
+            else
+            {//Kafka record data is not  valid
+                logger.LogWarning("Message read from Kafka. But not valid. {@KafkaRecord}", kafkaRecord);
+                return Results.BadRequest();
+            }
+
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing BalanceChanged request.");
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
 
     private string GetPaymentState(string recordStatus, string paymentSystem, string currentPaymentState)
     {

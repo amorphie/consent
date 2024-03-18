@@ -8,6 +8,7 @@ using amorphie.core.Swagger;
 using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
+using amorphie.consent.Service;
 using Dapr;
 
 namespace amorphie.consent.Module;
@@ -28,6 +29,7 @@ public class SchedulerModule : BaseBBTRoute<TokenDto, Token, ConsentDbContext>
     }
     [HttpPost("/amorphie-scheduler")]
     public async Task<IResult> Scheduler(
+        PushService pushService
    )
     {
         Console.WriteLine("Scheduler çalıştı.");
