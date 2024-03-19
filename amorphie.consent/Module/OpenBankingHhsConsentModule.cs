@@ -104,7 +104,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             string userTCKN = header.UserReference; //get logged in user tckn
             ApiResult getConsentsResponse = await authorizationService.GetAuthUsedAccountConsentsOfUser(userTCKN);
-            if (getConsentsResponse.Result == false)
+            if (!getConsentsResponse.Result)
             {
                 //Error in getting consents
                 return Results.Problem(getConsentsResponse.Message);
@@ -701,7 +701,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var getConsentResult = await authorizationService.GetConsentReadonly(id: rizaNo, userTCKN: userTCKN,
                 consentTypes: consentTypes);
 
-            if (getConsentResult.Result == false)
+            if (!getConsentResult.Result)
             {
                 //Error in getting consents
                 return Results.Problem(getConsentResult.Message);
@@ -1114,7 +1114,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             bool isAyrikGKD = hesapBilgisiRizasi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik;
             //Set gkd data
             //Set hhsYonAdr in Yonlendirmeli GKD
-            if (isAyrikGKD == false)
+            if (!isAyrikGKD)
             {
                 hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
                     consentEntity.Id.ToString());
@@ -1346,7 +1346,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             bool isAyrikGKD = odemeEmriRizasi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik;
             //Set gkd data
             //Set hhsYonAdr in Yonlendirmeli GKD
-            if (isAyrikGKD == false)
+            if (!isAyrikGKD)
             {
                 odemeEmriRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
                     consentEntity.Id.ToString());
@@ -1880,7 +1880,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check izinbilgisi properties
         if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
             || rizaIstegi.hspBlg.iznBlg.iznTur.Any(i => !ConstantHelper.GetIzinTurList().Contains(i))
-            || rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi) == false
+            || !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi)
             || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) &&
                 !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelIslemBilgisi))
             || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi) &&
@@ -3194,7 +3194,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 t.SourceType == sourceType
                 && t.EventType == OpenBankingConstants.OlayTip
                     .AyrikGKDBasarisiz));
-        if (isSubscriped == false)
+        if (!isSubscriped)
         {
             //Yos does not have subscription for ayrikGkd
             return false;
