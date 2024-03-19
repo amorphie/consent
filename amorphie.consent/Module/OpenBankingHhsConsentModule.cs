@@ -722,7 +722,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return new CustomStatusCodeResult(454, "Invalid consent to process. Try again.");
             }
             //Generate response
-            ConsentWebViewInfoDto response = new ConsentWebViewInfoDto()
+            ConsentWebViewInfoDto response = new()
             {
                 RizaNo = consent.Id,
                 ConsentType = consent.ConsentType,
@@ -787,11 +787,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Payment consent
                 return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, tokenService);
             }
-            else
-            {
-                //Not related type
-                return Results.BadRequest("Consent type not valid");
-            }
+            //Not related type
+            return Results.BadRequest("Consent type not valid");
         }
         catch (Exception ex)
         {
@@ -1705,6 +1702,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 case "G":
                     paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesmedi;
                     break;
+                default:
+                    paymentState = currentPaymentState;
+                    break;
             }
         }
         else if (paymentSystem == OpenBankingConstants.OdemeSistemi.EFT_POS)
@@ -1724,6 +1724,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 case "G":
                     paymentState = OpenBankingConstants.OdemeDurumu.Gonderildi;
                     break;
+                default:
+                    paymentState = currentPaymentState;
+                    break;
+
             }
         }
 
@@ -2339,7 +2343,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (odemeEmriRizasi == null)
         {
             result.Result = false;
-            result.Message = $"Relational data is missing. No Payment Information consent additional data in system.";
+            result.Message = "Relational data is missing. No Payment Information consent additional data in system.";
             return result;
         }
 
@@ -2811,7 +2815,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         ConsentDbContext context)
     {
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         var getConsentsResult =
             await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod);
         if (getConsentsResult.Result == false)
@@ -3141,6 +3145,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                         if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 26)
                             return false;
                         break;
+                    default:
+                        return false;
                 }
                 //From Document:
                 //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
