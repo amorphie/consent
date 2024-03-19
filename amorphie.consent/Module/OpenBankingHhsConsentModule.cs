@@ -101,7 +101,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 return Results.BadRequest("Header user_reference can not be empty");
             }
-            
+
             string userTCKN = header.UserReference; //get logged in user tckn
             ApiResult getConsentsResponse = await authorizationService.GetAuthUsedAccountConsentsOfUser(userTCKN);
             if (getConsentsResponse.Result == false)
@@ -3313,7 +3313,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var permissions = await dbContext.OBPermissionTypes.AsNoTracking()
             .Where(p => p.Language == "tr-TR")
             .ToListAsync();
-        
+
         foreach (var consent in userAccountConsents)
         {
             //Generate consent detail object
@@ -3322,7 +3322,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 continue;
             }
-            
+
             detailedConsent = new ListAccountConsentDto()
             {
                 ConsentId = consent.Id,
@@ -3336,18 +3336,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh,
                 TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn,
-                TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn, 
+                TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn,
                 PermissionTypes = permissions.Where(p => hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.Contains(p.Code))
                     .GroupBy(p => p.GroupId)
-                    .Select( g => new PermissionTypeResponseDto()
-                        {
-                            GroupName = g.First().GroupName, 
-                            GroupId = g.Key,
-                            PermissionNames = g.Select(p => p.Description).ToList()
-                        } )
+                    .Select(g => new PermissionTypeResponseDto()
+                    {
+                        GroupName = g.First().GroupName,
+                        GroupId = g.Key,
+                        PermissionNames = g.Select(p => p.Description).ToList()
+                    })
                         .ToList()
             };
-            
+
             responseList.Add(detailedConsent);
         }
 

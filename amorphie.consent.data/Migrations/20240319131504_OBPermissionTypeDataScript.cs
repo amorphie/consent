@@ -13,7 +13,7 @@ namespace amorphie.consent.data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-           migrationBuilder.Sql("TRUNCATE TABLE \"OBPermissionTypes\";");
+            migrationBuilder.Sql("TRUNCATE TABLE \"OBPermissionTypes\";");
 
             migrationBuilder.InsertData(
                 table: "OBPermissionTypes",
