@@ -16,8 +16,6 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using Dapr;
-using System.Linq;
-using amorphie.consent.Service.Refit;
 
 namespace amorphie.consent.Module;
 
@@ -679,7 +677,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (string.IsNullOrEmpty(header.UserReference))
             {
                 //Missing header fields
-                return Results.BadRequest("Header userreference can not be empty");
+                return Results.BadRequest("Header user_reference can not be empty");
             }
 
             //Check consent
@@ -870,15 +868,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-            //Set account reference
-            var detail = entity.OBPaymentConsentDetails.FirstOrDefault();
-            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity!.AdditionalData);
             //Check and set sender account
-            if (additionalData.odmBsltm.gon == null
+            if (additionalData!.odmBsltm.gon == null
                 || (string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspNo)
                     && string.IsNullOrEmpty(additionalData.odmBsltm.gon.hspRef)))
             {
                 additionalData.odmBsltm.gon = savePCStatusSenderAccount.SenderAccount;
+                //Set account reference
+                var detail = entity!.OBPaymentConsentDetails.FirstOrDefault();
+                if (detail == null)
+                {
+                    return Results.Problem("There is no payment consent detail data in the system.");
+                }
                 detail.SenderTitle = savePCStatusSenderAccount.SenderAccount?.unv;
                 detail.SenderAccountNumber = savePCStatusSenderAccount.SenderAccount?.hspNo;
                 detail.SenderAccountReference = savePCStatusSenderAccount.SenderAccount?.hspRef;
@@ -902,7 +904,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 await obEventService.DoEventProcess(entity.Id.ToString(), additionalData.katilimciBlg,
                     OpenBankingConstants.OlayTip.AyrikGKDBasarili, OpenBankingConstants.KaynakTip.OdemeEmriRizasi, entity.Id.ToString());
             }
-
             return Results.Ok(resultData);
         }
         catch (Exception ex)
@@ -1183,7 +1184,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent rıza bilgileri properties
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
+            if (additionalData == null)
+            {
+                return Results.BadRequest("Data inconsistency in the system. No desired account consent data.");
+            }
             additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
             additionalData.rzBlg.rizaIptDtyKod =
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleYOSUzerindenIptal;
@@ -1214,12 +1219,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ITokenService tokenService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBEventService eventService,
         HttpContext httpContext)
     {
         try
         {
             //Get header fields
             var header = ModuleHelper.GetHeader(httpContext);
+            if (string.IsNullOrEmpty(header.UserReference))
+            {
+                //Missing header fields
+                return Results.BadRequest("Header user_reference can not be empty");
+            }
             //Check consent to cancel&/end
             await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
 
@@ -1236,8 +1247,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent rıza bilgileri properties
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
+            additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
             additionalData.rzBlg.rizaIptDtyKod =
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleHHSUzerindenIptal;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
@@ -1251,7 +1262,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Revoke token
             await tokenService.RevokeConsentToken(rizaNo);
-            return Results.NoContent();
+
+            //Send event to yos
+            await eventService.DoEventProcess(entity.Id.ToString(),
+                additionalData.katilimciBlg,
+               eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
+               sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
+               sourceNumber: entity.Id.ToString());
+
+            return Results.Ok();
         }
         catch (Exception ex)
         {
@@ -1788,7 +1807,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -1972,7 +1991,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd))
+        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -2163,7 +2182,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(odemeEmriIstegi.gkd))
+        if (!IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk))
         {
             result.Result = false;
             result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
@@ -2467,7 +2486,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="entity">To be checked entity</param>
     /// <param name="userTCKN">Processing user tckn</param>
     /// <returns>Data validation result</returns>
-    private ApiResult IsDataValidToDeleteAccountConsentFromHHS(Consent? entity, string? userTCKN)
+    private ApiResult IsDataValidToDeleteAccountConsentFromHHS(Consent? entity, string userTCKN)
     {
         ApiResult result = new();
         if (entity == null)
@@ -2486,7 +2505,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         var hesapBilgisiRizasi = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
-        if (hesapBilgisiRizasi?.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
+        if (hesapBilgisiRizasi == null)
+        {
+            result.Result = false;
+            result.Message = "HesapBilgisiRizasi data in system is null";
+            return result;
+        }
+        if (hesapBilgisiRizasi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
             && hesapBilgisiRizasi.kmlk.kmlkVrs != userTCKN)
         {
             result.Result = false;
@@ -2630,10 +2655,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check if sender account is already selected in db
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+        if (additionalData == null)
+        {
+            result.Result = false;
+            result.Message = "Consent additional data is empty";
+            return result;
+        }
+        //Check if sender account is set in db
         bool isSenderAccountSet = !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspNo) ||
                                   !string.IsNullOrEmpty(additionalData.odmBsltm.gon?.hspRef);
         if (!isSenderAccountSet
             && (savePcStatusSenderAccount.SenderAccount == null
+                || string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.unv)
                 || (string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspRef)
                     && string.IsNullOrEmpty(savePcStatusSenderAccount.SenderAccount.hspNo))))
         {
@@ -3020,10 +3053,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Checks if gkd data is valid
     /// </summary>
     /// <param name="gkd">To be checked data</param>
+    /// <param name="kimlik">Identity Information in consent</param>
     /// <returns>Is gkd data valid</returns>
-    private static bool IsGkdValid(GkdDto gkd)
+    private static bool IsGkdValid(GkdDto gkd, KimlikDto kimlik)
     {
-        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr })
+        return IsGkdValid(new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr }, kimlik)
                && gkd.yetTmmZmn != DateTime.MinValue;
     }
 
@@ -3031,8 +3065,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Checks if gkd data is valid
     /// </summary>
     /// <param name="gkd">To be checked data</param>
+    /// <param name="kimlik">Identity Information in consent</param>
     /// <returns>Is gkd data valid</returns>
-    private static bool IsGkdValid(GkdRequestDto gkd)
+    private static bool IsGkdValid(GkdRequestDto gkd, KimlikDto kimlik)
     {
         if (!string.IsNullOrEmpty(gkd.yetYntm)) //YetYntm is set
         {
@@ -3088,6 +3123,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                         if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 26)
                             return false;
                         break;
+                }
+                //From Document:
+                //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
+                //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
+                //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
+                if (kimlik.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
+                    && kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger)
+                {
+                    return false;
                 }
             }
         }

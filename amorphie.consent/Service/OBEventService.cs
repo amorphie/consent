@@ -17,16 +17,19 @@ public class OBEventService : IOBEventService
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
     private readonly IBKMService _bkmService;
+    private readonly IYosInfoService _yosInfoService;
     private readonly ILogger<OBEventService> _logger;
 
     public OBEventService(ConsentDbContext context,
         IMapper mapper,
         IBKMService bkmService,
+        IYosInfoService yosInfoService,
         ILogger<OBEventService> logger)
     {
         _context = context;
         _mapper = mapper;
         _bkmService = bkmService;
+        _yosInfoService = yosInfoService;
         _logger = logger;
     }
 
@@ -166,6 +169,48 @@ public class OBEventService : IOBEventService
             return result;
         }
     }
+
+    public async Task<bool> DoHhsSystemEventProcess(
+        Guid systemEventId)
+    {
+        var continueTry = true;
+        try
+        {
+            //Get event from database
+            var systemEventEntity = await _context.OBSystemEvents.FirstOrDefaultAsync(e => e.Id == systemEventId
+                && e.ModuleName ==
+                OpenBankingConstants.ModuleName.HHS
+                && e.IsCompleted == false);
+            if (systemEventEntity == null)
+            {
+                //No desired system event in system
+                return false;
+            }
+
+            //Update event driven yos information
+            var saveYosResult =
+                await _yosInfoService.SaveYos(systemEventEntity.SourceNumber);
+            systemEventEntity.LastTryTime = DateTime.UtcNow;
+            systemEventEntity.TryCount = (systemEventEntity.TryCount ?? 0) + 1;
+            if (saveYosResult.Result)
+            {
+                //Get yos info success
+                continueTry = false;
+                systemEventEntity.IsCompleted = true;
+            }
+            //Save entity changes
+            _context.OBSystemEvents.Update(systemEventEntity);
+            await _context.SaveChangesAsync();
+
+            return continueTry;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing system event.");
+            return continueTry;
+        }
+    }
+
 
     /// <summary>
     /// Creates and insert event entity according to given data
