@@ -53,4 +53,12 @@ public interface IYosInfoService
     /// <returns>If YOS has subscription for given event type and source type</returns>
     public Task<ApiResult> IsYosSubscsribed(string yosKod, string eventType, string sourceType);
 
+    /// <summary>
+    /// Get yos from bkm service by yoscode
+    /// Save result to system
+    /// </summary>
+    /// <param name="yosCode">To be processed yos code</param>
+    /// <returns>Save yos code result</returns>
+    public Task<ApiResult> SaveYos(string yosCode);
+
 }

@@ -27,5 +27,18 @@ public interface IOBEventService
         string sourceType,
         string sourceNumber);
 
+    /// <summary>
+    /// BKM event message is send
+    /// </summary>
+    /// <param name="eventEntity">To be send event entity data</param>
+    /// <returns></returns>
     public Task<ApiResult> SendEventToYos(OBEvent eventEntity);
+
+    /// <summary>
+    /// Do system event process.
+    /// Get yos information from bkm service and save database
+    /// </summary>
+    /// <param name="systemEventId">To be processed system event id</param>
+    /// <returns>System event process result</returns>
+    public Task<bool> DoHhsSystemEventProcess(Guid systemEventId);
 }
