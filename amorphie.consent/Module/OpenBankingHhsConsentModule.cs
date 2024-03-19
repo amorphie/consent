@@ -96,12 +96,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             var header = ModuleHelper.GetHeader(httpContext);
-            string? userTCKN = header.UserReference; //get logged in user tckn
-            if (string.IsNullOrEmpty(userTCKN))
+            if (string.IsNullOrEmpty(header.UserReference))
             {
-                return Results.Unauthorized();
+                //Missing header fields
+                return Results.BadRequest("Header user_reference can not be empty");
             }
 
+            string userTCKN = header.UserReference; //get logged in user tckn
             ApiResult getConsentsResponse = await authorizationService.GetAuthUsedAccountConsentsOfUser(userTCKN);
             if (getConsentsResponse.Result == false)
             {
@@ -113,7 +114,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!(userAccountConsents?.Any() ?? false))
             {
                 //No authorized account consent in the system
-                return Results.NotFound();
+                return Results.NoContent();
             }
 
             //Get consent details
@@ -452,6 +453,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
     /// <param name="httpContext">Httpcontext object</param>
+    /// <param name="hesapIslemBslTrh"></param>
+    /// <param name="hesapIslemBtsTrh"></param>
+    /// <param name="minIslTtr"></param>
+    /// <param name="mksIslTtr"></param>
+    /// <param name="brcAlc"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    /// <param name="srlmKrtr"></param>
+    /// <param name="srlmYon"></param>
     /// <returns>account transactions- IslemBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1535,7 +1545,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Get payment system record.
-            PaymentRecordDto model = await httpContext.Deserialize<PaymentRecordDto>();
+            PaymentRecordDto? model = await httpContext.Deserialize<PaymentRecordDto>();
             if (model != null
                 && model.message?.data?.TRAN_BRANCH_CODE ==
                 OpenBankingConstants.PaymentServiceInformation.PaymentServiceBranchCode
@@ -1554,7 +1564,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var paymentOrderEntity = context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
                                                                             && o.PSNDate != null).AsEnumerable()
                     .FirstOrDefault(o =>
-                        DateTime.ParseExact(o.PSNDate, "yyyy-MM-dd HH:mm:ss", null).Date == utcTranDate.Date);
+                        o.PSNDate != null && DateTime.ParseExact(o.PSNDate, "yyyy-MM-dd HH:mm:ss", null).Date == utcTranDate.Date);
                 if (paymentOrderEntity != null)
                 {
                     if (paymentOrderEntity.PaymentServiceUpdateTime != null
@@ -1574,7 +1584,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                         //Update payment message
                         var additionalData =
                             JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
-                        additionalData.odmBsltm.odmAyr.odmDrm = paymentState;
+                        additionalData!.odmBsltm.odmAyr.odmDrm = paymentState;
                         //Update payment order data
                         paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
                         paymentOrderEntity.PaymentServiceUpdateTime = model.message.data.LAST_UPDATE_DATE;
@@ -2754,7 +2764,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Update consent rıza bilgileri properties
                 var additionalData =
                     JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(waitingAporove.AdditionalData);
-                additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
                 additionalData.rzBlg.rizaIptDtyKod =
                     OpenBankingConstants.RizaIptalDetayKodu.YeniRizaTalebiIleIptal;
                 additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
@@ -2874,6 +2884,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            if (additionalData == null)
+            {
+                continue;
+            }
             //comment from document
             //Erişimin Geçerli Olduğu Son Tarih geldiğinde Rıza durumu Yetki Kullanıldı’dan Yetki Sonlandırıldı durumuna çekilmelidir. K ⇨ S
             if (entity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
@@ -2958,6 +2972,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
+        if (additionalData == null)
+        {
+            return;
+        }
 
         //comment from document
         //5 dakikadan uzun süredir Yetki Bekleniyor'da kalan kayıtların durumları güncellenir.
@@ -3285,7 +3303,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         List<ListAccountConsentDto> responseList = new List<ListAccountConsentDto>(); //Response list object
         ListAccountConsentDto detailedConsent;
-        HesapBilgisiRizasiHHSDto hesapBilgisiRizasi;
+        HesapBilgisiRizasiHHSDto? hesapBilgisiRizasi;
 
         //Get yos informations by yos codes 
         var yosCodes = userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.Select(d => d.YosCode))
@@ -3295,25 +3313,39 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var permissions = await dbContext.OBPermissionTypes.AsNoTracking()
             .Where(p => p.Language == "tr-TR")
             .ToListAsync();
+
         foreach (var consent in userAccountConsents)
         {
             //Generate consent detail object
             hesapBilgisiRizasi = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
+            if (hesapBilgisiRizasi is null)
+            {
+                continue;
+            }
+
             detailedConsent = new ListAccountConsentDto()
             {
                 ConsentId = consent.Id,
+                CreatedAt = consent.CreatedAt,
                 AccountReferences = consent.OBAccountConsentDetails?.FirstOrDefault()?.AccountReferences ??
                                     new List<string>(),
                 YosInfo = mapper.Map<OBYosInfoDto>(yosList.FirstOrDefault(y =>
                     y.Kod == hesapBilgisiRizasi.katilimciBlg.yosKod))
             };
-            detailedConsent.PermissionDetail = new PermissionInformationDto()
+            detailedConsent.PermissionInformation = new PermissionInformationDto()
             {
                 LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh,
                 TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn,
                 TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn,
-                PermissionType = permissions.Where(p => hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.Contains(p.Code))
-                    .ToDictionary(p => p.Code, p => p.Description)
+                PermissionTypes = permissions.Where(p => hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.Contains(p.Code))
+                    .GroupBy(p => p.GroupId)
+                    .Select(g => new PermissionTypeResponseDto()
+                    {
+                        GroupName = g.First().GroupName,
+                        GroupId = g.Key,
+                        PermissionNames = g.Select(p => p.Description).ToList()
+                    })
+                        .ToList()
             };
 
             responseList.Add(detailedConsent);

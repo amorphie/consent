@@ -205,6 +205,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "01",
             Description = "Temel Hesap Bilgisi",
+            GroupId = 1,
+            GroupName = "Hesap Bilgileri",
             Language = "tr-TR"
         });
         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
@@ -212,6 +214,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "02",
             Description = "Ayrıntılı Hesap Bilgisi",
+            GroupId = 1,
+            GroupName = "Hesap Bilgileri",
             Language = "tr-TR"
         });
         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
@@ -219,6 +223,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "03",
             Description = "Bakiye Bilgisi",
+            GroupId = 2,
+            GroupName = "Hesap Bakiyesi",
             Language = "tr-TR"
         });
         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
@@ -226,6 +232,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "04",
             Description = "Temel İşlem (Hesap Hareketleri) Bilgisi",
+            GroupId = 3,
+            GroupName = "Hesap Hareketleri",
             Language = "tr-TR"
         });
         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
@@ -233,6 +241,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "05",
             Description = "Ayrıntılı İşlem Bilgisi",
+            GroupId = 3,
+            GroupName = "Hesap Hareketleri",
             Language = "tr-TR"
         });
         modelBuilder.Entity<OBPermissionType>().HasData(new OBPermissionType
@@ -240,6 +250,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             Code = "06",
             Description = "Anlık Bakiye Bildirimi",
+            GroupId = 2,
+            GroupName = "Hesap Bakiyesi",
             Language = "tr-TR"
         });
 

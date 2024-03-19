@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240319125311_OBPermissionType")]
+    partial class OBPermissionType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -839,62 +842,6 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBPermissionTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("5b833776-34d5-4b32-9f82-6c5cb701e064"),
-                            Code = "01",
-                            Description = "Temel Hesap Bilgisi",
-                            GroupId = 1,
-                            GroupName = "Hesap Bilgileri",
-                            Language = "tr-TR"
-                        },
-                        new
-                        {
-                            Id = new Guid("4c1d6d12-572e-4d73-b9a9-b4bd8debf104"),
-                            Code = "02",
-                            Description = "Ayrıntılı Hesap Bilgisi",
-                            GroupId = 1,
-                            GroupName = "Hesap Bilgileri",
-                            Language = "tr-TR"
-                        },
-                        new
-                        {
-                            Id = new Guid("75fc6e81-c293-4107-92eb-31b6bd507405"),
-                            Code = "03",
-                            Description = "Bakiye Bilgisi",
-                            GroupId = 2,
-                            GroupName = "Hesap Bakiyesi",
-                            Language = "tr-TR"
-                        },
-                        new
-                        {
-                            Id = new Guid("9c98a0b7-e568-4acc-9bb2-a15ecb3c2129"),
-                            Code = "04",
-                            Description = "Temel İşlem (Hesap Hareketleri) Bilgisi",
-                            GroupId = 3,
-                            GroupName = "Hesap Hareketleri",
-                            Language = "tr-TR"
-                        },
-                        new
-                        {
-                            Id = new Guid("7caa7d28-587a-4922-86f9-f897c3b9cd07"),
-                            Code = "05",
-                            Description = "Ayrıntılı İşlem Bilgisi",
-                            GroupId = 3,
-                            GroupName = "Hesap Hareketleri",
-                            Language = "tr-TR"
-                        },
-                        new
-                        {
-                            Id = new Guid("562e1b35-a1de-4ac7-8a23-379bfbd8cd7e"),
-                            Code = "06",
-                            Description = "Anlık Bakiye Bildirimi",
-                            GroupId = 2,
-                            GroupName = "Hesap Bakiyesi",
-                            Language = "tr-TR"
-                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBSystemEvent", b =>
