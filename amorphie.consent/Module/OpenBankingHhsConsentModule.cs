@@ -154,8 +154,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            List<OBErrorCodeDetail> errorCodeDetails = await context.OBErrorCodeDetails.AsNoTracking().ToListAsync();
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,errorCodeDetails:errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -165,7 +166,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
-            List<OBErrorCodeDetail> errorCodeDetails = new List<OBErrorCodeDetail>();
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
@@ -2700,7 +2700,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         IYosInfoService yosInfoService,
         RequestHeaderDto? header = null,
         KatilimciBilgisiDto? katilimciBlg = null,
-        bool? isUserRequired = false)
+        bool? isUserRequired = false,
+        List<OBErrorCodeDetail>? errorCodeDetails = null)
     {
         ApiResult result = new();
         if (header is null)
@@ -2708,7 +2709,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             header = ModuleHelper.GetHeader(context);
         }
 
-        List<OBErrorCodeDetail> errorCodeDetails = new List<OBErrorCodeDetail>();
+        errorCodeDetails ??= new List<OBErrorCodeDetail>();
         result = await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, context, errorCodeDetails,
             isUserRequired: isUserRequired);
         if (!result.Result)

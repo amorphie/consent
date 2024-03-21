@@ -23,7 +23,7 @@ public class OBCustomErrorResponseDto
     public string HttpMessage { get; set; }= string.Empty;
     public string MoreInformation { get; set; }= string.Empty;
     public string MoreInformationTr { get; set; }= string.Empty;
-    [JsonProperty(NullValueHandling = NullValueHandling.Include)]
+   [JsonIgnore]
     public List<FieldError>? FieldErrors { get; set; }
     public string ErrorCode { get; set; }= string.Empty;
 
