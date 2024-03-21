@@ -26,7 +26,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
     }
 
-    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
+    public override string[]? PropertyCheckList => new [] { "ConsentType", "State" };
 
     public override string? UrlFragment => "OpenBankingConsentHHS";
 
@@ -783,7 +783,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Account consent
                 return await UpdateAccountConsentStatusForUsage(updateConsentState, context, mapper);
             }
-            else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+            if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
             {
                 //Payment consent
                 return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, tokenService);
@@ -1508,9 +1508,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
     private static void SetPaymentSystemNumberFields(OdemeEmriHHSDto odemeEmriDto, OBPaymentOrder orderEntity)
     {
-        var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray() ?? null;
-        orderEntity.PSNDate = systemNumberItems?[0] ?? null;
-        orderEntity.PSNYosCode = systemNumberItems?[1] ?? null;
+        var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray();
+        orderEntity.PSNDate = systemNumberItems?[0];
+        orderEntity.PSNYosCode = systemNumberItems?[1];
         if (systemNumberItems?[2] == null
             || string.IsNullOrEmpty(systemNumberItems[2]))
         {
