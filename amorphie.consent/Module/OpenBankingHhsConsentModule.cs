@@ -3306,7 +3306,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     private async Task<List<ListAccountConsentDto>> GetAccountConsentDetails(string userTckn,
-        List<Consent> userAccountConsents, ConsentDbContext dbContext, IMapper mapper,IAccountService accountService)
+        List<Consent> userAccountConsents, ConsentDbContext dbContext, IMapper mapper, IAccountService accountService)
     {
         List<ListAccountConsentDto> responseList = new List<ListAccountConsentDto>(); //Response list object
         ListAccountConsentDto detailedConsent;
@@ -3320,19 +3320,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var permissions = await dbContext.OBPermissionTypes.AsNoTracking()
             .Where(p => p.Language == "tr-TR")
             .ToListAsync();
-        var accountRefs =  userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.SelectMany(d => d.AccountReferences))
+        var accountRefs = userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.SelectMany(d => d.AccountReferences))
             .Distinct()
             .ToList();
         List<HesapBilgileriDto>? accounts = null;
         if (accountRefs?.Any() ?? false)
         {
-           var getAccountInfoResult =  await accountService.GetAuthorizedAccountsForUI(userTckn, accountRefs,null,null,null,null);
-           if (getAccountInfoResult.Result)
-           {
-               accounts = (List<HesapBilgileriDto>?)getAccountInfoResult.Data;
-           }
+            var getAccountInfoResult = await accountService.GetAuthorizedAccountsForUI(userTckn, accountRefs, null, null, null, null);
+            if (getAccountInfoResult.Result)
+            {
+                accounts = (List<HesapBilgileriDto>?)getAccountInfoResult.Data;
+            }
         }
-        
+
 
         foreach (var consent in userAccountConsents)
         {

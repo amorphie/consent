@@ -11,8 +11,8 @@ namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 /// </summary>
 public class AccountRefDetailDto
 {
-  public string AccountReference { get; set; } = string.Empty;
-  public string? AccountName { get; set; } = String.Empty;
+    public string AccountReference { get; set; } = string.Empty;
+    public string? AccountName { get; set; } = String.Empty;
 }
 
 

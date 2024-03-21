@@ -113,13 +113,13 @@ public class AccountService : IAccountService
         return result;
     }
 
-      public async Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences, int? syfKytSayi, int? syfNo,
-        string? srlmKrtr, string? srlmYon)
+    public async Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences, int? syfKytSayi, int? syfNo,
+      string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
         try
         {
-           
+
             //Create service request body object
             var requestObject = new GetByAccountRefRequestDto()
             {
@@ -161,7 +161,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    
+
     public async Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef)
     {
         ApiResult result = new();
