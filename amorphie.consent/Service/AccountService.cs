@@ -113,6 +113,55 @@ public class AccountService : IAccountService
         return result;
     }
 
+      public async Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences, int? syfKytSayi, int? syfNo,
+        string? srlmKrtr, string? srlmYon)
+    {
+        ApiResult result = new();
+        try
+        {
+           
+            //Create service request body object
+            var requestObject = new GetByAccountRefRequestDto()
+            {
+                hspRefs = accountReferences
+            };
+
+            // Build account service parameters
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+                syfKytSayi,
+                syfNo,
+                srlmKrtr,
+                srlmYon
+            );
+
+            //Get accounts of customer from service
+            var serviceResponse = await _accountClientService.GetAccounts(izinTur: OpenBankingConstants.AccountServiceParameters.izinTurTemel,
+                accountRefs: requestObject,
+                customerId: userTCKN,
+                syfKytSayi: resolvedSyfKytSayi,
+                syfNo: resolvedSyfNo,
+                srlmKrtr: resolvedSrlmKrtr,
+                srlmYon: resolvedSrlmYon);
+            if (serviceResponse is null)
+            {
+                //No account
+                result.Data = null;
+                return result;
+            }
+
+            List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
+            result.Data = accounts;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
+    
     public async Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef)
     {
         ApiResult result = new();
