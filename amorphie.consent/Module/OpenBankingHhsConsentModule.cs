@@ -114,8 +114,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!(userAccountConsents?.Any() ?? false))
             {
                 //No authorized account consent in the system
-                //MObile ekip NoContenti yakalayamadığı için Ok ve null dönüldü
-                return Results.Ok(null);
+                //MObile ekip NoContenti yakalayamadığı için Ok ve boş liste dönüldü
+                return Results.Ok(new List<ListAccountConsentDto>());
             }
 
             //Get consent details
