@@ -1,6 +1,10 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.Enum;
+using amorphie.consent.core.Model;
 using amorphie.consent.Service.Interface;
 using Jose;
 using Newtonsoft.Json;
@@ -22,26 +26,32 @@ public static class ModuleHelper
         {
             header.XRequestID = traceValue.ToString();
         }
+
         if (httpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
         {
             header.XGroupID = traceValue.ToString();
         }
+
         if (httpContext.Request.Headers.TryGetValue("X-ASPSP-Code", out traceValue))
         {
             header.XASPSPCode = traceValue.ToString();
         }
+
         if (httpContext.Request.Headers.TryGetValue("X-TPP-Code", out traceValue))
         {
             header.XTPPCode = traceValue.ToString();
         }
+
         if (httpContext.Request.Headers.TryGetValue("PSU-Initiated", out traceValue))
         {
             header.PSUInitiated = traceValue.ToString();
         }
+
         if (httpContext.Request.Headers.TryGetValue("user_reference", out traceValue))
         {
             header.UserReference = traceValue;
         }
+
         return header;
     }
 
@@ -54,31 +64,41 @@ public static class ModuleHelper
     /// <param name="header">Data to be checked</param>
     /// <param name="configuration">Configuration instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="context"></param>
+    /// <param name="errorCodeDetails"></param>
     /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
     /// <returns>If header is valid</returns>
-    public static async Task<bool> IsHeaderValid(RequestHeaderDto header,
+    public static async Task<ApiResult> IsHeaderValid(RequestHeaderDto header,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails,
         bool? isUserRequired = false)
     {
+        ApiResult result = new();
 
-        if (string.IsNullOrEmpty(header.PSUInitiated)
-            || string.IsNullOrEmpty(header.XGroupID)
-            || string.IsNullOrEmpty(header.XASPSPCode)
-            || string.IsNullOrEmpty(header.XRequestID)
-            || string.IsNullOrEmpty(header.XTPPCode))
+        // Separate method to prepare and check header properties
+        if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails, out var errorResponse))
         {
-            return false;
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
         }
 
         if (configuration["HHSCode"] != header.XASPSPCode)
-        {//XASPSPCode value should be BurganBanks hhscode value
-            return false;
+        {
+            //XASPSPCode value should be BurganBanks hhscode value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+            return result;
         }
 
         if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
-        {//Check psu initiated value
-            return false;
+        {
+            //Check psu initiated value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInvalidContentError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated);
+            return result;
         }
 
         //Check setted yos value
@@ -86,18 +106,23 @@ public static class ModuleHelper
         if (yosCheckResult.Result == false
             || yosCheckResult.Data == null
             || (bool)yosCheckResult.Data == false)
-        {//No yos data in the system
-            return false;
+        {
+            //No yos data in the system
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+            return result;
         }
 
         if (isUserRequired.HasValue
             && isUserRequired.Value
             && string.IsNullOrEmpty(header.UserReference))
         {
-            return false;
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInvalidContentError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
+            return result;
         }
 
-        return true;
+        return result;
     }
 
     /// <summary>
@@ -114,7 +139,6 @@ public static class ModuleHelper
         IConfiguration configuration,
         IYosInfoService yosInfoService)
     {
-
         if (string.IsNullOrEmpty(header.XASPSPCode)
             || string.IsNullOrEmpty(header.XRequestID)
             || string.IsNullOrEmpty(header.XTPPCode))
@@ -123,7 +147,8 @@ public static class ModuleHelper
         }
 
         if (configuration["HHSCode"] != header.XASPSPCode)
-        {//XASPSPCode value should be BurganBanks hhscode value
+        {
+            //XASPSPCode value should be BurganBanks hhscode value
             return false;
         }
 
@@ -132,9 +157,11 @@ public static class ModuleHelper
         if (yosCheckResult.Result == false
             || yosCheckResult.Data == null
             || (bool)yosCheckResult.Data == false)
-        {//No yos data in the system
+        {
+            //No yos data in the system
             return false;
         }
+
         return true;
     }
 
@@ -170,10 +197,10 @@ public static class ModuleHelper
         //Payload kısmında özel olarak oluşturulacak olan “body” claim alanına istek gövdesi (request body) verisinin SHA256 hash değeri karşılığı yazılmalıdır.
         var data = new Dictionary<string, object>()
         {
-            {"iss", "https://apigw.bkm.com.tr"},
-            {"exp",  ((DateTimeOffset)DateTime.UtcNow.AddMinutes(60)).ToUnixTimeSeconds()},
-            {"iat", ((DateTimeOffset)DateTime.UtcNow.AddMinutes(-5)).ToUnixTimeSeconds()},
-            {"body", GetChecksumSHA256(body)}
+            { "iss", "https://apigw.bkm.com.tr" },
+            { "exp", ((DateTimeOffset)DateTime.UtcNow.AddMinutes(60)).ToUnixTimeSeconds() },
+            { "iat", ((DateTimeOffset)DateTime.UtcNow.AddMinutes(-5)).ToUnixTimeSeconds() },
+            { "body", GetChecksumSHA256(body) }
         };
 
         // Load private key from file
@@ -188,6 +215,7 @@ public static class ModuleHelper
         {
             pemContents = reader.ReadToEnd();
         }
+
         var key = RSA.Create();
         key.ImportFromPem(pemContents);
         return key;
@@ -223,15 +251,13 @@ public static class ModuleHelper
 
     public static void SetLinkHeader(HttpContext httpContext, IConfiguration configuration)
     {
-
         string linkHeaderValue = string.Join(", ",
-       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=6&syfKytSayi=100>; rel=\"next\"",
-       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=4&syfKytSayi=100>; rel=\"prev\"",
-       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=14&syfKytSayi=100>; rel=\"last\"",
-       "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
+            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=6&syfKytSayi=100>; rel=\"next\"",
+            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=4&syfKytSayi=100>; rel=\"prev\"",
+            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=14&syfKytSayi=100>; rel=\"last\"",
+            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
 
         linkHeaderValue = linkHeaderValue.Replace("\r", "").Replace("\n", "");
         httpContext.Response.Headers["Link"] = linkHeaderValue;
     }
-
 }

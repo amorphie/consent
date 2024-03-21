@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
 using amorphie.consent.core.Search;
@@ -158,21 +159,27 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
+            List<OBErrorCodeDetail> errorCodeDetails = new List<OBErrorCodeDetail>();
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
-            ApiResult isDataValidResult = IsDataValidToGetAccountConsent(entity);
-            if (!isDataValidResult.Result) //Error in data validation
+           
+            if (entity == null 
+                || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-                return Results.BadRequest(isDataValidResult.Message);
+               var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+               ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+               return Results.NotFound(errorResponse);
             }
-
+          
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
             return Results.Ok(accountConsent);
@@ -2413,24 +2420,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         result.Data = odemeEmriRizasiConsent;
         return result;
     }
-
-    /// <summary>
-    /// Checks if consent is valid to get
-    /// </summary>
-    /// <param name="entity">To be checked entity</param>
-    /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetAccountConsent(Consent? entity)
-    {
-        ApiResult result = new();
-        if (entity == null || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system";
-            return result;
-        }
-
-        return result;
-    }
+    
 
     /// <summary>
     /// Checks if consent is valid to get
@@ -2718,10 +2708,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             header = ModuleHelper.GetHeader(context);
         }
 
-        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, isUserRequired: isUserRequired))
+        List<OBErrorCodeDetail> errorCodeDetails = new List<OBErrorCodeDetail>();
+        result = await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, context, errorCodeDetails,
+            isUserRequired: isUserRequired);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
 
@@ -2733,7 +2724,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //HHSCode must match with header x-aspsp-code
                 result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
+                result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
                 return result;
             }
 
@@ -2741,7 +2732,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //YOSCode must match with header x-tpp-code
                 result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+                result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
                 return result;
             }
         }

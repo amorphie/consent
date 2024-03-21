@@ -1,3 +1,4 @@
+using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -258,4 +259,66 @@ public static class SeedExtension
     }
 
 
+    public static void SeedOBErrorCodeDetail(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Missing",
+            Message = "must not be null",
+            MessageTr = "boş değer olamaz"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message = "Validation error",
+            MessageTr = "Şema kontrolleri başarısız"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidASPSP",
+            Message = "Invalid ASPSP Code",
+            MessageTr = "Geçersiz HHS kodu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPP",
+            Message = "Invalid TPP Code",
+            MessageTr = "Geçersiz Yos kodu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFound.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "Resource not found",
+            MessageTr = "Kaynak bulunamadı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "PsuInitiated invalid",
+            MessageTr = "PsuInitiated değeri hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "User reference in header is wrong.",
+            MessageTr = "User reference değeri hatalı."
+        });
+
+    }
+
+    
 }
