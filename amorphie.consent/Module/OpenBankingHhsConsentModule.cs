@@ -26,7 +26,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
     }
 
-    public override string[]? PropertyCheckList => new [] { "ConsentType", "State" };
+    public override string[]? PropertyCheckList => new[] { "ConsentType", "State" };
 
     public override string? UrlFragment => "OpenBankingConsentHHS";
 
