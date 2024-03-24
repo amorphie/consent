@@ -1,8 +1,6 @@
 using System.Globalization;
-using System.Net;
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
-using amorphie.consent.core.Search;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using amorphie.core.Swagger;
@@ -27,14 +25,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
     }
 
-    public override string[]? PropertyCheckList => new string[] { "ConsentType", "State" };
+    public override string[] PropertyCheckList => new [] { "ConsentType", "State" };
 
-    public override string? UrlFragment => "OpenBankingConsentHHS";
+    public override string UrlFragment => "OpenBankingConsentHHS";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/GetAuthorizedAccountConsents", GetAuthorizedAccountConsentsByUserTCKN);
         routeGroupBuilder.MapGet("/GetConsentWebViewInfo/{rizaNo}", GetConsentWebViewInfo);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById)
@@ -1340,7 +1337,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.Consents.Add(consentEntity);
             //Generate response object
             OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi =
-                (OdemeEmriRizasiWithMsrfTtrHHSDto)paymentServiceResponse.Data;
+                (OdemeEmriRizasiWithMsrfTtrHHSDto)paymentServiceResponse.Data!;
             //Set consent data
             odemeEmriRizasi.rzBlg = new RizaBilgileriDto()
             {
@@ -1457,7 +1454,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Update consent state
             Consent paymentConsentEntity = (Consent)dataValidationResult.Data; //odemeemririzasi entity
             var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(paymentConsentEntity.AdditionalData);
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             paymentConsentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
             paymentConsentEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
@@ -1743,39 +1740,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
     #endregion
 
-
-    protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] ConsentSearch consentSearch,
-        CancellationToken token
-    )
-    {
-        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
-
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Tokens)
-            .AsNoTracking();
-
-        if (!string.IsNullOrEmpty(consentSearch.Keyword))
-        {
-            string keyword = consentSearch.Keyword.ToLower();
-            query = query.AsNoTracking().Where(x => EF.Functions
-                .ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
-                .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
-        }
-
-        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(consentSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDto>>(resultList))
-            : Results.NoContent();
-    }
-
-
+    
     /// <summary>
     /// Checks if data is valid for account consent post process
     /// </summary>
