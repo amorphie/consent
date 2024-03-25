@@ -21,6 +21,7 @@ public static class OBErrorCodeConstants
     {
         public const string BadRequest = "Bad Request";
         public const string NotFound = "Not Found";
+        public const string InternalServerError = "Internal Server Error";
     }
 
     public enum ErrorCodesEnum
@@ -33,6 +34,9 @@ public static class OBErrorCodeConstants
         InvalidTpp = 102,
         InvalidTppRole = 103,
         NotFound = 150,
+        InternalServerError = 151,
+        ConsentMismatch = 160,
+        ConsentMismatchStateNotValidToDelete = 161,
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201
        

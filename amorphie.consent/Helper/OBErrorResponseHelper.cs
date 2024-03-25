@@ -45,6 +45,7 @@ public static class OBErrorResponseHelper
             BkmCode = "TR.OHVPS.Field.Invalid",
         };
     }
+    
 
     /// <summary>
     /// Generates 400 OBCustomErrorResponseDto with given error code
@@ -53,25 +54,26 @@ public static class OBErrorResponseHelper
     /// <param name="errorCodeDetails">All error code constant data</param>
     /// <param name="errorCode">To be created error internal code</param>
     /// <returns>OBCustomErrorResponseDto type of object</returns>
-    public static OBCustomErrorResponseDto GetInvalidCodeError(HttpContext context,
+    public static OBCustomErrorResponseDto GetBadRequestError(HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
         var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
                                       e.InternalCode == errorCode.GetHashCode()) ??
                                   BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
                                       .BadRequest.GetHashCode());
+
         return BuildErrorResponse(HttpStatusCode.BadRequest,
             OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, validationErrorCode);
     }
-
+    
     /// <summary>
-    /// Generates 400 OBCustomErrorResponseDto with given error code
+    /// Generates 500 OBCustomErrorResponseDto with given error code
     /// </summary>
     /// <param name="context">HttpContext</param>
     /// <param name="errorCodeDetails">All error code constant data</param>
     /// <param name="errorCode">To be created error internal code</param>
     /// <returns>OBCustomErrorResponseDto type of object</returns>
-    public static OBCustomErrorResponseDto GetInvalidContentError(HttpContext context,
+    public static OBCustomErrorResponseDto GetInternalServerError(HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
         var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
@@ -79,8 +81,8 @@ public static class OBErrorResponseHelper
                                   BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
                                       .BadRequest.GetHashCode());
 
-        return BuildErrorResponse(HttpStatusCode.BadRequest,
-            OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, validationErrorCode);
+        return BuildErrorResponse(HttpStatusCode.InternalServerError,
+            OBErrorCodeConstants.HttpMessage.InternalServerError, context.Request.Path, validationErrorCode);
     }
     
     /// <summary>

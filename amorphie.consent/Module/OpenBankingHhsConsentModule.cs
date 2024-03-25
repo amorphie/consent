@@ -25,7 +25,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
     }
 
-    public override string[] PropertyCheckList => new [] { "ConsentType", "State" };
+    public override string[] PropertyCheckList => new[] { "ConsentType", "State" };
 
     public override string UrlFragment => "OpenBankingConsentHHS";
 
@@ -153,7 +153,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             List<OBErrorCodeDetail> errorCodeDetails = await context.OBErrorCodeDetails.AsNoTracking().ToListAsync();
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService,errorCodeDetails:errorCodeDetails);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -167,16 +167,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
-           
-            if (entity == null 
+
+            if (entity == null
                 || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-               var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
-               ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
-               return Results.NotFound(errorResponse);
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
             }
-          
+
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
             ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
             return Results.Ok(accountConsent);
@@ -1168,6 +1168,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            List<OBErrorCodeDetail> errorCodeDetails = await context.OBErrorCodeDetails.AsNoTracking().ToListAsync();
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation =
@@ -1176,7 +1177,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Check consent
@@ -1187,20 +1189,26 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                           && c.Variant == header.XTPPCode);
-            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity); //Check data validation
+
+            if (entity == null
+               || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
+            {
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
+            }
+            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity, errorCodeDetails, httpContext); //Check data validation
             if (!dataValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(dataValidationResult.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
+                return Results.BadRequest(dataValidationResult.Data);
             }
 
             //Update consent rıza bilgileri properties
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
-            if (additionalData == null)
-            {
-                return Results.BadRequest("Data inconsistency in the system. No desired account consent data.");
-            }
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
             additionalData.rzBlg.rizaIptDtyKod =
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleYOSUzerindenIptal;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
@@ -1740,7 +1748,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
     #endregion
 
-    
+
     /// <summary>
     /// Checks if data is valid for account consent post process
     /// </summary>
@@ -2385,7 +2393,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         result.Data = odemeEmriRizasiConsent;
         return result;
     }
-    
+
 
     /// <summary>
     /// Checks if consent is valid to get
@@ -2428,24 +2436,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="entity">To be checked entity</param>
     /// <returns>Data validation result</returns>
-    private ApiResult IsDataValidToDeleteAccountConsent(Consent? entity)
+    private ApiResult IsDataValidToDeleteAccountConsent(Consent entity, List<OBErrorCodeDetail> errorCodeDetails, HttpContext httpContext)
     {
         ApiResult result = new();
-        if (entity == null)
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system.";
-            return result;
-        }
-
         if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
         {
             //State not valid to set as deleted
             result.Result = false;
-            result.Message = "Account consent status not valid to marked as deleted";
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStateNotValidToDelete);
             return result;
         }
-
         return result;
     }
 
@@ -2690,7 +2690,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //HHSCode must match with header x-aspsp-code
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
                 return result;
             }
 
@@ -2698,7 +2698,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //YOSCode must match with header x-tpp-code
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetInvalidCodeError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
                 return result;
             }
         }

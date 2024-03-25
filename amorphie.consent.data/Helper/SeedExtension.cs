@@ -317,6 +317,30 @@ public static class SeedExtension
             Message = "User reference in header is wrong.",
             MessageTr = "User reference değeri hatalı."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatch.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent not valid to process",
+            MessageTr = "Consent işlem yapılmaya uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStateNotValidToDelete.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent state not valid to delete",
+            MessageTr = "Consent rıza durumu silme işlemine uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerError.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "Unexpected condition was encountered.",
+            MessageTr = "Beklenmeyen bir durumla karşılaşıldı."
+        });
 
     }
 
