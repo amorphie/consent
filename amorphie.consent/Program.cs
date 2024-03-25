@@ -41,6 +41,7 @@ builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IOBEventService, OBEventService>();
 builder.Services.AddScoped<IOBAuthorizationService, OBAuthorizationService>();
+builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>();
 builder.Services.AddSingleton<ITagService, TagService>();
 builder.Services.AddSingleton<IPushService, PushService>();
 builder.Services.AddSingleton<IDeviceRecord, DeviceRecordService>();

@@ -20,9 +20,23 @@ namespace amorphie.consent.Module;
 
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
+    private readonly IOBErrorCodeDetailService _errorCodeDetailService;
+    private List<OBErrorCodeDetail> _errorCodeDetails;
     public OpenBankingHHSConsentModule(WebApplication app)
-        : base(app)
+     : base(app)
     {
+        using (var scope = app.Services.CreateScope())
+        {
+            // Resolve the IOBErrorCodeDetailService dependency from the service provider
+            _errorCodeDetailService = scope.ServiceProvider.GetRequiredService<IOBErrorCodeDetailService>();
+            _errorCodeDetails = new List<OBErrorCodeDetail>();
+            InitializeErrorCodeDetails(); // Get error code details
+        }
+    }
+    
+    private async void InitializeErrorCodeDetails()
+    {
+        _errorCodeDetails = await _errorCodeDetailService.GetErrorCodeDetailsAsync();
     }
 
     public override string[] PropertyCheckList => new[] { "ConsentType", "State" };
@@ -151,9 +165,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
-            List<OBErrorCodeDetail> errorCodeDetails = await context.OBErrorCodeDetails.AsNoTracking().ToListAsync();
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: errorCodeDetails);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -171,7 +184,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (entity == null
                 || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, _errorCodeDetails,
                      OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
                 return Results.NotFound(errorResponse);
