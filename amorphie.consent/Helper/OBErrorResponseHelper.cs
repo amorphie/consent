@@ -23,28 +23,7 @@ public static class OBErrorResponseHelper
             FieldErrors = fieldErrors,
         };
     }
-
-    public static OBErrorCodeDetail BuildDefaultErrorCodeDetail(int internalCode)
-    {
-        return new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            Message = $"{internalCode} internal code information is not in system.",
-            MessageTr = $"{internalCode} kodlu hata detay bilgisi sistemde bulunamadı.",
-            BkmCode = "TR.OHVPS.Server.InternalError",
-        };
-    }
-
-    public static OBErrorCodeDetail BuildDefaultFieldErrorCodeDetail(int internalCode)
-    {
-        return new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            Message = $"{internalCode} internal code information is not in system.",
-            MessageTr = $"{internalCode} kodlu hata detay bilgisi sistemde bulunamadı.",
-            BkmCode = "TR.OHVPS.Field.Invalid",
-        };
-    }
+    
     
 
     /// <summary>
@@ -57,13 +36,11 @@ public static class OBErrorResponseHelper
     public static OBCustomErrorResponseDto GetBadRequestError(HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
-        var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
-                                      e.InternalCode == errorCode.GetHashCode()) ??
-                                  BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
-                                      .BadRequest.GetHashCode());
-
+        //Get errorCode detail
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        //Generate customerrorresponse of badrequest
         return BuildErrorResponse(HttpStatusCode.BadRequest,
-            OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, validationErrorCode);
+            OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, errorCodeDetail);
     }
     
     /// <summary>
@@ -76,13 +53,11 @@ public static class OBErrorResponseHelper
     public static OBCustomErrorResponseDto GetInternalServerError(HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
-        var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
-                                      e.InternalCode == errorCode.GetHashCode()) ??
-                                  BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
-                                      .BadRequest.GetHashCode());
-
+        //Get errorCode detail
+        var errorCodeDetail =GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        //Generate customerrorresponse of InternalServerError
         return BuildErrorResponse(HttpStatusCode.InternalServerError,
-            OBErrorCodeConstants.HttpMessage.InternalServerError, context.Request.Path, validationErrorCode);
+            OBErrorCodeConstants.HttpMessage.InternalServerError, context.Request.Path, errorCodeDetail);
     }
     
     /// <summary>
@@ -95,52 +70,95 @@ public static class OBErrorResponseHelper
     public static OBCustomErrorResponseDto GetNotFoundError(HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
-        var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
-                                      e.InternalCode == errorCode.GetHashCode()) ??
-                                  BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
-                                      .NotFound.GetHashCode());
-
+        //Get errorCode detail
+        var errorCodeDetail =GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        //Generate customerrorresponse of NotFound
         return BuildErrorResponse(HttpStatusCode.NotFound,
-            OBErrorCodeConstants.HttpMessage.NotFound, context.Request.Path, validationErrorCode);
+            OBErrorCodeConstants.HttpMessage.NotFound, context.Request.Path, errorCodeDetail);
+    }
+    
+    /// <summary>
+    /// Gets errorCodeDetail in errorCodeDetail list by internalCode.
+    /// If can not be found, default  TR.OHVPS.Field.Invalid bkm code error code detail object created
+    /// </summary>
+    /// <param name="errorCodeDetails"></param>
+    /// <param name="internalCode"></param>
+    /// <returns>errorCodeDetail object of given internalCode</returns>
+    private static OBErrorCodeDetail GetErrorCodeDetail_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    {
+        var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
+                                  e.InternalCode ==
+                                  internalCode.GetHashCode()) ??
+                              BuildDefaultErrorCodeDetail_InvalidField(internalCode.GetHashCode());
+        return errorCodeDetail;
+    }
+    
+    /// <summary>
+    /// Gets errorCodeDetail in errorCodeDetail list by internalCode.
+    /// If can not be found, default  TR.OHVPS.Server.InternalError bkm code error code detail object created
+    /// </summary>
+    /// <param name="errorCodeDetails"></param>
+    /// <param name="internalCode"></param>
+    /// <returns>errorCodeDetail object of given internalCode</returns>
+    private static OBErrorCodeDetail GetErrorCodeDetail_DefaultInternalServer(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    {
+        var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
+                                  e.InternalCode ==
+                                  internalCode.GetHashCode()) ??
+                              BuildDefaultErrorCodeDetail_InternalServer(internalCode.GetHashCode());
+        return errorCodeDetail;
+    }
+    
+    private static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InternalServer(int internalCode)
+    {
+        return new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            Message = $"{internalCode} internal code information is not in system.",
+            MessageTr = $"{internalCode} kodlu hata detay bilgisi sistemde bulunamadı.",
+            BkmCode = "TR.OHVPS.Server.InternalError",
+        };
+    }
+
+    private static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InvalidField(int internalCode)
+    {
+        return new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            Message = $"{internalCode} internal code information is not in system.",
+            MessageTr = $"{internalCode} kodlu hata detay bilgisi sistemde bulunamadı.",
+            BkmCode = "TR.OHVPS.Field.Invalid",
+        };
     }
 
 
     public static bool PrepareAndCheckHeaderInvalidFormatProperties(RequestHeaderDto header, HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
     {
-        var validationErrorCode = errorCodeDetails.FirstOrDefault(e =>
-                                      e.InternalCode == OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError
-                                          .GetHashCode()) ??
-                                  BuildDefaultErrorCodeDetail(OBErrorCodeConstants.HttpMessage
-                                      .BadRequest.GetHashCode());
-
-        errorResponse = BuildErrorResponse(HttpStatusCode.BadRequest,
-            OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, validationErrorCode);
+        //Get 400 error response
+        errorResponse = GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
         errorResponse.FieldErrors = new List<FieldError>();
 
-        var fieldErrorCode = errorCodeDetails.FirstOrDefault(e =>
-                                 e.InternalCode ==
-                                 OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull.GetHashCode()) ??
-                             BuildDefaultFieldErrorCodeDetail(OBErrorCodeConstants.ErrorCodesEnum
-                                 .FieldCanNotBeNull
-                                 .GetHashCode());
+        //Field can not be empty error code
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
 
         // Check each header property and add errors if necessary
         CheckHeaderInvalidFormatProperty(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
-            fieldErrorCode, errorResponse);
+            errorCodeDetail, errorResponse);
         CheckHeaderInvalidFormatProperty(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
-            fieldErrorCode, errorResponse);
+            errorCodeDetail, errorResponse);
         CheckHeaderInvalidFormatProperty(header.XASPSPCode, OBErrorCodeConstants.FieldNames.HeaderXaspspCode,
-            fieldErrorCode, errorResponse);
+            errorCodeDetail, errorResponse);
         CheckHeaderInvalidFormatProperty(header.XRequestID, OBErrorCodeConstants.FieldNames.HeaderXRequestId,
-            fieldErrorCode, errorResponse);
+            errorCodeDetail, errorResponse);
         CheckHeaderInvalidFormatProperty(header.XTPPCode, OBErrorCodeConstants.FieldNames.HeaderXtppCode,
-            fieldErrorCode, errorResponse);
+            errorCodeDetail, errorResponse);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
 
+    
     public static void CheckHeaderInvalidFormatProperty(string propertyValue, string propertyName,
         OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
     {
@@ -155,4 +173,7 @@ public static class OBErrorResponseHelper
             });
         }
     }
+    
+    
+  
 }

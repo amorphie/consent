@@ -1783,7 +1783,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
         result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: rizaIstegi.katilimciBlg);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
             //validation error in header fields
