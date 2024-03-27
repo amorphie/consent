@@ -1777,8 +1777,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ConsentDbContext dbContext)
     {
         //TODO:Ozlem Check if user is customer
-        //TODO:Ozlem Check fields length and necessity
-
+       
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
@@ -1808,10 +1807,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk))
+        result = IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
 
@@ -3181,6 +3179,162 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return true;
     }
 
+    
+    /// <summary>
+    /// Checks if gkd data is valid
+    /// </summary>
+    /// <param name="gkd">To be checked data</param>
+    /// <param name="kimlik">Identity Information in consent</param>
+    /// <returns>Is gkd data valid</returns>
+    private static ApiResult IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik, HttpContext context,List<OBErrorCodeDetail> errorCodeDetails )
+    {
+        ApiResult result = new();
+        if (!string.IsNullOrEmpty(gkd.yetYntm)) //YetYntm is set
+        {
+            //Get 400 error response
+            var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+            errorResponse.FieldErrors = new List<FieldError>();
+            
+            //Check data
+            if (!ConstantHelper.GetGKDTurList().Contains(gkd.yetYntm))
+            {
+                //GDKTur value is not valid
+                result.Result = false;
+                result.Data = errorResponse;
+                errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.GkdTurHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                return result;
+            }
+
+            if ((gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
+                 && string.IsNullOrEmpty(gkd.yonAdr)))
+            {
+                //YonAdr should be set
+                errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.GkdyonAdrHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                result.Result = false;
+                result.Data = errorResponse;
+                return result;
+            }
+
+            if (gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
+            {
+                //AyrikGKD object should be set
+                if (gkd.ayrikGkd == null)
+                {
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails, OBErrorCodeConstants.ObjectNames.GkdAyrikGkdHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                }
+                if(string.IsNullOrEmpty(gkd.ayrikGkd?.ohkTanimDeger))
+                {
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimDegerHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                }
+                else if(gkd.ayrikGkd?.ohkTanimDeger.Length < 1  || gkd.ayrikGkd?.ohkTanimDeger.Length > 30  ) //Check length
+                {
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.HhsCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                }
+                if(string.IsNullOrEmpty(gkd.ayrikGkd?.ohkTanimTip))
+                {
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTipHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                }
+                else if(gkd.ayrikGkd?.ohkTanimTip.Length != 8) //Check length
+                {
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.HhsCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                }
+                if (errorResponse.FieldErrors.Any())
+                {
+                    result.Result = false;
+                    result.Data = errorResponse;
+                    return result;
+                }
+                if (!ConstantHelper.GetOhkTanimTipList().Contains(gkd.ayrikGkd!.ohkTanimTip))
+                {
+                    //GDKTur value is not valid
+                    result.Result = false;
+                    result.Data = errorResponse;
+                    errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTipHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                    return result;
+                }
+                
+                //Check GKDTanımDeger values
+                switch (gkd.ayrikGkd.ohkTanimTip)
+                {
+                    case OpenBankingConstants.OhkTanimTip.TCKN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 11
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerTcknLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.MNO:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length >= 30)
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerMnoLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.YKN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 11
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerYknLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.PNO:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length > 9)
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerPnoLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.GSM:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 10
+                            || !gkd.ayrikGkd.ohkTanimDeger.All(char.IsAsciiDigit))
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerGsmLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    case OpenBankingConstants.OhkTanimTip.IBAN:
+                        if (gkd.ayrikGkd.ohkTanimDeger.Trim().Length != 26)
+                        {
+                            result.Result = false;
+                            result.Data = errorResponse;
+                            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerIbanLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                //From Document:
+                //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
+                //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
+                //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
+                if (kimlik.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
+                    && kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger)
+                {
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch);
+                    return result;
+                }
+            }
+        }
+        else
+        {
+            //Yetkilendirme yontemi not set
+            //TODO:Özlem. Set edilmeyebilir. Ama set edilmediği durumda nasıl ilerleyeceğimiz konuşulmalı. Patlamasın diye zorunluymuş gibi ilerltiyoruz.
+            return result;
+        }
+
+        return result;
+    }
+
+    
     /// <summary>
     /// Check if yos has subscription for GKD
     /// </summary>
