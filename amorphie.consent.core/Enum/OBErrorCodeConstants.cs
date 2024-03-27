@@ -15,6 +15,17 @@ public static class OBErrorCodeConstants
         public const string HeaderXaspspCode = "X-ASPSP-Code";
         public const string HeaderXRequestId = "X-TPP-Code";
         public const string HeaderXtppCode = "PSU-Initiated";
+        public const string HhsCodeHbr = "katilimciBlg.hhsKod";
+        public const string YosCodeHbr = "katilimciBlg.yosKod";
+    }
+    public static class ObjectNames
+    {
+        public const string HesapBilgisiRizasiIstegi = "HesapBilgisiRizasiIstegi";
+        public const string KatilimciBlg = "katilimciBlg";
+        public const string Gkd = "gkd";
+        public const string Kmlk = "kmlk";
+        public const string HspBlg = "hspBlg";
+        public const string HspBlgIznBlg = "hspBlg.iznBlg";
     }
 
     public static class HttpMessage
@@ -28,7 +39,8 @@ public static class OBErrorCodeConstants
     {
         FieldCanNotBeNullWithName = 1,
         FieldCanNotBeNull = 2,
-
+        InvalidFieldHhsCodeYosCodeLength = 3,
+        
         InvalidFormatValidationError = 100,
         InvalidAspsp= 101,
         InvalidTpp = 102,

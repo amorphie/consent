@@ -1789,27 +1789,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //validation error in header fields
             return result;
         }
-
+        
         //Check message required basic properties
-        if (rizaIstegi.katilimciBlg is null
-            || rizaIstegi.gkd == null
-            || rizaIstegi.kmlk == null
-            || rizaIstegi.hspBlg == null
-            || rizaIstegi.hspBlg.iznBlg == null)
+        if (!OBErrorResponseHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
-            result.Message =
-                "katilimciBlg, gkd,odmBsltm, kmlk, hspBlg, spBlg.iznBlg should be in consent request message";
+            result.Data = errorResponse;
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod) //Required fields
-            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
+        result = IsKatilimciBlgDataValid(httpContext, configuration, 
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
+            //validation error in katiliciBilgisi data fields
             return result;
         }
 
@@ -2716,6 +2710,54 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
         }
 
+        return result;
+    }
+
+    
+    private ApiResult IsKatilimciBlgDataValid(HttpContext context,
+        IConfiguration configuration,
+        KatilimciBilgisiDto katilimciBlg,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+       
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+        
+        //Field can not be empty error code
+        var errorCodeDetail = OBErrorResponseHelper.GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+        var invalidFieldHhsCodeYosCodeLength = OBErrorResponseHelper.GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength);
+        if (string.IsNullOrEmpty(katilimciBlg.hhsKod)) //Check hhskod 
+        {
+            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(OBErrorCodeConstants.FieldNames.HhsCodeHbr,errorCodeDetail, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+        }
+        else if(katilimciBlg.hhsKod.Length != 4) //Check hhskod length
+        {
+            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(OBErrorCodeConstants.FieldNames.HhsCodeHbr,invalidFieldHhsCodeYosCodeLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+        }
+        if (string.IsNullOrEmpty(katilimciBlg.yosKod)) //Check yoskod 
+        {
+            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(OBErrorCodeConstants.FieldNames.YosCodeHbr,errorCodeDetail,OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+        }
+        else if(katilimciBlg.yosKod.Length != 4) //Check yoskod length
+        {
+            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(OBErrorCodeConstants.FieldNames.YosCodeHbr,invalidFieldHhsCodeYosCodeLength, OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+        }
+        if (errorResponse.FieldErrors.Any())
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+        //Check HHSCode is correct
+        if (configuration["HHSCode"] != katilimciBlg.hhsKod)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+            return result;
+        }
         return result;
     }
 

@@ -32,6 +32,8 @@ public class OBCustomErrorResponseDto
 
 public class FieldError
 {
+    [JsonIgnore]
+    public string? ObjectName { get; set; }
     public string Field { get; set; }= string.Empty;
     public string MessageTr { get; set; }= string.Empty;
     public string Message { get; set; }= string.Empty;

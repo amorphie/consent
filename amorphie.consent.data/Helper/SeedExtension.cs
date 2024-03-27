@@ -272,6 +272,14 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 4",
+            MessageTr = "boyut '4' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "Validation error",

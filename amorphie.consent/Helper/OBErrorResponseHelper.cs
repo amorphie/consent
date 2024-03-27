@@ -1,5 +1,6 @@
 using System.Net;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 
@@ -84,7 +85,7 @@ public static class OBErrorResponseHelper
     /// <param name="errorCodeDetails"></param>
     /// <param name="internalCode"></param>
     /// <returns>errorCodeDetail object of given internalCode</returns>
-    private static OBErrorCodeDetail GetErrorCodeDetail_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
     {
         var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
                                   e.InternalCode ==
@@ -100,7 +101,7 @@ public static class OBErrorResponseHelper
     /// <param name="errorCodeDetails"></param>
     /// <param name="internalCode"></param>
     /// <returns>errorCodeDetail object of given internalCode</returns>
-    private static OBErrorCodeDetail GetErrorCodeDetail_DefaultInternalServer(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInternalServer(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
     {
         var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
                                   e.InternalCode ==
@@ -109,7 +110,7 @@ public static class OBErrorResponseHelper
         return errorCodeDetail;
     }
     
-    private static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InternalServer(int internalCode)
+    public static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InternalServer(int internalCode)
     {
         return new OBErrorCodeDetail
         {
@@ -120,7 +121,7 @@ public static class OBErrorResponseHelper
         };
     }
 
-    private static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InvalidField(int internalCode)
+    public static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InvalidField(int internalCode)
     {
         return new OBErrorCodeDetail
         {
@@ -143,37 +144,76 @@ public static class OBErrorResponseHelper
         var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
 
         // Check each header property and add errors if necessary
-        CheckHeaderInvalidFormatProperty(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
+        CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
             errorCodeDetail, errorResponse);
-        CheckHeaderInvalidFormatProperty(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
+        CheckInvalidFormatProperty_String(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
             errorCodeDetail, errorResponse);
-        CheckHeaderInvalidFormatProperty(header.XASPSPCode, OBErrorCodeConstants.FieldNames.HeaderXaspspCode,
+        CheckInvalidFormatProperty_String(header.XASPSPCode, OBErrorCodeConstants.FieldNames.HeaderXaspspCode,
             errorCodeDetail, errorResponse);
-        CheckHeaderInvalidFormatProperty(header.XRequestID, OBErrorCodeConstants.FieldNames.HeaderXRequestId,
+        CheckInvalidFormatProperty_String(header.XRequestID, OBErrorCodeConstants.FieldNames.HeaderXRequestId,
             errorCodeDetail, errorResponse);
-        CheckHeaderInvalidFormatProperty(header.XTPPCode, OBErrorCodeConstants.FieldNames.HeaderXtppCode,
+        CheckInvalidFormatProperty_String(header.XTPPCode, OBErrorCodeConstants.FieldNames.HeaderXtppCode,
             errorCodeDetail, errorResponse);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
+    
+    public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+    {
+        //Get 400 error response
+        errorResponse = GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+
+        //Field can not be empty error code
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        // Check each property and add errors if necessary
+        CheckInvalidFormatProperty_Object(rizaIstegi.katilimciBlg, OBErrorCodeConstants.ObjectNames.KatilimciBlg,
+            errorCodeDetail, errorResponse);
+        CheckInvalidFormatProperty_Object(rizaIstegi.gkd, OBErrorCodeConstants.ObjectNames.Gkd,
+            errorCodeDetail, errorResponse);
+        CheckInvalidFormatProperty_Object(rizaIstegi.kmlk, OBErrorCodeConstants.ObjectNames.Kmlk,
+            errorCodeDetail, errorResponse);
+        CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg, OBErrorCodeConstants.ObjectNames.HspBlg,
+            errorCodeDetail, errorResponse);
+        CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg?.iznBlg, OBErrorCodeConstants.ObjectNames.HspBlgIznBlg,
+            errorCodeDetail, errorResponse);
+
+        // Return false if any errors were added, indicating an issue with the header
+        return !errorResponse.FieldErrors.Any();
+        
+    }
 
     
-    public static void CheckHeaderInvalidFormatProperty(string propertyValue, string propertyName,
+    public static void CheckInvalidFormatProperty_String(string propertyValue, string propertyName,
         OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
     {
         if (string.IsNullOrEmpty(propertyValue))
         {
-            errorResponse.FieldErrors?.Add(new FieldError
-            {
-                Field = propertyName,
-                Message = errorCodeDetail.Message,
-                MessageTr = errorCodeDetail.MessageTr,
-                Code = errorCodeDetail.BkmCode
-            });
+            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
         }
     }
     
-    
-  
+    public static void CheckInvalidFormatProperty_Object(Object? objectValue, string propertyName,
+        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
+    {
+        if (objectValue is null)
+        {
+            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
+        }
+    }
+
+    public static FieldError GetFieldErrorObject(string propertyName, OBErrorCodeDetail errorCodeDetail, string objectName = null)
+    {
+        return new FieldError
+        {
+            ObjectName = objectName,
+            Field = propertyName,
+            Message = errorCodeDetail.Message,
+            MessageTr = errorCodeDetail.MessageTr,
+            Code = errorCodeDetail.BkmCode
+        };
+    }
 }
