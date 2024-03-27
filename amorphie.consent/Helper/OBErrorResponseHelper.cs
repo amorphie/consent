@@ -159,32 +159,7 @@ public static class OBErrorResponseHelper
         return !errorResponse.FieldErrors.Any();
     }
     
-    public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
-    {
-        //Get 400 error response
-        errorResponse = GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
-        errorResponse.FieldErrors = new List<FieldError>();
-
-        //Field can not be empty error code
-        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
-
-        // Check each property and add errors if necessary
-        CheckInvalidFormatProperty_Object(rizaIstegi.katilimciBlg, OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_Object(rizaIstegi.gkd, OBErrorCodeConstants.ObjectNames.Gkd,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_Object(rizaIstegi.kmlk, OBErrorCodeConstants.ObjectNames.Kmlk,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg, OBErrorCodeConstants.ObjectNames.HspBlg,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg?.iznBlg, OBErrorCodeConstants.ObjectNames.HspBlgIznBlg,
-            errorCodeDetail, errorResponse);
-
-        // Return false if any errors were added, indicating an issue with the header
-        return !errorResponse.FieldErrors.Any();
-        
-    }
+  
 
     
     public static void CheckInvalidFormatProperty_String(string propertyValue, string propertyName,
