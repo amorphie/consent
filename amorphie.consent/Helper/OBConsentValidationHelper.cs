@@ -48,11 +48,129 @@ public static class OBConsentValidationHelper
         return !errorResponse.FieldErrors.Any();
     }
 
+    public static ApiResult CheckKmlkData(KimlikDto kmlk, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+
+        errorResponse.FieldErrors = new List<FieldError>();
+        // Check each property and add errors if necessary
+        if (string.IsNullOrEmpty(kmlk.kmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        if (string.IsNullOrEmpty(kmlk.kmlkVrs))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkVrs, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        if (string.IsNullOrEmpty(kmlk.krmKmlkTur) != string.IsNullOrEmpty(kmlk.krmKmlkVrs))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData);
+
+        if (string.IsNullOrEmpty(kmlk.ohkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        if (!ConstantHelper.GetKimlikTurList().Contains(kmlk.kmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData);
+
+        if (!ConstantHelper.GetOHKTurList().Contains(kmlk.ohkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData);
+
+        if (!string.IsNullOrEmpty(kmlk.krmKmlkTur) &&
+            !ConstantHelper.GetKurumKimlikTurList().Contains(kmlk.krmKmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData);
+
+        if (errorResponse.FieldErrors.Any())
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+
+        result = CheckKmlkConstraints(kmlk, context, errorCodeDetails, errorResponse);
+        return result;
+    }
+
+    public static ApiResult CheckKmlkConstraints(KimlikDto kmlk, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse)
+    {
+        ApiResult result = new();
+        errorResponse.FieldErrors = new List<FieldError>();
+
+        // Check field constraints and add errors if necessary
+        if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN && !IsTcknValid(kmlk.kmlkVrs))
+        {
+            result.Result = false;
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkVrs,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkTcknLength);
+            
+        }
+        else if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.MNO 
+                 && !IsMnoValid(kmlk.kmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkMnoLength);
+        }
+        else if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.YKN 
+                 && !IsYknValid(kmlk.kmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkYknLength);
+        }
+        else if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.PNO
+                 && !IsPnoValid(kmlk.kmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkPnoLength);
+        }
+        if (kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.TCKN
+            && !IsTcknValid(kmlk.krmKmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKrmKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkTcknLength);
+        }
+        else if (kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.MNO  && !IsMnoValid(kmlk.krmKmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKrmKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkMnoLength);
+ 
+        }
+        else if (kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.VKN  && !IsVknValid(kmlk.krmKmlkVrs))
+        {
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkKrmKmlkVrs,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkVknLength);
+        }
+
+        if (errorResponse.FieldErrors.Any())
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+        }
+        return result;
+    }
+
+
     /// <summary>
     /// Checks if gkd data is valid
     /// </summary>
     /// <param name="gkd">To be checked data</param>
     /// <param name="kimlik">Identity Information in consent</param>
+    /// <param name="context"></param>
+    /// <param name="errorCodeDetails"></param>
     /// <returns>Is gkd data valid</returns>
     public static ApiResult IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik, HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails)
@@ -290,7 +408,7 @@ public static class OBConsentValidationHelper
     /// </summary>
     /// <param name="tckn">To be checked data</param>
     /// <returns>Is valid tckn</returns>
-    private static bool IsTcknValid(string tckn)
+    private static bool IsTcknValid(string? tckn)
     {
         return !string.IsNullOrEmpty(tckn) && tckn.Trim().Length == 11 && tckn.All(char.IsDigit);
     }
@@ -300,7 +418,7 @@ public static class OBConsentValidationHelper
     /// </summary>
     /// <param name="mno">The data to be checked.</param>
     /// <returns>True if the MNO is valid; otherwise, false.</returns>
-    private static bool IsMnoValid(string mno)
+    private static bool IsMnoValid(string? mno)
     {
         return !string.IsNullOrEmpty(mno) && mno.Trim().Length >= 1 && mno.Trim().Length <= 30;
     }
@@ -343,6 +461,16 @@ public static class OBConsentValidationHelper
     private static bool IsIbanValid(string iban)
     {
         return !string.IsNullOrEmpty(iban) && iban.Trim().Length == 26 && iban.All(char.IsDigit);
+    }
+    
+    /// <summary>
+    /// Checks if the vergi kimlik numarası data is valid.
+    /// </summary>
+    /// <param name="vkn">The data to be checked.</param>
+    /// <returns>True if the VKN is valid; otherwise, false.</returns>
+    private static bool IsVknValid(string? vkn)
+    {
+        return !string.IsNullOrEmpty(vkn) && vkn.Trim().Length == 10;
     }
 
     /// <summary>

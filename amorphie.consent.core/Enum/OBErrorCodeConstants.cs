@@ -22,7 +22,11 @@ public static class OBErrorCodeConstants
         public const string GkdAyrikGkdHbr = "gkd.ayrikGkd";
         public const string GkdAyrikGkdOhkTanimDegerHbr = "gkd.ayrikGkd.ohkTanimDeger";
         public const string GkdAyrikGkdOhkTanimTipHbr = "gkd.ayrikGkd.ohkTanimTip";
-
+        public const string KmlkKmlkTur = "kmlk.kmlkTur";
+        public const string KmlkKmlkVrs = "kmlk.kmlkVrs";
+        public const string KmlkKrmKmlkTur = "kmlk.krmKmlkTur";
+        public const string KmlkKrmKmlkVrs = "kmlk.krmKmlkVrs";
+        public const string KmlkOhkTur = "kmlk.ohkTur";
     }
     public static class ObjectNames
     {
@@ -57,6 +61,11 @@ public static class OBErrorCodeConstants
         InvalidFieldOhkTanimDegerGsmLength = 11,
         InvalidFieldOhkTanimDegerIbanLength = 12,
         
+        InvalidFieldKmlkTcknLength = 13,
+        InvalidFieldKmlkMnoLength = 14,
+        InvalidFieldKmlkYknLength = 15,
+        InvalidFieldKmlkPnoLength = 16,
+        InvalidFieldKmlkVknLength = 17,
         
         
         InvalidFormatValidationError = 100,

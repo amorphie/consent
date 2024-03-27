@@ -1825,38 +1825,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
         //Check Kimlik
-        if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur) //Check required fields
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
-            || (string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) != string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur)
-            || !ConstantHelper.GetKimlikTurList().Contains(rizaIstegi.kmlk.kmlkTur)
-            || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.kmlk.ohkTur)
-            || (!string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) &&
-                !ConstantHelper.GetKurumKimlikTurList().Contains(rizaIstegi.kmlk.krmKmlkTur)))
+        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.kmlk, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data is not valid";
-            return result;
-        }
-
-        //Check field constraints
-        if ((rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN &&
-             rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.MNO &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.YKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.PNO &&
-                (rizaIstegi.kmlk.kmlkVrs.Trim().Length < 7 || rizaIstegi.kmlk.kmlkVrs.Length > 9))
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.TCKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.MNO &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.VKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data validation failed.";
             return result;
         }
 
