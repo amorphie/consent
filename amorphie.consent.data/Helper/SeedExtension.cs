@@ -389,8 +389,78 @@ public static class SeedExtension
             Message = "size must be 10",
             MessageTr = "boyut '10' olmalı"
         });
-        
-        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurNoTemelHesap.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Temel hesap bilgisi izni must.",
+            MessageTr = "Temel hesap bilgisi izni seçimi zorunludur."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurAyrintiliIslemWithoutTemelIslem.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Detail transactions permission can not be selected without Basic transactions.",
+            MessageTr = "Temelişlem bilgisi izni seçimi yapılmadan ayrıntılı işlem bilgisi seçimi yapılamaz.."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurAnlikBakiyeWithoutBakiye.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Instant balance notification cannot be selected without selecting balance information permission.",
+            MessageTr = "Bakiye bilgisi izni seçimi yapılmadan anlık bakiye bildirimi seçimi yapılamaz.."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldErisimIzniSonTrh.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "The minimum value it can take is consent date +1 day, the maximum value it can take is: Consent date + 6 months.",
+            MessageTr = "Alabileceği minimum değer tarihi +1 gün, alabileceği maksimum değer : Rıza tarihi + 6 ay "
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldTransactionSelectedDateNotSet.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "When the Basic Transaction Information/Detailed Transaction Information permission is selected, the hesapIslemBslZmn hesapIslemBtsZmn fields must be filled.",
+            MessageTr = "Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman hesapIslemBslZmn hesapIslemBtsZmn alanlarının doldurulması zorunludur."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDateSetTransactionNotSelected.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "hesapIslemBslZmn hesapIslemBtsZmn fields should only be sent when the Basic Transaction Information/Detailed Transaction Information permission is selected.",
+            MessageTr = "hesapIslemBslZmn hesapIslemBtsZmn alanları sadece Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman gönderilmelidir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHesapIslemDateRange.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHesapIslemDateRange.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldesapIslemBslZmnLaterThanBtsZmn.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "hesapIslemBslZmn can not be later than hesapIslemBtsZmn.",
+            MessageTr = "hesapIslemBslZmn, hesapIslemBtsZmn verisinden sonra olamaz. "
+        });
         
         
         

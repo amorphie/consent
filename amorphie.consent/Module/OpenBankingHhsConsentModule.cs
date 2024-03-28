@@ -1831,78 +1831,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
-
-        //Check HesapBilgisi
-        //Check izinbilgisi properties
-        if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
-            || rizaIstegi.hspBlg.iznBlg.iznTur.Any(i => !ConstantHelper.GetIzinTurList().Contains(i))
-            || !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi)
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) &&
-                !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelIslemBilgisi))
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi) &&
-                !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.BakiyeBilgisi)))
-        {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain TemelHesapBilgisi permission.";
-            return result;
-        }
-
-        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
-        {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. IznBld erisimIzniSonTrh data check failed. It should be between tomorrow and 6 months later ";
-            return result;
-        }
-
-        //Check işlem sorgulama başlangıç zamanı
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                           || p == OpenBankingConstants.IzinTur
-                                                               .AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12)) //Data constraints
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid. Maximum 12 months before.";
-                return result;
-            }
-        }
-
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue) //Check işlem sorgulama bitiş zamanı
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                           || p == OpenBankingConstants.IzinTur
-                                                               .AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12)) //Data constraints
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid. Maximum 12 months later.";
-                return result;
-            }
-        }
-
+        result = OBConsentValidationHelper.CheckIznBlgTur(rizaIstegi.hspBlg.iznBlg, httpContext, _errorCodeDetails);
         return result;
     }
 

@@ -27,6 +27,13 @@ public static class OBErrorCodeConstants
         public const string KmlkKrmKmlkTur = "kmlk.krmKmlkTur";
         public const string KmlkKrmKmlkVrs = "kmlk.krmKmlkVrs";
         public const string KmlkOhkTur = "kmlk.ohkTur";
+        public const string HspBlgIznBlg = "hspBlg.iznBlg";
+        public const string HspBlgIznTur = "hspBlg.iznTur";
+        public const string HspBlgErisimIzniSonTrh = "hspBlg.iznBlg.erisimIzniSonTrh";
+        public const string HspBlgHesapIslemBslZmn = "hspBlg.iznBlg.hesapIslemBslZmn";
+        public const string HspBlgHesapIslemBtsZmn = "hspBlg.iznBlg.hesapIslemBtsZmn";
+        public const string HspBlgHesapIslemBslZmnBtsZmn = "hspBlg.iznBlg.hesapIslemBslZmn-hspBlg.iznBlg.hesapIslemBtsZmn";
+
     }
     public static class ObjectNames
     {
@@ -60,12 +67,20 @@ public static class OBErrorCodeConstants
         InvalidFieldOhkTanimDegerPnoLength = 10,
         InvalidFieldOhkTanimDegerGsmLength = 11,
         InvalidFieldOhkTanimDegerIbanLength = 12,
-        
         InvalidFieldKmlkTcknLength = 13,
         InvalidFieldKmlkMnoLength = 14,
         InvalidFieldKmlkYknLength = 15,
         InvalidFieldKmlkPnoLength = 16,
         InvalidFieldKmlkVknLength = 17,
+        InvalidFieldIznTurNoTemelHesap = 18,
+        InvalidFieldIznTurAyrintiliIslemWithoutTemelIslem = 19,
+        InvalidFieldIznTurAnlikBakiyeWithoutBakiye = 20,
+        InvalidFieldErisimIzniSonTrh = 21,
+        InvalidFieldTransactionSelectedDateNotSet= 22,
+        InvalidFieldDateSetTransactionNotSelected= 23,
+        InvalidFieldHesapIslemDateRange = 24,
+        InvalidFieldesapIslemBslZmnLaterThanBtsZmn = 25,
+        
         
         
         InvalidFormatValidationError = 100,
