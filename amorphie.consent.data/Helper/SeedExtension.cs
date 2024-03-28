@@ -553,6 +553,14 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchAccountPostAlreadyAuthroized.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "There is a Authorized / Authorzation Used consent in the system. First cancel the consent.",
+            MessageTr = "Sistemde Yetkilendirildi / Yetki Kullanıldı durumunda rıza olduğu için rıza kabul edilmedi. Öncelikli olarak rızayı iptal ediniz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerError.GetHashCode(),
             BkmCode = "TR.OHVPS.Server.InternalError",
             Message = "Unexpected condition was encountered.",

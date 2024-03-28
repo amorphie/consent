@@ -33,7 +33,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             InitializeErrorCodeDetails(); // Get error code details
         }
     }
-    
+
     private async void InitializeErrorCodeDetails()
     {
         _errorCodeDetails = await _errorCodeDetailService.GetErrorCodeDetailsAsync();
@@ -1097,8 +1097,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
             if (!checkValidationResult.Result)
             {
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
                 //Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
+                return Results.BadRequest(checkValidationResult.Data);
             }
 
             //Get user's active account consents from db and process them
@@ -1111,8 +1112,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var activeAccountConsents = (List<Consent>?)checkAccountConsentResult.Data;
             if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any yetkilendirildi, yetki kullanıldı state consent
             {
-                return Results.BadRequest(
-                    "TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
+                var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchAccountPostAlreadyAuthroized);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                Results.BadRequest(errorResponse);
             }
 
             var header = ModuleHelper.GetHeader(httpContext);
@@ -1346,7 +1348,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Check if post data is valid to process.
             var dataValidationResult =
-                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService,eventService, httpContext, context);
+                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
             if (!dataValidationResult.Result)
             {
                 //Data not valid
@@ -1783,7 +1785,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ConsentDbContext dbContext)
     {
         //TODO:Ozlem Check if user is customer
-       
+
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
@@ -1794,7 +1796,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //validation error in header fields
             return result;
         }
-        
+
         //Check message required basic properties
         if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse))
         {
@@ -1804,7 +1806,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check KatılımcıBilgisi
-        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration, 
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
@@ -1813,18 +1815,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk,rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails,eventService);
+        result = await OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
         if (!result.Result)
         {
-            return result;
-        }
-
-        //Check if yos has subscription
-        if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await eventService.IsSubscsribedForAyrikGkd(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingAccount))
-        {
-            result.Result = false;
-            result.Message = "Yos does not have subsription for Ayrik GKD";
             return result;
         }
 
@@ -2616,8 +2609,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
-    
-  
+
+
 
     /// <summary>
     /// Cancel waiting approve state consents
@@ -3038,7 +3031,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return true;
     }
 
-    
+
     /// <summary>
     /// Generates accountconsentdetail object of account consent
     /// </summary>

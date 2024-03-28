@@ -93,6 +93,7 @@ public static class OBErrorCodeConstants
         InternalServerError = 151,
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
+        ConsentMismatchAccountPostAlreadyAuthroized = 162,
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201
        

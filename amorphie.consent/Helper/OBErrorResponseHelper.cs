@@ -193,7 +193,7 @@ public static class OBErrorResponseHelper
     }
     public static FieldError GetFieldErrorObject_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails, string propertyName, OBErrorCodeConstants.ErrorCodesEnum errorCode, string objectName = null)
     {
-        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,errorCode);
         return GetFieldErrorObject(propertyName, errorCodeDetail, objectName);
     }
 }
