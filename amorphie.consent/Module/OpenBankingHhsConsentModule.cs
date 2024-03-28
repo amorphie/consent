@@ -1085,6 +1085,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBAuthorizationService authorizationService,
+        [FromServices] IOBEventService eventService,
         HttpContext httpContext,
         [FromServices] IPushService pushService
 )
@@ -1093,7 +1094,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext, context);
+                await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
             if (!checkValidationResult.Result)
             {
                 //Data not valid
@@ -1322,7 +1323,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="configuration">Configuration instance</param>
     /// <param name="paymentService">Payment service instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="pushService"></param>
     /// <param name="httpContext">Httpcontext object to get header data</param>
+    /// <param name="eventService"></param>
     /// <returns>OdemeEmriRizasi object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1335,6 +1338,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBEventService eventService,
         [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
@@ -1342,7 +1346,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Check if post data is valid to process.
             var dataValidationResult =
-                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext, context);
+                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService,eventService, httpContext, context);
             if (!dataValidationResult.Result)
             {
                 //Data not valid
@@ -1768,11 +1772,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="rizaIstegi">To be checked data</param>
     /// <param name="configuration">Config object</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="eventService"></param>
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
+        IOBEventService eventService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
@@ -1807,7 +1813,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk, httpContext, _errorCodeDetails);
+        result = await OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk,rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails,eventService);
         if (!result.Result)
         {
             return result;
@@ -1815,8 +1821,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check if yos has subscription
         if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingAccount,
-                dbContext))
+            && !await eventService.IsSubscsribedForAyrikGkd(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingAccount))
         {
             result.Result = false;
             result.Message = "Yos does not have subsription for Ayrik GKD";
@@ -1848,6 +1853,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
+        IOBEventService eventService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
@@ -1899,8 +1905,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check if yos has subscription
         if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment,
-                dbContext))
+            && !await eventService.IsSubscsribedForAyrikGkd(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment))
         {
             result.Result = false;
             result.Message = "Yos does not have subsription for Ayrik GKD";
@@ -3033,42 +3038,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return true;
     }
 
-
-
-    /// <summary>
-    /// Check if yos has subscription for GKD
-    /// </summary>
-    /// <param name="yosKod"></param>
-    /// <param name="consentType"></param>
-    /// <param name="dbContext"></param>
-    /// <returns></returns>
-    private static async Task<bool> IsSubscsribed(string yosKod, string consentType, ConsentDbContext dbContext)
-    {
-        string sourceType = consentType == ConsentConstants.ConsentType.OpenBankingAccount
-            ? OpenBankingConstants.KaynakTip.HesapBilgisiRizasi
-            : OpenBankingConstants.KaynakTip.OdemeEmriRizasi;
-
-        //HHS, YÖS'ün AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliğinin varlığını kontrol eder
-        bool isSubscriped = await dbContext.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
-            s.ModuleName == OpenBankingConstants.ModuleName.HHS
-            && s.YOSCode == yosKod
-            && s.OBEventSubscriptionTypes.Any(t =>
-                t.SourceType == sourceType
-                && t.EventType == OpenBankingConstants.OlayTip
-                    .AyrikGKDBasarili)
-            && s.OBEventSubscriptionTypes.Any(t =>
-                t.SourceType == sourceType
-                && t.EventType == OpenBankingConstants.OlayTip
-                    .AyrikGKDBasarisiz));
-        if (!isSubscriped)
-        {
-            //Yos does not have subscription for ayrikGkd
-            return false;
-        }
-
-        return true;
-    }
-
+    
     /// <summary>
     /// Generates accountconsentdetail object of account consent
     /// </summary>

@@ -3,6 +3,9 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
+using amorphie.consent.data;
+using amorphie.consent.Service.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace amorphie.consent.Helper;
 
@@ -305,8 +308,8 @@ public static class OBConsentValidationHelper
     /// <param name="context"></param>
     /// <param name="errorCodeDetails"></param>
     /// <returns>Is gkd data valid</returns>
-    public static ApiResult IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails)
+    public static async Task<ApiResult> IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik,string yosCode, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, IOBEventService eventService )
     {
         ApiResult result = new();
         //Get 400 error response
@@ -331,8 +334,8 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-        if ((gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
-             && string.IsNullOrEmpty(gkd.yonAdr)))
+        if (gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli
+             && string.IsNullOrEmpty(gkd.yonAdr))
         {
             //YonAdr should be set
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
@@ -354,7 +357,7 @@ public static class OBConsentValidationHelper
                 return result;
             }
 
-            result = ValidateAyrikGkd(gkd.ayrikGkd, errorCodeDetails, errorResponse); //validate ayrik gkd data
+            result = await ValidateAyrikGkd(gkd.ayrikGkd,yosCode, errorCodeDetails, errorResponse,eventService,context); //validate ayrik gkd data
             if (!result.Result)
             {
                 //Not valid
@@ -381,10 +384,6 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Adds fields error of given error code to OBCustomErrorResponseDto object
     /// </summary>
-    /// <param name="errorCodeDetails">All error codes</param>
-    /// <param name="errorResponse">Response object</param>
-    /// <param name="propertyName">To be checked property name</param>
-    /// <param name="errorCode">Error code - internal code</param>
     private static void AddFieldError_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, string propertyName, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
@@ -395,17 +394,21 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Validates ayrık gkd data inside gkd object
     /// </summary>
-    /// <param name="ayrikGkd"></param>
-    /// <param name="errorCodeDetails"></param>
-    /// <param name="errorResponse"></param>
-    /// <returns></returns>
-    private static ApiResult ValidateAyrikGkd(AyrikGkdDto ayrikGkd, List<OBErrorCodeDetail> errorCodeDetails,
-        OBCustomErrorResponseDto errorResponse)
+    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, string yosCode,List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, IOBEventService eventService,HttpContext context)
     {
         ApiResult result = new()
         {
             Data = errorResponse
         };
+        bool isSubscribed = await eventService.IsSubscsribedForAyrikGkd(yosCode, ConsentConstants.ConsentType.OpenBankingAccount);
+        if (!isSubscribed)
+        {//No subscription for ayrik gkd
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.AyrikGkdEventSubscriptionNotFound);
+            return result;
+        }
         errorResponse.FieldErrors = new List<FieldError>();
         if (string.IsNullOrEmpty(ayrikGkd.ohkTanimDeger))
         {
@@ -454,6 +457,7 @@ public static class OBConsentValidationHelper
 
         //Check GKDTanımDeger values
         ValidateOhkTanimDeger(ayrikGkd, errorCodeDetails, errorResponse, result);
+        
 
         return result;
     }
@@ -533,6 +537,8 @@ public static class OBConsentValidationHelper
                 break;
         }
     }
+    
+    
 
     /// <summary>
     /// Checks if tckn data is valid
@@ -632,28 +638,26 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength);
         if (string.IsNullOrEmpty(katilimciBlg.hhsKod)) //Check hhskod 
         {
-            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(
-                OBErrorCodeConstants.FieldNames.HhsCodeHbr, errorCodeDetail,
-                OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
         }
         else if (katilimciBlg.hhsKod.Length != 4) //Check hhskod length
         {
-            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(
-                OBErrorCodeConstants.FieldNames.HhsCodeHbr, invalidFieldHhsCodeYosCodeLength,
-                OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength);
         }
 
         if (string.IsNullOrEmpty(katilimciBlg.yosKod)) //Check yoskod 
         {
-            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(
-                OBErrorCodeConstants.FieldNames.YosCodeHbr, errorCodeDetail,
-                OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
         }
         else if (katilimciBlg.yosKod.Length != 4) //Check yoskod length
         {
-            errorResponse.FieldErrors.Add(OBErrorResponseHelper.GetFieldErrorObject(
-                OBErrorCodeConstants.FieldNames.YosCodeHbr, invalidFieldHhsCodeYosCodeLength,
-                OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi));
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.YosCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength);
         }
 
         if (errorResponse.FieldErrors.Any())

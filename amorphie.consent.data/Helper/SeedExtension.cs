@@ -498,9 +498,17 @@ public static class SeedExtension
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch.GetHashCode(),
-            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            BkmCode = "TR.OHVPS.Business.CustomerInfoMismatch",
             Message = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger must match.",
             MessageTr = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger aynı olmalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.AyrikGkdEventSubscriptionNotFound.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.EventSubscriptionNotFound",
+            Message = "No evet subscription for AYRIK_GKD_BASARILI and AYRIK_GKD_BASARISIZ.",
+            MessageTr = "AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliği yapılmalıdır."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {

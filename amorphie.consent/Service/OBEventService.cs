@@ -210,6 +210,33 @@ public class OBEventService : IOBEventService
             return continueTry;
         }
     }
+    
+    public async Task<bool> IsSubscsribedForAyrikGkd(string yosKod, string consentType)
+    {
+        string sourceType = consentType == ConsentConstants.ConsentType.OpenBankingAccount
+            ? OpenBankingConstants.KaynakTip.HesapBilgisiRizasi
+            : OpenBankingConstants.KaynakTip.OdemeEmriRizasi;
+
+        //HHS, YÖS'ün AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliğinin varlığını kontrol eder
+        bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
+            s.ModuleName == OpenBankingConstants.ModuleName.HHS
+            && s.YOSCode == yosKod
+            && s.OBEventSubscriptionTypes.Any(t =>
+                t.SourceType == sourceType
+                && t.EventType == OpenBankingConstants.OlayTip
+                    .AyrikGKDBasarili)
+            && s.OBEventSubscriptionTypes.Any(t =>
+                t.SourceType == sourceType
+                && t.EventType == OpenBankingConstants.OlayTip
+                    .AyrikGKDBasarisiz));
+        if (!isSubscriped)
+        {
+            //Yos does not have subscription for ayrikGkd
+            return false;
+        }
+
+        return true;
+    }
 
 
     /// <summary>

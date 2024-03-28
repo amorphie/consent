@@ -88,6 +88,7 @@ public static class OBErrorCodeConstants
         InvalidTpp = 102,
         InvalidTppRole = 103,
         GkdTanimDegerKimlikNotMatch = 104,
+        AyrikGkdEventSubscriptionNotFound = 105,
         NotFound = 150,
         InternalServerError = 151,
         ConsentMismatch = 160,
