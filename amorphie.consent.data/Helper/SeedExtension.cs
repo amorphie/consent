@@ -461,15 +461,15 @@ public static class SeedExtension
             Message = "hesapIslemBslZmn can not be later than hesapIslemBtsZmn.",
             MessageTr = "hesapIslemBslZmn, hesapIslemBtsZmn verisinden sonra olamaz. "
         });
-        
-        
-        
-        
-        
-        
-        
-        
-      
+
+
+
+
+
+
+
+
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -569,5 +569,5 @@ public static class SeedExtension
 
     }
 
-    
+
 }

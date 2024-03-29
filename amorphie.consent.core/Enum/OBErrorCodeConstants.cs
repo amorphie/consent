@@ -76,15 +76,15 @@ public static class OBErrorCodeConstants
         InvalidFieldIznTurAyrintiliIslemWithoutTemelIslem = 19,
         InvalidFieldIznTurAnlikBakiyeWithoutBakiye = 20,
         InvalidFieldErisimIzniSonTrh = 21,
-        InvalidFieldTransactionSelectedDateNotSet= 22,
-        InvalidFieldDateSetTransactionNotSelected= 23,
+        InvalidFieldTransactionSelectedDateNotSet = 22,
+        InvalidFieldDateSetTransactionNotSelected = 23,
         InvalidFieldHesapIslemDateRange = 24,
         InvalidFieldesapIslemBslZmnLaterThanBtsZmn = 25,
-        
-        
-        
+
+
+
         InvalidFormatValidationError = 100,
-        InvalidAspsp= 101,
+        InvalidAspsp = 101,
         InvalidTpp = 102,
         InvalidTppRole = 103,
         GkdTanimDegerKimlikNotMatch = 104,
@@ -96,6 +96,6 @@ public static class OBErrorCodeConstants
         ConsentMismatchAccountPostAlreadyAuthroized = 162,
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201
-       
+
     }
 }

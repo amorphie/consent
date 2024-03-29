@@ -9,7 +9,7 @@ namespace amorphie.consent.Service.Interface;
 
 public interface IOBErrorCodeDetailService
 {
-  
+
     public Task<List<OBErrorCodeDetail>> GetErrorCodeDetailsAsync();
-    
+
 }

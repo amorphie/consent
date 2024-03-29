@@ -266,7 +266,7 @@ public static class OBConsentValidationHelper
         }
 
         if (iznBlg.hesapIslemBslZmn.HasValue
-            && (iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12) || iznBlg.hesapIslemBslZmn.Value > DateTime.UtcNow.AddMonths(12) )) //Data constraints
+            && (iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12) || iznBlg.hesapIslemBslZmn.Value > DateTime.UtcNow.AddMonths(12))) //Data constraints
         {
             //max +12 ay, min -12 ay olabilir
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
@@ -282,7 +282,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.FieldNames.HspBlgHesapIslemBtsZmn,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHesapIslemDateRange);
         }
-        
+
         if (iznBlg is { hesapIslemBslZmn: not null, hesapIslemBtsZmn: not null }
             && iznBlg.hesapIslemBslZmn.Value > iznBlg.hesapIslemBtsZmn.Value) //Data constraints
         {
@@ -308,8 +308,8 @@ public static class OBConsentValidationHelper
     /// <param name="context"></param>
     /// <param name="errorCodeDetails"></param>
     /// <returns>Is gkd data valid</returns>
-    public static async Task<ApiResult> IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik,string yosCode, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, IOBEventService eventService )
+    public static async Task<ApiResult> IsGkdValid_Hbr(GkdRequestDto gkd, KimlikDto kimlik, string yosCode, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, IOBEventService eventService)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -357,7 +357,7 @@ public static class OBConsentValidationHelper
                 return result;
             }
 
-            result = await ValidateAyrikGkd(gkd.ayrikGkd,yosCode, errorCodeDetails, errorResponse,eventService,context); //validate ayrik gkd data
+            result = await ValidateAyrikGkd(gkd.ayrikGkd, yosCode, errorCodeDetails, errorResponse, eventService, context); //validate ayrik gkd data
             if (!result.Result)
             {
                 //Not valid
@@ -394,8 +394,8 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Validates ayrık gkd data inside gkd object
     /// </summary>
-    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, string yosCode,List<OBErrorCodeDetail> errorCodeDetails,
-        OBCustomErrorResponseDto errorResponse, IOBEventService eventService,HttpContext context)
+    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, string yosCode, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, IOBEventService eventService, HttpContext context)
     {
         ApiResult result = new()
         {
@@ -457,7 +457,7 @@ public static class OBConsentValidationHelper
 
         //Check GKDTanımDeger values
         ValidateOhkTanimDeger(ayrikGkd, errorCodeDetails, errorResponse, result);
-        
+
 
         return result;
     }
@@ -537,8 +537,8 @@ public static class OBConsentValidationHelper
                 break;
         }
     }
-    
-    
+
+
 
     /// <summary>
     /// Checks if tckn data is valid
@@ -651,7 +651,7 @@ public static class OBConsentValidationHelper
 
         if (string.IsNullOrEmpty(katilimciBlg.yosKod)) //Check yoskod 
         {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,OBErrorCodeConstants.FieldNames.YosCodeHbr,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse, OBErrorCodeConstants.FieldNames.YosCodeHbr, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
         }
         else if (katilimciBlg.yosKod.Length != 4) //Check yoskod length
         {

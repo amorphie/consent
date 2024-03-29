@@ -41,6 +41,6 @@ public interface IOBEventService
     /// <param name="systemEventId">To be processed system event id</param>
     /// <returns>System event process result</returns>
     public Task<bool> DoHhsSystemEventProcess(Guid systemEventId);
-    
+
     public Task<bool> IsSubscsribedForAyrikGkd(string yosKod, string consentType);
 }
