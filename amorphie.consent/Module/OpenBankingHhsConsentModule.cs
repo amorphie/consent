@@ -711,7 +711,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var consent = (Consent?)getConsentResult.Data;
             if (consent == null)
             {//No consent in system
-                return Results.NoContent();
+                return new CustomStatusCodeResult(454, "Invalid process. There is no consent in the system.");
             }
 
             if (consent.State != consentState)
