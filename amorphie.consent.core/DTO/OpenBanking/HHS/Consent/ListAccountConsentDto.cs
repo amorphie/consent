@@ -16,9 +16,9 @@ public class ListAccountConsentDto
     public Guid ConsentId { get; set; }
     public PermissionInformationDto PermissionInformation { get; set; }
     /// <summary>
-    /// Authorized Accounts' reference numbers
+    /// Authorized Accounts' reference number and names
     /// </summary>
-    public List<string> AccountReferences { get; set; }
+    public List<AccountRefDetailDto> AccountReferences { get; set; }
 }
 
 

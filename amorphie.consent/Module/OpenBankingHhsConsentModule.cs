@@ -126,11 +126,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!(userAccountConsents?.Any() ?? false))
             {
                 //No authorized account consent in the system
-                return Results.NoContent();
+                //MObile ekip NoContenti yakalayamadığı için Ok ve boş liste dönüldü
+                return Results.Ok(new List<ListAccountConsentDto>());
             }
 
             //Get consent details
-            var consentDetails = await GetAccountConsentDetails(userTCKN, userAccountConsents, dbContext, mapper);
+            var consentDetails = await GetAccountConsentDetails(userTCKN, userAccountConsents, dbContext, mapper, accountService);
             return Results.Ok(consentDetails);
         }
         catch (Exception ex)
@@ -727,7 +728,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var consent = (Consent?)getConsentResult.Data;
             if (consent == null)
             {//No consent in system
-                return Results.NoContent();
+                return new CustomStatusCodeResult(454, "Invalid process. There is no consent in the system.");
             }
 
             if (consent.State != consentState)
@@ -799,7 +800,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Account consent
                 return await UpdateAccountConsentStatusForUsage(updateConsentState, context, mapper);
             }
-            else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+            if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
             {
                 //Payment consent
                 return await UpdatePaymentConsentStatusForUsage(updateConsentState, context, tokenService);
@@ -1538,9 +1539,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
     private static void SetPaymentSystemNumberFields(OdemeEmriHHSDto odemeEmriDto, OBPaymentOrder orderEntity)
     {
-        var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray() ?? null;
-        orderEntity.PSNDate = systemNumberItems?[0] ?? null;
-        orderEntity.PSNYosCode = systemNumberItems?[1] ?? null;
+        var systemNumberItems = odemeEmriDto.odmBsltm.odmAyr.odmStmNo.Split('|').ToArray();
+        orderEntity.PSNDate = systemNumberItems?[0];
+        orderEntity.PSNYosCode = systemNumberItems?[1];
         if (systemNumberItems?[2] == null
             || string.IsNullOrEmpty(systemNumberItems[2]))
         {
@@ -3134,7 +3135,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     private async Task<List<ListAccountConsentDto>> GetAccountConsentDetails(string userTckn,
-        List<Consent> userAccountConsents, ConsentDbContext dbContext, IMapper mapper)
+        List<Consent> userAccountConsents, ConsentDbContext dbContext, IMapper mapper, IAccountService accountService)
     {
         List<ListAccountConsentDto> responseList = new List<ListAccountConsentDto>(); //Response list object
         ListAccountConsentDto detailedConsent;
@@ -3148,6 +3149,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var permissions = await dbContext.OBPermissionTypes.AsNoTracking()
             .Where(p => p.Language == "tr-TR")
             .ToListAsync();
+        var accountRefs = userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.SelectMany(d => d.AccountReferences))
+            .Distinct()
+            .ToList();
+        List<HesapBilgileriDto>? accounts = null;
+        if (accountRefs?.Any() ?? false)
+        {
+            var getAccountInfoResult = await accountService.GetAuthorizedAccountsForUI(userTckn, accountRefs, null, null, null, null);
+            if (getAccountInfoResult.Result)
+            {
+                accounts = (List<HesapBilgileriDto>?)getAccountInfoResult.Data;
+            }
+        }
+
 
         foreach (var consent in userAccountConsents)
         {
@@ -3162,8 +3176,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 ConsentId = consent.Id,
                 CreatedAt = consent.CreatedAt,
-                AccountReferences = consent.OBAccountConsentDetails?.FirstOrDefault()?.AccountReferences ??
-                                    new List<string>(),
+                AccountReferences = consent.OBAccountConsentDetails?.FirstOrDefault()?.AccountReferences?.Select(aRef =>
+                    new AccountRefDetailDto
+                    {
+                        AccountReference = aRef,
+                        AccountName = accounts?.FirstOrDefault(a => a.hspTml.hspRef == aRef)?.hspTml.kisaAd
+                    }).ToList() ?? new List<AccountRefDetailDto>(),
                 YosInfo = mapper.Map<OBYosInfoDto>(yosList.FirstOrDefault(y =>
                     y.Kod == hesapBilgisiRizasi.katilimciBlg.yosKod))
             };

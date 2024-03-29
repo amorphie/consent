@@ -18,6 +18,9 @@ public interface IAccountService
     /// <returns>Authorized account list of customer</returns>
     Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
+    Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences,
+        int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
