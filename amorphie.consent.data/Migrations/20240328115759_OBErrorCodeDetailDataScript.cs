@@ -13,7 +13,7 @@ namespace amorphie.consent.data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-           migrationBuilder.Sql(@"
+            migrationBuilder.Sql(@"
         DO
         $do$
         BEGIN
@@ -255,7 +255,7 @@ namespace amorphie.consent.data.Migrations
                 keyColumn: "Id",
                 keyValue: new Guid("edc568f4-ca13-4a6b-a1ba-437505ef6cdc"));
 
-          
+
         }
     }
 }

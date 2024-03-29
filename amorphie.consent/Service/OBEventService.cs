@@ -210,7 +210,7 @@ public class OBEventService : IOBEventService
             return continueTry;
         }
     }
-    
+
     public async Task<bool> IsSubscsribedForAyrikGkd(string yosKod, string consentType)
     {
         string sourceType = consentType == ConsentConstants.ConsentType.OpenBankingAccount

@@ -89,7 +89,7 @@ public static class ModuleHelper
         {
             //XASPSPCode value should be BurganBanks hhscode value
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
             return result;
         }
 
@@ -97,7 +97,7 @@ public static class ModuleHelper
         {
             //Check psu initiated value
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated);
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated);
             return result;
         }
 
@@ -118,7 +118,7 @@ public static class ModuleHelper
             && string.IsNullOrEmpty(header.UserReference))
         {
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
             return result;
         }
 

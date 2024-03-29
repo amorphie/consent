@@ -24,8 +24,8 @@ public static class OBErrorResponseHelper
             FieldErrors = fieldErrors,
         };
     }
-    
-    
+
+
 
     /// <summary>
     /// Generates 400 OBCustomErrorResponseDto with given error code
@@ -38,12 +38,12 @@ public static class OBErrorResponseHelper
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
         //Get errorCode detail
-        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
         //Generate customerrorresponse of badrequest
         return BuildErrorResponse(HttpStatusCode.BadRequest,
             OBErrorCodeConstants.HttpMessage.BadRequest, context.Request.Path, errorCodeDetail);
     }
-    
+
     /// <summary>
     /// Generates 500 OBCustomErrorResponseDto with given error code
     /// </summary>
@@ -55,12 +55,12 @@ public static class OBErrorResponseHelper
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
         //Get errorCode detail
-        var errorCodeDetail =GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
         //Generate customerrorresponse of InternalServerError
         return BuildErrorResponse(HttpStatusCode.InternalServerError,
             OBErrorCodeConstants.HttpMessage.InternalServerError, context.Request.Path, errorCodeDetail);
     }
-    
+
     /// <summary>
     /// Generates 404 OBCustomErrorResponseDto with given error code
     /// </summary>
@@ -72,12 +72,12 @@ public static class OBErrorResponseHelper
         List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
     {
         //Get errorCode detail
-        var errorCodeDetail =GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails,errorCode);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
         //Generate customerrorresponse of NotFound
         return BuildErrorResponse(HttpStatusCode.NotFound,
             OBErrorCodeConstants.HttpMessage.NotFound, context.Request.Path, errorCodeDetail);
     }
-    
+
     /// <summary>
     /// Gets errorCodeDetail in errorCodeDetail list by internalCode.
     /// If can not be found, default  TR.OHVPS.Field.Invalid bkm code error code detail object created
@@ -85,7 +85,7 @@ public static class OBErrorResponseHelper
     /// <param name="errorCodeDetails"></param>
     /// <param name="internalCode"></param>
     /// <returns>errorCodeDetail object of given internalCode</returns>
-    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum internalCode)
     {
         var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
                                   e.InternalCode ==
@@ -93,7 +93,7 @@ public static class OBErrorResponseHelper
                               BuildDefaultErrorCodeDetail_InvalidField(internalCode.GetHashCode());
         return errorCodeDetail;
     }
-    
+
     /// <summary>
     /// Gets errorCodeDetail in errorCodeDetail list by internalCode.
     /// If can not be found, default  TR.OHVPS.Server.InternalError bkm code error code detail object created
@@ -101,7 +101,7 @@ public static class OBErrorResponseHelper
     /// <param name="errorCodeDetails"></param>
     /// <param name="internalCode"></param>
     /// <returns>errorCodeDetail object of given internalCode</returns>
-    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInternalServer(List<OBErrorCodeDetail> errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum internalCode)
+    public static OBErrorCodeDetail GetErrorCodeDetail_DefaultInternalServer(List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum internalCode)
     {
         var errorCodeDetail = errorCodeDetails.FirstOrDefault(e =>
                                   e.InternalCode ==
@@ -109,7 +109,7 @@ public static class OBErrorResponseHelper
                               BuildDefaultErrorCodeDetail_InternalServer(internalCode.GetHashCode());
         return errorCodeDetail;
     }
-    
+
     public static OBErrorCodeDetail BuildDefaultErrorCodeDetail_InternalServer(int internalCode)
     {
         return new OBErrorCodeDetail
@@ -137,11 +137,11 @@ public static class OBErrorResponseHelper
         List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
-        errorResponse = GetBadRequestError(context, errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse = GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
         errorResponse.FieldErrors = new List<FieldError>();
 
         //Field can not be empty error code
-        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
 
         // Check each header property and add errors if necessary
         CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
@@ -158,10 +158,10 @@ public static class OBErrorResponseHelper
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
-    
-  
 
-    
+
+
+
     public static void CheckInvalidFormatProperty_String(string propertyValue, string propertyName,
         OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
     {
@@ -170,7 +170,7 @@ public static class OBErrorResponseHelper
             errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
         }
     }
-    
+
     public static void CheckInvalidFormatProperty_Object(Object? objectValue, string propertyName,
         OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
     {
@@ -193,7 +193,7 @@ public static class OBErrorResponseHelper
     }
     public static FieldError GetFieldErrorObject_DefaultInvalidField(List<OBErrorCodeDetail> errorCodeDetails, string propertyName, OBErrorCodeConstants.ErrorCodesEnum errorCode, string objectName = null)
     {
-        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,errorCode);
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails, errorCode);
         return GetFieldErrorObject(propertyName, errorCodeDetail, objectName);
     }
 }
