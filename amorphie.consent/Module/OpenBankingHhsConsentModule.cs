@@ -1,7 +1,6 @@
 using System.Globalization;
 using amorphie.core.Module.minimal_api;
 using Microsoft.AspNetCore.Mvc;
-using amorphie.consent.core.Search;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using amorphie.core.Swagger;
@@ -21,19 +20,29 @@ namespace amorphie.consent.Module;
 
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
+    private IOBErrorCodeDetailService _errorCodeDetailService;
+    private List<OBErrorCodeDetail> _errorCodeDetails;
     public OpenBankingHHSConsentModule(WebApplication app)
-        : base(app)
+     : base(app)
     {
+        InitializeErrorCodeDetails(app); // Get error code details
     }
 
-    public override string[]? PropertyCheckList => new[] { "ConsentType", "State" };
+    private async void InitializeErrorCodeDetails(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        // Resolve the IOBErrorCodeDetailService dependency from the service provider
+        _errorCodeDetailService = scope.ServiceProvider.GetRequiredService<IOBErrorCodeDetailService>();
+        _errorCodeDetails = await _errorCodeDetailService.GetErrorCodeDetailsAsync();
+    }
 
-    public override string? UrlFragment => "OpenBankingConsentHHS";
+    public override string[] PropertyCheckList => new[] { "ConsentType", "State" };
+
+    public override string UrlFragment => "OpenBankingConsentHHS";
 
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/search", SearchMethod);
         routeGroupBuilder.MapGet("/GetAuthorizedAccountConsents", GetAuthorizedAccountConsentsByUserTCKN);
         routeGroupBuilder.MapGet("/GetConsentWebViewInfo/{rizaNo}", GetConsentWebViewInfo);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById)
@@ -155,11 +164,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Check consent
@@ -168,10 +178,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
-            ApiResult isDataValidResult = IsDataValidToGetAccountConsent(entity);
-            if (!isDataValidResult.Result) //Error in data validation
+
+            if (entity == null
+                || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-                return Results.BadRequest(isDataValidResult.Message);
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, _errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
             }
 
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
@@ -1069,6 +1083,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBAuthorizationService authorizationService,
+        [FromServices] IOBEventService eventService,
         HttpContext httpContext,
         [FromServices] IPushService pushService
 )
@@ -1077,11 +1092,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, httpContext, context);
+                await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
             if (!checkValidationResult.Result)
             {
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
                 //Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
+                return Results.BadRequest(checkValidationResult.Data);
             }
 
             //Get user's active account consents from db and process them
@@ -1094,8 +1110,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var activeAccountConsents = (List<Consent>?)checkAccountConsentResult.Data;
             if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any yetkilendirildi, yetki kullanıldı state consent
             {
-                return Results.BadRequest(
-                    "TR.OHVPS.Resource.ConsentMismatch. There is already authorized account consent in system. First cancel the consent.");
+                var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchAccountPostAlreadyAuthroized);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                Results.BadRequest(errorResponse);
             }
 
             var header = ModuleHelper.GetHeader(httpContext);
@@ -1165,6 +1182,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            List<OBErrorCodeDetail> errorCodeDetails = await context.OBErrorCodeDetails.AsNoTracking().ToListAsync();
             var header = ModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation =
@@ -1173,7 +1191,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Check consent
@@ -1184,20 +1203,26 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                           && c.Variant == header.XTPPCode);
-            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity); //Check data validation
+
+            if (entity == null
+               || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
+            {
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
+            }
+            ApiResult dataValidationResult = IsDataValidToDeleteAccountConsent(entity, errorCodeDetails, httpContext); //Check data validation
             if (!dataValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(dataValidationResult.Message);
+                ModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
+                return Results.BadRequest(dataValidationResult.Data);
             }
 
             //Update consent rıza bilgileri properties
-            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
-            if (additionalData == null)
-            {
-                return Results.BadRequest("Data inconsistency in the system. No desired account consent data.");
-            }
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+            var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+            additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
             additionalData.rzBlg.rizaIptDtyKod =
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleYOSUzerindenIptal;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
@@ -1298,7 +1323,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="configuration">Configuration instance</param>
     /// <param name="paymentService">Payment service instance</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="pushService"></param>
     /// <param name="httpContext">Httpcontext object to get header data</param>
+    /// <param name="eventService"></param>
     /// <returns>OdemeEmriRizasi object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1311,6 +1338,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBEventService eventService,
         [FromServices] IPushService pushService,
         HttpContext httpContext)
     {
@@ -1318,7 +1346,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Check if post data is valid to process.
             var dataValidationResult =
-                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, httpContext, context);
+                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
             if (!dataValidationResult.Result)
             {
                 //Data not valid
@@ -1334,7 +1362,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.Consents.Add(consentEntity);
             //Generate response object
             OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi =
-                (OdemeEmriRizasiWithMsrfTtrHHSDto)paymentServiceResponse.Data;
+                (OdemeEmriRizasiWithMsrfTtrHHSDto)paymentServiceResponse.Data!;
             //Set consent data
             odemeEmriRizasi.rzBlg = new RizaBilgileriDto()
             {
@@ -1451,7 +1479,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Update consent state
             Consent paymentConsentEntity = (Consent)dataValidationResult.Data; //odemeemririzasi entity
             var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(paymentConsentEntity.AdditionalData);
-            additionalData.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
+            additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             paymentConsentEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
             paymentConsentEntity.State = OpenBankingConstants.RizaDurumu.YetkiOdemeEmrineDonustu;
@@ -1738,60 +1766,29 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     #endregion
 
 
-    protected async ValueTask<IResult> SearchMethod(
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [AsParameters] ConsentSearch consentSearch,
-        CancellationToken token
-    )
-    {
-        int skipRecords = (consentSearch.Page - 1) * consentSearch.PageSize;
-
-        IQueryable<Consent> query = context.Consents
-            .Include(c => c.Tokens)
-            .AsNoTracking();
-
-        if (!string.IsNullOrEmpty(consentSearch.Keyword))
-        {
-            string keyword = consentSearch.Keyword.ToLower();
-            query = query.AsNoTracking().Where(x => EF.Functions
-                .ToTsVector("english", string.Join(" ", x.State, x.ConsentType, x.AdditionalData))
-                .Matches(EF.Functions.PlainToTsQuery("english", consentSearch.Keyword)));
-        }
-
-        IList<Consent> resultList = await query.OrderBy(x => x.CreatedAt)
-            .Skip(skipRecords)
-            .Take(consentSearch.PageSize)
-            .ToListAsync(token);
-
-        return (resultList != null && resultList.Count > 0)
-            ? Results.Ok(mapper.Map<IList<OpenBankingConsentDto>>(resultList))
-            : Results.NoContent();
-    }
-
-
     /// <summary>
     /// Checks if data is valid for account consent post process
     /// </summary>
     /// <param name="rizaIstegi">To be checked data</param>
     /// <param name="configuration">Config object</param>
     /// <param name="yosInfoService">YosInfoService object</param>
+    /// <param name="eventService"></param>
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
+        IOBEventService eventService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
         //TODO:Ozlem Check if user is customer
-        //TODO:Ozlem Check fields length and necessity
 
         ApiResult result = new();
         var header = ModuleHelper.GetHeader(httpContext);
         //Check header fields
         result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: rizaIstegi.katilimciBlg);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
             //validation error in header fields
@@ -1799,155 +1796,38 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check message required basic properties
-        if (rizaIstegi.katilimciBlg is null
-            || rizaIstegi.gkd == null
-            || rizaIstegi.kmlk == null
-            || rizaIstegi.hspBlg == null
-            || rizaIstegi.hspBlg.iznBlg == null)
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
-            result.Message =
-                "katilimciBlg, gkd,odmBsltm, kmlk, hspBlg, spBlg.iznBlg should be in consent request message";
+            result.Data = errorResponse;
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod) //Required fields
-            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
+            //validation error in katiliciBilgisi data fields
             return result;
         }
 
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk))
+        result = await OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
-            return result;
-        }
-
-        //Check if yos has subscription
-        if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingAccount,
-                dbContext))
-        {
-            result.Result = false;
-            result.Message = "Yos does not have subsription for Ayrik GKD";
             return result;
         }
 
 
         //Check Kimlik
-        if (string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkTur) //Check required fields
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.kmlkVrs)
-            || (string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) != string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkVrs))
-            || string.IsNullOrEmpty(rizaIstegi.kmlk.ohkTur)
-            || !ConstantHelper.GetKimlikTurList().Contains(rizaIstegi.kmlk.kmlkTur)
-            || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.kmlk.ohkTur)
-            || (!string.IsNullOrEmpty(rizaIstegi.kmlk.krmKmlkTur) &&
-                !ConstantHelper.GetKurumKimlikTurList().Contains(rizaIstegi.kmlk.krmKmlkTur)))
+        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.kmlk, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data is not valid";
             return result;
         }
 
-        //Check field constraints
-        if ((rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN &&
-             rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.MNO &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.YKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.PNO &&
-                (rizaIstegi.kmlk.kmlkVrs.Trim().Length < 7 || rizaIstegi.kmlk.kmlkVrs.Length > 9))
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.TCKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 11)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.MNO &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length > 30)
-            || (rizaIstegi.kmlk.krmKmlkTur == OpenBankingConstants.KurumKimlikTur.VKN &&
-                rizaIstegi.kmlk.kmlkVrs.Trim().Length != 10))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kmlk data validation failed.";
-            return result;
-        }
-
-
-        //Check HesapBilgisi
-        //Check izinbilgisi properties
-        if ((rizaIstegi.hspBlg.iznBlg.iznTur?.Any() ?? false) == false
-            || rizaIstegi.hspBlg.iznBlg.iznTur.Any(i => !ConstantHelper.GetIzinTurList().Contains(i))
-            || !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelHesapBilgisi)
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi) &&
-                !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.TemelIslemBilgisi))
-            || (rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi) &&
-                !rizaIstegi.hspBlg.iznBlg.iznTur.Contains(OpenBankingConstants.IzinTur.BakiyeBilgisi)))
-        {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. IznBld iznTur check failed. IznTur required and should contain TemelHesapBilgisi permission.";
-            return result;
-        }
-
-        if (rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh == System.DateTime.MinValue
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh > System.DateTime.UtcNow.AddMonths(6)
-            || rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh < System.DateTime.UtcNow.AddDays(1))
-        {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. IznBld erisimIzniSonTrh data check failed. It should be between tomorrow and 6 months later ";
-            return result;
-        }
-
-        //Check işlem sorgulama başlangıç zamanı
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBslZmn.HasValue)
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                           || p == OpenBankingConstants.IzinTur
-                                                               .AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12)) //Data constraints
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. hesapIslemBslZmn not valid. Maximum 12 months before.";
-                return result;
-            }
-        }
-
-        if (rizaIstegi.hspBlg.iznBlg.hesapIslemBtsZmn.HasValue) //Check işlem sorgulama bitiş zamanı
-        {
-            //Temel işlem bilgisi ve/veya ayrıntılı işlem bilgisi seçilmiş olması gerekir
-            if (rizaIstegi.hspBlg.iznBlg?.iznTur?.Any(p => p == OpenBankingConstants.IzinTur.TemelIslemBilgisi
-                                                           || p == OpenBankingConstants.IzinTur
-                                                               .AyrintiliIslemBilgisi) == false)
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat IznTur temelislem or ayrintiliIslem should be selected.";
-                return result;
-            }
-
-            if (rizaIstegi.hspBlg.iznBlg?.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12)) //Data constraints
-            {
-                result.Result = false;
-                result.Message =
-                    "TR.OHVPS.Resource.InvalidFormat. hesapIslemBtsZmn not valid. Maximum 12 months later.";
-                return result;
-            }
-        }
-
+        result = OBConsentValidationHelper.CheckIznBlgTur(rizaIstegi.hspBlg.iznBlg, httpContext, _errorCodeDetails);
         return result;
     }
 
@@ -1964,6 +1844,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
+        IOBEventService eventService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
@@ -2015,8 +1896,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check if yos has subscription
         if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await IsSubscsribed(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment,
-                dbContext))
+            && !await eventService.IsSubscsribedForAyrikGkd(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment))
         {
             result.Result = false;
             result.Message = "Yos does not have subsription for Ayrik GKD";
@@ -2415,23 +2295,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
-    /// <summary>
-    /// Checks if consent is valid to get
-    /// </summary>
-    /// <param name="entity">To be checked entity</param>
-    /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetAccountConsent(Consent? entity)
-    {
-        ApiResult result = new();
-        if (entity == null || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system";
-            return result;
-        }
-
-        return result;
-    }
 
     /// <summary>
     /// Checks if consent is valid to get
@@ -2474,24 +2337,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="entity">To be checked entity</param>
     /// <returns>Data validation result</returns>
-    private ApiResult IsDataValidToDeleteAccountConsent(Consent? entity)
+    private ApiResult IsDataValidToDeleteAccountConsent(Consent entity, List<OBErrorCodeDetail> errorCodeDetails, HttpContext httpContext)
     {
         ApiResult result = new();
-        if (entity == null)
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system.";
-            return result;
-        }
-
         if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
         {
             //State not valid to set as deleted
             result.Result = false;
-            result.Message = "Account consent status not valid to marked as deleted";
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStateNotValidToDelete);
             return result;
         }
-
         return result;
     }
 
@@ -2711,7 +2566,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         IYosInfoService yosInfoService,
         RequestHeaderDto? header = null,
         KatilimciBilgisiDto? katilimciBlg = null,
-        bool? isUserRequired = false)
+        bool? isUserRequired = false,
+        List<OBErrorCodeDetail>? errorCodeDetails = null)
     {
         ApiResult result = new();
         if (header is null)
@@ -2719,10 +2575,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             header = ModuleHelper.GetHeader(context);
         }
 
-        if (!await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, isUserRequired: isUserRequired))
+        errorCodeDetails ??= new List<OBErrorCodeDetail>();
+        result = await ModuleHelper.IsHeaderValid(header, configuration, yosInfoService, context, errorCodeDetails,
+            isUserRequired: isUserRequired);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
             return result;
         }
 
@@ -2734,7 +2591,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //HHSCode must match with header x-aspsp-code
                 result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
                 return result;
             }
 
@@ -2742,13 +2599,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //YOSCode must match with header x-tpp-code
                 result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
                 return result;
             }
         }
 
         return result;
     }
+
+
 
 
     /// <summary>
@@ -3170,39 +3029,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return true;
     }
 
-    /// <summary>
-    /// Check if yos has subscription for GKD
-    /// </summary>
-    /// <param name="yosKod"></param>
-    /// <param name="consentType"></param>
-    /// <param name="dbContext"></param>
-    /// <returns></returns>
-    private static async Task<bool> IsSubscsribed(string yosKod, string consentType, ConsentDbContext dbContext)
-    {
-        string sourceType = consentType == ConsentConstants.ConsentType.OpenBankingAccount
-            ? OpenBankingConstants.KaynakTip.HesapBilgisiRizasi
-            : OpenBankingConstants.KaynakTip.OdemeEmriRizasi;
-
-        //HHS, YÖS'ün AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliğinin varlığını kontrol eder
-        bool isSubscriped = await dbContext.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
-            s.ModuleName == OpenBankingConstants.ModuleName.HHS
-            && s.YOSCode == yosKod
-            && s.OBEventSubscriptionTypes.Any(t =>
-                t.SourceType == sourceType
-                && t.EventType == OpenBankingConstants.OlayTip
-                    .AyrikGKDBasarili)
-            && s.OBEventSubscriptionTypes.Any(t =>
-                t.SourceType == sourceType
-                && t.EventType == OpenBankingConstants.OlayTip
-                    .AyrikGKDBasarisiz));
-        if (!isSubscriped)
-        {
-            //Yos does not have subscription for ayrikGkd
-            return false;
-        }
-
-        return true;
-    }
 
     /// <summary>
     /// Generates accountconsentdetail object of account consent
