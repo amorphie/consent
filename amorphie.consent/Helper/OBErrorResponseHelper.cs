@@ -15,7 +15,7 @@ public static class OBErrorResponseHelper
         {
             Path = path,
             Id = Guid.NewGuid().ToString(),
-            Timestamp = DateTime.Now,
+            Timestamp = DateTime.UtcNow,
             HttpCode = (int)httpCode,
             HttpMessage = httpMessage,
             MoreInformation = errorCodeDetail.Message,

@@ -8,7 +8,7 @@ public class OBCustomErrorResponseDto
     public OBCustomErrorResponseDto()
     {
         Id = Guid.NewGuid().ToString();
-        Timestamp = DateTime.Now;
+        Timestamp = DateTime.UtcNow;
     }
     public OBCustomErrorResponseDto(HttpStatusCode httpCode, string httpMessage, string path) : this()
     {

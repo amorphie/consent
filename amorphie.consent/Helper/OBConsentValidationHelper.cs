@@ -176,7 +176,7 @@ public static class OBConsentValidationHelper
         List<OBErrorCodeDetail> errorCodeDetails)
     {
         //Check izinbilgisi properties
-        ApiResult result = new ApiResult();
+        ApiResult result = new();
         OBCustomErrorResponseDto errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
         errorResponse.FieldErrors = new List<FieldError>();
@@ -534,6 +534,8 @@ public static class OBConsentValidationHelper
                         OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerIbanLength);
                 }
 
+                break;
+            default:
                 break;
         }
     }

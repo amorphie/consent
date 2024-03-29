@@ -284,7 +284,7 @@ public class OBEventService : IOBEventService
             return result;
         }
         //Create event entity
-        OBEvent eventEntity = new OBEvent()
+        OBEvent eventEntity = new()
         {
             HHSCode = katilimciBilgisi.hhsKod,
             YOSCode = katilimciBilgisi.yosKod,

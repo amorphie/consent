@@ -20,22 +20,19 @@ namespace amorphie.consent.Module;
 
 public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, Consent, ConsentDbContext>
 {
-    private readonly IOBErrorCodeDetailService _errorCodeDetailService;
+    private IOBErrorCodeDetailService _errorCodeDetailService;
     private List<OBErrorCodeDetail> _errorCodeDetails;
     public OpenBankingHHSConsentModule(WebApplication app)
      : base(app)
     {
-        using (var scope = app.Services.CreateScope())
-        {
-            // Resolve the IOBErrorCodeDetailService dependency from the service provider
-            _errorCodeDetailService = scope.ServiceProvider.GetRequiredService<IOBErrorCodeDetailService>();
-            _errorCodeDetails = new List<OBErrorCodeDetail>();
-            InitializeErrorCodeDetails(); // Get error code details
-        }
+        InitializeErrorCodeDetails(app); // Get error code details
     }
 
-    private async void InitializeErrorCodeDetails()
+    private async void InitializeErrorCodeDetails(WebApplication app)
     {
+        using var scope = app.Services.CreateScope();
+        // Resolve the IOBErrorCodeDetailService dependency from the service provider
+        _errorCodeDetailService = scope.ServiceProvider.GetRequiredService<IOBErrorCodeDetailService>();
         _errorCodeDetails = await _errorCodeDetailService.GetErrorCodeDetailsAsync();
     }
 
