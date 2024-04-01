@@ -22,7 +22,7 @@ public static class ModuleHelper
     /// <returns>Object keeping header keys</returns>
     public static RequestHeaderDto GetHeader(HttpContext httpContext)
     {
-        RequestHeaderDto header = new RequestHeaderDto();
+        RequestHeaderDto header = new();
 
         if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var traceValue))
         {
@@ -213,7 +213,7 @@ public static class ModuleHelper
     private static RSA LoadPrivateKeyFromPemFile(string pemFilePath)
     {
         string pemContents;
-        using (StreamReader reader = new StreamReader(pemFilePath))
+        using (StreamReader reader = new (pemFilePath))
         {
             pemContents = reader.ReadToEnd();
         }
@@ -244,11 +244,9 @@ public static class ModuleHelper
     private static string GetChecksumSHA256(object body)
     {
         // Initialize a SHA256 hash object.
-        using (SHA256 sha256Hash = SHA256.Create())
-        {
-            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
-            return Convert.ToHexString(bytes);
-        }
+        using SHA256 sha256Hash = SHA256.Create();
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
+        return Convert.ToHexString(bytes);
     }
 
     /// <summary>
@@ -257,7 +255,7 @@ public static class ModuleHelper
     /// In any other cases, set token login url
     /// </summary>
     /// <returns>Hhsforwardingaddress</returns>
-    public static async Task<string> GetHhsForwardingAddress(IConfiguration configuration, KimlikDto kmlk,
+    public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, KimlikDto kmlk,
         string consentId, ITagService tagService)
     {
         string forwardingAddress;
