@@ -432,7 +432,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTipHbr,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
         }
-        else if (ayrikGkd.ohkTanimTip.Length != 8) //Check length
+        else if (ayrikGkd.ohkTanimTip.Length < 1 || ayrikGkd.ohkTanimTip.Length > 8) //Check length
         {
             result.Result = false;
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
