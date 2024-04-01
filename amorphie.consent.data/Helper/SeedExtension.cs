@@ -298,8 +298,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipLength.GetHashCode(),
             BkmCode = "TR.OHVPS.Field.Invalid",
-            Message = "size must be 8",
-            MessageTr = "boyut '8' olmalı"
+            Message = "size must be between 1-8",
+            MessageTr = "boyut '1' ile '8' arasında olmalı"
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
