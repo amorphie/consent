@@ -213,7 +213,7 @@ public static class ModuleHelper
     private static RSA LoadPrivateKeyFromPemFile(string pemFilePath)
     {
         string pemContents;
-        using (StreamReader reader = new (pemFilePath))
+        using (StreamReader reader = new(pemFilePath))
         {
             pemContents = reader.ReadToEnd();
         }
