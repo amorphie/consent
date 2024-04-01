@@ -11,9 +11,11 @@ using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
+using amorphie.consent.Service.Refit;
 using Dapr;
 
 namespace amorphie.consent.Module;
@@ -1065,13 +1067,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// hesap-bilgisi-rizasi post. Does account consent process.
     /// </summary>
-    /// <param name="rizaIstegi">Request for account consent</param>
-    /// <param name="context">DBContext object</param>
-    /// <param name="mapper">Mapper object</param>
-    /// <param name="configuration"></param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -1085,7 +1080,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IOBAuthorizationService authorizationService,
         [FromServices] IOBEventService eventService,
         HttpContext httpContext,
-        [FromServices] IPushService pushService
+        [FromServices] IPushService pushService,
+        [FromServices] ITagService tagService
 )
     {
         try
@@ -1134,8 +1130,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                hesapBilgisiRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
-                    consentEntity.Id.ToString());
+                hesapBilgisiRizasi.gkd.hhsYonAdr = await ModuleHelper.GetHhsForwardingAddressAsync(configuration, hesapBilgisiRizasi.kmlk, consentEntity.Id.ToString(), tagService);
             }
 
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
@@ -1165,7 +1160,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
 
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1317,15 +1311,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// odeme-emri-rizasi post method.
     /// Checks OdemeEmriRizaIstegi object data and generates OdemeEmriRizasi object and insert.
     /// </summary>
-    /// <param name="rizaIstegi">Request object</param>
-    /// <param name="context">DB Context</param>
-    /// <param name="mapper">Mapping object</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="paymentService">Payment service instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="pushService"></param>
-    /// <param name="httpContext">Httpcontext object to get header data</param>
-    /// <param name="eventService"></param>
     /// <returns>OdemeEmriRizasi object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -1340,6 +1325,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBEventService eventService,
         [FromServices] IPushService pushService,
+        [FromServices] ITagService tagService,
         HttpContext httpContext)
     {
         try
@@ -1377,8 +1363,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                odemeEmriRizasi.gkd.hhsYonAdr = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
-                    consentEntity.Id.ToString());
+                odemeEmriRizasi.gkd.hhsYonAdr = await ModuleHelper.GetHhsForwardingAddressAsync(configuration, odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id.ToString(), tagService);
             }
 
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
@@ -3146,7 +3131,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var permissions = await dbContext.OBPermissionTypes.AsNoTracking()
             .Where(p => p.Language == "tr-TR")
             .ToListAsync();
-        var accountRefs = userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.SelectMany(d => d.AccountReferences))
+        var accountRefs = userAccountConsents.SelectMany(c => c.OBAccountConsentDetails.SelectMany(d => d.AccountReferences ?? Enumerable.Empty<string>()))
             .Distinct()
             .ToList();
         List<HesapBilgileriDto>? accounts = null;
