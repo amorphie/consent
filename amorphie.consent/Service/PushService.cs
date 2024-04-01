@@ -45,6 +45,7 @@ public class PushService : IPushService
             templateParameters["targetUrl"] = targetUrl;
             var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
             var checkDeviceRecordData = _configuration["CheckDeviceRecordData"];
+
             if (checkDeviceRecordData != null)
             {
                 deviceRecordData.Result = true;
