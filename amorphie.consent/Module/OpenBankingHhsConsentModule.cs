@@ -1130,7 +1130,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                hesapBilgisiRizasi.gkd.hhsYonAdr =await ModuleHelper.GetHhsForwardingAddress(configuration, hesapBilgisiRizasi.kmlk, consentEntity.Id.ToString(),tagService);
+                hesapBilgisiRizasi.gkd.hhsYonAdr = await ModuleHelper.GetHhsForwardingAddress(configuration, hesapBilgisiRizasi.kmlk, consentEntity.Id.ToString(), tagService);
             }
 
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
@@ -1160,7 +1160,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -1363,7 +1363,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                odemeEmriRizasi.gkd.hhsYonAdr = await ModuleHelper.GetHhsForwardingAddress(configuration, odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id.ToString(),tagService); 
+                odemeEmriRizasi.gkd.hhsYonAdr = await ModuleHelper.GetHhsForwardingAddress(configuration, odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id.ToString(), tagService);
             }
 
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
