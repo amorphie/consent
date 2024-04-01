@@ -250,7 +250,7 @@ public static class ModuleHelper
             return Convert.ToHexString(bytes);
         }
     }
-    
+
     /// <summary>
     /// Calculates hhsforwardingaddress according to kmlk data in consent.
     /// If tckn based consent, get data from tagservice and set according to On or Burgan user
@@ -283,7 +283,7 @@ public static class ModuleHelper
             }
         }
         //Set token login url
-        forwardingAddress= string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
+        forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
             consentId);
         return forwardingAddress;
     }
