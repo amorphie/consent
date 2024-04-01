@@ -1,11 +1,13 @@
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.Service.Interface;
+using amorphie.consent.Service.Refit;
 using Jose;
 using Newtonsoft.Json;
 
@@ -248,16 +250,42 @@ public static class ModuleHelper
             return Convert.ToHexString(bytes);
         }
     }
-
-    public static void SetLinkHeader(HttpContext httpContext, IConfiguration configuration)
+    
+    /// <summary>
+    /// Calculates hhsforwardingaddress according to kmlk data in consent.
+    /// If tckn based consent, get data from tagservice and set according to On or Burgan user
+    /// In any other cases, set token login url
+    /// </summary>
+    /// <returns>Hhsforwardingaddress</returns>
+    public static async Task<string> GetHhsForwardingAddress(IConfiguration configuration, KimlikDto kmlk,
+        string consentId, ITagService tagService)
     {
-        string linkHeaderValue = string.Join(", ",
-            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=6&syfKytSayi=100>; rel=\"next\"",
-            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=4&syfKytSayi=100>; rel=\"prev\"",
-            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=14&syfKytSayi=100>; rel=\"last\"",
-            "</ohvps/hbh/s1.1/hesaplar/hspref/islemler?hesapIslemBslTrh=2022-01-01T00:00:00+03:00&hesapIslemBtsTrh=2023-12-12T23:59:59+03:00&srlmKrtr=islGrckZaman&srlmYon=Y&syfNo=0&syfKytSayi=100>; rel=\"first\"");
-
-        linkHeaderValue = linkHeaderValue.Replace("\r", "").Replace("\n", "");
-        httpContext.Response.Headers["Link"] = linkHeaderValue;
+        string forwardingAddress;
+        if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
+        {
+            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);
+            if (getCustomerInfoResult.Result) //success from service
+            {
+                //Check phone number On user or Burgan User
+                PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
+                if (phoneNumber != null)//Phone number is taken
+                {
+                    if (phoneNumber.isOn == "X")//OnUser
+                    {
+                        forwardingAddress = string.Format(configuration["HHSForwardingAddressOn"] ?? string.Empty, consentId);
+                    }
+                    else
+                    {
+                        forwardingAddress = string.Format(configuration["HHSForwardingAddressBurgan"] ?? string.Empty, consentId);
+                    }
+                    return forwardingAddress;
+                }
+            }
+        }
+        //Set token login url
+        forwardingAddress= string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
+            consentId);
+        return forwardingAddress;
     }
+
 }
