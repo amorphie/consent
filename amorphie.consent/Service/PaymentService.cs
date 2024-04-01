@@ -29,7 +29,7 @@ public class PaymentService : IPaymentService
         {
             //Send odemeemririzasi to servie
             OdemeEmriRizasiServiceResponseDto serviceResponse = await _paymentClientService.SendOdemeEmriRizasi(odemeEmriRizaIstegi);
-            if (string.IsNullOrEmpty(serviceResponse.error))//Success
+            if (serviceResponse.error is null)//Success
             {
                 OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi = new OdemeEmriRizasiWithMsrfTtrHHSDto()
                 {
@@ -44,7 +44,8 @@ public class PaymentService : IPaymentService
             else
             {//Error in service
                 result.Result = false;
-                result.Message = serviceResponse.error;
+                result.Data = serviceResponse.error;
+                result.Message = serviceResponse.error.moreInformationTr;
             }
         }
         catch (Exception e)

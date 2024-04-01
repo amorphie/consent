@@ -1,3 +1,4 @@
+using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -253,6 +254,317 @@ public static class SeedExtension
             GroupId = 2,
             GroupName = "Hesap Bakiyesi",
             Language = "tr-TR"
+        });
+
+    }
+
+
+    public static void SeedOBErrorCodeDetail(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Missing",
+            Message = "must not be null",
+            MessageTr = "boş değer olamaz"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Invalid data.",
+            MessageTr = "Geçersiz veri."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 4",
+            MessageTr = "boyut '4' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-30",
+            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 8",
+            MessageTr = "boyut '8' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerTcknLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 11",
+            MessageTr = "boyut '11' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerMnoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-30",
+            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerYknLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 11",
+            MessageTr = "boyut '11' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerPnoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-9",
+            MessageTr = "boyut '1' ile  '9' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerGsmLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 10",
+            MessageTr = "boyut '10' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerIbanLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 26",
+            MessageTr = "boyut '26' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkTcknLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 11",
+            MessageTr = "boyut '11' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkMnoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-30",
+            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkYknLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 11",
+            MessageTr = "boyut '11' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkPnoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-9",
+            MessageTr = "boyut '1' ile  '9' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldKmlkVknLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 10",
+            MessageTr = "boyut '10' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurNoTemelHesap.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Temel hesap bilgisi izni must.",
+            MessageTr = "Temel hesap bilgisi izni seçimi zorunludur."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurAyrintiliIslemWithoutTemelIslem.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Detail transactions permission can not be selected without Basic transactions.",
+            MessageTr = "Temelişlem bilgisi izni seçimi yapılmadan ayrıntılı işlem bilgisi seçimi yapılamaz.."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIznTurAnlikBakiyeWithoutBakiye.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Instant balance notification cannot be selected without selecting balance information permission.",
+            MessageTr = "Bakiye bilgisi izni seçimi yapılmadan anlık bakiye bildirimi seçimi yapılamaz.."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldErisimIzniSonTrh.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "The minimum value it can take is consent date +1 day, the maximum value it can take is: Consent date + 6 months.",
+            MessageTr = "Alabileceği minimum değer tarihi +1 gün, alabileceği maksimum değer : Rıza tarihi + 6 ay "
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldTransactionSelectedDateNotSet.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "When the Basic Transaction Information/Detailed Transaction Information permission is selected, the hesapIslemBslZmn hesapIslemBtsZmn fields must be filled.",
+            MessageTr = "Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman hesapIslemBslZmn hesapIslemBtsZmn alanlarının doldurulması zorunludur."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDateSetTransactionNotSelected.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "hesapIslemBslZmn hesapIslemBtsZmn fields should only be sent when the Basic Transaction Information/Detailed Transaction Information permission is selected.",
+            MessageTr = "hesapIslemBslZmn hesapIslemBtsZmn alanları sadece Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman gönderilmelidir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHesapIslemDateRange.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHesapIslemDateRange.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldesapIslemBslZmnLaterThanBtsZmn.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "hesapIslemBslZmn can not be later than hesapIslemBtsZmn.",
+            MessageTr = "hesapIslemBslZmn, hesapIslemBtsZmn verisinden sonra olamaz. "
+        });
+
+
+
+
+
+
+
+
+
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message = "Validation error",
+            MessageTr = "Şema kontrolleri başarısız"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidASPSP",
+            Message = "Invalid ASPSP Code",
+            MessageTr = "Geçersiz HHS kodu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPP",
+            Message = "Invalid TPP Code",
+            MessageTr = "Geçersiz Yos kodu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.CustomerInfoMismatch",
+            Message = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger must match.",
+            MessageTr = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger aynı olmalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.AyrikGkdEventSubscriptionNotFound.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.EventSubscriptionNotFound",
+            Message = "No evet subscription for AYRIK_GKD_BASARILI and AYRIK_GKD_BASARISIZ.",
+            MessageTr = "AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliği yapılmalıdır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFound.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "Resource not found",
+            MessageTr = "Kaynak bulunamadı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "PsuInitiated invalid",
+            MessageTr = "PsuInitiated değeri hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "User reference in header is wrong.",
+            MessageTr = "User reference değeri hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatch.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent not valid to process",
+            MessageTr = "Consent işlem yapılmaya uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStateNotValidToDelete.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent state not valid to delete",
+            MessageTr = "Consent rıza durumu silme işlemine uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchAccountPostAlreadyAuthroized.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "There is a Authorized / Authorzation Used consent in the system. First cancel the consent.",
+            MessageTr = "Sistemde Yetkilendirildi / Yetki Kullanıldı durumunda rıza olduğu için rıza kabul edilmedi. Öncelikli olarak rızayı iptal ediniz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerError.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "Unexpected condition was encountered.",
+            MessageTr = "Beklenmeyen bir durumla karşılaşıldı."
         });
 
     }
