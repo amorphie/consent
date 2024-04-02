@@ -36,8 +36,13 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             CheckAuthorizationForLogin);
         routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
         routeGroupBuilder.MapDelete("/CancelLoginConsents", CancelLoginConsents);
+        routeGroupBuilder.MapGet(
+            "/CheckConsent/clientCode={clientCode}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
+            CheckConsent);
         //Added for comensis test environment
         routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin_Test);
+      
+        
     }
 
     /// <summary>
@@ -344,4 +349,42 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+    
+    /// <summary>
+    /// Check any yetkikullanildi state of consent in system
+    /// </summary>
+    /// <returns>Is any yetkikuıllanildi state consent in system</returns>
+    public async Task<IResult> CheckConsent(
+        string clientCode,
+        long userTCKN,
+        long scopeTCKN,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IConfiguration configuration,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Filter consent according to parameters
+            var consents = await context.Consents.AsNoTracking().Where(c =>
+                    c.ClientCode == clientCode
+                    && c.ScopeTCKN == scopeTCKN
+                    && c.UserTCKN == userTCKN)
+                .ToListAsync();
+
+            if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
+            {
+                //Authorized user
+                return Results.Ok();
+            }
+
+            //unauthroized
+            return Results.Unauthorized();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+
 }
