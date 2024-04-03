@@ -42,9 +42,9 @@ builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IOBEventService, OBEventService>();
 builder.Services.AddScoped<IOBAuthorizationService, OBAuthorizationService>();
 builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>();
-builder.Services.AddSingleton<ITagService, TagService>();
-builder.Services.AddSingleton<IPushService, PushService>();
-builder.Services.AddSingleton<IDeviceRecord, DeviceRecordService>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IPushService, PushService>();
+builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
 
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -209,7 +209,7 @@ var storedData = await client.GetStateAsync<string>("amorphie-state", "messages"
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
 
-db.Database.Migrate();
+// db.Database.Migrate();
 DbInitializer.Initialize(db);
 
 
