@@ -28,6 +28,7 @@ using amorphie.core.Extension;
 using Dapr;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
+using amorphie.core.Middleware.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,45 +63,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-var defaultHeadersToBeLogged = new List<string>
-{
-    "Content-Type",
-    "Host",
-    "X-Zeebe-Job-Key",
-    "xdeviceid",
-    "X-Device-Id",
-    "xtokenid",
-    "X-Token-Id",
-    "Transfer-Encoding",
-    "X-Forwarded-Host",
-    "X-Forwarded-For"
-};
+builder.AddSeriLogWithHttpLogging<AmorphieLogEnricher>();
 
-builder.Services.AddHttpLogging(logging =>
-{
-
-    logging.LoggingFields = HttpLoggingFields.All;
-
-    //logging.RequestHeaders.Concat(headersToBeLogged);
-
-    defaultHeadersToBeLogged.ForEach(p => logging.RequestHeaders.Add(p));
-
-    logging.MediaTypeOptions.AddText("application/javascript");
-
-    logging.RequestBodyLogLimit = 4096;
-
-    logging.ResponseBodyLogLimit = 4096;
-
-});
-
-builder.Services.AddHttpContextAccessor();
-builder.Logging.ClearProviders();
-builder.Host.UseSerilog((_, serviceProvider, loggerConfiguration) =>
-{
-    loggerConfiguration
-        .ReadFrom.Configuration(builder.Configuration);
-
-});
 
 
 //wait 1s and retry again 3 times when get timeout
@@ -193,14 +157,19 @@ builder.Services.AddDbContext<ConsentDbContext>
 
 
 var app = builder.Build();
-app.UseAllElasticApm(app.Configuration);
+if (!app.Environment.IsDevelopment())
+{
+    app.UseAllElasticApm(app.Configuration);
+}
+app.UseLoggingHandlerMiddlewares();
+
 app.UseCloudEvents();
 app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapSubscribeHandler();
 });
-app.UseHttpLogging();
+
 var jsonData = await File.ReadAllTextAsync(jsonFilePath);
 using var client = new DaprClientBuilder().Build();
 await client.SaveStateAsync("amorphie-state", "messages", jsonData);
