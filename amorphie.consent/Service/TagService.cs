@@ -15,7 +15,6 @@ public class TagService : ITagService
         ApiResult apiResult = new();
         try
         {
-            Console.WriteLine(JsonConvert.SerializeObject(_tagService));
             var customerNumber = await _tagService.GetCustomer(tckn);
             apiResult.Data = customerNumber;
 
