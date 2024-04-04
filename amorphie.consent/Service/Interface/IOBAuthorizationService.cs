@@ -73,6 +73,10 @@ public interface IOBAuthorizationService
     /// <returns>Get active account consents response</returns>
     public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
 
-    public Task<ApiResult> GetIdempotencyAccountConsent(string yosCode,
+    /// <summary>
+    /// Getting consent data by checking checksum value in database of account/payment consents
+    /// </summary>
+    /// <returns>Get previously responsed consent data response</returns>
+    public Task<ApiResult> GetIdempotencyRecordOfAccountPaymentConsent(string yosCode,
         string consentType, string checkSumValue);
 }

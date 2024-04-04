@@ -311,7 +311,7 @@ public static class OBModuleHelper
         ApiResult result = new(); 
         var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
         //Get db account consent
-        var getConsentResult = await authorizationService.GetIdempotencyAccountConsent(rizaIstegi.katilimciBlg.yosKod,
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
             ConsentConstants.ConsentType.OpenBankingAccount, checkSumRequest);
         if (!getConsentResult.Result)
         {//error in checking idempotency
@@ -320,6 +320,29 @@ public static class OBModuleHelper
         if (getConsentResult is { Result: true, Data: not null })
         {//Idempotency occured. Return previous response
             result.Data= JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>((string)getConsentResult.Data);
+        }
+        return result;
+    }
+    
+    /// <summary>
+    /// Get Payment Consent by checking idempotency.
+    /// </summary>
+    /// <returns>Already responsed payment consent data</returns>
+    public static async Task<ApiResult> GetIdempotencyPaymentConsent(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+        RequestHeaderDto header, IOBAuthorizationService authorizationService)
+    {
+        ApiResult result = new(); 
+        var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
+        //Get db account consent
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
+            ConsentConstants.ConsentType.OpenBankingPayment, checkSumRequest);
+        if (!getConsentResult.Result)
+        {//error in checking idempotency
+            return getConsentResult;
+        }
+        if (getConsentResult is { Result: true, Data: not null })
+        {//Idempotency occured. Return previous response
+            result.Data= JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>((string)getConsentResult.Data);
         }
         return result;
     }

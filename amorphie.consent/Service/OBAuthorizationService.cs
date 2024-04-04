@@ -57,7 +57,8 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthUsedAccountConsent(string consentId, string accountRef, List<string> permissions)
+    public async Task<ApiResult> GetAuthUsedAccountConsent(string consentId, string accountRef,
+        List<string> permissions)
     {
         ApiResult result = new();
         try
@@ -226,8 +227,8 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
-    
-    public async Task<ApiResult> GetIdempotencyAccountConsent(string yosCode,
+
+    public async Task<ApiResult> GetIdempotencyRecordOfAccountPaymentConsent(string yosCode,
         string consentType, string checkSumValue)
     {
         ApiResult result = new();
@@ -236,19 +237,34 @@ public class OBAuthorizationService : IOBAuthorizationService
             var today = DateTime.UtcNow;
             var activeConsent = await _context.Consents
                 .Include(c => c.OBAccountConsentDetails)
+                .Include(c => c.OBPaymentConsentDetails)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.ConsentType == consentType
-                                          && ( c.OBAccountConsentDetails.Any(i => 
+                                          && (c.OBAccountConsentDetails.Any(i =>
                                                   i.LastValidAccessDate > today
                                                   && i.YosCode == yosCode
                                                   && i.CheckSumValue == checkSumValue
                                                   && i.CheckSumLastValiDateTime >= today
                                                   && i.Consent.ConsentType ==
                                                   ConsentConstants.ConsentType.OpenBankingAccount)
-                                              ));
-            if (activeConsent?.OBAccountConsentDetails?.Any() ?? false)
+                                              || c.OBPaymentConsentDetails.Any(i =>
+                                                  i.YosCode == yosCode
+                                                  && i.CheckSumValue == checkSumValue
+                                                  && i.CheckSumLastValiDateTime >= today
+                                                  && i.Consent.ConsentType ==
+                                                  ConsentConstants.ConsentType.OpenBankingPayment)
+                                          ));
+            //Set account consent data
+            if (consentType == ConsentConstants.ConsentType.OpenBankingAccount
+                && (activeConsent?.OBAccountConsentDetails?.Any() ?? false))
             {
                 result.Data = activeConsent.OBAccountConsentDetails.First().SaveResponseMessage;
+            }
+            //Set payment consent data
+            else if (consentType == ConsentConstants.ConsentType.OpenBankingPayment
+                && (activeConsent?.OBPaymentConsentDetails?.Any() ?? false))
+            {
+                result.Data = activeConsent.OBPaymentConsentDetails.First().SaveResponseMessage;
             }
         }
         catch (Exception e)
@@ -256,6 +272,7 @@ public class OBAuthorizationService : IOBAuthorizationService
             result.Result = false;
             result.Message = e.Message;
         }
+
         return result;
     }
 }
