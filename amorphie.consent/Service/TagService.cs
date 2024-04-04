@@ -18,7 +18,7 @@ public class TagService : ITagService
             var customerNumber = _tagService.GetCustomer(tckn);
             apiResult.Data = customerNumber;
 
-            Console.WriteLine(JsonConvert.SerializeObject(customerNumber));
+            Console.WriteLine(customerNumber);
         }
         catch (Exception e)
         {
