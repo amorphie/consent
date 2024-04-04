@@ -261,7 +261,7 @@ public static class ModuleHelper
         string forwardingAddress;
         if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
         {
-            var getCustomerInfoResult = tagService.GetCustomer(kmlk.kmlkVrs);
+            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);
             if (getCustomerInfoResult.Result) //success from service
             {
                 //Check phone number On user or Burgan User
