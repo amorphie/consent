@@ -34,6 +34,10 @@ public class PushService : IPushService
             var number = await _tagService.GetCustomer(data.kmlkVrs);
             PhoneNumberDto phoneNumber = new();
             var telNo = _mapper.Map(number, phoneNumber);
+            Console.WriteLine("telNo : " + JsonConvert.SerializeObject(telNo));
+            Console.WriteLine("number : " + JsonConvert.SerializeObject(number));
+            Console.WriteLine("phoneNumber : " + JsonConvert.SerializeObject(phoneNumber));
+
             if (telNo.isOn == "X")
             {
                 targetUrl = String.Format(_configuration["OnMobileTargetUrl"] ?? String.Empty, consentId);
