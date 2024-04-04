@@ -10,12 +10,13 @@ public class TagService : ITagService
     {
         _tagService = tagService;
     }
-    public async Task<ApiResult> GetCustomer(string tckn)
+    public ApiResult GetCustomer(string tckn)
     {
         ApiResult apiResult = new();
         try
         {
-            var customerNumber = await _tagService.GetCustomer(tckn);
+            Console.WriteLine(JsonConvert.SerializeObject(_tagService));
+            var customerNumber = _tagService.GetCustomer(tckn);
             apiResult.Data = customerNumber;
 
             Console.WriteLine(JsonConvert.SerializeObject(customerNumber));
