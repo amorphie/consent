@@ -79,4 +79,10 @@ public interface IOBAuthorizationService
     /// <returns>Get previously responsed consent data response</returns>
     public Task<ApiResult> GetIdempotencyRecordOfAccountPaymentConsent(string yosCode,
         string consentType, string checkSumValue);
+
+    /// <summary>
+    /// Getting paymentorder data by checking checksum value in database
+    /// </summary>
+    /// <returns>Get previously responsed payment order record response</returns>
+    public Task<ApiResult> GetIdempotencyRecordOfPaymentOrder(string yosCode, string checkSumValue);
 }

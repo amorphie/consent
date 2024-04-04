@@ -275,4 +275,31 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
+    
+    
+    public async Task<ApiResult> GetIdempotencyRecordOfPaymentOrder(string yosCode, string checkSumValue)
+    {
+        ApiResult result = new();
+        try
+        {
+            var today = DateTime.UtcNow;
+            var paymentOrder = await _context.OBPaymentOrders
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.YosCode == yosCode
+                                                  && i.CheckSumValue == checkSumValue
+                                                  && i.CheckSumLastValiDateTime >= today);
+            //Set payment order data
+            if (paymentOrder != null)
+            {
+                result.Data = paymentOrder.SaveResponseMessage;
+            }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
 }

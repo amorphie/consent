@@ -346,5 +346,27 @@ public static class OBModuleHelper
         }
         return result;
     }
+    
+    /// <summary>
+    /// Get PaymentOrder record by checking idempotency.
+    /// </summary>
+    /// <returns>Already responsed paymentorder data</returns>
+    public static async Task<ApiResult> GetIdempotencyPaymentOrder(OdemeEmriIstegiHHSDto odemeEmriIstegi,
+        RequestHeaderDto header, IOBAuthorizationService authorizationService)
+    {
+        ApiResult result = new(); 
+        var checkSumRequest = GetChecksumForXRequestIdSHA256(odemeEmriIstegi, header.XRequestID);//Generate checksum
+        //Get db account consent
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfPaymentOrder(odemeEmriIstegi.katilimciBlg.yosKod, checkSumRequest);
+        if (!getConsentResult.Result)
+        {//error in checking idempotency
+            return getConsentResult;
+        }
+        if (getConsentResult is { Result: true, Data: not null })
+        {//Idempotency occured. Return previous response
+            result.Data= JsonSerializer.Deserialize<OdemeEmriHHSDto>((string)getConsentResult.Data);
+        }
+        return result;
+    }
 
 }

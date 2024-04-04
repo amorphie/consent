@@ -1452,10 +1452,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBAuthorizationService authorizationService,
         HttpContext httpContext)
     {
         try
         {
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header
             //Check if post data is valid to process.
             var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi, context, yosInfoService,
                 httpContext, configuration);
@@ -1469,6 +1471,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //Odeme emri rizası entity can not be taken
                 return Results.BadRequest("Payment Order Consent can not be found in the system");
+            }
+            
+            //Check Idempotency
+            var getIdempotencyConsentResult = await OBModuleHelper.GetIdempotencyPaymentOrder(odemeEmriIstegi, header, authorizationService);
+            if (!getIdempotencyConsentResult.Result)
+            {
+                //Get 500 error response
+                var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.BadRequest(errorResponse);
+            }
+            if (getIdempotencyConsentResult.Data != null)
+            {//Idempotency occured. Return previous response
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, getIdempotencyConsentResult.Data);
+                return Results.Ok(getIdempotencyConsentResult.Data);
             }
 
             //Send payment order to payment service
@@ -1532,10 +1550,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 orderEntity.SubWorkplaceCategoryCode = odemeEmriDto.isyOdmBlg.altIsyKtgKod;
                 orderEntity.GeneralWorkplaceNumber = odemeEmriDto.isyOdmBlg.genelUyeIsyeriNo;
             }
-
-            var header = OBModuleHelper.GetHeader(httpContext); //Get header
-            orderEntity.XRequestId = header.XRequestID ?? string.Empty;
-            orderEntity.XGroupId = header.XRequestID ?? string.Empty;
+            
+            orderEntity.XRequestId = header.XRequestID;
+            orderEntity.XGroupId = header.XGroupID;
             context.OBPaymentOrders.Add(orderEntity);
             await context.SaveChangesAsync();//Save order
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriDto);
