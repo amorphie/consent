@@ -206,7 +206,7 @@ public class BKMService : IBKMService
             if (!tokenServiceResponse.Result)//Error in service
                 return tokenServiceResponse;
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
-            var xjwsHeader = ModuleHelper.GetXJwsSignature(olayIstegi, _configuration);
+            var xjwsHeader = OBModuleHelper.GetXJwsSignature(olayIstegi, _configuration);
             //Send event to YOS
             var httpResponse = await _bkmClientService.SendEventToYos(authorizationValue,
                 Guid.NewGuid().ToString(),

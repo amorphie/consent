@@ -72,4 +72,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos code</param>
     /// <returns>Get active account consents response</returns>
     public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
+
+    public Task<ApiResult> GetIdempotencyAccountConsent(string yosCode,
+        string consentType, string checkSumValue);
 }

@@ -226,4 +226,36 @@ public class OBAuthorizationService : IOBAuthorizationService
 
         return result;
     }
+    
+    public async Task<ApiResult> GetIdempotencyAccountConsent(string yosCode,
+        string consentType, string checkSumValue)
+    {
+        ApiResult result = new();
+        try
+        {
+            var today = DateTime.UtcNow;
+            var activeConsent = await _context.Consents
+                .Include(c => c.OBAccountConsentDetails)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.ConsentType == consentType
+                                          && ( c.OBAccountConsentDetails.Any(i => 
+                                                  i.LastValidAccessDate > today
+                                                  && i.YosCode == yosCode
+                                                  && i.CheckSumValue == checkSumValue
+                                                  && i.CheckSumLastValiDateTime >= today
+                                                  && i.Consent.ConsentType ==
+                                                  ConsentConstants.ConsentType.OpenBankingAccount)
+                                              ));
+            if (activeConsent?.OBAccountConsentDetails?.Any() ?? false)
+            {
+                result.Data = activeConsent.OBAccountConsentDetails.First().SaveResponseMessage;
+            }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
 }

@@ -566,6 +566,14 @@ public static class SeedExtension
             Message = "Unexpected condition was encountered.",
             MessageTr = "Beklenmeyen bir durumla karşılaşıldı."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By Checking Idempotency Unexpected condition was encountered.",
+            MessageTr = "Idempotency kontrol edilirken beklenmeyen bir durumla karşılaşıldı."
+        });
 
     }
 

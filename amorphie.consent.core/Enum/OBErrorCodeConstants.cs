@@ -90,7 +90,10 @@ public static class OBErrorCodeConstants
         GkdTanimDegerKimlikNotMatch = 104,
         AyrikGkdEventSubscriptionNotFound = 105,
         NotFound = 150,
+
         InternalServerError = 151,
+        InternalServerErrorCheckingIdempotency = 152,
+        
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
         ConsentMismatchAccountPostAlreadyAuthroized = 162,
