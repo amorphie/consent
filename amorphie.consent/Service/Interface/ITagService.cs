@@ -5,5 +5,5 @@ namespace amorphie.consent.Service.Refit;
 
 public interface ITagService
 {
-    Task<ApiResult> GetCustomer(string tckn);
+    ApiResult GetCustomer(string tckn);
 }
