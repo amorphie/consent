@@ -31,7 +31,7 @@ public class PushService : IPushService
         {
             string targetUrl = String.Empty;
             var templateParameters = new Dictionary<string, object>();
-            var number = _tagService.GetCustomer(data.kmlkVrs);
+            var number = await _tagService.GetCustomer(data.kmlkVrs);
             PhoneNumberDto phoneNumber = new();
             var telNo = _mapper.Map(number, phoneNumber);
             Console.WriteLine("telNo : " + JsonConvert.SerializeObject(telNo));
