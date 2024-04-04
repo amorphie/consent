@@ -96,6 +96,7 @@ public class PushService : IPushService
         {
             result.Result = false;
             result.Message = e.Message;
+            Console.WriteLine(e.ToString());
         }
         return result;
     }
