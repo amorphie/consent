@@ -28,6 +28,8 @@ using amorphie.core.Extension;
 using Dapr;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
+using System.Net.Http;
+using amorphie.core.Middleware.Logging;
 using amorphie.core.Middleware.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,7 +48,7 @@ builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>(
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
-
+builder.Services.AddTransient<HttpClientHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
@@ -122,7 +124,11 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TagUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
 })
-.ConfigurePrimaryHttpMessageHandler(() => handler)
+  .ConfigurePrimaryHttpMessageHandler(_ =>
+    {
+        var handler = new HttpClientHandler();
+        return handler;
+    })
 .AddPolicyHandler(retryPolicy);
 
 builder.Services

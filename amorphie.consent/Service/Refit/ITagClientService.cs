@@ -8,5 +8,5 @@ public interface ITagClientService
 {
 
     [Get("/tag/openbanking/openbankinguser/openbanking-customer/execute?reference={tckn}")]
-    Task<PhoneNumberDto> GetCustomer(string tckn);
+    Task<PhoneNumberDto> GetCustomerFromTag(string tckn);
 }
