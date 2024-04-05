@@ -83,6 +83,6 @@ public interface IOBAuthorizationService
     /// <summary>
     /// Getting paymentorder data by checking checksum value in database
     /// </summary>
-    /// <returns>Get previously responsed payment order record response</returns>
+    /// <returns>Get previously responsed payment order record response </returns>
     public Task<ApiResult> GetIdempotencyRecordOfPaymentOrder(string yosCode, string checkSumValue);
 }
