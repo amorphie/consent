@@ -184,7 +184,7 @@ var storedData = await client.GetStateAsync<string>("amorphie-state", "messages"
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
 
-// db.Database.Migrate();
+db.Database.Migrate();
 DbInitializer.Initialize(db);
 
 
