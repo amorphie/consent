@@ -124,11 +124,6 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TagUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
 })
-  .ConfigurePrimaryHttpMessageHandler(_ =>
-    {
-        var handler = new HttpClientHandler();
-        return handler;
-    })
 .AddPolicyHandler(retryPolicy);
 
 builder.Services
@@ -138,7 +133,6 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
 })
-.ConfigurePrimaryHttpMessageHandler(() => handler)
 .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
