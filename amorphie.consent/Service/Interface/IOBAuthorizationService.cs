@@ -72,4 +72,17 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos code</param>
     /// <returns>Get active account consents response</returns>
     public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
+
+    /// <summary>
+    /// Getting consent data by checking checksum value in database of account/payment consents
+    /// </summary>
+    /// <returns>Get previously responsed consent data response</returns>
+    public Task<ApiResult> GetIdempotencyRecordOfAccountPaymentConsent(string yosCode,
+        string consentType, string checkSumValue);
+
+    /// <summary>
+    /// Getting paymentorder data by checking checksum value in database
+    /// </summary>
+    /// <returns>Get previously responsed payment order record response</returns>
+    public Task<ApiResult> GetIdempotencyRecordOfPaymentOrder(string yosCode, string checkSumValue);
 }

@@ -62,7 +62,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         try
         {
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check header fields
             ApiResult headerValidation =
                 await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
@@ -119,7 +119,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         try
         {
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check header fields
             ApiResult headerValidation =
                 await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
@@ -228,7 +228,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 return Results.BadRequest(checkValidationResult.Message);
             }
 
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Generate entity object
             var eventSubscriptionEntity = new OBEventSubscription()
             {
@@ -297,7 +297,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 return Results.BadRequest(checkValidationResult.Message);
             }
 
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
 
             //Get entity from db
             var entity = await context.OBEventSubscriptions
@@ -357,7 +357,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     {
         try
         {
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check header fields
             ApiResult headerValidation =
                 await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
@@ -442,7 +442,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             }
 
             //Check if any system record in database with same data
-            var header = ModuleHelper.GetHeader(httpContext); //Get header object
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             var systemEventEntity = await context.OBSystemEvents.FirstOrDefaultAsync(se =>
                 se.YOSCode == olayIstegi.katilimciBlg.yosKod
                 && se.ModuleName == OpenBankingConstants.ModuleName.HHS
@@ -871,10 +871,10 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         ApiResult result = new();
         if (header == null) //Get header
         {
-            header = ModuleHelper.GetHeader(context); //Get header object
+            header = OBModuleHelper.GetHeader(context); //Get header object
         }
 
-        if (!await ModuleHelper.IsHeaderValidForEvents(header, configuration, yosInfoService))
+        if (!await OBModuleHelper.IsHeaderValidForEvents(header, configuration, yosInfoService))
         {
             //Header is not valid
             result.Result = false;

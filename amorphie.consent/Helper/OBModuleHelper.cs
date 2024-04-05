@@ -10,10 +10,11 @@ using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Jose;
 using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace amorphie.consent.Helper;
 
-public static class ModuleHelper
+public static class OBModuleHelper
 {
     /// <summary>
     /// Keeps httpcontext header information into a headerdto object
@@ -248,6 +249,20 @@ public static class ModuleHelper
         byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
         return Convert.ToHexString(bytes);
     }
+    
+    /// <summary>
+    /// Generates sha256 hash of body and xrequestId
+    /// </summary>
+    /// <returns>xRequestId|body sha256 hash</returns>
+    public static string GetChecksumForXRequestIdSHA256(object body, string xRequestId)
+    {
+        string concatenatedData = $"{xRequestId}|{JsonConvert.SerializeObject(body)}";
+        // Initialize a SHA256 hash object.
+        using SHA256 sha256Hash = SHA256.Create();
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(concatenatedData));
+        // Convert the hash bytes to a hexadecimal string.
+        return Convert.ToHexString(bytes);
+    }
 
     /// <summary>
     /// Calculates hhsforwardingaddress according to kmlk data in consent.
@@ -284,6 +299,74 @@ public static class ModuleHelper
         forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
             consentId);
         return forwardingAddress;
+    }
+    
+    /// <summary>
+    /// Get Account Consent by checking idempotency.
+    /// </summary>
+    /// <returns>Already responsed account consent data</returns>
+    public static async Task<ApiResult> GetIdempotencyAccountConsent(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+        RequestHeaderDto header, IOBAuthorizationService authorizationService)
+    {
+        ApiResult result = new(); 
+        var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
+        //Get db account consent
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
+            ConsentConstants.ConsentType.OpenBankingAccount, checkSumRequest);
+        if (!getConsentResult.Result)
+        {//error in checking idempotency
+            return getConsentResult;
+        }
+        if (getConsentResult is { Result: true, Data: not null })
+        {//Idempotency occured. Return previous response
+            result.Data= JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>((string)getConsentResult.Data);
+        }
+        return result;
+    }
+    
+    /// <summary>
+    /// Get Payment Consent by checking idempotency.
+    /// </summary>
+    /// <returns>Already responsed payment consent data</returns>
+    public static async Task<ApiResult> GetIdempotencyPaymentConsent(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+        RequestHeaderDto header, IOBAuthorizationService authorizationService)
+    {
+        ApiResult result = new(); 
+        var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
+        //Get db account consent
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
+            ConsentConstants.ConsentType.OpenBankingPayment, checkSumRequest);
+        if (!getConsentResult.Result)
+        {//error in checking idempotency
+            return getConsentResult;
+        }
+        if (getConsentResult is { Result: true, Data: not null })
+        {//Idempotency occured. Return previous response
+            result.Data= JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>((string)getConsentResult.Data);
+        }
+        return result;
+    }
+    
+    /// <summary>
+    /// Get PaymentOrder record by checking idempotency.
+    /// </summary>
+    /// <returns>Already responsed paymentorder data</returns>
+    public static async Task<ApiResult> GetIdempotencyPaymentOrder(OdemeEmriIstegiHHSDto odemeEmriIstegi,
+        RequestHeaderDto header, IOBAuthorizationService authorizationService)
+    {
+        ApiResult result = new(); 
+        var checkSumRequest = GetChecksumForXRequestIdSHA256(odemeEmriIstegi, header.XRequestID);//Generate checksum
+        //Get db account consent
+        var getConsentResult = await authorizationService.GetIdempotencyRecordOfPaymentOrder(odemeEmriIstegi.katilimciBlg.yosKod, checkSumRequest);
+        if (!getConsentResult.Result)
+        {//error in checking idempotency
+            return getConsentResult;
+        }
+        if (getConsentResult is { Result: true, Data: not null })
+        {//Idempotency occured. Return previous response
+            result.Data= JsonSerializer.Deserialize<OdemeEmriHHSDto>((string)getConsentResult.Data);
+        }
+        return result;
     }
 
 }
