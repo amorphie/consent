@@ -1081,7 +1081,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IOBEventService eventService,
         HttpContext httpContext,
         [FromServices] IPushService pushService,
-        [FromServices] ITagService tagService
+        [FromServices] ITagService tagService,
+        [FromServices] IDeviceRecord deviceRecordService
 )
     {
         try
@@ -1139,7 +1140,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                hesapBilgisiRizasi.gkd.hhsYonAdr = await OBModuleHelper.GetHhsForwardingAddressAsync(configuration, hesapBilgisiRizasi.kmlk, consentEntity.Id.ToString(), tagService);
+                hesapBilgisiRizasi.gkd.hhsYonAdr = await OBModuleHelper.GetHhsForwardingAddressAsync(configuration, hesapBilgisiRizasi.kmlk, consentEntity.Id.ToString(), tagService,deviceRecordService);
             }
 
             hesapBilgisiRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);
@@ -1338,6 +1339,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IPushService pushService,
         [FromServices] ITagService tagService,
         [FromServices] IOBAuthorizationService authorizationService,
+        [FromServices] IDeviceRecord deviceRecordService,
         HttpContext httpContext)
     {
         try
@@ -1391,7 +1393,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Set hhsYonAdr in Yonlendirmeli GKD
             if (!isAyrikGKD)
             {
-                odemeEmriRizasi.gkd.hhsYonAdr = await OBModuleHelper.GetHhsForwardingAddressAsync(configuration, odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id.ToString(), tagService);
+                odemeEmriRizasi.gkd.hhsYonAdr = await OBModuleHelper.GetHhsForwardingAddressAsync(configuration, odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id.ToString(), tagService, deviceRecordService);
             }
 
             odemeEmriRizasi.gkd.yetTmmZmn = DateTime.UtcNow.AddMinutes(5);

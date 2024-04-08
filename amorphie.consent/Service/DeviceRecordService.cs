@@ -1,5 +1,9 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.Token;
 using amorphie.consent.Service.Refit;
+using Newtonsoft.Json;
+
 namespace amorphie.consent.Service;
 public class DeviceRecordService : IDeviceRecord
 {
@@ -14,7 +18,14 @@ public class DeviceRecordService : IDeviceRecord
         try
         {
             var customerDevice = await _deviceRecordClientService.GetDeviceRecord(tckn);
-            apiResult.Result = customerDevice.IsSuccessStatusCode;
+            if (!customerDevice.IsSuccessStatusCode)
+            {//Error in service
+                apiResult.Result = false;
+                return apiResult;
+            }
+            var content = await customerDevice.Content.ReadAsStringAsync();
+            var getDeviceResponse = JsonConvert.DeserializeObject<GetDeviceRecordResponseDto>(content);
+            apiResult.Data = getDeviceResponse;
         }
         catch (Exception e)
         {
