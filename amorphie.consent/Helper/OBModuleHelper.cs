@@ -4,6 +4,7 @@ using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.Tag;
+using amorphie.consent.core.DTO.Token;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.Service.Interface;
@@ -271,33 +272,72 @@ public static class OBModuleHelper
     /// </summary>
     /// <returns>Hhsforwardingaddress</returns>
     public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, KimlikDto kmlk,
-        string consentId, ITagService tagService)
-    {
-        string forwardingAddress;
+        string consentId, ITagService tagService, IDeviceRecord deviceRecordService)
+    { 
+        //Set token login url
+        string forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentId);
         if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
-        {
-            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);
-            if (getCustomerInfoResult.Result) //success from service
+        {//Tckn consent
+            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);//Get customer phonenumber
+            if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //Error in service
             {
-                //Check phone number On user or Burgan User
+                return forwardingAddress;
+            }
+
+            //Check phone number On user or Burgan User
                 PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
                 if (phoneNumber != null)//Phone number is taken
                 {
+                    //Check if url will be set by operations system
+                    bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
+                    bool isIos = false;
+                    if (setUrlByOs)//Set url by operating system
+                    {
+                        //Get user operating system information
+                        var deviceRecordData = await deviceRecordService.GetDeviceRecord(kmlk.kmlkVrs);
+                        if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
+                        {
+                            setUrlByOs = false;
+                        }
+                        else
+                        {
+                            GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
+                            isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios; 
+                        }
+                    }
+                    
+                    
                     if (phoneNumber.isOn == "X")//OnUser
                     {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddressOn"] ?? string.Empty, consentId);
+                        if (setUrlByOs)
+                        {
+                            forwardingAddress = isIos
+                                ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
+                                : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
+                        }
+                        else
+                        {
+                              forwardingAddress = string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
+                        }
                     }
                     else
                     {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddressBurgan"] ?? string.Empty, consentId);
+                        if (setUrlByOs)
+                        {
+                            forwardingAddress = isIos
+                                ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
+                                : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
+                        }
+                        else
+                        {
+                            forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty, consentId);
+                        }
+                        
                     }
                     return forwardingAddress;
                 }
-            }
         }
-        //Set token login url
-        forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty,
-            consentId);
+       
         return forwardingAddress;
     }
     
