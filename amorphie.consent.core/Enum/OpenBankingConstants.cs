@@ -402,6 +402,11 @@ public static class OpenBankingConstants
     }
 
 
+    public static class OsType
+    {
+        public const int Android = 1;
+        public const int Ios = 2;
+    }
 
 
 }
