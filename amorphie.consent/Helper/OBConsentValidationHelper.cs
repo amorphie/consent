@@ -231,10 +231,11 @@ public static class OBConsentValidationHelper
             return result;
         }
 
+        var todayDate = DateTime.UtcNow.Date;
         //check erisimIzniSonTrh
-        if (iznBlg.erisimIzniSonTrh == DateTime.MinValue
-            || iznBlg.erisimIzniSonTrh > DateTime.UtcNow.AddMonths(6)
-            || iznBlg.erisimIzniSonTrh < DateTime.UtcNow.AddDays(1))
+        if (iznBlg.erisimIzniSonTrh.Date == DateTime.MinValue
+            || iznBlg.erisimIzniSonTrh > todayDate.AddMonths(6).AddDays(1)
+            || iznBlg.erisimIzniSonTrh < todayDate.AddDays(2))
         {
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.HspBlgErisimIzniSonTrh,
@@ -266,8 +267,8 @@ public static class OBConsentValidationHelper
         }
 
         if (iznBlg.hesapIslemBslZmn.HasValue
-            && (iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12) ||
-                iznBlg.hesapIslemBslZmn.Value > DateTime.UtcNow.AddMonths(12))) //Data constraints
+            && (iznBlg.hesapIslemBslZmn.Value < todayDate.AddMonths(-12) ||
+                iznBlg.hesapIslemBslZmn.Value > todayDate.AddMonths(12).AddDays(1))) //Data constraints
         {
             //max +12 ay, min -12 ay olabilir
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
@@ -276,8 +277,8 @@ public static class OBConsentValidationHelper
         }
 
         if (iznBlg.hesapIslemBtsZmn.HasValue &&
-            (iznBlg.hesapIslemBtsZmn.Value < DateTime.UtcNow.AddMonths(-12) ||
-             iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))) //Data constraints
+            (iznBlg.hesapIslemBtsZmn.Value < todayDate.AddMonths(-12) ||
+             iznBlg.hesapIslemBtsZmn.Value > todayDate.AddMonths(12).AddDays(1))) //Data constraints
         {
             //max +12 ay, min -12 ay olabilir
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
