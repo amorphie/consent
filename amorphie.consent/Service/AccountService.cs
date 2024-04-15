@@ -24,7 +24,7 @@ public class AccountService : IAccountService
         _context = context;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -42,7 +42,15 @@ public class AccountService : IAccountService
             if (authConsentResult.Result == false
                 || authConsentResult.Data == null)
             {
-                //Error or no consent in db
+                //Error
+                return authConsentResult;
+            }
+            
+            if (authConsentResult.Data == null)
+            {
+                //no consent in db
+                authConsentResult.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 return authConsentResult;
             }
 
@@ -78,6 +86,17 @@ public class AccountService : IAccountService
                 srlmKrtr,
                 srlmYon
             );
+            //Check parameters.
+            var checkValidationResult =
+                OBConsentValidationHelper.IsParametersValidToGetAccountsBalances(httpContext,errorCodeDetails, 
+                    resolvedSyfKytSayi,
+                    resolvedSrlmKrtr,
+                    resolvedSrlmYon);
+            if (!checkValidationResult.Result)
+            {
+                //parameters not valid
+                return checkValidationResult;
+            }
 
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
@@ -206,7 +225,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -250,6 +269,19 @@ public class AccountService : IAccountService
                 srlmKrtr,
                 srlmYon
             );
+            //Check parameters.
+            var checkValidationResult =
+                OBConsentValidationHelper.IsParametersValidToGetAccountsBalances(httpContext,errorCodeDetails, 
+                    resolvedSyfKytSayi,
+                    resolvedSrlmKrtr,
+                    resolvedSrlmYon);
+            if (!checkValidationResult.Result)
+            {
+                //parameters not valid
+                return checkValidationResult;
+            }
+            
+            
             //Create service request body object
             var requestObject = new GetByAccountRefRequestDto()
             {
@@ -322,7 +354,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
+    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
         string? minIslTtr,
         string? mksIslTtr,
@@ -352,23 +384,6 @@ public class AccountService : IAccountService
             }
 
             var activeConsent = (Consent)authConsentResult.Data;
-            //Check if post data is valid to process.
-            var checkValidationResult =
-                IsDataValidToGetTransactionsByHspRef(activeConsent,
-                    psuInitiated,
-                    hesapIslemBslTrh,
-                    hesapIslemBtsTrh,
-                    minIslTtr,
-                    mksIslTtr,
-                    brcAlc,
-                    syfKytSayi,
-                    srlmKrtr,
-                    srlmYon);
-            if (!checkValidationResult.Result)
-            {
-                //Data not valid
-                return checkValidationResult;
-            }
 
             //Get header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
@@ -382,6 +397,23 @@ public class AccountService : IAccountService
                 srlmKrtr,
                 srlmYon
             );
+            //Check if post data is valid to process.
+            var checkValidationResult =
+                OBConsentValidationHelper.IsParametersValidToGetTransactionsByHspRef(httpContext,errorCodeDetails,activeConsent,
+                    psuInitiated,
+                    hesapIslemBslTrh,
+                    hesapIslemBtsTrh,
+                    minIslTtr,
+                    mksIslTtr,
+                    brcAlc,
+                    resolvedSyfKytSayi,
+                    resolvedSrlmKrtr,
+                    resolvedSrlmYon);
+            if (!checkValidationResult.Result)
+            {
+                //Data not valid
+                return checkValidationResult;
+            }
             minIslTtr = (minIslTtr == string.Empty) ? null : minIslTtr;
             mksIslTtr = (mksIslTtr == string.Empty) ? null : mksIslTtr;
             brcAlc = (brcAlc == string.Empty) ? null : brcAlc;
@@ -430,141 +462,12 @@ public class AccountService : IAccountService
         return (
             syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
             syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
-            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccount,
+            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccountAndBalance,
             srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
         );
     }
-
-
-
-    /// <summary>
-    /// Checks if parameters valid to get transactions
-    /// </summary>
-    /// <param name="consent"></param>
-    /// <param name="psuInitiated"></param>
-    /// <param name="hesapIslemBslTrh"></param>
-    /// <param name="hesapIslemBtsTrh"></param>
-    /// <param name="minIslTtr"></param>
-    /// <param name="mksIslTtr"></param>
-    /// <param name="brcAlc"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="srlmKrtr"></param>
-    /// <param name="srlmYon"></param>
-    /// <returns></returns>
-    private ApiResult IsDataValidToGetTransactionsByHspRef(Consent consent,
-        string psuInitiated,
-        DateTime hesapIslemBslTrh,
-        DateTime hesapIslemBtsTrh,
-        string? minIslTtr,
-        string? mksIslTtr,
-        string? brcAlc,
-        int? syfKytSayi,
-        string? srlmKrtr,
-        string? srlmYon)
-    {
-        ApiResult result = new();
-        var today = DateTime.UtcNow;
-        if (hesapIslemBtsTrh == DateTime.MinValue
-            || hesapIslemBslTrh == DateTime.MinValue) //required parameters
-        {
-            result.Result = false;
-            result.Message = "hesapIslemBtsTrh,hesapIslemBslTrh values not valid ";
-            return result;
-        }
-
-        //Check hesapIslemBtsTrh
-        if (hesapIslemBtsTrh > today)
-        {
-            result.Result = false;
-            result.Message = "hesapIslemBtsTrh can not be later than enquiry datetime.";
-            return result;
-        }
-
-        if (hesapIslemBtsTrh < hesapIslemBslTrh)
-        {
-            result.Result = false;
-            result.Message = "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.";
-            return result;
-        }
-
-        //ÖHK tarafından tetiklenen sorgularda; hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay,kurumsal ÖHK’lar için ise en fazla 1 hafta olabilir.
-        if (psuInitiated == OpenBankingConstants.PSUInitiated.OHKStarted)
-        {
-            if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel)
-            {
-                if (hesapIslemBslTrh.AddMonths(1) < hesapIslemBtsTrh)
-                {
-                    result.Result = false;
-                    result.Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.";
-                    return result;
-                }
-            }
-            else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal)
-            {
-                if (hesapIslemBslTrh.AddDays(7) < hesapIslemBtsTrh)
-                {
-                    result.Result = false;
-                    result.Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.";
-                    return result;
-                }
-            }
-        }
-
-        //YÖS tarafından sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir. Bu yüzden hesapIslemBtsTrh-24 saat’ten daha uzun bir aralık sorgulanamaz olmalıdır.
-        if (psuInitiated == OpenBankingConstants.PSUInitiated.SystemStarted
-            && (hesapIslemBtsTrh - hesapIslemBslTrh).TotalHours > 24)
-        {
-            result.Result = false;
-            result.Message = "hesapIslemBtsTrh hesapIslemBslTrh can not be later than enquiry datetime.";
-            return result;
-        }
-
-        if (!string.IsNullOrEmpty(brcAlc) && !ConstantHelper.GetBrcAlcList().Contains(brcAlc))
-        {
-            result.Result = false;
-            result.Message = "brcAlc value is not valid.";
-            return result;
-        }
-
-        if (syfKytSayi is > OpenBankingConstants.AccountServiceParameters.syfKytSayi)
-        {
-            result.Result = false;
-            result.Message = $"syfKytSayi value is not valid. syfKytSayi can be maximum: {OpenBankingConstants.AccountServiceParameters.syfKytSayi} ";
-            return result;
-        }
-
-        if (!string.IsNullOrEmpty(minIslTtr) && !ConstantHelper.IsValidAmount(minIslTtr))
-        {
-            result.Result = false;
-            result.Message = "minIslTtr value is not valid.";
-            return result;
-        }
-        if (!string.IsNullOrEmpty(mksIslTtr) && !ConstantHelper.IsValidAmount(mksIslTtr))
-        {
-            result.Result = false;
-            result.Message = "mksIslTtr value is not valid.";
-            return result;
-        }
-
-        if (!string.IsNullOrEmpty(srlmKrtr)
-            && OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction != srlmKrtr)
-        {
-            result.Result = false;
-            result.Message = "srlmKrtr value is not valid.";
-            return result;
-        }
-
-        if (!string.IsNullOrEmpty(srlmYon)
-            && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
-        {
-            result.Result = false;
-            result.Message = "srlmYon value is not valid.";
-            return result;
-        }
-
-        return result;
-    }
-
+    
+   
     /// <summary>
     /// Set header x-total-count and link properties
     /// </summary>
@@ -600,18 +503,6 @@ public class AccountService : IAccountService
     /// <summary>
     /// Set header x-total-count and link properties
     /// </summary>
-    /// <param name="httpContext"></param>
-    /// <param name="totalCount"></param>
-    /// <param name="hesapIslemBtsTrh"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
-    /// <param name="srlmKrtr"></param>
-    /// <param name="srlmYon"></param>
-    /// <param name="hspRef"></param>
-    /// <param name="hesapIslemBslTrh"></param>
-    /// <param name="minIslTtr"></param>
-    /// <param name="mksIslTtr"></param>
-    /// <param name="brcAlc"></param>
     private static void SetHeaderLinkForTransaction(HttpContext httpContext, int totalCount, string hspRef, DateTime hesapIslemBslTrh, DateTime hesapIslemBtsTrh, int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon, string? minIslTtr, string? mksIslTtr, string? brcAlc)
     {
         string basePath = GetTransactionBaseUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, srlmKrtr, srlmYon,

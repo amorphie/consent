@@ -691,4 +691,182 @@ public static class OBConsentValidationHelper
 
         return result;
     }
+    
+    
+    /// <summary>
+    /// Checks if parameters valid to get balances and accounts
+    /// </summary>
+    /// <returns></returns>
+    public static ApiResult IsParametersValidToGetAccountsBalances(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,
+        int syfKytSayi,
+        string srlmKrtr,
+        string srlmYon)
+    {
+        ApiResult result = new();
+        var today = DateTime.UtcNow;
+     
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
+            || syfKytSayi <=0 )
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmKrtr)
+            && OpenBankingConstants.AccountServiceParameters.srlmKrtrAccountAndBalance != srlmKrtr)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrAccount);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmYon)
+            && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon);
+            return result;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if parameters valid to get transactions
+    /// </summary>
+    /// <returns>Parameters validation result</returns>
+    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,Consent consent,
+        string psuInitiated,
+        DateTime hesapIslemBslTrh,
+        DateTime hesapIslemBtsTrh,
+        string? minIslTtr,
+        string? mksIslTtr,
+        string? brcAlc,
+        int syfKytSayi,
+        string srlmKrtr,
+        string srlmYon)
+    {
+        ApiResult result = new();
+        var today = DateTime.UtcNow;
+        if (hesapIslemBtsTrh == DateTime.MinValue
+            || hesapIslemBslTrh == DateTime.MinValue) //required parameters
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBslBtsTrh);
+            return result;
+        }
+
+        //Check hesapIslemBtsTrh
+        if (hesapIslemBtsTrh > today)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBtsTrhLaterThanToday);
+            return result;
+        }
+
+        if (hesapIslemBtsTrh < hesapIslemBslTrh)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatesapIslemBslZmnLaterThanBtsZmn);
+            return result;
+        }
+
+        //ÖHK tarafından tetiklenen sorgularda; hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay,kurumsal ÖHK’lar için ise en fazla 1 hafta olabilir.
+        if (psuInitiated == OpenBankingConstants.PSUInitiated.OHKStarted)
+        {
+            if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel)
+            {
+                if (hesapIslemBslTrh.AddMonths(1) < hesapIslemBtsTrh)
+                {
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff);
+                    return result;
+                }
+            }
+            else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal)
+            {
+                if (hesapIslemBslTrh.AddDays(7) < hesapIslemBtsTrh)
+                {
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff);
+                    return result;
+                }
+            }
+        }
+
+        //YÖS tarafından sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir. Bu yüzden hesapIslemBtsTrh-24 saat’ten daha uzun bir aralık sorgulanamaz olmalıdır.
+        if (psuInitiated == OpenBankingConstants.PSUInitiated.SystemStarted
+            && (hesapIslemBtsTrh - hesapIslemBslTrh).TotalHours > 24)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(brcAlc) && !ConstantHelper.GetBrcAlcList().Contains(brcAlc))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc);
+            return result;
+        }
+        
+
+        if (!string.IsNullOrEmpty(minIslTtr) && !ConstantHelper.IsValidAmount(minIslTtr))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMinIslTtr);
+            return result;
+        }
+        if (!string.IsNullOrEmpty(mksIslTtr) && !ConstantHelper.IsValidAmount(mksIslTtr))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr);
+            return result;
+        }
+        
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
+            || syfKytSayi <=0 )
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmKrtr)
+            && OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction != srlmKrtr)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrTransaction);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmYon)
+            && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon);
+            return result;
+        }
+
+
+        return result;
+    }
+    
+    
+    
 }

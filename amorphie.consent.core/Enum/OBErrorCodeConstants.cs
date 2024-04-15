@@ -89,6 +89,22 @@ public static class OBErrorCodeConstants
         InvalidTppRole = 103,
         GkdTanimDegerKimlikNotMatch = 104,
         AyrikGkdEventSubscriptionNotFound = 105,
+        InvalidFormatSyfKytSayi = 106,
+        InvalidFormatSrlmKrtrAccount = 107,
+        InvalidFormatSrlmYon = 108,
+        InvalidFormathesapIslemBslBtsTrh = 109,
+        InvalidFormathesapIslemBtsTrhLaterThanToday = 110,
+        InvalidFormatesapIslemBslZmnLaterThanBtsZmn = 111,
+        InvalidFormatBireyselDateDiff = 112,
+        InvalidFormatKurumsalDateDiff = 113,
+        InvalidFormatSystemStartedDateDiff = 114,
+        InvalidFormatBrcAlc = 115,
+        InvalidFormatSrlmKrtrTransaction = 116,
+        InvalidFormatMinIslTtr = 117,
+        InvalidFormatMksIslTtr = 118,
+        
+        
+        
         NotFound = 150,
 
         InternalServerError = 151,

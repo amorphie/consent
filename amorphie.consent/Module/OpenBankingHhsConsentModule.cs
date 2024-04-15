@@ -268,7 +268,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             ApiResult accountApiResult =
@@ -328,12 +329,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference!, header.XTPPCode, syfKytSayi, syfNo,
+                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference!, header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo,
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
@@ -383,7 +385,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             ApiResult accountApiResult =
@@ -443,11 +446,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, header.UserReference!,
-                header.XTPPCode, syfKytSayi, syfNo, srlmKrtr, srlmYon);
+                header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -463,22 +467,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get transactions from service with hspref 
     /// </summary>
-    /// <param name="hspRef">Hesap ref</param>
-    /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
-    /// <param name="accountService">Account service class</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
-    /// <param name="hesapIslemBslTrh"></param>
-    /// <param name="hesapIslemBtsTrh"></param>
-    /// <param name="minIslTtr"></param>
-    /// <param name="mksIslTtr"></param>
-    /// <param name="brcAlc"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
-    /// <param name="srlmKrtr"></param>
-    /// <param name="srlmYon"></param>
     /// <returns>account transactions- IslemBilgileriDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -513,20 +501,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
-
 
             //Get transactions from service
             ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, header.UserReference!,
-                header.XTPPCode,
+                header.XTPPCode,_errorCodeDetails,
                 hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh, minIslTtr, mksIslTtr, brcAlc,
                 syfKytSayi, syfNo,
                 srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 //Error in service
-                return Results.BadRequest(accountApiResult.Message);
+                return Results.BadRequest(accountApiResult.Data);
             }
 
             return Results.Ok(mapper.Map<IslemBilgileriDto>(accountApiResult.Data));

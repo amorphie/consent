@@ -463,11 +463,7 @@ public static class SeedExtension
         });
 
 
-
-
-
-
-
+        
 
 
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -510,6 +506,118 @@ public static class SeedExtension
             Message = "No evet subscription for AYRIK_GKD_BASARILI and AYRIK_GKD_BASARISIZ.",
             MessageTr = "AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliği yapılmalıdır."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "syfKytSayi value is not valid. syfKytSayi can be between 1-100",
+            MessageTr = "syfKytSayi değeri geçersiz. 1-100 aralığında olabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrAccount.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "srlmKrtr value is not valid. it should be hspRef",
+            MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer hspRef."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "srlmYon value is not valid.",
+            MessageTr = "srlmYon değeri geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBslBtsTrh.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "hesapIslemBtsTrh,hesapIslemBslTrh values not valid",
+            MessageTr = "hesapIslemBtsTrh,hesapIslemBslTrh değerleri geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBtsTrhLaterThanToday.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "hesapIslemBtsTrh can not be later than enquiry datetime.",
+            MessageTr = "hesapIslemBtsTrh sorgulama zamanından sonra olamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatesapIslemBslZmnLaterThanBtsZmn.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.",
+            MessageTr = "hesapIslemBtsTrh hesapIslemBslTrh den önce olamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
+            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
+            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "For system enquiry, last 24 hours can be enquirable.",
+            MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "brcAlc value is not valid.",
+            MessageTr = "brcAlc değeri geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrTransaction.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "srlmKrtr value is not valid. it should be islGrckZaman",
+            MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer islGrckZaman."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMinIslTtr.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "minIslTtr value is not valid.",
+            MessageTr = "minIslTtr değeri geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "mksIslTtr value is not valid.",
+            MessageTr = "mksIslTtr değeri geçersiz."
+        });
+
+        
+        
+        
+        
+        
+        
+        
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
