@@ -325,7 +325,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true);
+                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -339,7 +339,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
-                return Results.BadRequest(accountApiResult.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
+                return Results.BadRequest(accountApiResult.Data);
             }
             return Results.Ok(accountApiResult.Data);
         }
@@ -381,7 +382,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true);
+                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -394,7 +395,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     hspRef); //Get data from service
             if (!accountApiResult.Result)
             {
-                return Results.BadRequest(accountApiResult.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
+                return Results.BadRequest(accountApiResult.Data);
             }
 
             return Results.Ok(accountApiResult.Data);
@@ -442,7 +444,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true);
+                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -454,7 +456,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
-                return Results.BadRequest(accountApiResult.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
+                return Results.BadRequest(accountApiResult.Data);
             }
             return Results.Ok(accountApiResult.Data);
         }
@@ -497,7 +500,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true);
+                isUserRequired: true, errorCodeDetails: _errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -514,6 +517,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!accountApiResult.Result)
             {
                 //Error in service
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
                 return Results.BadRequest(accountApiResult.Data);
             }
 
@@ -1166,6 +1170,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     protected async Task<IResult> DeleteAccountConsentFromYos(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1181,7 +1186,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check header fields
             ApiResult headerValidation =
                 await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header,
-                    isUserRequired: true);
+                    isUserRequired: true, errorCodeDetails:errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
