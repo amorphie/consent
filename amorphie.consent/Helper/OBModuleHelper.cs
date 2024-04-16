@@ -55,6 +55,10 @@ public static class OBModuleHelper
         {
             header.UserReference = traceValue;
         }
+        if (httpContext.Request.Headers.TryGetValue("openbanking_consent_id", out traceValue))
+        {
+            header.ConsentId = traceValue;
+        }
 
         return header;
     }
