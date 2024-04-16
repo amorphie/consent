@@ -209,7 +209,7 @@ public class AccountService : IAccountService
             };
             //Get account consent from database
             var getConsentResult =
-                await _authorizationService.GetAccountConsentByAccountRef(userTCKN: userTckn, consentId: consentId, yosCode: yosCode,
+                await _authorizationService.GetAccountConsentByAccountRef(userTckn: userTckn, consentId: consentId, yosCode: yosCode,
                     permissions: permisssions, accountRef: hspRef);
             if (!getConsentResult.Result)
             {
@@ -284,7 +284,7 @@ public class AccountService : IAccountService
             };
             //Get account consent from database
             var getConsentResult =
-                await _authorizationService.GetAccountConsent(userTCKN: userTCKN, consentId:consentId, yosCode: yosCode,
+                await _authorizationService.GetAccountConsent(userTckn: userTCKN, consentId:consentId, yosCode: yosCode,
                     permissions: permisssions);
             if (!getConsentResult.Result)
             {

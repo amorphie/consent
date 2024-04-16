@@ -18,9 +18,6 @@ public interface IAccountService
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
-    /// <param name="userTCKN">Customer Id</param>
-    /// <param name="yosCode"></param>
-    /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
     Task<ApiResult> GetAuthorizedAccountByHspRef(HttpContext httpContext, string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails);
 

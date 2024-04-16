@@ -262,7 +262,7 @@ namespace amorphie.consent.data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("346c4eeb-cf85-4e85-a786-567388056461"),
+                            Id = new Guid("841bf229-a9ac-4fb1-9e20-1ee6fdd223d8"),
                             BkmCode = "TR.OHVPS.Field.Missing",
                             InternalCode = 2,
                             Message = "must not be null",
@@ -270,7 +270,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("84e96832-b0b6-495f-87f2-c1a5dfb1aecc"),
+                            Id = new Guid("b5710db9-4d09-486c-adc4-4e925596e201"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 3,
                             Message = "Invalid data.",
@@ -278,7 +278,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6172522a-c516-46fe-941f-412cb36529ad"),
+                            Id = new Guid("dd1033b1-7fe1-4e7b-bb29-d9e6cf351fe7"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 4,
                             Message = "size must be 4",
@@ -286,7 +286,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("961ee3ba-2657-4c85-a657-a0396fe618ab"),
+                            Id = new Guid("35b0e4ff-f937-4ba6-a727-d4ed707c8265"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 5,
                             Message = "size must be between 1-30",
@@ -294,7 +294,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6748e925-21b2-40fe-9431-87a2e54a2de6"),
+                            Id = new Guid("60f86d3f-4c2d-4c9b-92f0-1e0c553ab03a"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 6,
                             Message = "size must be between 1-8",
@@ -302,7 +302,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("d8ebd86a-a2f8-49d2-aecf-0498894463db"),
+                            Id = new Guid("efe0e6db-bb22-4803-8713-72ec0139fa55"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 7,
                             Message = "size must be 11",
@@ -310,7 +310,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("cadbbd74-431f-4f8a-b55e-fc55d2fdb25e"),
+                            Id = new Guid("0f6af59f-3695-4599-a724-e20077ad1ed1"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 8,
                             Message = "size must be between 1-30",
@@ -318,7 +318,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("943206c5-1c0f-4c65-b808-4e713b86be52"),
+                            Id = new Guid("156e8aed-b41d-444f-af59-de557a70fb6a"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 9,
                             Message = "size must be 11",
@@ -326,7 +326,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("87b9ab37-d8e2-4abd-b531-ed478123331d"),
+                            Id = new Guid("c6c61977-dc31-4e7e-b075-23bea1a5c7a2"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 10,
                             Message = "size must be between 1-9",
@@ -334,7 +334,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("c0e8ca89-60be-48cf-937b-4cd03b427bb8"),
+                            Id = new Guid("d475571b-0308-4f96-b733-91f51e99340f"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 11,
                             Message = "size must be 10",
@@ -342,7 +342,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("d75ad513-a612-4409-8bea-eb5c9b127321"),
+                            Id = new Guid("07c20c1a-cbe6-414e-ab0b-f2b3a39154be"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 12,
                             Message = "size must be 26",
@@ -350,7 +350,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("351cc3db-9972-489b-9f30-e628cdfe0bc3"),
+                            Id = new Guid("b7fef618-dd1e-40d6-8822-0eb73801b4b7"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 13,
                             Message = "size must be 11",
@@ -358,7 +358,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6c7839af-9e1c-4548-95db-95025f9a59b3"),
+                            Id = new Guid("cc536003-e51e-48eb-a26a-24cd09ef1e25"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 14,
                             Message = "size must be between 1-30",
@@ -366,7 +366,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("4a380958-f79d-45d4-a000-99718c9a3e46"),
+                            Id = new Guid("f76bec1e-f329-4767-86a9-0c5747002354"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 15,
                             Message = "size must be 11",
@@ -374,7 +374,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("2cfdc525-0b8b-4722-ab48-0fba83a2b895"),
+                            Id = new Guid("c6ac0347-c639-486e-b7e5-99fa5230264d"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 16,
                             Message = "size must be between 1-9",
@@ -382,7 +382,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("1ea3312f-f6b2-49d6-a97d-6258ce17ed71"),
+                            Id = new Guid("579047dd-e9b4-48ba-bcf6-f7b94cdd3a22"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 17,
                             Message = "size must be 10",
@@ -390,7 +390,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("d6ee560c-7189-43f8-8f4c-075fdbee0ef9"),
+                            Id = new Guid("fb8f8ad6-dd0b-44d4-8508-bc9285567ba7"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 18,
                             Message = "Temel hesap bilgisi izni must.",
@@ -398,7 +398,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("7d18d600-41be-4c09-8fd1-fcbfb155b27a"),
+                            Id = new Guid("22758959-655b-4136-9a6d-400e27160eaf"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 19,
                             Message = "Detail transactions permission can not be selected without Basic transactions.",
@@ -406,7 +406,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("5a48ae18-d4c7-4725-a2ef-48f1950ae93c"),
+                            Id = new Guid("f07ec1e2-b90e-4095-9bd4-92335da4ed4d"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 20,
                             Message = "Instant balance notification cannot be selected without selecting balance information permission.",
@@ -414,7 +414,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("e35192bb-2490-4166-8c86-1084231e0898"),
+                            Id = new Guid("24113782-4116-42b0-9b34-40ec3e76c7f7"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 21,
                             Message = "The minimum value it can take is consent date +1 day, the maximum value it can take is: Consent date + 6 months.",
@@ -422,7 +422,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("7098aeb3-7f1f-4c2e-bc6d-4b8367bd2168"),
+                            Id = new Guid("afa15290-1e59-49f3-a468-2106591239c9"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 22,
                             Message = "When the Basic Transaction Information/Detailed Transaction Information permission is selected, the hesapIslemBslZmn hesapIslemBtsZmn fields must be filled.",
@@ -430,7 +430,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("b3264a29-9abf-4605-9930-276b17b0e6bf"),
+                            Id = new Guid("d6905ef6-9d21-4c82-a2ab-ec18b8860341"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 23,
                             Message = "hesapIslemBslZmn hesapIslemBtsZmn fields should only be sent when the Basic Transaction Information/Detailed Transaction Information permission is selected.",
@@ -438,7 +438,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("48161774-f8fd-46c1-ad40-f67ac51b32e0"),
+                            Id = new Guid("cd238a9b-0a8d-40c9-908f-491f51638865"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 24,
                             Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
@@ -446,7 +446,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("95d08f9f-21d2-4000-90ae-0b6683137f51"),
+                            Id = new Guid("d815a9bb-2f04-4cb7-a7e9-a27c13fda62e"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 24,
                             Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
@@ -454,7 +454,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("852ca27f-4193-4d7e-8f37-bb0f53c91dab"),
+                            Id = new Guid("f7b66a7d-d2bf-4686-a8ea-bf4314da810b"),
                             BkmCode = "TR.OHVPS.Field.Invalid",
                             InternalCode = 25,
                             Message = "hesapIslemBslZmn can not be later than hesapIslemBtsZmn.",
@@ -462,7 +462,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("568a9ff8-bb99-4b97-bc10-296714697379"),
+                            Id = new Guid("8e32e9e1-ea0d-4b71-a61a-82f049e2abad"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 100,
                             Message = "Validation error",
@@ -470,7 +470,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("8b8d1442-f5f7-48b0-b521-8d271b6c463f"),
+                            Id = new Guid("fe36bb90-8d1e-45ac-a817-7ed57599352f"),
                             BkmCode = "TR.OHVPS.Connection.InvalidASPSP",
                             InternalCode = 101,
                             Message = "Invalid ASPSP Code",
@@ -478,7 +478,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("70858d02-6763-4a37-9f0e-ebd3c2a3dc41"),
+                            Id = new Guid("c86ab026-813a-4c04-a7af-8e7ac1fc8e82"),
                             BkmCode = "TR.OHVPS.Connection.InvalidTPP",
                             InternalCode = 102,
                             Message = "Invalid TPP Code",
@@ -486,7 +486,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("b8e367a4-4b63-40a5-ad32-0f04e70c9e93"),
+                            Id = new Guid("fdfb334f-6839-44bd-a811-fcda2dd3dba8"),
                             BkmCode = "TR.OHVPS.Business.CustomerInfoMismatch",
                             InternalCode = 104,
                             Message = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger must match.",
@@ -494,7 +494,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("ddd17f2d-b85f-4e03-aca5-2baa240a8334"),
+                            Id = new Guid("725f5be5-4fa6-49ea-b831-467008f9ebd7"),
                             BkmCode = "TR.OHVPS.Business.EventSubscriptionNotFound",
                             InternalCode = 105,
                             Message = "No evet subscription for AYRIK_GKD_BASARILI and AYRIK_GKD_BASARISIZ.",
@@ -502,7 +502,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("34a0750e-7fda-4e4a-bdc7-c0b4977280ec"),
+                            Id = new Guid("87b8e90f-43b9-4c53-bb6e-128f2fee17a3"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 106,
                             Message = "syfKytSayi value is not valid. syfKytSayi can be between 1-100",
@@ -510,7 +510,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("16bcbc09-3641-4e7b-8f49-70e7a66257c1"),
+                            Id = new Guid("d6f908c8-b580-4525-9cab-4e84b9b3f321"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 107,
                             Message = "srlmKrtr value is not valid. it should be hspRef",
@@ -518,7 +518,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("44060e83-dadd-455a-8629-693cc9e2a05a"),
+                            Id = new Guid("5351a02e-2a59-45e7-9509-8e6a37051d4f"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 108,
                             Message = "srlmYon value is not valid.",
@@ -526,7 +526,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("14b1b63c-e87d-4601-8129-9d5711c8c5c5"),
+                            Id = new Guid("f733643d-fb83-440a-a2c5-66809aa30acf"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 109,
                             Message = "hesapIslemBtsTrh,hesapIslemBslTrh values not valid",
@@ -534,7 +534,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("a5a31e98-fe46-4085-aa6b-c6ddd5559c20"),
+                            Id = new Guid("02ac284d-169a-4ba2-90fc-a1c767f5c6a3"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 110,
                             Message = "hesapIslemBtsTrh can not be later than enquiry datetime.",
@@ -542,7 +542,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6baf2a76-69b9-40f9-9ec7-9a714331fe00"),
+                            Id = new Guid("88e2b05a-1e69-47fd-bbf9-c26e82aadddc"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 111,
                             Message = "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.",
@@ -550,7 +550,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("0d50c0c1-ed01-4b67-9e49-dbc419f5b8db"),
+                            Id = new Guid("992e3262-fe09-4f68-8cf4-e0ba3dc0f90c"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 112,
                             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
@@ -558,7 +558,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("dfcc500a-b22b-44f9-a35d-0475cda2c78a"),
+                            Id = new Guid("f76a86ee-ef8c-43b9-996e-e8c6d258e158"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 113,
                             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
@@ -566,7 +566,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("a52fdb22-7222-41dd-8503-cdd626495bf0"),
+                            Id = new Guid("9744a249-d6b7-4404-af8e-1bffb14d944a"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 114,
                             Message = "For system enquiry, last 24 hours can be enquirable.",
@@ -574,7 +574,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("ef07e888-175b-46f9-bd3e-e2581c13bef2"),
+                            Id = new Guid("5a4450ae-8e80-4405-9557-bc6cff791b40"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 115,
                             Message = "brcAlc value is not valid.",
@@ -582,7 +582,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("ec09f1f9-bffd-48e4-8a89-526b6abf4faf"),
+                            Id = new Guid("ea93d68c-db26-4dd7-bca7-24598cace8b0"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 116,
                             Message = "srlmKrtr value is not valid. it should be islGrckZaman",
@@ -590,7 +590,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("196d6149-1a87-4df8-a70e-bf8b02dc2821"),
+                            Id = new Guid("9cea46aa-7b58-4ef8-a697-8d959685fc4c"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 117,
                             Message = "minIslTtr value is not valid.",
@@ -598,7 +598,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("d74b07c8-4e51-4667-99b1-0ba2f6d0ac21"),
+                            Id = new Guid("c2f14416-e3c3-44d9-bdcb-8d1570479d82"),
                             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
                             InternalCode = 118,
                             Message = "mksIslTtr value is not valid.",
@@ -606,7 +606,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("2a563a1d-808a-44ac-97f6-b48a195f60fb"),
+                            Id = new Guid("07871055-f172-4853-b369-42e582b0aa4d"),
                             BkmCode = "TR.OHVPS.Resource.NotFound",
                             InternalCode = 150,
                             Message = "Resource not found",
@@ -614,7 +614,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("b9318747-0068-4ca3-830a-3b2d133a5ff3"),
+                            Id = new Guid("34e053e3-9a70-4082-9040-3f4efd33e649"),
                             BkmCode = "TR.OHVPS.Business.InvalidContent",
                             InternalCode = 200,
                             Message = "PsuInitiated invalid",
@@ -622,15 +622,23 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("b8c32564-60c5-4946-bd62-183b3ea01df0"),
+                            Id = new Guid("fce8b4e0-133a-4abd-b1a5-8e541abf9e51"),
                             BkmCode = "TR.OHVPS.Business.InvalidContent",
                             InternalCode = 201,
                             Message = "User reference in header is wrong.",
-                            MessageTr = "User reference değeri hatalı."
+                            MessageTr = "User reference değeri geçersiz."
                         },
                         new
                         {
-                            Id = new Guid("66242d5b-1beb-4ea2-9faf-3eefc93129a8"),
+                            Id = new Guid("a6da080d-4cc4-4e72-8042-d7d8f9fc26b8"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 202,
+                            Message = "OpenBanking Consent Id in header is invalid.",
+                            MessageTr = "OpenBanking Consent Id değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("c06ed343-0360-48a9-a166-552036cd8b0c"),
                             BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
                             InternalCode = 160,
                             Message = "Consent not valid to process",
@@ -638,7 +646,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("bf2e98e1-20eb-453c-beca-dbeebc2e21f4"),
+                            Id = new Guid("deb787b8-54b5-4142-aed5-0faaa4a01274"),
                             BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
                             InternalCode = 161,
                             Message = "Consent state not valid to delete",
@@ -646,7 +654,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("13697d97-4d10-4c02-bf90-4b2da7f0e6c3"),
+                            Id = new Guid("e333d225-6f95-4970-b449-366b791b588f"),
                             BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
                             InternalCode = 162,
                             Message = "There is a Authorized / Authorzation Used consent in the system. First cancel the consent.",
@@ -654,7 +662,23 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("41055406-4c99-4eef-b4fb-6e01dd6a864f"),
+                            Id = new Guid("c0425ded-7786-4f4f-ad15-ff899dd44a1d"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+                            InternalCode = 163,
+                            Message = "Consent ended. Not valid to process.",
+                            MessageTr = "Sonlandırılmış rıza için işlem yapılamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("361c5a8d-837f-4807-a6a4-dc8d61337cd3"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+                            InternalCode = 164,
+                            Message = "Consent state is not authorization used. Not valid to process.",
+                            MessageTr = "Rıza durumu yetki kullanıldı olmadığı için işlem yapılamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("e8c3ff38-8175-4695-a22e-e1c676105af5"),
                             BkmCode = "TR.OHVPS.Server.InternalError",
                             InternalCode = 151,
                             Message = "Unexpected condition was encountered.",
@@ -662,7 +686,7 @@ namespace amorphie.consent.data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("ceb914d8-0c66-4ce2-ac03-a1e5ef650b2b"),
+                            Id = new Guid("6ef3e43d-3313-4c9f-8e58-83ba1942575e"),
                             BkmCode = "TR.OHVPS.Server.InternalError",
                             InternalCode = 152,
                             Message = "By Checking Idempotency Unexpected condition was encountered.",

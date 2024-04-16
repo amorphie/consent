@@ -99,8 +99,8 @@ builder.Services
 builder.Services
 .AddRefitClient<IDeviceRecordClientService>()
 .ConfigureHttpClient(c =>
-    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
-                            throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
+    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURLForDevice"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURLForDevice")))
 .AddPolicyHandler(retryPolicy);
 
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
