@@ -24,51 +24,73 @@ public class AccountService : IAccountService
         _context = context;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
-            {
-                OpenBankingConstants.IzinTur.TemelHesapBilgisi,
-                OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
-            };
+
             //Get account consent from database
-            var authConsentResult =
-                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
-                    permissions: permisssions);
-            if (authConsentResult.Result == false
-                || authConsentResult.Data == null)
+            var getConsentResult =
+                await _authorizationService.GetAccountConsent(consentId, userTCKN, yosCode: yosCode,
+                    permissions: new List<string>()
+                    {
+                        OpenBankingConstants.IzinTur.TemelHesapBilgisi,
+                        OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
+                    });
+            if (!getConsentResult.Result)
             {
                 //Error
-                return authConsentResult;
+                return getConsentResult;
             }
             
-            if (authConsentResult.Data == null)
+            if (getConsentResult.Data == null)
             {
                 //no consent in db
-                authConsentResult.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
                     OBErrorCodeConstants.ErrorCodesEnum.NotFound);
-                return authConsentResult;
+                return result;
             }
 
-            var activeConsent = (Consent)authConsentResult.Data;
+            var activeConsent = (Consent)getConsentResult.Data;
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
             if (consentDetail == null)
             {
                 result.Result = false;
-                result.Message = "Consent detail missing";
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 return result;
             }
+            
+            //Check consent status
+            if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                return result;
+            }
+
+            if (activeConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed);
+                return result;
+            }
+            
             if (consentDetail.AccountReferences == null
                 || consentDetail.AccountReferences.Count == 0)
             {
                 result.Result = false;
-                result.Message = "Consent does not have any authorized account reference.";
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 return result;
             }
+            
             //Set header values
             bool havingDetailPermission = consentDetail.PermissionTypes.Contains(OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi);
             var permissionType = havingDetailPermission ? OpenBankingConstants.AccountServiceParameters.izinTurDetay
@@ -106,14 +128,8 @@ public class AccountService : IAccountService
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
-            if (serviceResponse is null)
-            {
-                //No account
-                result.Data = null;
-                return result;
-            }
-
-            List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
+        
+            List<HesapBilgileriDto>? accounts = serviceResponse?.hesapBilgileri;
             accounts = accounts?.Select(a =>
             {
                 a.rizaNo = activeConsent.Id.ToString();
@@ -121,7 +137,7 @@ public class AccountService : IAccountService
             }).ToList();
             result.Data = accounts;
             //Set header total count and link properties
-            SetHeaderLinkForAccount(httpContext, serviceResponse.toplamHesapSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            SetHeaderLinkForAccount(httpContext, serviceResponse?.toplamHesapSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -181,7 +197,7 @@ public class AccountService : IAccountService
     }
 
 
-    public async Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef)
+    public async Task<ApiResult> GetAuthorizedAccountByHspRef(HttpContext httpContext,string userTckn, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
         try
@@ -192,28 +208,60 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             };
             //Get account consent from database
-            var authConsentResult =
-                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
-                    permissions: permisssions, hspRef);
-            if (authConsentResult.Result == false
-                || authConsentResult.Data == null)
+            var getConsentResult =
+                await _authorizationService.GetAccountConsentByAccountRef(userTCKN: userTckn, consentId: consentId, yosCode: yosCode,
+                    permissions: permisssions, accountRef: hspRef);
+            if (!getConsentResult.Result)
             {
-                //Error or no consent in db
-                return authConsentResult;
+                //Error
+                return getConsentResult;
             }
-
-            //Get account of customer from service
-            HesapBilgileriDto? account = await _accountClientService.GetAccountByHspRef(userTCKN, hspRef);
-            if (account == null)
+            
+            if (getConsentResult.Data == null)
             {
-                //No account
-                result.Data = account;
+                //no consent in db
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
+            }
+            
+            var activeConsent = (Consent)getConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
+            }
+            
+            //Check consent status
+            if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
                 return result;
             }
 
-            var activeConsent = (Consent)authConsentResult.Data;
+            if (activeConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed);
+                return result;
+            }
+
+            //Get account of customer from service
+            HesapBilgileriDto? account = await _accountClientService.GetAccountByHspRef(userTckn, hspRef);
+         
             //Set rizaNo
-            account.rizaNo = activeConsent.Id.ToString();
+            if (account != null)
+            {
+                account.rizaNo = activeConsent.Id.ToString();
+            }
             result.Data = account;
         }
         catch (Exception e)
@@ -221,11 +269,10 @@ public class AccountService : IAccountService
             result.Result = false;
             result.Message = e.Message;
         }
-
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
+    public async Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
         string? srlmKrtr, string? srlmYon)
     {
         ApiResult result = new();
@@ -236,29 +283,56 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
             };
             //Get account consent from database
-            var authConsentResult =
-                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+            var getConsentResult =
+                await _authorizationService.GetAccountConsent(userTCKN: userTCKN, consentId:consentId, yosCode: yosCode,
                     permissions: permisssions);
-            if (authConsentResult.Result == false
-                || authConsentResult.Data == null)
+            if (!getConsentResult.Result)
             {
-                //Error or no consent in db
-                return authConsentResult;
+                //Error
+                return getConsentResult;
+            }
+            
+            if (getConsentResult.Data == null)
+            {
+                //no consent in db
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
             }
 
-            var activeConsent = (Consent)authConsentResult.Data;
+            var activeConsent = (Consent)getConsentResult.Data;
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
             if (consentDetail == null)
             {
                 result.Result = false;
-                result.Message = "Consent detail missing";
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 return result;
             }
+            //Check consent status
+            if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                return result;
+            }
+            if (activeConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed);
+                return result;
+            }
+            
             if (consentDetail.AccountReferences == null
                 || consentDetail.AccountReferences.Count == 0)
             {
                 result.Result = false;
-                result.Message = "Consent does not have any authorized account reference.";
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
                 return result;
             }
 
@@ -294,17 +368,11 @@ public class AccountService : IAccountService
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
-            if (serviceResponse is null)
-            {
-                //No balance
-                result.Data = null;
-                return result;
-            }
-
-            List<BakiyeBilgileriDto>? balances = serviceResponse.bakiyeBilgileri;
+          
+            List<BakiyeBilgileriDto>? balances = serviceResponse?.bakiyeBilgileri;
             result.Data = balances;
             //Set header total count and link properties
-            SetHeaderLinkForBalance(httpContext, serviceResponse.toplamBakiyeSayisi, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            SetHeaderLinkForBalance(httpContext, serviceResponse?.toplamBakiyeSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -315,7 +383,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN, string yosCode, string hspRef)
+    public async Task<ApiResult> GetAuthorizedBalanceByHspRef(HttpContext httpContext,string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
         try
@@ -325,24 +393,54 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
             };
             //Get account consent from database
-            var authConsentResult =
-                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+            var getConsentResult =
+                await _authorizationService.GetAccountConsentByAccountRef(userTCKN, consentId:consentId, yosCode: yosCode,
                     permissions: permisssions, accountRef: hspRef);
-            if (authConsentResult.Result == false
-                || authConsentResult.Data == null)
+            if (!getConsentResult.Result)
             {
-                //Error or no consent in db
-                return authConsentResult;
+                //Error
+                return getConsentResult;
+            }
+            
+            if (getConsentResult.Data == null)
+            {
+                //no consent in db
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
+            }
+            
+            var activeConsent = (Consent)getConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
+            }
+            
+            //Check consent status
+            if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                return result;
+            }
+
+            if (activeConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed);
+                return result;
             }
 
             //Get balance by account reference number of customer from service
             BakiyeBilgileriDto? balance = await _accountClientService.GetBalanceByHspRef(userTCKN, hspRef);
-            if (balance == null)
-            {
-                //No balance
-                result.Data = balance;
-                return result;
-            }
             result.Data = balance;
         }
         catch (Exception e)
@@ -354,7 +452,7 @@ public class AccountService : IAccountService
         return result;
     }
 
-    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
+    public async Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTckn, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef, string psuInitiated, DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
         string? minIslTtr,
         string? mksIslTtr,
@@ -373,17 +471,49 @@ public class AccountService : IAccountService
                 OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi
             };
             //Get account consent from database
-            var authConsentResult =
-                await _authorizationService.GetAuthorizedAccountConsent(userTCKN, yosCode: yosCode,
+            var getConsentResult =
+                await _authorizationService.GetAccountConsentByAccountRef(userTckn, consentId:consentId, yosCode: yosCode,
                     permissions: permisssions, accountRef: hspRef);
-            if (authConsentResult.Result == false
-                || authConsentResult.Data == null)
+            if (!getConsentResult.Result)
             {
-                //Error or no consent in db
-                return authConsentResult;
+                //Error
+                return getConsentResult;
+            }
+            
+            if (getConsentResult.Data == null)
+            {
+                //no consent in db
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
             }
 
-            var activeConsent = (Consent)authConsentResult.Data;
+            var activeConsent = (Consent)getConsentResult.Data;
+            var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail == null)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                return result;
+            }
+            //Check consent status
+            if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                return result;
+            }
+            if (activeConsent.State != OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+            {
+                //Consent revoked
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed);
+                return result;
+            }
 
             //Get header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>
@@ -431,16 +561,10 @@ public class AccountService : IAccountService
                 permissionType,
                 ohkTur,
                 psuInitiated);
-
-            if (serviceResponse is null)
-            {
-                //No transaction
-                result.Data = null;
-                return result;
-            }
+            
             result.Data = serviceResponse;
             //Set header total count and link properties
-            SetHeaderLinkForTransaction(httpContext, serviceResponse.toplamIslemSayisi, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
+            SetHeaderLinkForTransaction(httpContext, serviceResponse?.toplamIslemSayisi ?? 0, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
 
         }
         catch (Exception e)

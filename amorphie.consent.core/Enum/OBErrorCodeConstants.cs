@@ -113,8 +113,11 @@ public static class OBErrorCodeConstants
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
         ConsentMismatchAccountPostAlreadyAuthroized = 162,
+        ConsentRevokedStateEnd = 163,
+        ConsentRevokedStateNotAutUsed = 164,
         InvalidContentPsuInitiated = 200,
-        InvalidContentUserReference = 201
+        InvalidContentUserReference = 201,
+        InvalidContentConsentIdInHeader = 202
 
     }
 }

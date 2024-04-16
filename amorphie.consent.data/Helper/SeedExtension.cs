@@ -640,7 +640,15 @@ public static class SeedExtension
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference.GetHashCode(),
             BkmCode = "TR.OHVPS.Business.InvalidContent",
             Message = "User reference in header is wrong.",
-            MessageTr = "User reference değeri hatalı."
+            MessageTr = "User reference değeri geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "OpenBanking Consent Id in header is invalid.",
+            MessageTr = "OpenBanking Consent Id değeri geçersiz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
@@ -666,6 +674,23 @@ public static class SeedExtension
             Message = "There is a Authorized / Authorzation Used consent in the system. First cancel the consent.",
             MessageTr = "Sistemde Yetkilendirildi / Yetki Kullanıldı durumunda rıza olduğu için rıza kabul edilmedi. Öncelikli olarak rızayı iptal ediniz."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+            Message = "Consent ended. Not valid to process.",
+            MessageTr = "Sonlandırılmış rıza için işlem yapılamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateNotAutUsed.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+            Message = "Consent state is not authorization used. Not valid to process.",
+            MessageTr = "Rıza durumu yetki kullanıldı olmadığı için işlem yapılamaz."
+        });
+        
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),

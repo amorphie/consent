@@ -166,7 +166,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -250,6 +250,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedAccountByHspRef(
         string hspRef,
         [FromServices] ConsentDbContext context,
@@ -263,8 +264,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true, isConsentIdRequired:true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -273,8 +274,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccountByHspRef(header.UserReference!, yosCode: header.XTPPCode,
-                    hspRef); //Get data from service
+                await accountService.GetAuthorizedAccountByHspRef(httpContext, header.UserReference!, header.ConsentId!, yosCode: header.XTPPCode,
+                    hspRef,_errorCodeDetails); //Get data from service
             if (!accountApiResult.Result)
             {
                 return Results.BadRequest(accountApiResult.Message);
@@ -309,6 +310,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedAccounts([FromQuery] int? syfKytSayi,
         [FromQuery] int? syfNo,
         [FromQuery] string? srlmKrtr,
@@ -324,8 +326,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true, isConsentIdRequired:true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -335,7 +337,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //Get authorized accounts
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedAccounts(httpContext, header.UserReference!, header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo,
+                await accountService.GetAuthorizedAccounts(httpContext, userTCKN: header.UserReference!, consentId: header.ConsentId!, header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo,
                     srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
@@ -368,6 +370,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedBalanceByHspRef(
         string hspRef,
         [FromServices] ConsentDbContext context,
@@ -381,8 +384,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true, isConsentIdRequired:true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -391,8 +394,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             ApiResult accountApiResult =
-                await accountService.GetAuthorizedBalanceByHspRef(header.UserReference!, yosCode: header.XTPPCode,
-                    hspRef); //Get data from service
+                await accountService.GetAuthorizedBalanceByHspRef(httpContext, userTCKN: header.UserReference!, yosCode: header.XTPPCode,
+                   hspRef: hspRef, consentId: header.ConsentId!, errorCodeDetails:_errorCodeDetails); //Get data from service
             if (!accountApiResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
@@ -428,6 +431,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedBalances([FromQuery] int? syfKytSayi,
         [FromQuery] int? syfNo,
         [FromQuery] string? srlmKrtr,
@@ -443,8 +447,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true, errorCodeDetails:_errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true, isConsentIdRequired:true, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -452,8 +456,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(headerValidation.Data);
             }
 
-            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, header.UserReference!,
-                header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo, srlmKrtr, srlmYon);
+            ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, userTCKN: header.UserReference!,
+             consentId:header.ConsentId!, yosCode: header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo, srlmKrtr, srlmYon);
             if (!accountApiResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
@@ -477,6 +481,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetTransactionsByHspRef(
         string hspRef,
         [FromQuery] DateTime hesapIslemBslTrh,
@@ -499,8 +504,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-                isUserRequired: true, errorCodeDetails: _errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                isUserRequired: true, isConsentIdRequired:true, errorCodeDetails: _errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -509,8 +514,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Get transactions from service
-            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, header.UserReference!,
-                header.XTPPCode,_errorCodeDetails,
+            ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, userTCKN: header.UserReference!,
+              consentId:header.ConsentId!, yosCode:  header.XTPPCode,_errorCodeDetails,
                 hspRef, header.PSUInitiated, hesapIslemBslTrh, hesapIslemBtsTrh, minIslTtr, mksIslTtr, brcAlc,
                 syfKytSayi, syfNo,
                 srlmKrtr, srlmYon);
@@ -556,7 +561,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails:_errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -614,7 +619,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
                 isUserRequired: true);
             if (!headerValidation.Result)
             {
@@ -1185,7 +1190,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header,
+                await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header,
                     isUserRequired: true, errorCodeDetails:errorCodeDetails);
             if (!headerValidation.Result)
             {
@@ -1812,7 +1817,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext);
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
@@ -1877,7 +1882,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
             katilimciBlg: rizaIstegi.katilimciBlg);
         if (!result.Result)
         {
@@ -2052,7 +2057,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
             katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true);
         if (!result.Result)
         {
@@ -2568,65 +2573,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Result = false;
             result.Message = "Sender account information should be sent.";
             return result;
-        }
-
-        return result;
-    }
-
-
-    /// <summary>
-    ///  Checks if header is varlid.
-    /// Checks required fields.
-    /// Checks hhskod yoskod if katilimciBlg parameter is set.
-    /// </summary>
-    /// <param name="context">Context</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">Yos service instance</param>
-    /// <param name="header">Header object</param>
-    /// <param name="katilimciBlg">Katilimci data object default value with null</param>
-    /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
-    /// <returns>Validation result</returns>
-    private async Task<ApiResult> IsHeaderDataValid(HttpContext context,
-        IConfiguration configuration,
-        IYosInfoService yosInfoService,
-        RequestHeaderDto? header = null,
-        KatilimciBilgisiDto? katilimciBlg = null,
-        bool? isUserRequired = false,
-        List<OBErrorCodeDetail>? errorCodeDetails = null)
-    {
-        ApiResult result = new();
-        if (header is null)
-        {
-            header = OBModuleHelper.GetHeader(context);
-        }
-
-        errorCodeDetails ??= new List<OBErrorCodeDetail>();
-        result = await OBModuleHelper.IsHeaderValid(header, configuration, yosInfoService, context, errorCodeDetails,
-            isUserRequired: isUserRequired);
-        if (!result.Result)
-        {
-            return result;
-        }
-
-        //If there is katilimciBlg object, validate data in it with header
-        if (katilimciBlg != null)
-        {
-            //Check header data and message data
-            if (header.XASPSPCode != katilimciBlg.hhsKod)
-            {
-                //HHSCode must match with header x-aspsp-code
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
-                return result;
-            }
-
-            if (header.XTPPCode != katilimciBlg.yosKod)
-            {
-                //YOSCode must match with header x-tpp-code
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
-                return result;
-            }
         }
 
         return result;

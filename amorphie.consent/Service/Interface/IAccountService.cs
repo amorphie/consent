@@ -10,7 +10,7 @@ public interface IAccountService
     /// Checks user's account consent. If any, get accounts
     /// </summary>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
     Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences,
         int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
@@ -22,14 +22,14 @@ public interface IAccountService
     /// <param name="yosCode"></param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
-    Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef);
+    Task<ApiResult> GetAuthorizedAccountByHspRef(HttpContext httpContext, string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails);
 
 
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
 
     /// <summary>
@@ -39,13 +39,13 @@ public interface IAccountService
     /// <param name="yosCode">Yos Code</param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
-    Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN, string yosCode, string hspRef);
+    Task<ApiResult> GetAuthorizedBalanceByHspRef(HttpContext httpContext,string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails);
 
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
     /// <returns>Transactions of Given Account Reference</returns>
-    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef,
+    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,

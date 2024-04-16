@@ -867,6 +867,114 @@ public static class OBConsentValidationHelper
         return result;
     }
     
+    /// <summary>
+    /// Checks if header is valid by controlling;
+    /// PSU Initiated value is in predefined values
+    /// Required fields are checked
+    /// XASPSPCode is equal with BurganBank hhscode
+    /// Checks hhskod yoskod if katilimciBlg parameter is set.
+    /// </summary>
+    /// <param name="context">Context</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">Yos service instance</param>
+    /// <param name="header">Header object</param>
+    /// <param name="katilimciBlg">Katilimci data object default value with null</param>
+    /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
+    /// <param name="isConsentIdRequired">There should be openbanking_consent_id in header. Optional parameter with default false value</param>
+    /// <returns>Validation result</returns>
+    public static async Task<ApiResult> IsHeaderDataValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto? header = null,
+        KatilimciBilgisiDto? katilimciBlg = null,
+        bool? isUserRequired = false,
+        bool? isConsentIdRequired = false,
+        List<OBErrorCodeDetail>? errorCodeDetails = null)
+    {
+        ApiResult result = new();
+        header ??= OBModuleHelper.GetHeader(context);
+
+        errorCodeDetails ??= new List<OBErrorCodeDetail>();
+       
+         // Separate method to prepare and check header properties
+        if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails, out var errorResponse))
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+
+        if (configuration["HHSCode"] != header.XASPSPCode)
+        {
+            //XASPSPCode value should be BurganBanks hhscode value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+            return result;
+        }
+
+        if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
+        {
+            //Check psu initiated value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated);
+            return result;
+        }
+
+        //Check setted yos value
+        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
+        if (yosCheckResult.Result == false
+            || yosCheckResult.Data == null
+            || (bool)yosCheckResult.Data == false)
+        {
+            //No yos data in the system
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+            return result;
+        }
+
+        if (isUserRequired.HasValue
+            && isUserRequired.Value
+            && string.IsNullOrEmpty(header.UserReference))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
+            return result;
+        }
+        
+        if (isConsentIdRequired.HasValue
+            && isConsentIdRequired.Value
+            && string.IsNullOrEmpty(header.ConsentId))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader);
+            return result;
+        }
+
+        //If there is katilimciBlg object, validate data in it with header
+        if (katilimciBlg != null)
+        {
+            //Check header data and message data
+            if (header.XASPSPCode != katilimciBlg.hhsKod)
+            {
+                //HHSCode must match with header x-aspsp-code
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+                return result;
+            }
+
+            if (header.XTPPCode != katilimciBlg.yosKod)
+            {
+                //YOSCode must match with header x-tpp-code
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    
     
     
 }
