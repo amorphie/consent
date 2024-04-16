@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Service.Interface;
 
@@ -8,15 +9,8 @@ public interface IAccountService
     /// Get authorized accounts of customer
     /// Checks user's account consent. If any, get accounts
     /// </summary>
-    /// <param name="httpContext"></param>
-    /// <param name="userTCKN">User TCKN</param>
-    /// <param name="yosCode"></param>
-    /// <param name="syfKytSayi">Page size</param>
-    /// <param name="syfNo">Page number</param>
-    /// <param name="srlmKrtr">Order by name</param>
-    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Authorized account list of customer</returns>
-    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
     Task<ApiResult> GetAuthorizedAccountsForUI(string userTCKN, List<string> accountReferences,
         int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
@@ -24,25 +18,15 @@ public interface IAccountService
     /// <summary>
     /// Get account of customer by account referenece number if authorized
     /// </summary>
-    /// <param name="userTCKN">Customer Id</param>
-    /// <param name="yosCode"></param>
-    /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account of Given Reference if authorized</returns>
-    Task<ApiResult> GetAuthorizedAccountByHspRef(string userTCKN, string yosCode, string hspRef);
+    Task<ApiResult> GetAuthorizedAccountByHspRef(HttpContext httpContext, string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails);
 
 
     /// <summary>
     /// Get authorized balances of customer
     /// </summary>
-    /// <param name="httpContext"></param>
-    /// <param name="userTCKN">User tckn</param>
-    /// <param name="yosCode">Yos Code</param>
-    /// <param name="syfKytSayi">Page size</param>
-    /// <param name="syfNo">Page number</param>
-    /// <param name="srlmKrtr">Order by name</param>
-    /// <param name="srlmYon">Order by direction</param>
     /// <returns>Balance list of customer</returns>
-    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string yosCode, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
+    Task<ApiResult> GetAuthorizedBalances(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon);
 
 
     /// <summary>
@@ -52,26 +36,13 @@ public interface IAccountService
     /// <param name="yosCode">Yos Code</param>
     /// <param name="hspRef">Account Referans Number</param>
     /// <returns>Customer Account Balance of Given Account Reference</returns>
-    Task<ApiResult> GetAuthorizedBalanceByHspRef(string userTCKN, string yosCode, string hspRef);
+    Task<ApiResult> GetAuthorizedBalanceByHspRef(HttpContext httpContext,string userTCKN, string consentId, string yosCode, string hspRef,List<OBErrorCodeDetail> errorCodeDetails);
 
     /// <summary>
     /// Get transactions of account reference number
     /// </summary>
-    /// <param name="yosCode"></param>
-    /// <param name="hspRef">Account Referans Number</param>
-    /// <param name="psuInitiated"></param>
-    /// <param name="hesapIslemBslTrh"></param>
-    /// <param name="hesapIslemBtsTrh"></param>
-    /// <param name="minIslTtr"></param>
-    /// <param name="mksIslTtr"></param>
-    /// <param name="brcAlc"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
-    /// <param name="srlmKrtr"></param>
-    /// <param name="srlmYon"></param>
-    /// <param name="userTCKN"></param>
     /// <returns>Transactions of Given Account Reference</returns>
-    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string yosCode, string hspRef,
+    public Task<ApiResult> GetTransactionsByHspRef(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, string hspRef,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,

@@ -231,10 +231,11 @@ public static class OBConsentValidationHelper
             return result;
         }
 
+        var todayDate = DateTime.UtcNow.Date;
         //check erisimIzniSonTrh
-        if (iznBlg.erisimIzniSonTrh == DateTime.MinValue
-            || iznBlg.erisimIzniSonTrh > DateTime.UtcNow.AddMonths(6)
-            || iznBlg.erisimIzniSonTrh < DateTime.UtcNow.AddDays(1))
+        if (iznBlg.erisimIzniSonTrh.Date == DateTime.MinValue
+            || iznBlg.erisimIzniSonTrh > todayDate.AddMonths(6).AddDays(1)
+            || iznBlg.erisimIzniSonTrh < todayDate.AddDays(2))
         {
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.HspBlgErisimIzniSonTrh,
@@ -266,8 +267,8 @@ public static class OBConsentValidationHelper
         }
 
         if (iznBlg.hesapIslemBslZmn.HasValue
-            && (iznBlg.hesapIslemBslZmn.Value < DateTime.UtcNow.AddMonths(-12) ||
-                iznBlg.hesapIslemBslZmn.Value > DateTime.UtcNow.AddMonths(12))) //Data constraints
+            && (iznBlg.hesapIslemBslZmn.Value < todayDate.AddMonths(-12) ||
+                iznBlg.hesapIslemBslZmn.Value > todayDate.AddMonths(12).AddDays(1))) //Data constraints
         {
             //max +12 ay, min -12 ay olabilir
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
@@ -276,8 +277,8 @@ public static class OBConsentValidationHelper
         }
 
         if (iznBlg.hesapIslemBtsZmn.HasValue &&
-            (iznBlg.hesapIslemBtsZmn.Value < DateTime.UtcNow.AddMonths(-12) ||
-             iznBlg.hesapIslemBtsZmn.Value > DateTime.UtcNow.AddMonths(12))) //Data constraints
+            (iznBlg.hesapIslemBtsZmn.Value < todayDate.AddMonths(-12) ||
+             iznBlg.hesapIslemBtsZmn.Value > todayDate.AddMonths(12).AddDays(1))) //Data constraints
         {
             //max +12 ay, min -12 ay olabilir
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
@@ -690,4 +691,290 @@ public static class OBConsentValidationHelper
 
         return result;
     }
+    
+    
+    /// <summary>
+    /// Checks if parameters valid to get balances and accounts
+    /// </summary>
+    /// <returns></returns>
+    public static ApiResult IsParametersValidToGetAccountsBalances(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,
+        int syfKytSayi,
+        string srlmKrtr,
+        string srlmYon)
+    {
+        ApiResult result = new();
+        var today = DateTime.UtcNow;
+     
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
+            || syfKytSayi <=0 )
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmKrtr)
+            && OpenBankingConstants.AccountServiceParameters.srlmKrtrAccountAndBalance != srlmKrtr)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrAccount);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmYon)
+            && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon);
+            return result;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if parameters valid to get transactions
+    /// </summary>
+    /// <returns>Parameters validation result</returns>
+    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,Consent consent,
+        string psuInitiated,
+        DateTime hesapIslemBslTrh,
+        DateTime hesapIslemBtsTrh,
+        string? minIslTtr,
+        string? mksIslTtr,
+        string? brcAlc,
+        int syfKytSayi,
+        string srlmKrtr,
+        string srlmYon)
+    {
+        ApiResult result = new();
+        var today = DateTime.UtcNow;
+        if (hesapIslemBtsTrh == DateTime.MinValue
+            || hesapIslemBslTrh == DateTime.MinValue) //required parameters
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBslBtsTrh);
+            return result;
+        }
+
+        //Check hesapIslemBtsTrh
+        if (hesapIslemBtsTrh > today)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBtsTrhLaterThanToday);
+            return result;
+        }
+
+        if (hesapIslemBtsTrh < hesapIslemBslTrh)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatesapIslemBslZmnLaterThanBtsZmn);
+            return result;
+        }
+
+        //ÖHK tarafından tetiklenen sorgularda; hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay,kurumsal ÖHK’lar için ise en fazla 1 hafta olabilir.
+        if (psuInitiated == OpenBankingConstants.PSUInitiated.OHKStarted)
+        {
+            if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Bireysel)
+            {
+                if (hesapIslemBslTrh.AddMonths(1) < hesapIslemBtsTrh)
+                {
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff);
+                    return result;
+                }
+            }
+            else if (consent.OBAccountConsentDetails.FirstOrDefault()?.UserType == OpenBankingConstants.OHKTur.Kurumsal)
+            {
+                if (hesapIslemBslTrh.AddDays(7) < hesapIslemBtsTrh)
+                {
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff);
+                    return result;
+                }
+            }
+        }
+
+        //YÖS tarafından sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir. Bu yüzden hesapIslemBtsTrh-24 saat’ten daha uzun bir aralık sorgulanamaz olmalıdır.
+        if (psuInitiated == OpenBankingConstants.PSUInitiated.SystemStarted
+            && (hesapIslemBtsTrh - hesapIslemBslTrh).TotalHours > 24)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(brcAlc) && !ConstantHelper.GetBrcAlcList().Contains(brcAlc))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc);
+            return result;
+        }
+        
+
+        if (!string.IsNullOrEmpty(minIslTtr) && !ConstantHelper.IsValidAmount(minIslTtr))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMinIslTtr);
+            return result;
+        }
+        if (!string.IsNullOrEmpty(mksIslTtr) && !ConstantHelper.IsValidAmount(mksIslTtr))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr);
+            return result;
+        }
+        
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
+            || syfKytSayi <=0 )
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmKrtr)
+            && OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction != srlmKrtr)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrTransaction);
+            return result;
+        }
+
+        if (!string.IsNullOrEmpty(srlmYon)
+            && !ConstantHelper.GetSrlmYonList().Contains(srlmYon))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon);
+            return result;
+        }
+
+
+        return result;
+    }
+    
+    /// <summary>
+    /// Checks if header is valid by controlling;
+    /// PSU Initiated value is in predefined values
+    /// Required fields are checked
+    /// XASPSPCode is equal with BurganBank hhscode
+    /// Checks hhskod yoskod if katilimciBlg parameter is set.
+    /// </summary>
+    /// <param name="context">Context</param>
+    /// <param name="configuration">Configuration instance</param>
+    /// <param name="yosInfoService">Yos service instance</param>
+    /// <param name="header">Header object</param>
+    /// <param name="katilimciBlg">Katilimci data object default value with null</param>
+    /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
+    /// <param name="isConsentIdRequired">There should be openbanking_consent_id in header. Optional parameter with default false value</param>
+    /// <returns>Validation result</returns>
+    public static async Task<ApiResult> IsHeaderDataValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto? header = null,
+        KatilimciBilgisiDto? katilimciBlg = null,
+        bool? isUserRequired = false,
+        bool? isConsentIdRequired = false,
+        List<OBErrorCodeDetail>? errorCodeDetails = null)
+    {
+        ApiResult result = new();
+        header ??= OBModuleHelper.GetHeader(context);
+
+        errorCodeDetails ??= new List<OBErrorCodeDetail>();
+       
+         // Separate method to prepare and check header properties
+        if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails, out var errorResponse))
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+
+        if (configuration["HHSCode"] != header.XASPSPCode)
+        {
+            //XASPSPCode value should be BurganBanks hhscode value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+            return result;
+        }
+
+        if (ConstantHelper.GetPSUInitiatedValues().Contains(header.PSUInitiated) == false)
+        {
+            //Check psu initiated value
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentPsuInitiated);
+            return result;
+        }
+
+        //Check setted yos value
+        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
+        if (yosCheckResult.Result == false
+            || yosCheckResult.Data == null
+            || (bool)yosCheckResult.Data == false)
+        {
+            //No yos data in the system
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+            return result;
+        }
+
+        if (isUserRequired.HasValue
+            && isUserRequired.Value
+            && string.IsNullOrEmpty(header.UserReference))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
+            return result;
+        }
+        
+        if (isConsentIdRequired.HasValue
+            && isConsentIdRequired.Value
+            && string.IsNullOrEmpty(header.ConsentId))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader);
+            return result;
+        }
+
+        //If there is katilimciBlg object, validate data in it with header
+        if (katilimciBlg != null)
+        {
+            //Check header data and message data
+            if (header.XASPSPCode != katilimciBlg.hhsKod)
+            {
+                //HHSCode must match with header x-aspsp-code
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidAspsp);
+                return result;
+            }
+
+            if (header.XTPPCode != katilimciBlg.yosKod)
+            {
+                //YOSCode must match with header x-tpp-code
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidTpp);
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    
+    
+    
 }
