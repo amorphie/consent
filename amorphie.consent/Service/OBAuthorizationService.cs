@@ -91,23 +91,20 @@ public class OBAuthorizationService : IOBAuthorizationService
     }
 
 
-    public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions)
+    public async Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions)
     {
         ApiResult result = new();
         try
         {
-            var consentState = ConstantHelper.GetAuthorizedConsentStatusForAccount();
-            var today = DateTime.UtcNow;
             var activeConsent = (await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                                && c.State == consentState
                                 && c.Variant == yosCode
-                                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
+                                && c.Id.ToString() == consentId
+                                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTckn
                                                                       && i.IdentityType ==
                                                                       OpenBankingConstants.KimlikTur.TCKN
-                                                                      && i.LastValidAccessDate > today
                                                                       && i.UserType == OpenBankingConstants.OHKTur
                                                                           .Bireysel))
                     .ToListAsync())
@@ -124,24 +121,21 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
-    public async Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions,
+    public async Task<ApiResult> GetAccountConsentByAccountRef(string userTckn,string consentId, string yosCode, List<string> permissions,
         string accountRef)
     {
         ApiResult result = new();
         try
         {
-            var consentState = ConstantHelper.GetAuthorizedConsentStatusForAccount();
-            var today = DateTime.UtcNow;
             var activeConsent = (await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                                && c.State == consentState
                                 && c.Variant == yosCode
-                                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
+                                && c.Id.ToString() == consentId
+                                && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTckn
                                                                       && i.IdentityType ==
                                                                       OpenBankingConstants.KimlikTur.TCKN
-                                                                      && i.LastValidAccessDate > today
                                                                       && i.UserType == OpenBankingConstants.OHKTur
                                                                           .Bireysel
                                                                       && i.AccountReferences != null

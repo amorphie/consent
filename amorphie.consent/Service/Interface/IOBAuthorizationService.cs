@@ -1,8 +1,5 @@
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
-using amorphie.consent.core.DTO.OpenBanking.Event;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
-using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Service.Interface;
 
@@ -13,10 +10,9 @@ public interface IOBAuthorizationService
     /// Get users yetkikullanildi state of account consents
     /// Also Checks consent validity date
     /// </summary>
-    /// <param name="userTCKN">Consent owner tckn</param>
-    /// <param name="context"></param>
+    /// <param name="userTckn">Consent owner tckn</param>
     /// <returns>User's account consents</returns>
-    public Task<ApiResult> GetAuthUsedAccountConsentsOfUser(string userTCKN);
+    public Task<ApiResult> GetAuthUsedAccountConsentsOfUser(string userTckn);
 
     /// <summary>
     /// Get yetki kullanıldı state of account consent by given id and permission.
@@ -29,27 +25,25 @@ public interface IOBAuthorizationService
     public Task<ApiResult> GetAuthUsedAccountConsent(string consentId, string accountRef, List<string> permissions);
 
     /// <summary>
-    /// Get User's authorized account consent.
-    /// Consent state must be  yetki kullanildi.
-    /// Checks yos code and permissions.
+    /// Get User's account consent by consent id, tckn, yoscode, permissions.
     /// </summary>
-    /// <param name="userTCKN">User TCKN number</param>
+    /// <param name="consentId">Consent id</param>
+    /// <param name="userTckn">User TCKN number</param>
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="permissions">Required Permissions</param>
-    /// <returns>User's authorized consent</returns>
-    public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions);
+    /// <returns>User's account consent</returns>
+    public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions);
 
     /// <summary>
-    /// Get User's authorized account consent.
-    /// Consent state must be  yetki kullanildi.
-    /// Checks yos code, account ref and permissions.
+    /// Get User's account consent of given account ref by consent id, tckn, yoscode, permissions.
     /// </summary>
-    /// <param name="userTCKN">User TCKN number</param>
+    /// <param name="userTckn">User TCKN number</param>
+    /// <param name="consentId"></param>
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="permissions">Required Permissions</param>
     /// <param name="accountRef">Account ref</param>
-    /// <returns>User's authorized consent</returns>
-    public Task<ApiResult> GetAuthorizedAccountConsent(string userTCKN, string yosCode, List<string> permissions,
+    /// <returns>User's account consent</returns>
+    public Task<ApiResult> GetAccountConsentByAccountRef(string userTckn,string consentId, string yosCode, List<string> permissions,
         string accountRef);
 
     /// <summary>
@@ -58,10 +52,10 @@ public interface IOBAuthorizationService
     /// This metod works for Bireysel consents.
     /// </summary>
     /// <param name="id"></param>
-    /// <param name="userTCKN"></param>
+    /// <param name="userTckn"></param>
     /// <param name="consentTypes"></param>
     /// <returns>Consent data</returns>
-    public Task<ApiResult> GetConsentReadonly(Guid id, string userTCKN, List<string> consentTypes);
+    public Task<ApiResult> GetConsentReadonly(Guid id, string userTckn, List<string> consentTypes);
 
 
     /// <summary>
