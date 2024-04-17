@@ -707,6 +707,14 @@ public static class SeedExtension
             Message = "By Checking Idempotency Unexpected condition was encountered.",
             MessageTr = "Idempotency kontrol edilirken beklenmeyen bir durumla karşılaşıldı."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.MissingSignature.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.MissingSignature",
+            Message = "Header x-jws-signature property is empty.",
+            MessageTr = "İstek başlığında x-jws-signature alanı eksik."
+        });
 
     }
 

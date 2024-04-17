@@ -51,6 +51,8 @@ public static class OBErrorCodeConstants
         public const string BadRequest = "Bad Request";
         public const string NotFound = "Not Found";
         public const string InternalServerError = "Internal Server Error";
+        public const string Forbidden = "Forbidden";
+        
     }
 
     public enum ErrorCodesEnum
@@ -117,7 +119,8 @@ public static class OBErrorCodeConstants
         ConsentRevokedStateNotAutUsed = 164,
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201,
-        InvalidContentConsentIdInHeader = 202
+        InvalidContentConsentIdInHeader = 202,
+        MissingSignature = 300
 
     }
 }
