@@ -77,6 +77,23 @@ public static class OBErrorResponseHelper
         return BuildErrorResponse(HttpStatusCode.NotFound,
             OBErrorCodeConstants.HttpMessage.NotFound, context.Request.Path, errorCodeDetail);
     }
+    
+    /// <summary>
+    /// Generates 403 OBCustomErrorResponseDto with given error code
+    /// </summary>
+    /// <param name="context">HttpContext</param>
+    /// <param name="errorCodeDetails">All error code constant data</param>
+    /// <param name="errorCode">To be created error internal code</param>
+    /// <returns>OBCustomErrorResponseDto type of object</returns>
+    public static OBCustomErrorResponseDto GetForbiddenError(HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
+    {
+        //Get errorCode detail
+        var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
+        //Generate customerrorresponse of forbidden
+        return BuildErrorResponse(HttpStatusCode.Forbidden,
+            OBErrorCodeConstants.HttpMessage.Forbidden, context.Request.Path, errorCodeDetail);
+    }
 
     /// <summary>
     /// Gets errorCodeDetail in errorCodeDetail list by internalCode.

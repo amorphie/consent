@@ -53,5 +53,19 @@ public interface IAccountService
         int? syfNo,
         string? srlmKrtr,
         string? srlmYon);
+    
+    /// <summary>
+    /// Send account consent detail to account service
+    /// </summary>
+    /// <param name="accountRefs">Account references</param>
+    /// <param name="consentId">Consent Id</param>
+    /// <param name="instantBalanceNotificationPermission">Is there balance notification permission</param>
+    /// <param name="sharePermission">Is consent continue</param>
+    /// <returns>Service call response</returns>
+    public Task<ApiResult> SendConsentToAccountService(List<string> accountRefs,
+        string consentId,
+        string instantBalanceNotificationPermission,
+        string sharePermission);
+
 
 }

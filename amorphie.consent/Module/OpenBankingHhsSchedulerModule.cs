@@ -31,7 +31,7 @@ public class OpenBankingHhsSchedulerModule : BaseBBTRoute<OpenBankingConsentDto,
         Guid consentId,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
-        [FromServices] IOBEventService obEventService,
+        [FromServices] IAccountService accountService,
         [FromServices] ILogger<OpenBankingHhsSchedulerModule> logger)
     {
         bool continueTry = true;
@@ -44,7 +44,10 @@ public class OpenBankingHhsSchedulerModule : BaseBBTRoute<OpenBankingConsentDto,
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             var consentDetail = consentEntity?.OBAccountConsentDetails.FirstOrDefault();
             if (consentEntity == null
-                || consentDetail == null)
+                || consentDetail == null
+                || consentDetail.AccountReferences == null
+                || consentDetail.AccountReferences.Count == 0
+                || consentDetail.SendToServiceDeliveryStatus != OpenBankingConstants.RecordDeliveryStatus.Processing)
             {
                 //No desired consent in system
                 continueTry = false;
@@ -57,29 +60,40 @@ public class OpenBankingHhsSchedulerModule : BaseBBTRoute<OpenBankingConsentDto,
             if (entityTryCount < maxRetryCount)
             {
                 //Send consent to account service
-                //If success
-                //Update consent
-                consentDetail.ModifiedAt = DateTime.UtcNow;
-                consentDetail.SendToServiceLastTryTime = DateTime.UtcNow;
-                consentDetail.SendToServiceTryCount = entityTryCount + 1;
-                consentDetail.SendToServiceDeliveryStatus =
-                    OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully;
-                context.OBAccountConsentDetails.Update(consentDetail);
-
-                continueTry = false;
-
-                //If error
-                consentDetail.ModifiedAt = DateTime.UtcNow;
-                consentDetail.SendToServiceLastTryTime = DateTime.UtcNow;
-                consentDetail.SendToServiceTryCount = entityTryCount + 1;
-                if (consentDetail.SendToServiceTryCount >= maxRetryCount)
+                var accountRefs = consentDetail.AccountReferences;
+                var instanceBalence =
+                    consentDetail.PermissionTypes.Contains(OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi)
+                        ? OpenBankingConstants.BalanceChangedServiceYesNo.Yes
+                        : OpenBankingConstants.BalanceChangedServiceYesNo.No;
+                var sharePermission = consentEntity.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi  
+                    ? OpenBankingConstants.BalanceChangedServiceYesNo.Yes
+                    : OpenBankingConstants.BalanceChangedServiceYesNo.No; 
+                var accountServiceResponse = await accountService.SendConsentToAccountService(accountRefs, consentId.ToString(), instanceBalence,sharePermission);
+                if (accountServiceResponse.Result) //Success from service
                 {
-                    //Mark as undeliverable
-                    consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
-                    continueTry = false; //sending process completed
+                    //Update consent
+                    consentDetail.ModifiedAt = DateTime.UtcNow;
+                    consentDetail.SendToServiceLastTryTime = DateTime.UtcNow;
+                    consentDetail.SendToServiceTryCount = entityTryCount + 1;
+                    consentDetail.SendToServiceDeliveryStatus =
+                        OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully;
+                    continueTry = false;
                 }
-
-                context.Consents.Update(consentEntity);
+                else
+                {
+                    //If error
+                    consentDetail.ModifiedAt = DateTime.UtcNow;
+                    consentDetail.SendToServiceLastTryTime = DateTime.UtcNow;
+                    consentDetail.SendToServiceTryCount = entityTryCount + 1;
+                    if (consentDetail.SendToServiceTryCount >= maxRetryCount)
+                    {
+                        //Mark as undeliverable
+                        consentDetail.SendToServiceDeliveryStatus =
+                            OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
+                        continueTry = false; //sending process completed
+                    }
+                }
+                context.OBAccountConsentDetails.Update(consentDetail);
                 await context.SaveChangesAsync();
             }
             else
@@ -90,7 +104,7 @@ public class OpenBankingHhsSchedulerModule : BaseBBTRoute<OpenBankingConsentDto,
                     //Mark as undeliverable
                     consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Undeliverable;
                     consentDetail.ModifiedAt = DateTime.UtcNow;
-                    context.Consents.Update(consentEntity);
+                    context.OBAccountConsentDetails.Update(consentDetail);
                     await context.SaveChangesAsync();
                     continueTry = false; //sending process completed
                 }

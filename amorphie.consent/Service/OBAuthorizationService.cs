@@ -127,7 +127,7 @@ public class OBAuthorizationService : IOBAuthorizationService
         ApiResult result = new();
         try
         {
-            var activeConsent = (await _context.Consents
+            var consent = (await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
@@ -143,7 +143,7 @@ public class OBAuthorizationService : IOBAuthorizationService
                     .ToListAsync())
                 ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
                 .FirstOrDefault();
-            result.Data = activeConsent;
+            result.Data = consent;
         }
         catch (Exception e)
         {

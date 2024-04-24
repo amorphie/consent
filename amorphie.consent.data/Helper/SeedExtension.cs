@@ -1,7 +1,7 @@
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using Microsoft.EntityFrameworkCore;
-
+namespace amorphie.consent.data;
 public static class SeedExtension
 {
     public static void SeedOBEventTypeSourceTypeRelation(this ModelBuilder modelBuilder)
@@ -706,6 +706,14 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Server.InternalError",
             Message = "By Checking Idempotency Unexpected condition was encountered.",
             MessageTr = "Idempotency kontrol edilirken beklenmeyen bir durumla karşılaşıldı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.MissingSignature.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.MissingSignature",
+            Message = "Header x-jws-signature property is empty.",
+            MessageTr = "İstek başlığında x-jws-signature alanı eksik."
         });
 
     }
