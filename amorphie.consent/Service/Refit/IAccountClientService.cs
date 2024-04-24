@@ -54,6 +54,11 @@ public interface IAccountClientService
         [Header("izinTur")] string permissionType,
         [Header("ohkTur")] string ohkTur,
         [Header("PSU-Initiated")] string psuInitiated);
-
-
+    
+    [Headers("Content-Type: application/json")]
+    [Post("/accounts/changeopenbankingpermission/{consentId}/{instantBalanceNotificationPermission}/{sharePermission}")]
+    Task<string> ChangeOpenBankingPermission([Body] List<string> accountRefs,
+        string consentId,
+        string instantBalanceNotificationPermission,
+        string sharePermission);
 }

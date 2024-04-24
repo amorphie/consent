@@ -1069,6 +1069,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1237,7 +1238,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
-
+            
             //Revoke token
             await tokenService.RevokeConsentToken(rizaNo);
             return Results.NoContent();
@@ -1273,6 +1274,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             //get consent entity from db
             var entity = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
             ApiResult dataValidationResult =
@@ -1294,6 +1296,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+            //Update consent detail to send consent information to account service.
+            var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
+            if (consentDetail is not  null)
+            {
+                consentDetail.SendToServiceTryCount = 0;
+                consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
+                context.OBAccountConsentDetails.Update(consentDetail);
+            }
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
 
@@ -1327,6 +1337,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1446,6 +1457,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentOrderPost([FromBody] OdemeEmriIstegiHHSDto odemeEmriIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1817,7 +1829,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext);
         //Check header fields
-        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired:true,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
@@ -1882,8 +1894,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
-        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: rizaIstegi.katilimciBlg);
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired:true,
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails:_errorCodeDetails);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2057,8 +2069,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
-        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true);
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired:true,
+            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true, errorCodeDetails:_errorCodeDetails);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2687,6 +2699,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private async Task ProcessAccountConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context)
     {
         var entity = await context.Consents
+            .Include(c => c.OBAccountConsentDetails)
             .FirstOrDefaultAsync(c => c.Id == rizaNo
                                       && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
         var today = DateTime.UtcNow;
@@ -2735,6 +2748,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 entity.ModifiedAt = today;
                 entity.State = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
                 entity.StateModifiedAt = today;
+                var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
+                if (consentDetail is not  null)
+                {
+                    consentDetail.SendToServiceTryCount = 0;
+                    consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
+                    context.OBAccountConsentDetails.Update(consentDetail);
+                }
                 context.Consents.Update(entity);
                 await context.SaveChangesAsync();
             }

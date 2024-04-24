@@ -866,7 +866,7 @@ public static class OBConsentValidationHelper
 
         return result;
     }
-    
+
     /// <summary>
     /// Checks if header is valid by controlling;
     /// PSU Initiated value is in predefined values
@@ -881,6 +881,7 @@ public static class OBConsentValidationHelper
     /// <param name="katilimciBlg">Katilimci data object default value with null</param>
     /// <param name="isUserRequired">There should be userreference value in header. Optional parameter with default false value</param>
     /// <param name="isConsentIdRequired">There should be openbanking_consent_id in header. Optional parameter with default false value</param>
+    /// <param name="isXJwsSignatureRequired">There should be x-jws-signature in header. Optional parameter with default false value</param>
     /// <returns>Validation result</returns>
     public static async Task<ApiResult> IsHeaderDataValid(HttpContext context,
         IConfiguration configuration,
@@ -889,6 +890,7 @@ public static class OBConsentValidationHelper
         KatilimciBilgisiDto? katilimciBlg = null,
         bool? isUserRequired = false,
         bool? isConsentIdRequired = false,
+        bool? isXJwsSignatureRequired = false,
         List<OBErrorCodeDetail>? errorCodeDetails = null)
     {
         ApiResult result = new();
@@ -947,6 +949,15 @@ public static class OBConsentValidationHelper
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader);
+            return result;
+        }
+        
+        if (isXJwsSignatureRequired.HasValue
+            && isXJwsSignatureRequired.Value
+            && string.IsNullOrEmpty(header.XJWSSignature))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
             return result;
         }
 

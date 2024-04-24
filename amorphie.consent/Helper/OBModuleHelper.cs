@@ -60,6 +60,11 @@ public static class OBModuleHelper
             header.ConsentId = traceValue;
         }
 
+        if (httpContext.Request.Headers.TryGetValue("X-JWS-Signature", out traceValue))
+        {
+            header.XJWSSignature = traceValue;
+        }
+
         return header;
     }
 
