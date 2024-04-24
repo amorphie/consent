@@ -394,6 +394,27 @@ public class AccountService : IAccountService
         return result;
     }
 
+    public async Task<ApiResult> SendConsentToAccountService(List<string> accountRefs, string consentId, string instantBalanceNotificationPermission,
+        string sharePermission)
+    {
+        ApiResult result = new();
+        try
+        {
+           
+           //Send account consent details to account service
+            string serviceResponse = await _accountClientService.ChangeOpenBankingPermission(accountRefs, consentId, instantBalanceNotificationPermission,sharePermission);
+            result.Data = serviceResponse;
+            result.Result = serviceResponse.Trim('"') == "1";
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+
 
     private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
         int? syfKytSayi,
