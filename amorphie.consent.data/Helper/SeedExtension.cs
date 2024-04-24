@@ -1,7 +1,7 @@
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using Microsoft.EntityFrameworkCore;
-
+namespace amorphie.consent.data;
 public static class SeedExtension
 {
     public static void SeedOBEventTypeSourceTypeRelation(this ModelBuilder modelBuilder)
