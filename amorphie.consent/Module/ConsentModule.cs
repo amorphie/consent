@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Module;
 
@@ -24,50 +25,40 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/search", SearchMethod);
-        routeGroupBuilder.MapGet("/user/{userId}/consentType/{consentType}", GetUserConsents);
-        routeGroupBuilder.MapGet("/user/{userId}", GetUserConsentsByUserId);
+        routeGroupBuilder.MapGet(
+            "/GetUserConsents/clientCode={clientCode}&userTCKN={userTCKN}",
+            GetUserConsents);
     }
 
 
     public async Task<IResult> GetUserConsents(
+        string clientCode,
+        long userTCKN,
         [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        Guid userId,
-        string consentType)
+        [FromServices] IMapper mapper)
     {
-        //Get user consents
-        var consents = await context.Consents.AsNoTracking()
-            .Where(c => c.UserId == userId
-                        && c.ConsentType == consentType).ToListAsync();
-        if (consents?.Any() ?? false)
+        try
         {
-            return Results.Ok(mapper.Map<List<ConsentDto>>(consents));
+            //Filter consent according to parameters
+            var consents = await context.Consents.AsNoTracking()
+                .Where(c => c.ClientCode == clientCode
+                            && c.UserTCKN == userTCKN
+                            && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+                .ToListAsync();
+
+            if (consents?.Any() ?? false)
+            {
+                return Results.Ok(mapper.Map<List<ConsentDto>>(consents));
+            }
+            //No consent in the system
+            return Results.NotFound();
         }
-        else
+        catch (Exception ex)
         {
-            return Results.NotFound("Kullanıcının rızası bulunamadı.");
+            return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-    public async Task<IResult> GetUserConsentsByUserId(
-        [FromServices] ConsentDbContext context,
-        Guid userId
-    )
-    {
-        var userConsents = await context.Consents
-            .AsNoTracking()
-            .Where(x => x.UserId == userId)
-            .ToListAsync();
-
-        if (userConsents.Count > 0)
-        {
-            return Results.Ok(userConsents);
-        }
-        else
-        {
-            return Results.NotFound("Kullanıcının rızası bulunamadı.");
-        }
-    }
+    
 
     public async ValueTask<IResult> SearchMethod(
         [FromServices] ConsentDbContext context,
