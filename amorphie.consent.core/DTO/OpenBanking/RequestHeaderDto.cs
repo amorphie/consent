@@ -10,4 +10,6 @@ public class RequestHeaderDto
     public string PSUInitiated { get; set; } = string.Empty;
 
     public string? UserReference { get; set; }
+    public string? ConsentId { get; set; }
+    public string? XJWSSignature { get; set; }
 }

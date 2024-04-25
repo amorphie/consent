@@ -28,6 +28,8 @@ using amorphie.core.Extension;
 using Dapr;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
+using System.Net.Http;
+using amorphie.core.Middleware.Logging;
 using amorphie.core.Middleware.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,10 +44,11 @@ builder.Services.AddScoped<IYosInfoService, YosInfoService>();
 builder.Services.AddScoped<IBKMService, BKMService>();
 builder.Services.AddScoped<IOBEventService, OBEventService>();
 builder.Services.AddScoped<IOBAuthorizationService, OBAuthorizationService>();
-builder.Services.AddSingleton<ITagService, TagService>();
-builder.Services.AddSingleton<IPushService, PushService>();
-builder.Services.AddSingleton<IDeviceRecord, DeviceRecordService>();
-
+builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IPushService, PushService>();
+builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
+builder.Services.AddTransient<HttpClientHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
@@ -96,8 +99,8 @@ builder.Services
 builder.Services
 .AddRefitClient<IDeviceRecordClientService>()
 .ConfigureHttpClient(c =>
-    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
-                            throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
+    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURLForDevice"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURLForDevice")))
 .AddPolicyHandler(retryPolicy);
 
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
@@ -121,7 +124,6 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TagUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
 })
-.ConfigurePrimaryHttpMessageHandler(() => handler)
 .AddPolicyHandler(retryPolicy);
 
 builder.Services
@@ -131,7 +133,6 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
 })
-.ConfigurePrimaryHttpMessageHandler(() => handler)
 .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>

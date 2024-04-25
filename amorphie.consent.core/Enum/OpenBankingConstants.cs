@@ -382,7 +382,7 @@ public static class OpenBankingConstants
     {
         public const int syfKytSayi = 100;
         public const int syfNo = 1;
-        public const string srlmKrtrAccount = "hspRef";
+        public const string srlmKrtrAccountAndBalance = "hspRef";
         public const string srlmKrtrTransaction = "islGrckZaman";
         public const string srlmYon = "A";
         public const string izinTurDetay = "D";
@@ -402,6 +402,11 @@ public static class OpenBankingConstants
     }
 
 
+    public static class OsType
+    {
+        public const int Android = 1;
+        public const int Ios = 2;
+    }
 
 
 }

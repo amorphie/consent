@@ -33,6 +33,10 @@ public class OBAccountConsentDetail : EntityBase
     public DateTime? SendToServiceLastTryTime { get; set; }
     public int? SendToServiceDeliveryStatus { get; set; }
 
+    public string CheckSumValue { get; set; }= String.Empty;
+    public DateTime CheckSumLastValiDateTime { get; set; }
+    public string SaveResponseMessage { get; set; }= String.Empty;
+
     [ForeignKey("ConsentId")]
     public Consent Consent { get; set; }
 }
