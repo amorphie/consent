@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -5,7 +7,7 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
-using Microsoft.EntityFrameworkCore;
+using Jose;
 
 namespace amorphie.consent.Helper;
 
@@ -691,8 +693,8 @@ public static class OBConsentValidationHelper
 
         return result;
     }
-    
-    
+
+
     /// <summary>
     /// Checks if parameters valid to get balances and accounts
     /// </summary>
@@ -704,9 +706,9 @@ public static class OBConsentValidationHelper
     {
         ApiResult result = new();
         var today = DateTime.UtcNow;
-     
-        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
-            || syfKytSayi <=0 )
+
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
+            || syfKytSayi <= 0)
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -738,7 +740,7 @@ public static class OBConsentValidationHelper
     /// Checks if parameters valid to get transactions
     /// </summary>
     /// <returns>Parameters validation result</returns>
-    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,Consent consent,
+    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails, Consent consent,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
@@ -819,7 +821,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc);
             return result;
         }
-        
+
 
         if (!string.IsNullOrEmpty(minIslTtr) && !ConstantHelper.IsValidAmount(minIslTtr))
         {
@@ -835,9 +837,9 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr);
             return result;
         }
-        
-        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
-            || syfKytSayi <=0 )
+
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
+            || syfKytSayi <= 0)
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -897,8 +899,8 @@ public static class OBConsentValidationHelper
         header ??= OBModuleHelper.GetHeader(context);
 
         errorCodeDetails ??= new List<OBErrorCodeDetail>();
-       
-         // Separate method to prepare and check header properties
+
+        // Separate method to prepare and check header properties
         if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
@@ -942,7 +944,7 @@ public static class OBConsentValidationHelper
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
             return result;
         }
-        
+
         if (isConsentIdRequired.HasValue
             && isConsentIdRequired.Value
             && string.IsNullOrEmpty(header.ConsentId))
@@ -951,7 +953,7 @@ public static class OBConsentValidationHelper
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader);
             return result;
         }
-        
+
         if (isXJwsSignatureRequired.HasValue
             && isXJwsSignatureRequired.Value
             && string.IsNullOrEmpty(header.XJWSSignature))
@@ -960,6 +962,8 @@ public static class OBConsentValidationHelper
             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
             return result;
         }
+
+        await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, isXJwsSignatureRequired);
 
         //If there is katilimciBlg object, validate data in it with header
         if (katilimciBlg != null)
@@ -985,7 +989,110 @@ public static class OBConsentValidationHelper
         return result;
     }
 
-    
-    
-    
+    public static async Task<ApiResult> IsXJwsSignatureValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        bool? isXJwsSignatureRequired = false
+        )
+    {
+        ApiResult result = new();
+        if (isXJwsSignatureRequired.HasValue
+            && isXJwsSignatureRequired.Value
+            && string.IsNullOrEmpty(header.XJWSSignature))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+            return result;
+        }
+
+        var headerXjwsSignature =
+            "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaWd3LmJrbS5jb20udHIiLCJleHAiOjE2NjU0NzU1NjIsImlhdCI6MTY2NTM4OTE2MiwiYm9keSI6ImE2NGIxOWY5NWVlYjFmYjBhMGEzZTJkYmJjNmUzZDg0NzJjNTIxODRkNDU0MzQxN2RkYzZkMTU2ZmM1YzU1NzEifQ.Q65PI_1fTEzzBMirvmJvXgVX3orhhZ4_UqujtGdHkU7me-1ymIjvPrzy3kfyER1pedFb7HDCBuPvYoqjX8eUnpiiZsxfzCiEa0McIhoFeUOggq-O8VihItp8bLr2DWwQ9JHN1-WXB2mL31KAKFAL1VY9-DXuAdT-RfE_SLYsl2ycmNy4ti4XvfDvvlE56ZsieFZ727VuwR8wi7F0kKDc6UhjaMF9xcUeAM1fxX-bmcOaOo1NZGC0vvgjNZKz_OJrN-q8VhWYnQPiJ7wY7S9IG8bHIkBImKSVf8LuOEvl8u0BZzADLH1iOBd9x2l1plyI_NLPTrnOqhWhKlljkkJBCg";
+        //header.XJWSSignature!;
+        // Decode JWT to get header
+        var jwtHeaderDecoded = JWT.Headers(headerXjwsSignature);
+        // Verify algorithm used is RS256
+        if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong);
+            return result;
+        }
+
+        var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
+        // Decode JWT payload to JSON object
+        var jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(jwtPayloadDecoded);
+
+        // Get the expiration time claim (exp) from the payload
+        var expUnixTime = (long)jwtPayloadJson["exp"];
+        // Convert the Unix time to a DateTime object
+        var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+        // Check if the token has expired
+        if (expDateTime <= DateTime.UtcNow)
+        {
+            // Token is invalid
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
+            return result;
+        }
+
+
+        string publicKey = String.Empty;
+        // Convert the base64 encoded public key to bytes
+        byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+
+        /// Create a RSA key from the public key bytes
+        using RSA rsa = RSA.Create();
+        rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+        try
+        {
+            // Verify the JWT signature
+            var payload = JWT.Decode(headerXjwsSignature, rsa);
+
+            // If the token is valid, proceed to validate the payload
+            var jwtPayload = JWT.Payload(headerXjwsSignature);
+            // Parse JWT payload to JSON object
+
+            jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(jwtPayload);
+            // Retrieve the "body" claim from the payload
+            var bodyClaim = jwtPayloadJson["body"]?.ToString();
+            if (string.IsNullOrEmpty(bodyClaim))
+            {
+                // If "body" claim is missing, return an error
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
+                return result;
+            }
+
+            // Calculate SHA256 hash of the request body
+            var requestBodyHash = "";//CalculateSHA256Hash(requestBody); // You need to implement this method
+
+            // Compare the calculated hash with the value in the "body" claim
+            if (bodyClaim != requestBodyHash)
+            {
+                // If the hashes don't match, return an error
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+                return result;
+            }
+
+            // If everything is valid, return success
+            result.Result = true;
+        }
+        catch (Exception)
+        {
+            // If token validation fails, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+        }
+
+
+        return result;
+    }
+
+
+
+
 }
