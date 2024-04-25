@@ -124,6 +124,13 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("AuthMethod")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CheckSumLastValiDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CheckSumValue")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("ConsentId")
                         .HasColumnType("uuid");
 
@@ -185,6 +192,10 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text[]");
 
+                    b.Property<string>("SaveResponseMessage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int?>("SendToServiceDeliveryStatus")
                         .HasColumnType("integer");
 
@@ -221,6 +232,474 @@ namespace amorphie.consent.data.Migrations
                     b.HasIndex("ConsentId");
 
                     b.ToTable("OBAccountConsentDetails");
+                });
+
+            modelBuilder.Entity("amorphie.consent.core.Model.OBErrorCodeDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BkmCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("InternalCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MessageTr")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OBErrorCodeDetails");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("c1fe7cda-68be-4bd3-b5f7-c439c3efff74"),
+                            BkmCode = "TR.OHVPS.Field.Missing",
+                            InternalCode = 2,
+                            Message = "must not be null",
+                            MessageTr = "boş değer olamaz"
+                        },
+                        new
+                        {
+                            Id = new Guid("94ceb714-eb17-4eeb-bfb4-16716042f211"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 3,
+                            Message = "Invalid data.",
+                            MessageTr = "Geçersiz veri."
+                        },
+                        new
+                        {
+                            Id = new Guid("eb8c91fd-1663-47c6-b143-4ac964ed2ff5"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 4,
+                            Message = "size must be 4",
+                            MessageTr = "boyut '4' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("b67b9adc-d382-468a-946d-ff19955022b2"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 5,
+                            Message = "size must be between 1-30",
+                            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("0e1d4db6-03c9-4015-bcff-cc30ccad9566"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 6,
+                            Message = "size must be between 1-8",
+                            MessageTr = "boyut '1' ile '8' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("57e78d29-b372-425c-9df9-6b0a3c8afd82"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 7,
+                            Message = "size must be 11",
+                            MessageTr = "boyut '11' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("a9c9655c-86ef-4784-9258-d1b1df0fab03"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 8,
+                            Message = "size must be between 1-30",
+                            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("95bf32a6-b6a9-4259-8eb7-217bd8735d63"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 9,
+                            Message = "size must be 11",
+                            MessageTr = "boyut '11' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("e5aac2b0-d4d6-4023-8a16-89d75c42c150"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 10,
+                            Message = "size must be between 1-9",
+                            MessageTr = "boyut '1' ile  '9' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("53057c89-eff3-4444-9762-2f64789c46bf"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 11,
+                            Message = "size must be 10",
+                            MessageTr = "boyut '10' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("ddfdb41c-ee40-4090-9e55-e38b98b19151"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 12,
+                            Message = "size must be 26",
+                            MessageTr = "boyut '26' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("5949a56a-d55d-454f-9fbd-6b74f19243a3"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 13,
+                            Message = "size must be 11",
+                            MessageTr = "boyut '11' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("95afed77-f15e-4d5b-bb98-81a3666ca8e2"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 14,
+                            Message = "size must be between 1-30",
+                            MessageTr = "boyut '1' ile  '30' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("b30ad3e9-a1e2-4cdc-80b1-f18b8f214e8d"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 15,
+                            Message = "size must be 11",
+                            MessageTr = "boyut '11' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("6dc3924c-0064-4c84-b965-a744acbcf4ec"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 16,
+                            Message = "size must be between 1-9",
+                            MessageTr = "boyut '1' ile  '9' arasında olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("f955fb07-f9ba-4c31-97f9-fab7437790f8"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 17,
+                            Message = "size must be 10",
+                            MessageTr = "boyut '10' olmalı"
+                        },
+                        new
+                        {
+                            Id = new Guid("4c52e931-63af-49b7-b5ef-09843181c7f8"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 18,
+                            Message = "Temel hesap bilgisi izni must.",
+                            MessageTr = "Temel hesap bilgisi izni seçimi zorunludur."
+                        },
+                        new
+                        {
+                            Id = new Guid("075ebaae-d065-4ce6-94cb-fcd819145cc4"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 19,
+                            Message = "Detail transactions permission can not be selected without Basic transactions.",
+                            MessageTr = "Temelişlem bilgisi izni seçimi yapılmadan ayrıntılı işlem bilgisi seçimi yapılamaz.."
+                        },
+                        new
+                        {
+                            Id = new Guid("ef42dcfe-47db-43a5-ae92-f16e830a716c"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 20,
+                            Message = "Instant balance notification cannot be selected without selecting balance information permission.",
+                            MessageTr = "Bakiye bilgisi izni seçimi yapılmadan anlık bakiye bildirimi seçimi yapılamaz.."
+                        },
+                        new
+                        {
+                            Id = new Guid("b1496b62-c8c4-4146-a1f2-35cd56f80bc2"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 21,
+                            Message = "The minimum value it can take is consent date +1 day, the maximum value it can take is: Consent date + 6 months.",
+                            MessageTr = "Alabileceği minimum değer tarihi +1 gün, alabileceği maksimum değer : Rıza tarihi + 6 ay "
+                        },
+                        new
+                        {
+                            Id = new Guid("d1339d35-f367-4876-890a-06ee9e888594"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 22,
+                            Message = "When the Basic Transaction Information/Detailed Transaction Information permission is selected, the hesapIslemBslZmn hesapIslemBtsZmn fields must be filled.",
+                            MessageTr = "Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman hesapIslemBslZmn hesapIslemBtsZmn alanlarının doldurulması zorunludur."
+                        },
+                        new
+                        {
+                            Id = new Guid("5acaa8dc-8611-4e0a-9ce1-5f44d6b29d9a"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 23,
+                            Message = "hesapIslemBslZmn hesapIslemBtsZmn fields should only be sent when the Basic Transaction Information/Detailed Transaction Information permission is selected.",
+                            MessageTr = "hesapIslemBslZmn hesapIslemBtsZmn alanları sadece Temel İşlem bilgisi/ayrıntlı işlem bilgisi izni seçilmiş olduğu zaman gönderilmelidir."
+                        },
+                        new
+                        {
+                            Id = new Guid("56446392-e762-4f50-ab93-ae1243cd4fbb"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 24,
+                            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+                            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+                        },
+                        new
+                        {
+                            Id = new Guid("f868e2ef-9863-42df-8603-87347de8d0d6"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 24,
+                            Message = "Minimum date: Date of consent given – 12 months Maximum date: Date of consent given + 12 months",
+                            MessageTr = "Minimum tarih : Rızanın veriliş tarihi – 12 ay Maksimum tarih : Rızanın veriliş tarihi + 12 ay"
+                        },
+                        new
+                        {
+                            Id = new Guid("9fca1229-a83b-4a9d-a323-1aba5d0cc31a"),
+                            BkmCode = "TR.OHVPS.Field.Invalid",
+                            InternalCode = 25,
+                            Message = "hesapIslemBslZmn can not be later than hesapIslemBtsZmn.",
+                            MessageTr = "hesapIslemBslZmn, hesapIslemBtsZmn verisinden sonra olamaz. "
+                        },
+                        new
+                        {
+                            Id = new Guid("db7a0741-30c6-4ea2-88be-39c593cd9146"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 100,
+                            Message = "Validation error",
+                            MessageTr = "Şema kontrolleri başarısız"
+                        },
+                        new
+                        {
+                            Id = new Guid("f3a5651d-1e73-4308-8ebc-88a73e436645"),
+                            BkmCode = "TR.OHVPS.Connection.InvalidASPSP",
+                            InternalCode = 101,
+                            Message = "Invalid ASPSP Code",
+                            MessageTr = "Geçersiz HHS kodu."
+                        },
+                        new
+                        {
+                            Id = new Guid("c087390a-8c3e-49fd-93de-64ac5258a294"),
+                            BkmCode = "TR.OHVPS.Connection.InvalidTPP",
+                            InternalCode = 102,
+                            Message = "Invalid TPP Code",
+                            MessageTr = "Geçersiz Yos kodu."
+                        },
+                        new
+                        {
+                            Id = new Guid("aff24378-9a4f-4613-b100-5242015fff1b"),
+                            BkmCode = "TR.OHVPS.Business.CustomerInfoMismatch",
+                            InternalCode = 104,
+                            Message = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger must match.",
+                            MessageTr = "kmlk.kmlkVrs - ayrikGkd.ohkTanimDeger aynı olmalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("b9e97485-5e54-496a-8cf1-706774268569"),
+                            BkmCode = "TR.OHVPS.Business.EventSubscriptionNotFound",
+                            InternalCode = 105,
+                            Message = "No evet subscription for AYRIK_GKD_BASARILI and AYRIK_GKD_BASARISIZ.",
+                            MessageTr = "AYRIK_GKD_BASARILI ve AYRIK_GKD_BASARISIZ olay tipleri için olay aboneliği yapılmalıdır."
+                        },
+                        new
+                        {
+                            Id = new Guid("9e480a47-d008-4391-b82d-c2125f07f9f8"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 106,
+                            Message = "syfKytSayi value is not valid. syfKytSayi can be between 1-100",
+                            MessageTr = "syfKytSayi değeri geçersiz. 1-100 aralığında olabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("8a8d027a-087e-494c-b1d4-436ded807ce6"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 107,
+                            Message = "srlmKrtr value is not valid. it should be hspRef",
+                            MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer hspRef."
+                        },
+                        new
+                        {
+                            Id = new Guid("3209a533-a7a3-4f9c-a2d9-cf2f41733d3c"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 108,
+                            Message = "srlmYon value is not valid.",
+                            MessageTr = "srlmYon değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("4eb9ecd7-5076-45fe-a2c7-ccc1bdac710c"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 109,
+                            Message = "hesapIslemBtsTrh,hesapIslemBslTrh values not valid",
+                            MessageTr = "hesapIslemBtsTrh,hesapIslemBslTrh değerleri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("ed354dea-c822-48bd-8acd-e56276444a67"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 110,
+                            Message = "hesapIslemBtsTrh can not be later than enquiry datetime.",
+                            MessageTr = "hesapIslemBtsTrh sorgulama zamanından sonra olamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("b9b627f7-2b86-40fd-9119-b2a851ab6d04"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 111,
+                            Message = "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.",
+                            MessageTr = "hesapIslemBtsTrh hesapIslemBslTrh den önce olamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("8de16fb2-a131-40ce-b051-8bf48c1d4a42"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 112,
+                            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
+                            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("6f3e094e-c716-4cd6-8372-06298191e402"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 113,
+                            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
+                            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("610ce78f-79fb-4795-88dd-f2884316e396"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 114,
+                            Message = "For system enquiry, last 24 hours can be enquirable.",
+                            MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("34716ab5-b839-4a34-8200-a904589ec549"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 115,
+                            Message = "brcAlc value is not valid.",
+                            MessageTr = "brcAlc değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("376dee57-c554-40d2-8c33-4ea3bdd09860"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 116,
+                            Message = "srlmKrtr value is not valid. it should be islGrckZaman",
+                            MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer islGrckZaman."
+                        },
+                        new
+                        {
+                            Id = new Guid("b57b6eb2-d656-41ac-b499-8d3a860ab3db"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 117,
+                            Message = "minIslTtr value is not valid.",
+                            MessageTr = "minIslTtr değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("eba499b9-8271-40b2-82e5-624a9067603d"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+                            InternalCode = 118,
+                            Message = "mksIslTtr value is not valid.",
+                            MessageTr = "mksIslTtr değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("b1e86ea3-2fe0-4c23-8395-21f8aaa53c08"),
+                            BkmCode = "TR.OHVPS.Resource.NotFound",
+                            InternalCode = 150,
+                            Message = "Resource not found",
+                            MessageTr = "Kaynak bulunamadı."
+                        },
+                        new
+                        {
+                            Id = new Guid("ec5c9910-00f5-4f64-b9e2-6d0ef4efdb7f"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 200,
+                            Message = "PsuInitiated invalid",
+                            MessageTr = "PsuInitiated değeri hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("7f8aa21a-93ad-4ea4-904b-1f08f05a03a7"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 201,
+                            Message = "User reference in header is wrong.",
+                            MessageTr = "User reference değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("5fbeb808-9241-4fa7-bfc9-bbfc63e380e0"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 202,
+                            Message = "OpenBanking Consent Id in header is invalid.",
+                            MessageTr = "OpenBanking Consent Id değeri geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("ef63595d-e335-4678-9580-b5a8f2205075"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+                            InternalCode = 160,
+                            Message = "Consent not valid to process",
+                            MessageTr = "Consent işlem yapılmaya uygun değil."
+                        },
+                        new
+                        {
+                            Id = new Guid("16f73fe3-92f2-4b97-9b7a-f2ea0bedef71"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+                            InternalCode = 161,
+                            Message = "Consent state not valid to delete",
+                            MessageTr = "Consent rıza durumu silme işlemine uygun değil."
+                        },
+                        new
+                        {
+                            Id = new Guid("703a06c9-b8ae-4a0f-be90-80e4a9b14188"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+                            InternalCode = 162,
+                            Message = "There is a Authorized / Authorzation Used consent in the system. First cancel the consent.",
+                            MessageTr = "Sistemde Yetkilendirildi / Yetki Kullanıldı durumunda rıza olduğu için rıza kabul edilmedi. Öncelikli olarak rızayı iptal ediniz."
+                        },
+                        new
+                        {
+                            Id = new Guid("1a3334a3-c17a-4d48-aae8-23631e494595"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+                            InternalCode = 163,
+                            Message = "Consent ended. Not valid to process.",
+                            MessageTr = "Sonlandırılmış rıza için işlem yapılamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("bfef3ca1-8d4f-44d7-8112-5cf553654a97"),
+                            BkmCode = "TR.OHVPS.Resource.ConsentRevoked",
+                            InternalCode = 164,
+                            Message = "Consent state is not authorization used. Not valid to process.",
+                            MessageTr = "Rıza durumu yetki kullanıldı olmadığı için işlem yapılamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("00d5f845-2c6e-488f-bb89-ce587bceb519"),
+                            BkmCode = "TR.OHVPS.Server.InternalError",
+                            InternalCode = 151,
+                            Message = "Unexpected condition was encountered.",
+                            MessageTr = "Beklenmeyen bir durumla karşılaşıldı."
+                        },
+                        new
+                        {
+                            Id = new Guid("7c8a625a-c465-4f18-bc76-7d618574dc58"),
+                            BkmCode = "TR.OHVPS.Server.InternalError",
+                            InternalCode = 152,
+                            Message = "By Checking Idempotency Unexpected condition was encountered.",
+                            MessageTr = "Idempotency kontrol edilirken beklenmeyen bir durumla karşılaşıldı."
+                        },
+                        new
+                        {
+                            Id = new Guid("2d6f4351-6994-42c7-a260-b9539254febd"),
+                            BkmCode = "TR.OHVPS.Resource.MissingSignature",
+                            InternalCode = 300,
+                            Message = "Header x-jws-signature property is empty.",
+                            MessageTr = "İstek başlığında x-jws-signature alanı eksik."
+                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>
@@ -542,6 +1021,13 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("AuthMethod")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CheckSumLastValiDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CheckSumValue")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("ConsentId")
                         .HasColumnType("uuid");
 
@@ -651,6 +1137,10 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("ReferenceInformation")
                         .HasColumnType("text");
 
+                    b.Property<string>("SaveResponseMessage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("SenderAccountNumber")
                         .HasColumnType("text");
 
@@ -700,6 +1190,13 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Amount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CheckSumLastValiDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CheckSumValue")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -779,6 +1276,10 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("ReferenceInformation")
                         .HasColumnType("text");
 
+                    b.Property<string>("SaveResponseMessage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
@@ -822,6 +1323,13 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GroupName")
                         .IsRequired()
                         .HasColumnType("text");
 
