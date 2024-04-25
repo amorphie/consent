@@ -31,6 +31,10 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
     }
 
 
+    /// <summary>
+    /// Get user active consents- YetkiKullanıldı state by checking clientcode and usertckn
+    /// </summary>
+    /// <returns>User's active consents list</returns>
     public async Task<IResult> GetUserConsents(
         string clientCode,
         long userTCKN,
@@ -58,7 +62,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 
     public async ValueTask<IResult> SearchMethod(
         [FromServices] ConsentDbContext context,
