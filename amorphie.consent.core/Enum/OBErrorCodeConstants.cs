@@ -126,6 +126,7 @@ public static class OBErrorCodeConstants
         InvalidSignatureMissingBodyClaim = 303,
         InvalidSignatureInvalidKey = 304,
         InvalidSignatureExMissing = 305,
+        InvalidSignatureExWrong = 306
 
     }
 }

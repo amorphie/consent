@@ -893,7 +893,8 @@ public static class OBConsentValidationHelper
         bool? isUserRequired = false,
         bool? isConsentIdRequired = false,
         bool? isXJwsSignatureRequired = false,
-        List<OBErrorCodeDetail>? errorCodeDetails = null)
+        List<OBErrorCodeDetail>? errorCodeDetails = null,
+        Object? body = null)
     {
         ApiResult result = new();
         header ??= OBModuleHelper.GetHeader(context);
@@ -954,16 +955,11 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-        if (isXJwsSignatureRequired.HasValue
-            && isXJwsSignatureRequired.Value
-            && string.IsNullOrEmpty(header.XJWSSignature))
+        result = await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, body, isXJwsSignatureRequired);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
             return result;
         }
-
-        await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, isXJwsSignatureRequired);
 
         //If there is katilimciBlg object, validate data in it with header
         if (katilimciBlg != null)
@@ -994,7 +990,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
-        object body,
+        object? body,
         bool? isXJwsSignatureRequired = false
         )
     {
@@ -1005,6 +1001,13 @@ public static class OBConsentValidationHelper
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+            return result;
+        }
+
+        //No need to check header property
+        if (isXJwsSignatureRequired is null
+        || isXJwsSignatureRequired is false)
+        {
             return result;
         }
 
@@ -1022,31 +1025,43 @@ public static class OBConsentValidationHelper
         }
 
         var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
-        // Decode JWT payload to JSON object
-        var jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(jwtPayloadDecoded);
-        if (jwtPayloadJson is null
-            || jwtPayloadJson["exp"] is null )
+
+        var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+        if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
         {
+            if (expValue.TryGetInt64(out long expUnixTime))
+            {
+                // Convert the Unix time to a DateTime object
+                var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                // Check if the token has expired
+                if (expDateTime <= DateTime.UtcNow)
+                {
+                    // Token is invalid
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
+                    return result;
+                }
+            }
+            else
+            {
+                // Handle the case where "exp" property is not a valid JSON number
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong);
+                return result;
+            }
+        }
+        else
+        {
+            // Handle the case where "exp" property is missing
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing);
             return result;
         }
 
-        // Get the expiration time claim (exp) from the payload
-        var expUnixTime = (long)jwtPayloadJson["exp"];
-        // Convert the Unix time to a DateTime object
-        var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
 
-        // Check if the token has expired
-        if (expDateTime <= DateTime.UtcNow)
-        {
-            // Token is invalid
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
-            return result;
-        }
 
-        var validateSignatureResult = await 
+        var validateSignatureResult = await
             ValidateJWTSignature(yosInfoService, header, headerXjwsSignature, context, errorCodeDetails, body);
         if (!result.Result)
         {
@@ -1063,6 +1078,7 @@ public static class OBConsentValidationHelper
         ApiResult result = new();
         int maxRetryCount = 2;
         int tryCount = 0;
+        bool isPublicKeyUpdated = false;
         string? payload = string.Empty;
         while (tryCount < maxRetryCount)
         {
@@ -1078,12 +1094,17 @@ public static class OBConsentValidationHelper
             if (getPublicKeyResult.Data is null
                 || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
             {
-                //Get yos public key and update system
-                await yosInfoService.SaveYos(header.XTPPCode);
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
                 ++tryCount;
                 continue;
             }
-            
+
             string publicKey = getPublicKeyResult.Data.ToString()!;
             // Convert the base64 encoded public key to bytes
             byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
@@ -1100,10 +1121,17 @@ public static class OBConsentValidationHelper
             }
             catch (Exception)
             {
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
                 tryCount++;
             }
         }
-        
+
         if (tryCount == 2)
         {
             // If token validation fails, return an error
