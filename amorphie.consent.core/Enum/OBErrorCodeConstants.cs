@@ -124,7 +124,8 @@ public static class OBErrorCodeConstants
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
         InvalidSignatureMissingBodyClaim = 303,
-        InvalidSignatureInvalidKey = 304
+        InvalidSignatureInvalidKey = 304,
+        InvalidSignatureExMissing = 305,
 
     }
 }

@@ -994,6 +994,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
+        object body,
         bool? isXJwsSignatureRequired = false
         )
     {
@@ -1023,6 +1024,13 @@ public static class OBConsentValidationHelper
         var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
         // Decode JWT payload to JSON object
         var jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(jwtPayloadDecoded);
+        if (jwtPayloadJson is null
+            || jwtPayloadJson["exp"] is null )
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing);
+            return result;
+        }
 
         // Get the expiration time claim (exp) from the payload
         var expUnixTime = (long)jwtPayloadJson["exp"];
@@ -1038,61 +1046,101 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-
-        string publicKey = String.Empty;
-        // Convert the base64 encoded public key to bytes
-        byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
-
-        /// Create a RSA key from the public key bytes
-        using RSA rsa = RSA.Create();
-        rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
-        try
+        var validateSignatureResult = await 
+            ValidateJWTSignature(yosInfoService, header, headerXjwsSignature, context, errorCodeDetails, body);
+        if (!result.Result)
         {
-            // Verify the JWT signature
-            var payload = JWT.Decode(headerXjwsSignature, rsa);
-
-            // If the token is valid, proceed to validate the payload
-            var jwtPayload = JWT.Payload(headerXjwsSignature);
-            // Parse JWT payload to JSON object
-
-            jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(jwtPayload);
-            // Retrieve the "body" claim from the payload
-            var bodyClaim = jwtPayloadJson["body"]?.ToString();
-            if (string.IsNullOrEmpty(bodyClaim))
-            {
-                // If "body" claim is missing, return an error
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
-                return result;
-            }
-
-            // Calculate SHA256 hash of the request body
-            var requestBodyHash = "";//CalculateSHA256Hash(requestBody); // You need to implement this method
-
-            // Compare the calculated hash with the value in the "body" claim
-            if (bodyClaim != requestBodyHash)
-            {
-                // If the hashes don't match, return an error
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
-                return result;
-            }
-
-            // If everything is valid, return success
-            result.Result = true;
+            return validateSignatureResult;
         }
-        catch (Exception)
-        {
-            // If token validation fails, return an error
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
-        }
-
 
         return result;
     }
 
+    private static async Task<ApiResult> ValidateJWTSignature(IYosInfoService yosInfoService,
+        RequestHeaderDto header, string headerXjwsSignature, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, object body)
+    {
+        ApiResult result = new();
+        int maxRetryCount = 2;
+        int tryCount = 0;
+        string? payload = string.Empty;
+        while (tryCount < maxRetryCount)
+        {
+            var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
+            if (!getPublicKeyResult.Result)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+                return result;
+            }
 
+            if (getPublicKeyResult.Data is null
+                || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
+            {
+                //Get yos public key and update system
+                await yosInfoService.SaveYos(header.XTPPCode);
+                ++tryCount;
+                continue;
+            }
+            
+            string publicKey = getPublicKeyResult.Data.ToString()!;
+            // Convert the base64 encoded public key to bytes
+            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+
+            /// Create a RSA key from the public key bytes
+            using RSA rsa = RSA.Create();
+            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+            try
+            {
+                // Decode JWT to get payload
+                payload = JWT.Decode(headerXjwsSignature, publicKeyBytes);
+                result.Data = payload;
+                break;
+            }
+            catch (Exception)
+            {
+                tryCount++;
+            }
+        }
+        
+        if (tryCount == 2)
+        {
+            // If token validation fails, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+            return result;
+        }
+
+        // Parse JWT payload to JSON object
+        var jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(payload);
+        // Retrieve the "body" claim from the payload
+        var bodyClaim = jwtPayloadJson?["body"]?.ToString();
+        if (string.IsNullOrEmpty(bodyClaim))
+        {
+            // If "body" claim is missing, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
+            return result;
+        }
+
+        // Calculate SHA256 hash of the request body
+        var requestBodyHash = OBModuleHelper.GetChecksumSHA256(body);
+
+        // Compare the calculated hash with the value in the "body" claim
+        if (!string.Equals(bodyClaim, requestBodyHash, StringComparison.OrdinalIgnoreCase))
+        {
+            // If the hashes don't match, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+            return result;
+        }
+
+        return result;
+    }
 
 
 }

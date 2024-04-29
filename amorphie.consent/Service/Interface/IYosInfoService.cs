@@ -22,6 +22,13 @@ public interface IYosInfoService
     /// <returns>Get Yos entity from db response</returns>
     public Task<ApiResult> GetYosByCode(string yosCode);
 
+    /// <summary>
+    /// Get yos's public key.
+    /// </summary>
+    /// <param name="yosCode">Yos Code</param>
+    /// <returns>Yos public key</returns>
+    public Task<ApiResult> GetYosPublicKey(string yosCode);
+
 
     /// <summary>
     /// Check yos by code, if has desired role

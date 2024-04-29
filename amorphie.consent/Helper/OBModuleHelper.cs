@@ -183,7 +183,7 @@ public static class OBModuleHelper
     /// </summary>
     /// <param name="body"></param>
     /// <returns></returns>
-    private static string GetChecksumSHA256(object body)
+    public static string GetChecksumSHA256(object body)
     {
         // Initialize a SHA256 hash object.
         using SHA256 sha256Hash = SHA256.Create();

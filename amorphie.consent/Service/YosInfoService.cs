@@ -71,6 +71,27 @@ public class YosInfoService : IYosInfoService
 
         return result;
     }
+    
+    public async Task<ApiResult> GetYosPublicKey(string yosCode)
+    {
+        ApiResult result = new();
+        try
+        {
+            var entity = await _context.OBYosInfos
+                .AsNoTracking()
+                .Where(y => y.Kod == yosCode)
+                .Select(y => y.AcikAnahtar)
+                .FirstOrDefaultAsync();
+            result.Data = entity;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
 
     public async Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
         List<AbonelikTipleriDto> abonelikTipleri,
