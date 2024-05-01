@@ -193,7 +193,7 @@ public class AccountService : IAccountService
             {//Consent permissions not valid to get response
                 result.Result = false;
                 result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetAccount);
                 return result;
             }
             //Get account of customer from service
@@ -302,7 +302,7 @@ public class AccountService : IAccountService
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
+            var permissions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
             };
@@ -314,6 +314,15 @@ public class AccountService : IAccountService
             {
                 //Error
                 return checkConsentResult;
+            }
+            
+            var activeConsent = (Consent)getConsentResult.Data!;
+            if (!activeConsent.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+            {//Consent permissions not valid to get response
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetBalance);
+                return result;
             }
         
             //Get balance by account reference number of customer from service
@@ -348,7 +357,7 @@ public class AccountService : IAccountService
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
+            var permissions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.TemelIslemBilgisi,
                 OpenBankingConstants.IzinTur.AyrintiliIslemBilgisi
@@ -365,6 +374,13 @@ public class AccountService : IAccountService
             
             var activeConsent = (Consent)getConsentResult.Data!;
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault()!;
+            if (!activeConsent.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+            {//Consent permissions not valid to get response
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetTransaction);
+                return result;
+            }
        
             //Get header values
             bool havingDetailPermission = activeConsent.OBAccountConsentDetails.Any(d =>

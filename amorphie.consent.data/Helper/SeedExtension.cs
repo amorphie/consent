@@ -715,6 +715,78 @@ public static class SeedExtension
             Message = "Header x-jws-signature property is empty.",
             MessageTr = "İstek başlığında x-jws-signature alanı eksik."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is algorithm is wrong.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligindaki alg geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is expired.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi zaman asimina ugramis."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is body claim is missing.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basliginda body claim bulunmamaktadır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature signature does not match locally computed signature.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature kayitli public key ile dogrulanamadi."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request ex is missing.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request ex is wrong.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetAccount.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no account permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. Hesap yetkisi olmayan rıza no ile hesap sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetBalance.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no balance permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. Bakiye yetkisi olmayan rıza no ile bakiye sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetTransaction.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no transaction permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. İşlem yetkisi olmayan rıza no ile işlem bilgisi sorgulanamaz."
+        });
 
     }
 

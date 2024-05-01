@@ -127,9 +127,9 @@ public static class OBErrorCodeConstants
         InvalidSignatureInvalidKey = 304,
         InvalidSignatureExMissing = 305,
         InvalidSignatureExWrong = 306,
-        // InvalidPermissionGetAccount = 310,
-        // InvalidPermissionGetAccount = 310,
-        // InvalidPermissionGetAccount = 310
+        InvalidPermissionGetAccount = 310,
+        InvalidPermissionGetBalance = 311,
+        InvalidPermissionGetTransaction = 312
 
     }
 }
