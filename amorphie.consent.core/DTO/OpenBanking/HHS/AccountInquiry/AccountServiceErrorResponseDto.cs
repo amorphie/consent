@@ -2,17 +2,17 @@ using Newtonsoft.Json;
 
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
-public class PaymentServiceErrorResponseDto
+public class AccountServiceErrorResponseDto
 {
     public string errorCode { get; set; }
-    public FieldErrors fieldErrors { get; set; }
+    public FieldErrorsAccount fieldErrors { get; set; }
     public int httpCode { get; set; }
     public string httpMessage { get; set; }
     public string moreInformation { get; set; }
     public string moreInformationTr { get; set; }
 }
 
-public class FieldErrors
+public class FieldErrorsAccount
 {
     public string code { get; set; }
     public string field { get; set; }

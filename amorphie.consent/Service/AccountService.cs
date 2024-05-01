@@ -6,6 +6,7 @@ using amorphie.consent.data;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
+using AutoMapper;
 
 namespace amorphie.consent.Service;
 
@@ -14,14 +15,17 @@ public class AccountService : IAccountService
     private readonly IAccountClientService _accountClientService;
     private readonly IOBAuthorizationService _authorizationService;
     private readonly ConsentDbContext _context;
+    private readonly IMapper _mapper;
 
     public AccountService(IAccountClientService accountClientService,
         IOBAuthorizationService authorizationService,
-        ConsentDbContext context)
+        ConsentDbContext context,
+        IMapper mapper)
     {
         _accountClientService = accountClientService;
         _authorizationService = authorizationService;
         _context = context;
+        _mapper = mapper;
     }
 
     public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
@@ -88,8 +92,15 @@ public class AccountService : IAccountService
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
+
+            if (serviceResponse?.error != null)
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
         
-            List<HesapBilgileriDto>? accounts = serviceResponse?.hesapBilgileri;
+            List<HesapBilgileriDto>? accounts = serviceResponse?.data?.hesapBilgileri;
             accounts = accounts?.Select(a =>
             {
                 a.rizaNo = activeConsent.Id.ToString();
@@ -97,7 +108,7 @@ public class AccountService : IAccountService
             }).ToList();
             result.Data = accounts;
             //Set header total count and link properties
-            SetHeaderLinkForAccount(httpContext, serviceResponse?.toplamHesapSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            SetHeaderLinkForAccount(httpContext, serviceResponse?.data?.toplamHesapSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -137,14 +148,15 @@ public class AccountService : IAccountService
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
-            if (serviceResponse is null)
+            
+            if (serviceResponse?.error != null)//Error in service
             {
-                //No account
-                result.Data = null;
+                result.Result = false;
+                result.Data = serviceResponse.error;
                 return result;
             }
-
-            List<HesapBilgileriDto>? accounts = serviceResponse.hesapBilgileri;
+            
+            List<HesapBilgileriDto>? accounts = serviceResponse?.data?.hesapBilgileri;
             result.Data = accounts;
         }
         catch (Exception e)
@@ -152,7 +164,6 @@ public class AccountService : IAccountService
             result.Result = false;
             result.Message = e.Message;
         }
-
         return result;
     }
 
@@ -162,15 +173,14 @@ public class AccountService : IAccountService
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
+            var permissions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.TemelHesapBilgisi,
                 OpenBankingConstants.IzinTur.AyrintiliHesapBilgisi
             };
             //Get account consent from database
             var getConsentResult =
-                await _authorizationService.GetAccountConsentByAccountRef(userTckn: userTckn, consentId: consentId, yosCode: yosCode,
-                    permissions: permisssions, accountRef: hspRef);
+                await _authorizationService.GetAccountConsentByAccountRef(userTckn: userTckn, consentId: consentId, yosCode: yosCode, accountRef: hspRef);
             var checkConsentResult = CheckAccountConsent(getConsentResult, httpContext, errorCodeDetails);
             if (!checkConsentResult.Result)//Consent in db is not valid
             {
@@ -179,9 +189,23 @@ public class AccountService : IAccountService
             }
             
             var activeConsent = (Consent)getConsentResult.Data!;
+            if (!activeConsent.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+            {//Consent permissions not valid to get response
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentRevokedStateEnd);
+                return result;
+            }
             //Get account of customer from service
-            HesapBilgileriDto? account = await _accountClientService.GetAccountByHspRef(userTckn, hspRef);
-         
+            var serviceResponse = await _accountClientService.GetAccountByHspRef(userTckn, hspRef);
+            if (serviceResponse?.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
+
+            HesapBilgileriDto? account = serviceResponse?.data;
             //Set rizaNo
             if (account != null)
             {
@@ -240,7 +264,6 @@ public class AccountService : IAccountService
                 return checkValidationResult;
             }
             
-            
             //Create service request body object
             var requestObject = new GetByAccountRefRequestDto()
             {
@@ -254,10 +277,16 @@ public class AccountService : IAccountService
                 srlmKrtr: resolvedSrlmKrtr,
                 srlmYon: resolvedSrlmYon);
           
-            List<BakiyeBilgileriDto>? balances = serviceResponse?.bakiyeBilgileri;
+            if (serviceResponse?.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
+            List<BakiyeBilgileriDto>? balances = serviceResponse?.data?.bakiyeBilgileri;
             result.Data = balances;
             //Set header total count and link properties
-            SetHeaderLinkForBalance(httpContext, serviceResponse?.toplamBakiyeSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
+            SetHeaderLinkForBalance(httpContext, serviceResponse?.data?.toplamBakiyeSayisi ?? 0, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon);
         }
         catch (Exception e)
         {
@@ -279,8 +308,7 @@ public class AccountService : IAccountService
             };
             //Get account consent from database
             var getConsentResult =
-                await _authorizationService.GetAccountConsentByAccountRef(userTCKN, consentId:consentId, yosCode: yosCode,
-                    permissions: permisssions, accountRef: hspRef);
+                await _authorizationService.GetAccountConsentByAccountRef( userTckn:userTCKN, consentId:consentId, yosCode: yosCode,accountRef: hspRef);
             var checkConsentResult = CheckAccountConsent(getConsentResult, httpContext, errorCodeDetails);
             if (!checkConsentResult.Result)
             {
@@ -289,8 +317,14 @@ public class AccountService : IAccountService
             }
         
             //Get balance by account reference number of customer from service
-            BakiyeBilgileriDto? balance = await _accountClientService.GetBalanceByHspRef(userTCKN, hspRef);
-            result.Data = balance;
+            var serviceResponse  = await _accountClientService.GetBalanceByHspRef(userTCKN, hspRef);
+            if (serviceResponse?.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
+            result.Data = serviceResponse?.data;
         }
         catch (Exception e)
         {
@@ -321,8 +355,7 @@ public class AccountService : IAccountService
             };
             //Get account consent from database
             var getConsentResult =
-                await _authorizationService.GetAccountConsentByAccountRef(userTckn, consentId:consentId, yosCode: yosCode,
-                    permissions: permisssions, accountRef: hspRef);
+                await _authorizationService.GetAccountConsentByAccountRef(userTckn: userTckn, consentId:consentId, yosCode: yosCode, accountRef: hspRef);
             var checkConsentResult = CheckAccountConsent(getConsentResult, httpContext, errorCodeDetails);
             if (!checkConsentResult.Result)//Consent in db is not valid
             {
@@ -379,10 +412,15 @@ public class AccountService : IAccountService
                 permissionType,
                 ohkTur,
                 psuInitiated);
-            
-            result.Data = serviceResponse;
+            if (serviceResponse?.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
+            result.Data =_mapper.Map<IslemBilgileriDto>(serviceResponse?.data);
             //Set header total count and link properties
-            SetHeaderLinkForTransaction(httpContext, serviceResponse?.toplamIslemSayisi ?? 0, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
+            SetHeaderLinkForTransaction(httpContext, serviceResponse?.data?.toplamIslemSayisi ?? 0, hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon, minIslTtr, mksIslTtr, brcAlc);
 
         }
         catch (Exception e)
