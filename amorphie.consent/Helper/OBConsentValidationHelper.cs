@@ -960,6 +960,12 @@ public static class OBConsentValidationHelper
         {
             return result;
         }
+        
+        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails, body);
+        if (!result.Result)
+        {
+            return result;
+        }
 
         //If there is katilimciBlg object, validate data in it with header
         if (katilimciBlg != null)
@@ -1171,4 +1177,269 @@ public static class OBConsentValidationHelper
     }
 
 
+    
+     public static async Task<ApiResult> IsPsuFraudCheckValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        object? body
+        )
+    {
+        ApiResult result = new();
+        if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.OHKStarted
+            && string.IsNullOrEmpty(header.PSUFraudCheck))//PSUFraudCheck is required when OHK started
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
+            return result;
+        }
+
+        //No need to check header property
+        if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.SystemStarted)
+        {
+            return result;
+        }
+
+        var headerPsuFraudCheck =
+            "eyJhbGciOiJSUzI1NiJ9.eyJBbm9tYWx5RmxhZyI6IjAiLCJMYXN0UGFzc3dvcmRDaGFuZ2VGbGFnIjoiMSIsIkZpcnN0TG9naW5GbGFnIjoiMSIsIkRldmljZUZpcnN0TG9naW5GbGFnIjoiMSIsIkJsYWNrbGlzdEZsYWciOiIwIiwiTWFsd2FyZUZsYWciOiIwIiwiVW5zYWZlQWNjb3VudEZsYWciOiIwIiwiZXhwIjoxNjY1NDc1NTU2LCJpYXQiOjE2NjUzODkxNTYsImlzcyI6Imh0dHBzOi8vYXBpZ3cuYmttLmNvbS50ciJ9.DhUh_nsXDuNIrvsQ3KOhOXdVcJg6fTDVW8K1oea8kLtmb7n-_hJHY3mWX5zzobu-Vh2VvFzIxPhHtol6gLHFktmIMiQ9TDHb_mRZFXgJB4ToNfqc3Fy9mi5bS8By2IYi1HxDaCStstaZDaunzXfHCtqybfZXyk6teDrf-iIf6lqX9Keo7GZO-Y7mP7C13-c_QwyNKrZK4TZwUQbecRqXYn1DcEHM7kukQHTar_hKBWkXPmNpScY0J2rKksr4ejR1uLhdQm-Pdwoe9y6qrNEB79vMLBkRNtbuV0vc1GYHp_YKkzBKBI_58uuB2GD9877CsrcRnHMQb88xpxiPKh6-ew";
+        //header.PSUFraudCheck!;
+        // Decode JWT to get header
+        var jwtHeaderDecoded = JWT.Headers(headerPsuFraudCheck);
+        // Verify algorithm used is RS256
+        if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrongFraud);
+            return result;
+        }
+
+        var jwtPayloadDecoded = JWT.Payload(headerPsuFraudCheck);
+        var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+        if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
+        {
+            if (expValue.TryGetInt64(out long expUnixTime))
+            {
+                // Convert the Unix time to a DateTime object
+                var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                // Check if the token has expired
+                if (expDateTime <= DateTime.UtcNow)
+                {
+                    // Token is invalid
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassedFraud);
+                    return result;
+                }
+            }
+            else
+            {
+                // Handle the case where "exp" property is not a valid JSON number
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrongFraud);
+                return result;
+            }
+        }
+        else
+        {
+            // Handle the case where "exp" property is missing
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissingFraud);
+            return result;
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("FirstLoginFlag", out var firstLoginFlag))
+        {
+            if (string.IsNullOrEmpty(firstLoginFlag.ToString())
+                || !ConstantHelper.GetZmnAralikList().Contains(firstLoginFlag.ToString()))
+            {
+                //firstLoginFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud);
+                return result;
+            }
+        }
+        else
+        {
+            //firstLoginFlag is missing
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud);
+            return result;
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("DeviceFirstLoginFlag", out var deviceFirstLoginFlag))
+        {
+            if (string.IsNullOrEmpty(deviceFirstLoginFlag.ToString())
+                || !ConstantHelper.GetZmnAralikList().Contains(deviceFirstLoginFlag.ToString()))
+            {
+                //DeviceFirstLoginFlag is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud);
+                return result;
+            }
+        }
+        else
+        {
+            //DeviceFirstLoginFlag is missing
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud);
+            return result;
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("LastPasswordChangeFlag", out var lastPasswordChangeFlag))
+        {
+            if (string.IsNullOrEmpty(lastPasswordChangeFlag.ToString())
+                || !ConstantHelper.GetZmnAralikList().Contains(lastPasswordChangeFlag.ToString()))
+            {
+                //LastPasswordChangeFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud);
+                return result;
+            }
+        }
+        else
+        {
+            //LastPasswordChangeFlag is missing
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud);
+            return result;
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("BlacklistFlag", out var blacklistFlag))
+        {
+            if (!string.IsNullOrEmpty(blacklistFlag.ToString())
+                && !ConstantHelper.GetVarYok().Contains(blacklistFlag.ToString()))
+            {
+                //BlacklistFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud);
+                return result;
+            }
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("MalwareFlag", out var malwareFlag))
+        {
+            if (!string.IsNullOrEmpty(malwareFlag.ToString())
+                && !ConstantHelper.GetZmnAralikList().Contains(malwareFlag.ToString()))
+            {
+                //BlacklistFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud);
+                return result;
+            }
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("AnomalyFlag", out var anomalyFlag))
+        {
+            if (!string.IsNullOrEmpty(anomalyFlag.ToString())
+                && !ConstantHelper.GetVarYok().Contains(anomalyFlag.ToString()))
+            {
+                //BlacklistFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud);
+                return result;
+            }
+        }
+        if (jwtPayloadJson.RootElement.TryGetProperty("UnsafeAccountFlag", out var unsafeAccountFlag))
+        {
+            if (!string.IsNullOrEmpty(unsafeAccountFlag.ToString())
+                && !ConstantHelper.GetZmnAralikList().Contains(unsafeAccountFlag.ToString()))
+            {
+                //BlacklistFlag  is invalid
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud);
+                return result;
+            }
+        }
+        
+        var validateSignatureResult = await
+            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails, body);
+        if (!result.Result)
+        {
+            return validateSignatureResult;
+        }
+
+        return result;
+    }
+
+    private static async Task<ApiResult> ValidatePsuFraudCheckJWT(IYosInfoService yosInfoService,
+        RequestHeaderDto header, string headerPsuFraudCheck, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, object body)
+    {
+        ApiResult result = new();
+        int maxRetryCount = 2;
+        int tryCount = 0;
+        bool isPublicKeyUpdated = false;
+        string? payload = string.Empty;
+        while (tryCount < maxRetryCount)
+        {
+            var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
+            if (!getPublicKeyResult.Result)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
+                return result;
+            }
+
+            if (getPublicKeyResult.Data is null
+                || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
+            {
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
+                ++tryCount;
+                continue;
+            }
+
+            string publicKey = getPublicKeyResult.Data.ToString()!;
+            // Convert the base64 encoded public key to bytes
+            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+
+            /// Create a RSA key from the public key bytes
+            using RSA rsa = RSA.Create();
+            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+            try
+            {
+                // Decode JWT to get payload
+                payload = JWT.Decode(headerPsuFraudCheck, publicKeyBytes);
+                result.Data = payload;
+                break;
+            }
+            catch (Exception)
+            {
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
+                tryCount++;
+            }
+        }
+
+        if (tryCount == 2)
+        {
+            // If token validation fails, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKeyFraud);
+            return result;
+        }
+        
+        return result;
+    }
+
+
+    
+    
 }

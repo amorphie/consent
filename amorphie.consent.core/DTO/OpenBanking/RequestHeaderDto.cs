@@ -12,4 +12,5 @@ public class RequestHeaderDto
     public string? UserReference { get; set; }
     public string? ConsentId { get; set; }
     public string? XJWSSignature { get; set; }
+    public string? PSUFraudCheck { get; set; }
 }

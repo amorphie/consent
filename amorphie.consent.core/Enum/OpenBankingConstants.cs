@@ -296,6 +296,12 @@ public static class OpenBankingConstants
         public const int Dort15Gun = 4;
         public const int OnAltiGunVeUzeri = 5;
     }
+    
+    public static class VarYok
+    {
+        public const int KayitYok = 0;
+        public const int KayitVar = 1;
+    }
 
     public static class PSUInitiated
     {
@@ -407,6 +413,5 @@ public static class OpenBankingConstants
         public const int Android = 1;
         public const int Ios = 2;
     }
-
 
 }
