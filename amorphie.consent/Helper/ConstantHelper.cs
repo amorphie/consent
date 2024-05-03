@@ -250,18 +250,18 @@ public static class ConstantHelper
     /// Get ZmnAralik constants values list
     /// </summary>
     /// <returns>ZmnAralik constants values list</returns>
-    public static List<string> GetZmnAralikList()
+    public static List<int> GetZmnAralikList()
     {
-        return typeof(OpenBankingConstants.ZmnAralik).GetAllPublicConstantValues<string>();
+        return typeof(OpenBankingConstants.ZmnAralik).GetAllPublicConstantValues<int>();
     }
     
     /// <summary>
     /// Get VarYok constants values
     /// </summary>
     /// <returns>VarYok constants values</returns>
-    public static List<string> GetVarYok()
+    public static List<int> GetVarYok()
     {
-        return typeof(OpenBankingConstants.VarYok).GetAllPublicConstantValues<string>();
+        return typeof(OpenBankingConstants.VarYok).GetAllPublicConstantValues<int>();
     }
 
     /// <summary>

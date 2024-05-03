@@ -127,6 +127,7 @@ public static class OBErrorCodeConstants
         InvalidSignatureInvalidKey = 304,
         InvalidSignatureExMissing = 305,
         InvalidSignatureExWrong = 306,
+        
         MissingSignaturePSUFraudCheck = 307,
         InvalidSignatureHeaderAlgorithmWrongFraud = 308,
         InvalidSignatureHeaderExpireDatePassedFraud = 309,

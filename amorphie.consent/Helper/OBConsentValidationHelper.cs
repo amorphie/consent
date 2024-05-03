@@ -1065,11 +1065,9 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-
-
         var validateSignatureResult = await
             ValidateJWTSignature(yosInfoService, header, headerXjwsSignature, context, errorCodeDetails, body);
-        if (!result.Result)
+        if (!validateSignatureResult.Result)
         {
             return validateSignatureResult;
         }
@@ -1216,155 +1214,184 @@ public static class OBConsentValidationHelper
 
         var jwtPayloadDecoded = JWT.Payload(headerPsuFraudCheck);
         var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
-        if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
-        {
-            if (expValue.TryGetInt64(out long expUnixTime))
-            {
-                // Convert the Unix time to a DateTime object
-                var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
 
-                // Check if the token has expired
-                if (expDateTime <= DateTime.UtcNow)
-                {
-                    // Token is invalid
-                    result.Result = false;
-                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassedFraud);
-                    return result;
-                }
-            }
-            else
-            {
-                // Handle the case where "exp" property is not a valid JSON number
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrongFraud);
-                return result;
-            }
-        }
-        else
-        {
-            // Handle the case where "exp" property is missing
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissingFraud);
+        result = ValidateExPropertyFraud(context, errorCodeDetails, jwtPayloadJson);//Validate ex property
+        if (!result.Result)
             return result;
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("FirstLoginFlag", out var firstLoginFlag))
-        {
-            if (string.IsNullOrEmpty(firstLoginFlag.ToString())
-                || !ConstantHelper.GetZmnAralikList().Contains(firstLoginFlag.ToString()))
-            {
-                //firstLoginFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud);
-                return result;
-            }
-        }
-        else
-        {
-            //firstLoginFlag is missing
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud);
+
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "FirstLoginFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud);
+        if (!result.Result)
             return result;
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("DeviceFirstLoginFlag", out var deviceFirstLoginFlag))
-        {
-            if (string.IsNullOrEmpty(deviceFirstLoginFlag.ToString())
-                || !ConstantHelper.GetZmnAralikList().Contains(deviceFirstLoginFlag.ToString()))
-            {
-                //DeviceFirstLoginFlag is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud);
-                return result;
-            }
-        }
-        else
-        {
-            //DeviceFirstLoginFlag is missing
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud);
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "DeviceFirstLoginFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud);
+        if (!result.Result)
             return result;
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("LastPasswordChangeFlag", out var lastPasswordChangeFlag))
-        {
-            if (string.IsNullOrEmpty(lastPasswordChangeFlag.ToString())
-                || !ConstantHelper.GetZmnAralikList().Contains(lastPasswordChangeFlag.ToString()))
-            {
-                //LastPasswordChangeFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud);
-                return result;
-            }
-        }
-        else
-        {
-            //LastPasswordChangeFlag is missing
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud);
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "LastPasswordChangeFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud, 
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud);
+        if (!result.Result)
             return result;
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("BlacklistFlag", out var blacklistFlag))
-        {
-            if (!string.IsNullOrEmpty(blacklistFlag.ToString())
-                && !ConstantHelper.GetVarYok().Contains(blacklistFlag.ToString()))
-            {
-                //BlacklistFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud);
-                return result;
-            }
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("MalwareFlag", out var malwareFlag))
-        {
-            if (!string.IsNullOrEmpty(malwareFlag.ToString())
-                && !ConstantHelper.GetZmnAralikList().Contains(malwareFlag.ToString()))
-            {
-                //BlacklistFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud);
-                return result;
-            }
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("AnomalyFlag", out var anomalyFlag))
-        {
-            if (!string.IsNullOrEmpty(anomalyFlag.ToString())
-                && !ConstantHelper.GetVarYok().Contains(anomalyFlag.ToString()))
-            {
-                //BlacklistFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud);
-                return result;
-            }
-        }
-        if (jwtPayloadJson.RootElement.TryGetProperty("UnsafeAccountFlag", out var unsafeAccountFlag))
-        {
-            if (!string.IsNullOrEmpty(unsafeAccountFlag.ToString())
-                && !ConstantHelper.GetZmnAralikList().Contains(unsafeAccountFlag.ToString()))
-            {
-                //BlacklistFlag  is invalid
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud);
-                return result;
-            }
-        }
+        
+      
+        result = ValidateVarYokProperty(jwtPayloadJson, "BlacklistFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud);
+        if (!result.Result)
+            return result;
+        
+        result = ValidateZmnAralikProperty(jwtPayloadJson, "MalwareFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud);
+        if (!result.Result)
+            return result;
+      
+        result = ValidateVarYokProperty(jwtPayloadJson, "AnomalyFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud);
+        if (!result.Result)
+            return result;
+      
+        result = ValidateZmnAralikProperty(jwtPayloadJson, "UnsafeAccountFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud);
+        if (!result.Result)
+            return result;
         
         var validateSignatureResult = await
             ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails, body);
-        if (!result.Result)
+        if (!validateSignatureResult.Result)
         {
             return validateSignatureResult;
         }
 
         return result;
     }
+
+     private static ApiResult ValidateExPropertyFraud(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails, JsonDocument jwtPayloadJson)
+     {
+         ApiResult result =new();
+         if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
+         {
+             if (expValue.TryGetInt64(out long expUnixTime))
+             {
+                 // Convert the Unix time to a DateTime object
+                 var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                 // Check if the token has expired
+                 if (expDateTime <= DateTime.UtcNow)
+                 {
+                     // Token is invalid
+                     result.Result = false;
+                     result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                         OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassedFraud);
+                     return result;
+                 }
+             }
+             else
+             {
+                 // Handle the case where "exp" property is not a valid JSON number
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrongFraud);
+                 return result;
+             }
+         }
+         else
+         {
+             // Handle the case where "exp" property is missing
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                 OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissingFraud);
+             return result;
+         }
+
+         return result;
+     }
+
+     /// <summary>
+     /// Validates property. It is  required property. Its value is in zmnaralik list enum.
+     /// </summary>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateRequiredZmnAralikProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum missingErrorCode, OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (string.IsNullOrEmpty(propertyValue.ToString())
+             || !Int32.TryParse(propertyValue.ToString(), out var propInt)
+                 || !ConstantHelper.GetZmnAralikList().Contains(propInt))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+         else
+         {
+             //property is missing
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                 missingErrorCode);
+             return result;
+         }
+
+         return result;
+     }
+     
+     /// <summary>
+     /// Validates property. Its not requeired property. Its value is in zmnaralik list enum.
+     /// </summary>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateZmnAralikProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (!string.IsNullOrEmpty(propertyValue.ToString())
+                && (!Int32.TryParse(propertyValue.ToString(), out var propInt)
+                 || !ConstantHelper.GetZmnAralikList().Contains(propInt)))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+
+         return result;
+     }
+     
+     /// <summary>
+     /// Validates property. Its not requeired property. Its value is in varyok enum.
+     /// </summary>
+     /// <param name="jwtPayloadJson">To be checked property object</param>
+     /// <param name="propertyName">property name</param>
+     /// <param name="context"></param>
+     /// <param name="errorCodeDetails"></param>
+     /// <param name="invalidErrorCode">If not valid, which error code result will be generated</param>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateVarYokProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (!string.IsNullOrEmpty(propertyValue.ToString())
+                 &&  (!Int32.TryParse(propertyValue.ToString(), out var propInt)
+                      || !ConstantHelper.GetVarYok().Contains(propInt)))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+
+         return result;
+     }
+     
 
     private static async Task<ApiResult> ValidatePsuFraudCheckJWT(IYosInfoService yosInfoService,
         RequestHeaderDto header, string headerPsuFraudCheck, HttpContext context,
