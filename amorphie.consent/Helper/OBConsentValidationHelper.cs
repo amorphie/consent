@@ -955,17 +955,17 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-        result = await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, body, isXJwsSignatureRequired);
-        if (!result.Result)
-        {
-            return result;
-        }
+        // result = await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, body, isXJwsSignatureRequired);
+        // if (!result.Result)
+        // {
+        //     return result;
+        // }
         
-        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails, body);
-        if (!result.Result)
-        {
-            return result;
-        }
+        // result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails, body);
+        // if (!result.Result)
+        // {
+        //     return result;
+        // }
 
         //If there is katilimciBlg object, validate data in it with header
         if (katilimciBlg != null)

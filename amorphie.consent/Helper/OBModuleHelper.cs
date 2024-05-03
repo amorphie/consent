@@ -65,6 +65,11 @@ public static class OBModuleHelper
             header.XJWSSignature = traceValue;
         }
 
+        if (httpContext.Request.Headers.TryGetValue("PSU-Fraud-Check", out traceValue))
+        {
+            header.PSUFraudCheck = traceValue;
+        }
+
         return header;
     }
 

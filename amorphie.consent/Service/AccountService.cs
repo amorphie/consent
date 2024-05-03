@@ -388,7 +388,7 @@ public class AccountService : IAccountService
             var permissionType = havingDetailPermission ? "D" : "T";
             string ohkTur = consentDetail.UserType;
             // Build account service parameters
-            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
+            var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParametersForTransaction(
                 syfKytSayi,
                 syfNo,
                 srlmKrtr,
@@ -480,6 +480,20 @@ public class AccountService : IAccountService
             syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
             syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
             srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrAccountAndBalance,
+            srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
+        );
+    }
+
+        private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParametersForTransaction(
+        int? syfKytSayi,
+        int? syfNo,
+        string? srlmKrtr,
+        string? srlmYon)
+    {
+        return (
+            syfKytSayi ?? OpenBankingConstants.AccountServiceParameters.syfKytSayi,
+            syfNo ?? OpenBankingConstants.AccountServiceParameters.syfNo,
+            srlmKrtr ?? OpenBankingConstants.AccountServiceParameters.srlmKrtrTransaction,
             srlmYon ?? OpenBankingConstants.AccountServiceParameters.srlmYon
         );
     }
@@ -604,6 +618,7 @@ public class AccountService : IAccountService
         if (getConsentResult.Data == null)
         {
             //no consent in db
+            result.Result = false;
             result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
                 OBErrorCodeConstants.ErrorCodesEnum.NotFound);
             return result;
