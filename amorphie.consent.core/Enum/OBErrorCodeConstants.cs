@@ -145,9 +145,9 @@ public static class OBErrorCodeConstants
         InvalidSignatureAnomalyFlagFraud = 321,
         InvalidSignatureMalwareFlagFraud = 322,
   
-        InvalidPermissionGetAccount = 315,
-        InvalidPermissionGetBalance = 316,
-        InvalidPermissionGetTransaction = 317
+        InvalidPermissionGetAccount = 323,
+        InvalidPermissionGetBalance = 324,
+        InvalidPermissionGetTransaction = 325
 
     }
 }
