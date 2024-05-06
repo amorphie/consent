@@ -1,5 +1,3 @@
-using amorphie.consent.core.DTO.OpenBanking.PaymentService;
-
 namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
 public class OdemeEmriServiceResponseDto

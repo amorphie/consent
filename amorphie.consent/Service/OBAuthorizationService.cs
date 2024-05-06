@@ -121,13 +121,12 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
-    public async Task<ApiResult> GetAccountConsentByAccountRef(string userTckn,string consentId, string yosCode, List<string> permissions,
-        string accountRef)
+    public async Task<ApiResult> GetAccountConsentByAccountRef(string consentId,string userTckn, string yosCode, string accountRef)
     {
         ApiResult result = new();
         try
         {
-            var consent = (await _context.Consents
+            var consent = await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
@@ -140,9 +139,7 @@ public class OBAuthorizationService : IOBAuthorizationService
                                                                           .Bireysel
                                                                       && i.AccountReferences != null
                                                                       && i.AccountReferences.Contains(accountRef)))
-                    .ToListAsync())
-                ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
-                .FirstOrDefault();
+                    .FirstOrDefaultAsync();
             result.Data = consent;
         }
         catch (Exception e)

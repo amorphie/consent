@@ -245,6 +245,24 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.SrlmYon).GetAllPublicConstantValues<string>();
     }
+    
+    /// <summary>
+    /// Get ZmnAralik constants values list
+    /// </summary>
+    /// <returns>ZmnAralik constants values list</returns>
+    public static List<int> GetZmnAralikList()
+    {
+        return typeof(OpenBankingConstants.ZmnAralik).GetAllPublicConstantValues<int>();
+    }
+    
+    /// <summary>
+    /// Get VarYok constants values
+    /// </summary>
+    /// <returns>VarYok constants values</returns>
+    public static List<int> GetVarYok()
+    {
+        return typeof(OpenBankingConstants.VarYok).GetAllPublicConstantValues<int>();
+    }
 
     /// <summary>
     /// Checks amount data pattern
