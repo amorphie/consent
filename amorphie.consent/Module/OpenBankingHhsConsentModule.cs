@@ -1070,6 +1070,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("PSU-Fraud-Check", ParameterLocation.Header)]
     protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
