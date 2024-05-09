@@ -1832,7 +1832,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var header = OBModuleHelper.GetHeader(httpContext);
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
-            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, body:rizaIstegi);
         if (!result.Result)
         {
             //validation error in header fields
