@@ -897,7 +897,7 @@ public static class OBConsentValidationHelper
         bool? isConsentIdRequired = false,
         bool? isXJwsSignatureRequired = false,
         List<OBErrorCodeDetail>? errorCodeDetails = null,
-        Object? body = null)
+        string? body = null)
     {
         ApiResult result = new();
         header ??= OBModuleHelper.GetHeader(context);
@@ -999,7 +999,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
-        object? body,
+        string? body,
         bool? isXJwsSignatureRequired = false
         )
     {
@@ -1088,7 +1088,7 @@ public static class OBConsentValidationHelper
 
     private static async Task<ApiResult> ValidateJWTSignature(IYosInfoService yosInfoService,
         RequestHeaderDto header, string headerXjwsSignature, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, object body)
+        List<OBErrorCodeDetail> errorCodeDetails, string body)
     {
         ApiResult result = new();
         int maxRetryCount = 2;
@@ -1157,20 +1157,19 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
             return result;
         }
+        
+        // Calculate SHA256 hash of the request body
+        var requestBodyHash = OBModuleHelper.GetChecksumSHA256(body);
 
-//TODO:Özlem deserialize sorununu çöz
-        // // Calculate SHA256 hash of the request body
-        // var requestBodyHash = OBModuleHelper.GetChecksumSHA256(body);
-
-        // // Compare the calculated hash with the value in the "body" claim
-        // if (!string.Equals(bodyClaim, requestBodyHash, StringComparison.OrdinalIgnoreCase))
-        // {
-        //     // If the hashes don't match, return an error
-        //     result.Result = false;
-        //     result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
-        //         OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
-        //     return result;
-        // }
+        // Compare the calculated hash with the value in the "body" claim
+        if (!string.Equals(bodyClaim, requestBodyHash, StringComparison.OrdinalIgnoreCase))
+        {
+            // If the hashes don't match, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+            return result;
+        }
 
         return result;
     }
@@ -1224,7 +1223,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
-        object? body
+        string? body
         )
     {
         ApiResult result = new();
@@ -1306,8 +1305,9 @@ public static class OBConsentValidationHelper
         if (!result.Result)
             return result;
         
+        //Validate fraud jwt with public key
         var validateSignatureResult = await
-            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails, body);
+            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails);
         if (!validateSignatureResult.Result)
         {
             return validateSignatureResult;
@@ -1445,13 +1445,12 @@ public static class OBConsentValidationHelper
 
     private static async Task<ApiResult> ValidatePsuFraudCheckJWT(IYosInfoService yosInfoService,
         RequestHeaderDto header, string headerPsuFraudCheck, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, object body)
+        List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
         int maxRetryCount = 2;
         int tryCount = 0;
         bool isPublicKeyUpdated = false;
-        string? payload = string.Empty;
         while (tryCount < maxRetryCount)
         {
             var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
@@ -1478,30 +1477,18 @@ public static class OBConsentValidationHelper
             }
 
             string publicKey = getPublicKeyResult.Data.ToString()!;
-            // Convert the base64 encoded public key to bytes
-            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
-
-            /// Create a RSA key from the public key bytes
-            using RSA rsa = RSA.Create();
-            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
-            try
+            var verifyResult= VerifyJwt(headerPsuFraudCheck, publicKey);
+            if (verifyResult.Result)//Verified
             {
-                // Decode JWT to get payload
-                payload = JWT.Decode(headerPsuFraudCheck, publicKeyBytes);
-                result.Data = payload;
                 break;
             }
-            catch (Exception)
+            if (!isPublicKeyUpdated)
             {
-                if (!isPublicKeyUpdated)
-                {
-                    //Get yos public key and update system
-                    await yosInfoService.SaveYos(header.XTPPCode);
-                    isPublicKeyUpdated = true;
-                }
-
-                tryCount++;
+                //Get yos public key and update system
+                await yosInfoService.SaveYos(header.XTPPCode);
+                isPublicKeyUpdated = true;
             }
+            tryCount++;
         }
 
         if (tryCount == 2)

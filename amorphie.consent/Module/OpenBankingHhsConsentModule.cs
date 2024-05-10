@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -1071,7 +1072,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Fraud-Check", ParameterLocation.Header)]
-    protected async Task<IResult> AccountInformationConsentPost([FromBody] HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+    protected async Task<IResult> AccountInformationConsentPost(
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
@@ -1086,10 +1087,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var requestBody = await new StreamReader(httpContext.Request.Body).ReadToEndAsync();
+            var rizaIstegi = JsonSerializer.Deserialize<HesapBilgisiRizaIstegiHHSDto>(requestBody);
+            if (rizaIstegi == null)
+            {
+                var nullError = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContent);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, nullError);
+                return Results.BadRequest(nullError);
+            }
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToAccountConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
+                await IsDataValidToAccountConsentPost(rizaIstegi,requestBody, configuration, yosInfoService, eventService, httpContext, context);
             if (!checkValidationResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
@@ -1101,7 +1110,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!getIdempotencyConsentResult.Result)
             {
                 //Get 500 error response
-                var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
+                var errorResponse = OBErrorResponseHelper.GetInternalServerError(httpContext, _errorCodeDetails,
                     OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency);
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
                 return Results.BadRequest(errorResponse);
@@ -1820,6 +1829,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToAccountConsentPost(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+        string requestBody,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         IOBEventService eventService,
@@ -1832,7 +1842,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         var header = OBModuleHelper.GetHeader(httpContext);
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
-            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, body:rizaIstegi);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, body:requestBody);
         if (!result.Result)
         {
             //validation error in header fields
@@ -3199,4 +3209,5 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return responseList;
     }
+
 }

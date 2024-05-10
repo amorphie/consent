@@ -120,6 +120,7 @@ public static class OBErrorCodeConstants
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201,
         InvalidContentConsentIdInHeader = 202,
+        InvalidContent = 203,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
