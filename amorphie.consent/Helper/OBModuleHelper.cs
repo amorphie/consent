@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.DTO.Token;
 using amorphie.consent.core.Enum;
-using amorphie.consent.core.Model;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Jose;
@@ -195,7 +195,22 @@ public static class OBModuleHelper
         byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
         return Convert.ToHexString(bytes);
     }
-    
+
+
+    /// <summary>
+    /// Generates sha256 hash of body
+    /// </summary>
+    /// <param name="body"></param>
+    /// <returns></returns>
+    public static string GetChecksumSHA256(string body)
+    {
+        // Initialize a SHA256 hash object.
+        using SHA256 sha256Hash = SHA256.Create();
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(body));
+        return Convert.ToHexString(bytes);
+    }
+
+   
     /// <summary>
     /// Generates sha256 hash of body and xrequestId
     /// </summary>
@@ -218,7 +233,7 @@ public static class OBModuleHelper
     /// <returns>Hhsforwardingaddress</returns>
     public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, KimlikDto kmlk,
         string consentId, ITagService tagService, IDeviceRecord deviceRecordService)
-    { 
+    {
         //Set token login url
         string forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentId);
         if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
@@ -230,62 +245,62 @@ public static class OBModuleHelper
             }
 
             //Check phone number On user or Burgan User
-                PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
-                if (phoneNumber != null)//Phone number is taken
+            PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
+            if (phoneNumber != null)//Phone number is taken
+            {
+                //Check if url will be set by operations system
+                bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
+                bool isIos = false;
+                if (setUrlByOs)//Set url by operating system
                 {
-                    //Check if url will be set by operations system
-                    bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
-                    bool isIos = false;
-                    if (setUrlByOs)//Set url by operating system
+                    //Get user operating system information
+                    var deviceRecordData = await deviceRecordService.GetDeviceRecord(kmlk.kmlkVrs);
+                    if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
                     {
-                        //Get user operating system information
-                        var deviceRecordData = await deviceRecordService.GetDeviceRecord(kmlk.kmlkVrs);
-                        if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
-                        {
-                            setUrlByOs = false;
-                        }
-                        else
-                        {
-                            GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
-                            isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios; 
-                        }
-                    }
-                    
-                    
-                    if (phoneNumber.isOn == "X")//OnUser
-                    {
-                        if (setUrlByOs)
-                        {
-                            forwardingAddress = isIos
-                                ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
-                                : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
-                        }
-                        else
-                        {
-                              forwardingAddress = string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
-                        }
+                        setUrlByOs = false;
                     }
                     else
                     {
-                        if (setUrlByOs)
-                        {
-                            forwardingAddress = isIos
-                                ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
-                                : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
-                        }
-                        else
-                        {
-                            forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty, consentId);
-                        }
-                        
+                        GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
+                        isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
                     }
-                    return forwardingAddress;
                 }
+
+
+                if (phoneNumber.isOn == "X")//OnUser
+                {
+                    if (setUrlByOs)
+                    {
+                        forwardingAddress = isIos
+                            ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
+                            : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
+                    }
+                    else
+                    {
+                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
+                    }
+                }
+                else
+                {
+                    if (setUrlByOs)
+                    {
+                        forwardingAddress = isIos
+                            ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
+                            : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
+                    }
+                    else
+                    {
+                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty, consentId);
+                    }
+
+                }
+                return forwardingAddress;
+            }
         }
-       
+
         return forwardingAddress;
     }
-    
+
     /// <summary>
     /// Get Account Consent by checking idempotency.
     /// </summary>
@@ -293,7 +308,7 @@ public static class OBModuleHelper
     public static async Task<ApiResult> GetIdempotencyAccountConsent(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         RequestHeaderDto header, IOBAuthorizationService authorizationService)
     {
-        ApiResult result = new(); 
+        ApiResult result = new();
         var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
         //Get db account consent
         var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
@@ -304,11 +319,11 @@ public static class OBModuleHelper
         }
         if (getConsentResult is { Result: true, Data: not null })
         {//Idempotency occured. Return previous response
-            result.Data= JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>((string)getConsentResult.Data);
+            result.Data = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>((string)getConsentResult.Data);
         }
         return result;
     }
-    
+
     /// <summary>
     /// Get Payment Consent by checking idempotency.
     /// </summary>
@@ -316,7 +331,7 @@ public static class OBModuleHelper
     public static async Task<ApiResult> GetIdempotencyPaymentConsent(OdemeEmriRizaIstegiHHSDto rizaIstegi,
         RequestHeaderDto header, IOBAuthorizationService authorizationService)
     {
-        ApiResult result = new(); 
+        ApiResult result = new();
         var checkSumRequest = GetChecksumForXRequestIdSHA256(rizaIstegi, header.XRequestID);//Generate checksum
         //Get db account consent
         var getConsentResult = await authorizationService.GetIdempotencyRecordOfAccountPaymentConsent(rizaIstegi.katilimciBlg.yosKod,
@@ -327,11 +342,11 @@ public static class OBModuleHelper
         }
         if (getConsentResult is { Result: true, Data: not null })
         {//Idempotency occured. Return previous response
-            result.Data= JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>((string)getConsentResult.Data);
+            result.Data = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>((string)getConsentResult.Data);
         }
         return result;
     }
-    
+
     /// <summary>
     /// Get PaymentOrder record by checking idempotency.
     /// </summary>
@@ -339,7 +354,7 @@ public static class OBModuleHelper
     public static async Task<ApiResult> GetIdempotencyPaymentOrder(OdemeEmriIstegiHHSDto odemeEmriIstegi,
         RequestHeaderDto header, IOBAuthorizationService authorizationService)
     {
-        ApiResult result = new(); 
+        ApiResult result = new();
         var checkSumRequest = GetChecksumForXRequestIdSHA256(odemeEmriIstegi, header.XRequestID);//Generate checksum
         //Get db account consent
         var getConsentResult = await authorizationService.GetIdempotencyRecordOfPaymentOrder(odemeEmriIstegi.katilimciBlg.yosKod, checkSumRequest);
@@ -349,9 +364,11 @@ public static class OBModuleHelper
         }
         if (getConsentResult is { Result: true, Data: not null })
         {//Idempotency occured. Return previous response
-            result.Data= JsonSerializer.Deserialize<OdemeEmriHHSDto>((string)getConsentResult.Data);
+            result.Data = JsonSerializer.Deserialize<OdemeEmriHHSDto>((string)getConsentResult.Data);
         }
         return result;
     }
+
+
 
 }
