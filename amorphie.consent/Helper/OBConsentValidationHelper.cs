@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text.Json;
 using amorphie.consent.core.DTO;
@@ -8,6 +9,8 @@ using amorphie.consent.core.Model;
 using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
 using Jose;
+
+using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.consent.Helper;
 
@@ -894,7 +897,7 @@ public static class OBConsentValidationHelper
         bool? isConsentIdRequired = false,
         bool? isXJwsSignatureRequired = false,
         List<OBErrorCodeDetail>? errorCodeDetails = null,
-        Object? body = null)
+        string? body = null)
     {
         ApiResult result = new();
         header ??= OBModuleHelper.GetHeader(context);
@@ -996,7 +999,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
-        object? body,
+        string? body,
         bool? isXJwsSignatureRequired = false
         )
     {
@@ -1085,13 +1088,13 @@ public static class OBConsentValidationHelper
 
     private static async Task<ApiResult> ValidateJWTSignature(IYosInfoService yosInfoService,
         RequestHeaderDto header, string headerXjwsSignature, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, object body)
+        List<OBErrorCodeDetail> errorCodeDetails, string body)
     {
         ApiResult result = new();
         int maxRetryCount = 2;
         int tryCount = 0;
         bool isPublicKeyUpdated = false;
-        string? payload = string.Empty;
+        Dictionary<string, object>? payload = null;
         while (tryCount < maxRetryCount)
         {
             var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
@@ -1121,27 +1124,19 @@ public static class OBConsentValidationHelper
             // Convert the base64 encoded public key to bytes
             byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
 
-            /// Create a RSA key from the public key bytes
-            using RSA rsa = RSA.Create();
-            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
-            try
-            {
-                // Decode JWT to get payload
-                payload = JWT.Decode(headerXjwsSignature, publicKeyBytes);
-                result.Data = payload;
-                break;
-            }
-            catch (Exception)
-            {
-                if (!isPublicKeyUpdated)
-                {
-                    //Get yos public key and update system
-                    await yosInfoService.SaveYos(header.XTPPCode);
-                    isPublicKeyUpdated = true;
-                }
-
-                tryCount++;
-            }
+           var verifyResult= VerifyJwt(headerXjwsSignature, publicKey);
+           if (verifyResult.Result)//Verified
+           {
+               payload = (Dictionary<string, object>?)verifyResult.Data;
+               break;
+           }
+           if (!isPublicKeyUpdated)
+           {
+               //Get yos public key and update system
+               await yosInfoService.SaveYos(header.XTPPCode);
+               isPublicKeyUpdated = true;
+           }
+           tryCount++;
         }
 
         if (tryCount == 2)
@@ -1153,10 +1148,7 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-        // Parse JWT payload to JSON object
-        var jwtPayloadJson = JsonSerializer.Deserialize<dynamic>(payload);
-        // Retrieve the "body" claim from the payload
-        var bodyClaim = jwtPayloadJson?["body"]?.ToString();
+        var bodyClaim = payload?["body"]?.ToString();
         if (string.IsNullOrEmpty(bodyClaim))
         {
             // If "body" claim is missing, return an error
@@ -1165,7 +1157,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
             return result;
         }
-
+        
         // Calculate SHA256 hash of the request body
         var requestBodyHash = OBModuleHelper.GetChecksumSHA256(body);
 
@@ -1181,6 +1173,48 @@ public static class OBConsentValidationHelper
 
         return result;
     }
+    
+    public static ApiResult VerifyJwt(string token, string publicKey)
+    {
+        ApiResult result = new();
+        RSA rsa = RSA.Create();
+ 
+        // Convert the public key string to byte array
+        byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+ 
+        // Import the public key bytes to the RSA object
+        rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+ 
+ 
+        // Create token validation parameters
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false, // Set to true if you want to validate the issuer
+            ValidateAudience = false, // Set to true if you want to validate the audience
+            ValidateLifetime = false, // Set to true to validate the token expiration
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new RsaSecurityKey(rsa)
+        };
+ 
+        try
+        {
+            // Try to validate the token
+            var handler = new JwtSecurityTokenHandler();
+            SecurityToken securityToken;
+            var principal = handler.ValidateToken(token, validationParameters, out securityToken);
+            // Token is valid
+            // Extract claims from the principal
+            var claims = principal.Claims.ToDictionary(c => c.Type, c => (object)c.Value);
+            result.Data = claims;
+            return result; // Return the payload (claims)
+        }
+        catch (Exception ex)
+        {
+            // Token validation failed
+            result.Result = false;
+            return result;
+        }
+    }
 
 
     
@@ -1189,7 +1223,7 @@ public static class OBConsentValidationHelper
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
         List<OBErrorCodeDetail> errorCodeDetails,
-        object? body
+        string? body
         )
     {
         ApiResult result = new();
@@ -1271,8 +1305,9 @@ public static class OBConsentValidationHelper
         if (!result.Result)
             return result;
         
+        //Validate fraud jwt with public key
         var validateSignatureResult = await
-            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails, body);
+            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails);
         if (!validateSignatureResult.Result)
         {
             return validateSignatureResult;
@@ -1410,13 +1445,12 @@ public static class OBConsentValidationHelper
 
     private static async Task<ApiResult> ValidatePsuFraudCheckJWT(IYosInfoService yosInfoService,
         RequestHeaderDto header, string headerPsuFraudCheck, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, object body)
+        List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
         int maxRetryCount = 2;
         int tryCount = 0;
         bool isPublicKeyUpdated = false;
-        string? payload = string.Empty;
         while (tryCount < maxRetryCount)
         {
             var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
@@ -1443,30 +1477,18 @@ public static class OBConsentValidationHelper
             }
 
             string publicKey = getPublicKeyResult.Data.ToString()!;
-            // Convert the base64 encoded public key to bytes
-            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
-
-            /// Create a RSA key from the public key bytes
-            using RSA rsa = RSA.Create();
-            rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
-            try
+            var verifyResult= VerifyJwt(headerPsuFraudCheck, publicKey);
+            if (verifyResult.Result)//Verified
             {
-                // Decode JWT to get payload
-                payload = JWT.Decode(headerPsuFraudCheck, publicKeyBytes);
-                result.Data = payload;
                 break;
             }
-            catch (Exception)
+            if (!isPublicKeyUpdated)
             {
-                if (!isPublicKeyUpdated)
-                {
-                    //Get yos public key and update system
-                    await yosInfoService.SaveYos(header.XTPPCode);
-                    isPublicKeyUpdated = true;
-                }
-
-                tryCount++;
+                //Get yos public key and update system
+                await yosInfoService.SaveYos(header.XTPPCode);
+                isPublicKeyUpdated = true;
             }
+            tryCount++;
         }
 
         if (tryCount == 2)

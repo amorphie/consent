@@ -720,7 +720,7 @@ public static class SeedExtension
 
     public static void SeedOBErrorCodeDetailsVersion2(this ModelBuilder modelBuilder)
     {
-           modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong.GetHashCode(),
@@ -921,6 +921,14 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Resource.Forbidden",
             Message = "There is no transaction permission for this consent.",
             MessageTr = "İzin türü kontrolü başarısız. İşlem yetkisi olmayan rıza no ile işlem bilgisi sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContent.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Invalid post message",
+            MessageTr = "İstek mesajı geçersiz."
         });
     }
 }
