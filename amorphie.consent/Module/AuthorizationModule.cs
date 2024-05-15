@@ -67,7 +67,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.UserTCKN == userTCKN
                     && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                          && authAccountConsentStatusList.Contains(c.State)
-                         && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate > today))
+                         && c.LastValidAccessDate > today)
                         || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();

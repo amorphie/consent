@@ -1158,6 +1158,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
             consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
+            consentEntity.LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime();
             consentEntity.OBAccountConsentDetails = new List<OBAccountConsentDetail>
             {
                 GenerateAccountConsentDetailObject(hesapBilgisiRizasi, rizaIstegi, header)
@@ -3058,7 +3059,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             DiscreteGKDDefinitionValue = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimDeger,
             AuthCompletionTime = hesapBilgisiRizasi.gkd.yetTmmZmn,
             PermissionTypes = hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.ToList(),
-            LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime(),
             TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn?.ToUniversalTime(),
             TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn?.ToUniversalTime(),
             OhkMessage = hesapBilgisiRizasi.hspBlg.ayrBlg?.ohkMsj,
