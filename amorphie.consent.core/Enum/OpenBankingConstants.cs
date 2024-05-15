@@ -278,7 +278,7 @@ public static class OpenBankingConstants
         public const string GKDIptali_OHKIstegiIleGKDdenVazgecildi = "13";
         public const string GKDIptali_FraudSuphesi = "14";
         public const string GKDIptali_Diger = "99";
-        public const string IBLogin_ContractIstegiIleIptal = "100";
+        public const string IBLogin_ServisIstegiIleIptal = "100";
     }
 
     public static class SrlmYon

@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.Consent;
 using amorphie.consent.core.Enum;
 
 namespace amorphie.consent.Module;
@@ -29,6 +30,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             "/GetUserConsents/clientCode={clientCode}&userTCKN={userTCKN}",
             GetUserConsents);
         routeGroupBuilder.MapDelete("/CancelLoginConsents", CancelLoginConsents);
+        routeGroupBuilder.MapDelete("/CancelLoginConsent", CancelLoginConsent);
     }
 
 
@@ -71,10 +73,6 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
     /// Cancels IBLogin types of yetkikullanildi state of consents.
     /// Consent state is turned to yetkiIptal state
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="httpContext"></param>
     /// <returns></returns>
     public async Task<IResult> CancelLoginConsents([FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -85,7 +83,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
         {
             //Filter login consents
             var consents = await context.Consents.Where(c =>
-                    c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
+                    c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
                     && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
                 .ToListAsync();
 
@@ -95,7 +93,54 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
                 c.ModifiedAt = DateTime.UtcNow;
                 c.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
                 c.StateModifiedAt = DateTime.UtcNow;
-                c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ContractIstegiIleIptal;
+                c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ServisIstegiIleIptal;
+                return c;
+            }).ToList();
+
+            if (consents != null && consents.Any())
+            {
+                context.Consents.UpdateRange(consents);
+                await context.SaveChangesAsync();
+            }
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    
+    public async Task<IResult> CancelLoginConsent([FromBody] CancelLoginConsentDto cancelData,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Check data validity
+            ApiResult isDataValidResult = IsDataValidToCancelLoginConsent(cancelData);
+            if (!isDataValidResult.Result) //Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
+            //Filter login consents
+            var consents = await context.Consents.Where(c =>
+                    c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin
+                    && c.ClientCode == cancelData.ClientCode
+                    && c.UserTCKN == cancelData.UserTCKN
+                    && c.ScopeTCKN == cancelData.ScopeTCKN)
+                .ToListAsync();
+
+            //Update consents
+            consents = consents?.Select(c =>
+            {
+                c.ModifiedAt = DateTime.UtcNow;
+                c.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                c.StateModifiedAt = DateTime.UtcNow;
+                c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ServisIstegiIleIptal;
                 return c;
             }).ToList();
 
@@ -139,6 +184,34 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
         return (resultList != null && resultList.Count > 0)
             ? Results.Ok(mapper.Map<IList<ConsentDto>>(resultList))
             : Results.NoContent();
+    }
+    
+   
+    /// <summary>
+    /// Checks cancelloginconsent data
+    /// </summary>
+    /// <param name="cancelData">To be checked data</param>
+    /// <returns>Data validation result</returns>
+    private ApiResult IsDataValidToCancelLoginConsent(CancelLoginConsentDto cancelData)
+    {
+        ApiResult result = new();
+
+        //check clientcode
+        if (string.IsNullOrEmpty(cancelData.ClientCode))
+        {
+            result.Result = false;
+            result.Message = "Client code parameter is required.";
+            return result;
+        }
+        //check tckn
+        if (cancelData.UserTCKN <= 0 || cancelData.ScopeTCKN <= 0)
+        {
+            result.Result = false;
+            result.Message = "usertckn, scope tckn not valid. Can not be zero or negative.";
+            return result;
+        }
+
+        return result;
     }
 
 
