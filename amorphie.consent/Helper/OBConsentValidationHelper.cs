@@ -1208,7 +1208,7 @@ public static class OBConsentValidationHelper
             result.Data = claims;
             return result; // Return the payload (claims)
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Token validation failed
             result.Result = false;

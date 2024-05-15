@@ -2610,7 +2610,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="context"></param>
     /// <param name="activeAccountConsents">Consents to be checked</param>
-    private void CancelWaitingApproveConsents(ConsentDbContext context, List<Consent> activeAccountConsents)
+    private async Task  CancelWaitingApproveConsents(ConsentDbContext context, List<Consent> activeAccountConsents)
     {
         //Waiting approve state consents
         var waitingAporoves = activeAccountConsents
@@ -2635,6 +2635,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             context.Consents.UpdateRange(waitingAporoves);
+            await context.SaveChangesAsync();
         }
     }
 
@@ -2689,7 +2690,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         await ProcessAccountConsentToCancelOrEnd(activeAccountConsents, context);
         //Cancel Yetki Bekleniyor state consents.
-        CancelWaitingApproveConsents(context, activeAccountConsents);
+        await CancelWaitingApproveConsents(context, activeAccountConsents);
         if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any yetkilendirildi, yetki kullanıldı state consent
         {
             result.Result = false;

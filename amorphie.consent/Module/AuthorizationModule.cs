@@ -27,81 +27,16 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet(
-            "/CheckAuthorization/clientCode={clientCode}&userId={userId}&roleId={roleId}&scopeId={scopeId}&consentType={consentType}",
-            CheckAuthorization);
         routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
         routeGroupBuilder.MapGet(
             "/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
             CheckAuthorizationForLogin);
-        routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
-        routeGroupBuilder.MapDelete("/CancelLoginConsents", CancelLoginConsents);
         routeGroupBuilder.MapGet(
             "/CheckConsent/clientCode={clientCode}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
             CheckConsent);
-        //Added for comensis test environment
-        routeGroupBuilder.MapPost("/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}", CheckAuthorizationForLogin_Test);
-      
-        
+        routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
     }
 
-    /// <summary>
-    /// Check if there is any valid consent with given parameters
-    /// </summary>
-    /// <param name="clientCode">ClientCode</param>
-    /// <param name="userId">User Id</param>
-    /// <param name="roleId">Role Id</param>
-    /// <param name="scopeId">Scope Id</param>
-    /// <param name="consentType">Consent Type</param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="httpContext"></param>
-    /// <returns>If there is any valid consent with given parameters</returns>
-    public async Task<IResult> CheckAuthorization(
-        string clientCode,
-        Guid userId,
-        Guid roleId,
-        Guid scopeId,
-        string consentType,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        HttpContext httpContext)
-    {
-        try
-        {
-            var today = DateTime.UtcNow;
-            var authAccountConsentStatusList =
-                ConstantHelper.GetAuthorizedConsentStatusListForAccount(); //Get authorized status list for account
-            var authPaymentConsentStatusList =
-                ConstantHelper.GetAuthorizedConsentStatusListForPayment(); //Get authorized status list for payment
-            //Filter consent according to parameters
-            var consents = await context.Consents.AsNoTracking().Where(c =>
-                    c.ClientCode == clientCode
-                    && c.UserId == userId
-                    && c.RoleId == roleId
-                    && c.ScopeId == scopeId
-                    && c.ConsentType == consentType
-                    && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
-                         && authAccountConsentStatusList.Contains(c.State)
-                         && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate >= today))
-                        || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
-                            && authPaymentConsentStatusList.Contains(c.State))))
-                .ToListAsync();
-            if (consents?.Any() ?? false)
-            {
-                return Results.Ok();
-            }
-            else
-            {
-                //Not authorized
-                return Results.Forbid();
-            }
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
 
     /// <summary>
     /// Checks if any active Open Banking authorization of rizaNo is match with given userTCKN
@@ -132,7 +67,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.UserTCKN == userTCKN
                     && ((c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                          && authAccountConsentStatusList.Contains(c.State)
-                         && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate >= today))
+                         && c.OBAccountConsentDetails.Any(r => r.LastValidAccessDate > today))
                         || (c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
                             && authPaymentConsentStatusList.Contains(c.State))))
                 .ToListAsync();
@@ -176,16 +111,61 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     {
         try
         {
+            var today = DateTime.UtcNow;
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == clientCode
                     && c.RoleId == roleId
                     && c.ScopeTCKN == scopeTCKN
                     && c.UserTCKN == userTCKN
-                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
+                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin
+                    && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                    && (c.LastValidAccessDate == null
+                        || (c.LastValidAccessDate != null && c.LastValidAccessDate > today)))
                 .ToListAsync();
 
-            if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
+            if (consents?.Any() ?? false)
+            {
+                //Authorized user
+                return Results.Ok();
+            }
+
+            //unauthroized
+            return Results.Unauthorized();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Check any yetkikullanildi state of valid consent in system
+    /// Checks clientCode,userTckn,scopeTckn
+    /// </summary>
+    /// <returns>Is any yetkikuıllanildi state of valid consent in system</returns>
+    public async Task<IResult> CheckConsent(
+        string clientCode,
+        long userTCKN,
+        long scopeTCKN,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IConfiguration configuration,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var today = DateTime.UtcNow;
+            //Filter consent according to parameters
+            var consents = await context.Consents.AsNoTracking().Where(c =>
+                    c.ClientCode == clientCode
+                    && c.ScopeTCKN == scopeTCKN
+                    && c.UserTCKN == userTCKN
+                    && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                    && (c.LastValidAccessDate == null
+                        || (c.LastValidAccessDate != null && c.LastValidAccessDate > today)))
+                .ToListAsync();
+
+            if (consents?.Any() ?? false)
             {
                 //Authorized user
                 return Results.Ok();
@@ -216,6 +196,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     {
         try
         {
+            var today = DateTime.UtcNow;
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == saveConsent.ClientCode
@@ -225,35 +206,54 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
                 .ToListAsync();
 
-            if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
+            //Valid date ended consents
+            var outDatedConsents = consents.Where(c => c.LastValidAccessDate != null
+                                                       && c.LastValidAccessDate <= today
+                                                       && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+                .ToList();
+            if (outDatedConsents?.Any() ?? false)
             {
-                //Authorized user
-                return Results.Ok();
+                //End consents
+                outDatedConsents = outDatedConsents.Select(c =>
+                {
+                    c.State = OpenBankingConstants.RizaDurumu.YetkiSonlandirildi;
+                    c.StateModifiedAt = today;
+                    return c;
+                }).ToList();
+                context.Consents.UpdateRange(outDatedConsents);
             }
 
-            //If any yetkibekleniyor state consent, update 
-            var consent = consents?.FirstOrDefault(c => c.State == OpenBankingConstants.RizaDurumu.YetkiBekleniyor);
-            if (consent != null) //Update consent
+            var toBeCancelledConsents =
+                consents.Where(c => c.State != OpenBankingConstants.RizaDurumu.YetkiSonlandirildi
+                && c.State != OpenBankingConstants.RizaDurumu.YetkiIptal).ToList();
+            if (toBeCancelledConsents?.Any() ?? false)
             {
-                consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-                consent.ModifiedAt = DateTime.UtcNow;
-                consent.StateModifiedAt = DateTime.UtcNow;
-                context.Consents.Update(consent);
+                //End consents
+                toBeCancelledConsents = toBeCancelledConsents.Select(c =>
+                {
+                    c.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                    c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.YeniRizaTalebiIleIptal;
+                    c.StateModifiedAt = today;
+                    return c;
+                }).ToList();
+                context.Consents.UpdateRange(toBeCancelledConsents);
             }
-            else //If there is no yetkibekleniyor state consent in db, insert consent
+            
+            //Create desired consent
+            var consent = new Consent
             {
-                consent = new Consent();
-                consent.ScopeTCKN = saveConsent.ScopeTCKN;
-                consent.UserTCKN = saveConsent.UserTCKN;
-                consent.ConsentType = ConsentConstants.ConsentType.IBLogin;
-                consent.RoleId = saveConsent.RoleId;
-                consent.ClientCode = saveConsent.ClientCode;
-                consent.State = OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-                consent.AdditionalData = string.Empty;
-                consent.CreatedAt = DateTime.UtcNow;
-                consent.StateModifiedAt = DateTime.UtcNow;
-                context.Consents.Add(consent);
-            }
+                ScopeTCKN = saveConsent.ScopeTCKN,
+                UserTCKN = saveConsent.UserTCKN,
+                ConsentType = ConsentConstants.ConsentType.IBLogin,
+                RoleId = saveConsent.RoleId,
+                ClientCode = saveConsent.ClientCode,
+                State = OpenBankingConstants.RizaDurumu.YetkiKullanildi,
+                LastValidAccessDate = saveConsent.LastValidAccessDate,
+                AdditionalData = string.Empty,
+                CreatedAt = DateTime.UtcNow,
+                StateModifiedAt = DateTime.UtcNow
+            };
+            context.Consents.Add(consent);
 
             await context.SaveChangesAsync();
             return Results.Ok();
@@ -263,128 +263,4 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-
-    /// <summary>
-    /// Cancels IBLogin types of yetkikullanildi state of consents.
-    /// Consent state is turned to yetkiIptal state
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
-    public async Task<IResult> CancelLoginConsents([FromServices] ConsentDbContext context,
-        [FromServices] IMapper mapper,
-        [FromServices] IConfiguration configuration,
-        HttpContext httpContext)
-    {
-        try
-        {
-            //Filter login consents
-            var consents = await context.Consents.Where(c =>
-                    c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
-                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
-                .ToListAsync();
-
-            //Update consents
-            consents = consents?.Select(c =>
-            {
-                c.ModifiedAt = DateTime.UtcNow;
-                c.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
-                c.StateModifiedAt = DateTime.UtcNow;
-                c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ContractIstegiIleIptal;
-                return c;
-            }).ToList();
-
-            if (consents != null && consents.Any())
-            {
-                context.Consents.UpdateRange(consents);
-                await context.SaveChangesAsync();
-            }
-            return Results.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-
-    /// <summary>
-    /// This method will be removed when commensis started to use preprod for test
-    /// </summary>
-    /// <param name="clientCode"></param>
-    /// <param name="roleId"></param>
-    /// <param name="userTCKN"></param>
-    /// <param name="scopeTCKN"></param>
-    /// <param name="context"></param>
-    /// <param name="contractService"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
-    public async Task<IResult> CheckAuthorizationForLogin_Test(
-      string clientCode,
-      Guid roleId,
-      long userTCKN,
-      long scopeTCKN,
-      [FromServices] ConsentDbContext context,
-      [FromServices] IMapper mapper,
-      [FromServices] IConfiguration configuration,
-      HttpContext httpContext)
-    {
-        try
-        {
-            var response = new
-            {
-                IsAuthorized = true,
-                ContractDocuments = (ICollection<object>?)null
-            };
-            return Results.Ok(response);
-
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-    
-    /// <summary>
-    /// Check any yetkikullanildi state of consent in system
-    /// </summary>
-    /// <returns>Is any yetkikuıllanildi state consent in system</returns>
-    public async Task<IResult> CheckConsent(
-        string clientCode,
-        long userTCKN,
-        long scopeTCKN,
-        [FromServices] ConsentDbContext context,
-        [FromServices] IConfiguration configuration,
-        HttpContext httpContext)
-    {
-        try
-        {
-            //Filter consent according to parameters
-            var consents = await context.Consents.AsNoTracking().Where(c =>
-                    c.ClientCode == clientCode
-                    && c.ScopeTCKN == scopeTCKN
-                    && c.UserTCKN == userTCKN)
-                .ToListAsync();
-
-            if (consents?.Any(c => c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi) ?? false)
-            {
-                //Authorized user
-                return Results.Ok();
-            }
-
-            //unauthroized
-            return Results.Unauthorized();
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem($"An error occurred: {ex.Message}");
-        }
-    }
-
-
 }

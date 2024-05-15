@@ -28,6 +28,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
         routeGroupBuilder.MapGet(
             "/GetUserConsents/clientCode={clientCode}&userTCKN={userTCKN}",
             GetUserConsents);
+        routeGroupBuilder.MapDelete("/CancelLoginConsents", CancelLoginConsents);
     }
 
 
@@ -43,11 +44,14 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
     {
         try
         {
+            var today = DateTime.UtcNow;
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking()
                 .Where(c => c.ClientCode == clientCode
                             && c.UserTCKN == userTCKN
-                            && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+                            && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
+                            && (c.LastValidAccessDate == null 
+                                || (c.LastValidAccessDate != null && c.LastValidAccessDate > today)))
                 .ToListAsync();
 
             if (consents?.Any() ?? false)
@@ -56,6 +60,51 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             }
             //No consent in the system
             return Results.NotFound();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Cancels IBLogin types of yetkikullanildi state of consents.
+    /// Consent state is turned to yetkiIptal state
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="mapper"></param>
+    /// <param name="configuration"></param>
+    /// <param name="httpContext"></param>
+    /// <returns></returns>
+    public async Task<IResult> CancelLoginConsents([FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] IConfiguration configuration,
+        HttpContext httpContext)
+    {
+        try
+        {
+            //Filter login consents
+            var consents = await context.Consents.Where(c =>
+                    c.State == OpenBankingConstants.RizaDurumu.Yetkilendirildi
+                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
+                .ToListAsync();
+
+            //Update consents
+            consents = consents?.Select(c =>
+            {
+                c.ModifiedAt = DateTime.UtcNow;
+                c.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                c.StateModifiedAt = DateTime.UtcNow;
+                c.StateCancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.IBLogin_ContractIstegiIleIptal;
+                return c;
+            }).ToList();
+
+            if (consents != null && consents.Any())
+            {
+                context.Consents.UpdateRange(consents);
+                await context.SaveChangesAsync();
+            }
+            return Results.Ok();
         }
         catch (Exception ex)
         {
