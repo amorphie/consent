@@ -18,6 +18,7 @@ using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Dapr;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
@@ -75,6 +76,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
+        routeGroupBuilder.MapDelete("/Cancel", CancelConsent);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
@@ -1062,6 +1064,82 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
+    
+    public async Task<IResult> CancelConsent([FromBody] CancelConsentDto cancelData,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
+    {
+        try
+        {
+            //Check data validity
+            ApiResult isDataValidResult = IsDataValidToCancelConsent(cancelData);
+            if (!isDataValidResult.Result) //Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
+            //State list can be cancelled
+            var canBeCancelledStates = new List<string>()
+            {
+                OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+                OpenBankingConstants.RizaDurumu.Yetkilendirildi
+            };
+            //Get entity from db
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == cancelData.ConsentId);
+            if (entity == null)
+            {
+                return Results.NoContent();
+            }
+            if (!canBeCancelledStates.Contains(entity.State))
+            {
+                return Results.BadRequest("Consent state not valid to be cancelled.");
+            }
+            
+            if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+            {
+                //Account consent
+                //Update consent rıza bilgileri properties
+                var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
+                additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData.rzBlg.rizaIptDtyKod =cancelData.CancelDetailCode;
+                additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+                entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                entity.ModifiedAt = DateTime.UtcNow;
+                entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                entity.StateModifiedAt = DateTime.UtcNow;
+                entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+                context.Consents.Update(entity);
+                await context.SaveChangesAsync();
+            }
+            else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+            {
+                //Payment consent
+                //Update consent rıza bilgileri properties
+                var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
+                additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                additionalData.rzBlg.rizaIptDtyKod =cancelData.CancelDetailCode;
+                additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+                entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                entity.ModifiedAt = DateTime.UtcNow;
+                entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+                entity.StateModifiedAt = DateTime.UtcNow;
+                entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+                context.Consents.Update(entity);
+                await context.SaveChangesAsync();
+            }
+            else{
+                 //Not related type
+            return Results.BadRequest("Consent type not valid");
+            }
+           return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
     /// <summary>
     /// hesap-bilgisi-rizasi post. Does account consent process.
     /// </summary>
@@ -1158,6 +1236,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingAccount;
             consentEntity.Variant = hesapBilgisiRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
+            consentEntity.LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime();
             consentEntity.OBAccountConsentDetails = new List<OBAccountConsentDetail>
             {
                 GenerateAccountConsentDetailObject(hesapBilgisiRizasi, rizaIstegi, header)
@@ -2394,7 +2473,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private ApiResult IsDataValidToDeleteAccountConsent(Consent entity, List<OBErrorCodeDetail> errorCodeDetails, HttpContext httpContext)
     {
         ApiResult result = new();
-        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
+        var deleteStatusList = new List<string>() { OpenBankingConstants.RizaDurumu.Yetkilendirildi,
+            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+            OpenBankingConstants.RizaDurumu.YetkiKullanildi
+        };
+        if (!deleteStatusList.Contains(entity.State))
         {
             //State not valid to set as deleted
             result.Result = false;
@@ -2419,8 +2502,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "No desired consent in system.";
             return result;
         }
-
-        if (!ConstantHelper.GetAccountConsentCanBeDeleteStatusList().Contains(entity.State))
+        var deleteStatusList = new List<string>() { OpenBankingConstants.RizaDurumu.Yetkilendirildi,
+            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+            OpenBankingConstants.RizaDurumu.YetkiKullanildi
+        };
+        if (!deleteStatusList.Contains(entity.State))
         {
             //State not valid to set as deleted
             result.Result = false;
@@ -2610,7 +2696,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <param name="context"></param>
     /// <param name="activeAccountConsents">Consents to be checked</param>
-    private void CancelWaitingApproveConsents(ConsentDbContext context, List<Consent> activeAccountConsents)
+    private async Task  CancelWaitingApproveConsents(ConsentDbContext context, List<Consent> activeAccountConsents)
     {
         //Waiting approve state consents
         var waitingAporoves = activeAccountConsents
@@ -2635,6 +2721,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             context.Consents.UpdateRange(waitingAporoves);
+            await context.SaveChangesAsync();
         }
     }
 
@@ -2689,7 +2776,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         await ProcessAccountConsentToCancelOrEnd(activeAccountConsents, context);
         //Cancel Yetki Bekleniyor state consents.
-        CancelWaitingApproveConsents(context, activeAccountConsents);
+        await CancelWaitingApproveConsents(context, activeAccountConsents);
         if (AnyAuthAndUsedConsents(activeAccountConsents)) //Checks any yetkilendirildi, yetki kullanıldı state consent
         {
             result.Result = false;
@@ -3031,6 +3118,33 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return true;
     }
+    
+    /// <summary>
+    /// Checks cancel consent data
+    /// </summary>
+    /// <param name="cancelData">To be checked data</param>
+    /// <returns>Data validation result</returns>
+    private ApiResult IsDataValidToCancelConsent(CancelConsentDto cancelData)
+    {
+        ApiResult result = new();
+
+        //check clientcode
+        if (string.IsNullOrEmpty(cancelData.CancelDetailCode))
+        {
+            result.Result = false;
+            result.Message = "Client detail code parameter is required.";
+            return result;
+        }
+        //check tckn
+        if (!ConstantHelper.GetRizaIptalDetayKoduList().Contains(cancelData.CancelDetailCode))
+        {
+            result.Result = false;
+            result.Message = "Cancel detail code is not valid.";
+            return result;
+        }
+
+        return result;
+    }
 
 
     /// <summary>
@@ -3057,7 +3171,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             DiscreteGKDDefinitionValue = hesapBilgisiRizasi.gkd.ayrikGkd?.ohkTanimDeger,
             AuthCompletionTime = hesapBilgisiRizasi.gkd.yetTmmZmn,
             PermissionTypes = hesapBilgisiRizasi.hspBlg.iznBlg.iznTur.ToList(),
-            LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime(),
             TransactionInquiryStartTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBslZmn?.ToUniversalTime(),
             TransactionInquiryEndTime = hesapBilgisiRizasi.hspBlg.iznBlg.hesapIslemBtsZmn?.ToUniversalTime(),
             OhkMessage = hesapBilgisiRizasi.hspBlg.ayrBlg?.ohkMsj,
