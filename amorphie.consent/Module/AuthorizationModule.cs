@@ -211,7 +211,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                                                        && c.LastValidAccessDate <= today
                                                        && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
                 .ToList();
-            if (outDatedConsents?.Any() ?? false)
+            if (outDatedConsents.Any())
             {
                 //End consents
                 outDatedConsents = outDatedConsents.Select(c =>
@@ -225,8 +225,9 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
             var toBeCancelledConsents =
                 consents.Where(c => c.State != OpenBankingConstants.RizaDurumu.YetkiSonlandirildi
-                && c.State != OpenBankingConstants.RizaDurumu.YetkiIptal).ToList();
-            if (toBeCancelledConsents?.Any() ?? false)
+                && c.State != OpenBankingConstants.RizaDurumu.YetkiIptal)
+                .ToList();
+            if (toBeCancelledConsents.Any())
             {
                 //End consents
                 toBeCancelledConsents = toBeCancelledConsents.Select(c =>
