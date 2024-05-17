@@ -8,18 +8,6 @@ public static class ConstantHelper
 {
 
     /// <summary>
-    /// Gets account consent status list that consent can be marked as deleted
-    /// </summary>
-    /// <returns>Deletable account consent status list</returns>
-    public static List<string> GetAccountConsentCanBeDeleteStatusList()
-    {
-        return new List<string>() { OpenBankingConstants.RizaDurumu.Yetkilendirildi,
-            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
-            OpenBankingConstants.RizaDurumu.YetkiKullanildi
-        };
-    }
-
-    /// <summary>
     /// Get account consent status list that can be marked as active statuses.
     /// In those statuses if new consent comes, it should be handled
     /// </summary>
@@ -262,6 +250,15 @@ public static class ConstantHelper
     public static List<int> GetVarYok()
     {
         return typeof(OpenBankingConstants.VarYok).GetAllPublicConstantValues<int>();
+    }
+    
+    /// <summary>
+    /// Get RizaIptalDetayKodu constants values list
+    /// </summary>
+    /// <returns>RizaIptalDetayKodu constants values list</returns>
+    public static List<string> GetRizaIptalDetayKoduList()
+    {
+        return typeof(OpenBankingConstants.RizaIptalDetayKodu).GetAllPublicConstantValues<string>();
     }
 
     /// <summary>

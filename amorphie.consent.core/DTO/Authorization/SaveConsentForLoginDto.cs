@@ -6,4 +6,6 @@ public class SaveConsentForLoginDto
     public string ClientCode { get; set; }
     public long UserTCKN { get; set; }
     public long ScopeTCKN { get; set; }
+    
+    public DateTime? LastValidAccessDate { get; set; }
 }

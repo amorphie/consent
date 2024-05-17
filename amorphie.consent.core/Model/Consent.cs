@@ -12,6 +12,7 @@ public class Consent : EntityBase
     public long? ScopeTCKN { get; set; }
     public string? Variant { get; set; }
     public string State { get; set; }
+    public DateTime? LastValidAccessDate { get; set; }
     public string? Description { get; set; }
     public string? XGroupId { get; set; }
     public string ConsentType { get; set; }

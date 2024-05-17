@@ -19,6 +19,7 @@ public class ConsentDto : DtoBase
     public string State { get; set; }
     public DateTime StateModifiedAt { get; set; }
     public string? StateCancelDetailCode { get; set; }
+    public DateTime? LastValidAccessDate { get; set; }
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
 }

@@ -635,7 +635,7 @@ public class AccountService : IAccountService
         }
             
         //Check consent status
-        if (consentDetail.LastValidAccessDate <  DateTime.UtcNow)
+        if (activeConsent.LastValidAccessDate <  DateTime.UtcNow)
         {
             //Consent revoked
             result.Result = false;
