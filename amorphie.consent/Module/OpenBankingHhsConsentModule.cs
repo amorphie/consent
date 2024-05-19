@@ -1427,6 +1427,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("PSU-Fraud-Check", ParameterLocation.Header)]
     protected async Task<IResult> PaymentConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1445,11 +1446,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
             var dataValidationResult =
-                await IsDataValidToPaymentConsentPost(rizaIstegi, configuration, yosInfoService, eventService, httpContext, context);
+                await IsDataValidToPaymentConsentPost(rizaIstegi,header, configuration, yosInfoService, eventService, httpContext, context);
             if (!dataValidationResult.Result)
             {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
                 //Data not valid
-                return Results.BadRequest(dataValidationResult.Message);
+                return Results.BadRequest(dataValidationResult.Data);
             }
 
             //Check Idempotency
@@ -1968,13 +1970,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     ///  Checks if data is valid for payment information consent post process
     /// </summary>
-    /// <param name="rizaIstegi">To be checked data</param>
-    /// <param name="configuration">Config file</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">HttpContext httpContext</param>
-    /// <param name="dbContext"></param>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+        RequestHeaderDto header,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         IOBEventService eventService,
@@ -1983,7 +1981,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         //TODO:Ozlem update method
         ApiResult result = new();
-        var header = OBModuleHelper.GetHeader(httpContext); //Get header
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
