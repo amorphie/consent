@@ -111,6 +111,8 @@ public static class OBErrorCodeConstants
 
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
+        InternalServerErrorBodyEmptyValidateJwt = 153,
+        
         
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
@@ -148,7 +150,9 @@ public static class OBErrorCodeConstants
   
         InvalidPermissionGetAccount = 323,
         InvalidPermissionGetBalance = 324,
-        InvalidPermissionGetTransaction = 325
+        InvalidPermissionGetTransaction = 325,
+        InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
+        InvalidSignatureXJwsSignatureHeaderInvalid = 327
 
     }
 }

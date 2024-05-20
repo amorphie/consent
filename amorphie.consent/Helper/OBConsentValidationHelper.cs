@@ -964,7 +964,7 @@ public static class OBConsentValidationHelper
             return result;
         }
         
-        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails, body);
+        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails);
         if (!result.Result)
         {
             return result;
@@ -1001,81 +1001,102 @@ public static class OBConsentValidationHelper
         List<OBErrorCodeDetail> errorCodeDetails,
         string? body,
         bool? isXJwsSignatureRequired = false
-        )
+    )
     {
         ApiResult result = new();
-        
+
         //Check config value CheckXJWSSignature
-        if (bool.TryParse(configuration["CheckXJWSSignature"], out bool isXJWSSignatureCheckEnabled) && !isXJWSSignatureCheckEnabled)
-        { //XJWSSignature check config is false
+        if (bool.TryParse(configuration["CheckXJWSSignature"], out bool isXJWSSignatureCheckEnabled) &&
+            !isXJWSSignatureCheckEnabled)
+        {
+            //XJWSSignature check config is false
             //NO need to check
             return result;
         }
-        
+
         if (isXJwsSignatureRequired.HasValue
             && isXJwsSignatureRequired.Value
             && string.IsNullOrEmpty(header.XJWSSignature))
         {
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
             return result;
         }
 
         //No need to check header property
         if (isXJwsSignatureRequired is null
-        || isXJwsSignatureRequired is false)
+            || isXJwsSignatureRequired is false)
         {
             return result;
         }
-        
         var headerXjwsSignature = header.XJWSSignature!;
-         //   "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaWd3LmJrbS5jb20udHIiLCJleHAiOjE2NjU0NzU1NjIsImlhdCI6MTY2NTM4OTE2MiwiYm9keSI6ImE2NGIxOWY5NWVlYjFmYjBhMGEzZTJkYmJjNmUzZDg0NzJjNTIxODRkNDU0MzQxN2RkYzZkMTU2ZmM1YzU1NzEifQ.Q65PI_1fTEzzBMirvmJvXgVX3orhhZ4_UqujtGdHkU7me-1ymIjvPrzy3kfyER1pedFb7HDCBuPvYoqjX8eUnpiiZsxfzCiEa0McIhoFeUOggq-O8VihItp8bLr2DWwQ9JHN1-WXB2mL31KAKFAL1VY9-DXuAdT-RfE_SLYsl2ycmNy4ti4XvfDvvlE56ZsieFZ727VuwR8wi7F0kKDc6UhjaMF9xcUeAM1fxX-bmcOaOo1NZGC0vvgjNZKz_OJrN-q8VhWYnQPiJ7wY7S9IG8bHIkBImKSVf8LuOEvl8u0BZzADLH1iOBd9x2l1plyI_NLPTrnOqhWhKlljkkJBCg";
-        
-        // Decode JWT to get header
-        var jwtHeaderDecoded = JWT.Headers(headerXjwsSignature);
-        // Verify algorithm used is RS256
-        if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+        //   "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaWd3LmJrbS5jb20udHIiLCJleHAiOjE2NjU0NzU1NjIsImlhdCI6MTY2NTM4OTE2MiwiYm9keSI6ImE2NGIxOWY5NWVlYjFmYjBhMGEzZTJkYmJjNmUzZDg0NzJjNTIxODRkNDU0MzQxN2RkYzZkMTU2ZmM1YzU1NzEifQ.Q65PI_1fTEzzBMirvmJvXgVX3orhhZ4_UqujtGdHkU7me-1ymIjvPrzy3kfyER1pedFb7HDCBuPvYoqjX8eUnpiiZsxfzCiEa0McIhoFeUOggq-O8VihItp8bLr2DWwQ9JHN1-WXB2mL31KAKFAL1VY9-DXuAdT-RfE_SLYsl2ycmNy4ti4XvfDvvlE56ZsieFZ727VuwR8wi7F0kKDc6UhjaMF9xcUeAM1fxX-bmcOaOo1NZGC0vvgjNZKz_OJrN-q8VhWYnQPiJ7wY7S9IG8bHIkBImKSVf8LuOEvl8u0BZzADLH1iOBd9x2l1plyI_NLPTrnOqhWhKlljkkJBCg";
+        try
         {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong);
-            return result;
-        }
-
-        var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
-
-        var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
-        if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
-        {
-            if (expValue.TryGetInt64(out long expUnixTime))
+            // Decode JWT to get header
+            var jwtHeaderDecoded = JWT.Headers(headerXjwsSignature);
+            // Verify algorithm used is RS256
+            if (jwtHeaderDecoded["alg"].ToString() != "RS256")
             {
-                // Convert the Unix time to a DateTime object
-                var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong);
+                return result;
+            }
 
-                // Check if the token has expired
-                if (expDateTime <= DateTime.UtcNow)
+            var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
+            var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+            if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))//Get exp data in payload
+            {
+                if (expValue.TryGetInt64(out long expUnixTime))
                 {
-                    // Token is invalid
+                    // Convert the Unix time to a DateTime object
+                    var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                    // Check if the token has expired
+                    if (expDateTime <= DateTime.UtcNow)
+                    {
+                        // Token is invalid
+                        result.Result = false;
+                        result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
+                        return result;
+                    }
+                }
+                else
+                {
+                    // Handle the case where "exp" property is not a valid JSON number
                     result.Result = false;
-                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
+                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong);
                     return result;
                 }
             }
             else
             {
-                // Handle the case where "exp" property is not a valid JSON number
+                // Handle the case where "exp" property is missing
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong);
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing);
                 return result;
             }
         }
-        else
+        catch (Exception)
         {
-            // Handle the case where "exp" property is missing
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing);
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureXJwsSignatureHeaderInvalid);
             return result;
         }
 
+        if (body is null)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorBodyEmptyValidateJwt);
+            return result;
+        }
         var validateSignatureResult = await
             ValidateJWTSignature(yosInfoService, header, headerXjwsSignature, context, errorCodeDetails, body);
         if (!validateSignatureResult.Result)
@@ -1098,15 +1119,8 @@ public static class OBConsentValidationHelper
         while (tryCount < maxRetryCount)
         {
             var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
-            if (!getPublicKeyResult.Result)
-            {
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
-                return result;
-            }
-
-            if (getPublicKeyResult.Data is null
+            if (getPublicKeyResult.Result == false 
+                || getPublicKeyResult.Data is null
                 || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
             {
                 if (!isPublicKeyUpdated)
@@ -1222,47 +1236,61 @@ public static class OBConsentValidationHelper
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
-        List<OBErrorCodeDetail> errorCodeDetails,
-        string? body
+        List<OBErrorCodeDetail> errorCodeDetails
         )
     {
         ApiResult result = new();
-        
+
         //No need to check header property
         if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.SystemStarted)
         {
             return result;
         }
-        
+
         //Check CheckPSUFraudCheck config value 
-        if (bool.TryParse(configuration["CheckPSUFraudCheck"], out bool isPSUFraudCheckEnabled) && !isPSUFraudCheckEnabled)
-        { //CheckPSUFraudCheck config is false. No need to check
+        if (bool.TryParse(configuration["CheckPSUFraudCheck"], out bool isPSUFraudCheckEnabled) &&
+            !isPSUFraudCheckEnabled)
+        {
+            //CheckPSUFraudCheck config is false. No need to check
             return result;
         }
-        
+
         if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.OHKStarted
-            && string.IsNullOrEmpty(header.PSUFraudCheck))//PSUFraudCheck is required when OHK started
+            && string.IsNullOrEmpty(header.PSUFraudCheck)) //PSUFraudCheck is required when OHK started
         {
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
             return result;
         }
 
-        var headerPsuFraudCheck =  header.PSUFraudCheck!;
-            // "eyJhbGciOiJSUzI1NiJ9.eyJBbm9tYWx5RmxhZyI6IjAiLCJMYXN0UGFzc3dvcmRDaGFuZ2VGbGFnIjoiMSIsIkZpcnN0TG9naW5GbGFnIjoiMSIsIkRldmljZUZpcnN0TG9naW5GbGFnIjoiMSIsIkJsYWNrbGlzdEZsYWciOiIwIiwiTWFsd2FyZUZsYWciOiIwIiwiVW5zYWZlQWNjb3VudEZsYWciOiIwIiwiZXhwIjoxNjY1NDc1NTU2LCJpYXQiOjE2NjUzODkxNTYsImlzcyI6Imh0dHBzOi8vYXBpZ3cuYmttLmNvbS50ciJ9.DhUh_nsXDuNIrvsQ3KOhOXdVcJg6fTDVW8K1oea8kLtmb7n-_hJHY3mWX5zzobu-Vh2VvFzIxPhHtol6gLHFktmIMiQ9TDHb_mRZFXgJB4ToNfqc3Fy9mi5bS8By2IYi1HxDaCStstaZDaunzXfHCtqybfZXyk6teDrf-iIf6lqX9Keo7GZO-Y7mP7C13-c_QwyNKrZK4TZwUQbecRqXYn1DcEHM7kukQHTar_hKBWkXPmNpScY0J2rKksr4ejR1uLhdQm-Pdwoe9y6qrNEB79vMLBkRNtbuV0vc1GYHp_YKkzBKBI_58uuB2GD9877CsrcRnHMQb88xpxiPKh6-ew";
-     
-        // Decode JWT to get header
-        var jwtHeaderDecoded = JWT.Headers(headerPsuFraudCheck);
-        // Verify algorithm used is RS256
-        if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+        var headerPsuFraudCheck = header.PSUFraudCheck!;
+        // "eyJhbGciOiJSUzI1NiJ9.eyJBbm9tYWx5RmxhZyI6IjAiLCJMYXN0UGFzc3dvcmRDaGFuZ2VGbGFnIjoiMSIsIkZpcnN0TG9naW5GbGFnIjoiMSIsIkRldmljZUZpcnN0TG9naW5GbGFnIjoiMSIsIkJsYWNrbGlzdEZsYWciOiIwIiwiTWFsd2FyZUZsYWciOiIwIiwiVW5zYWZlQWNjb3VudEZsYWciOiIwIiwiZXhwIjoxNjY1NDc1NTU2LCJpYXQiOjE2NjUzODkxNTYsImlzcyI6Imh0dHBzOi8vYXBpZ3cuYmttLmNvbS50ciJ9.DhUh_nsXDuNIrvsQ3KOhOXdVcJg6fTDVW8K1oea8kLtmb7n-_hJHY3mWX5zzobu-Vh2VvFzIxPhHtol6gLHFktmIMiQ9TDHb_mRZFXgJB4ToNfqc3Fy9mi5bS8By2IYi1HxDaCStstaZDaunzXfHCtqybfZXyk6teDrf-iIf6lqX9Keo7GZO-Y7mP7C13-c_QwyNKrZK4TZwUQbecRqXYn1DcEHM7kukQHTar_hKBWkXPmNpScY0J2rKksr4ejR1uLhdQm-Pdwoe9y6qrNEB79vMLBkRNtbuV0vc1GYHp_YKkzBKBI_58uuB2GD9877CsrcRnHMQb88xpxiPKh6-ew";
+        string jwtPayloadDecoded;
+        JsonDocument jwtPayloadJson;
+        try
+        {
+            // Decode JWT to get header
+            var jwtHeaderDecoded = JWT.Headers(headerPsuFraudCheck);
+            // Verify algorithm used is RS256
+            if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrongFraud);
+                return result;
+            }
+
+            jwtPayloadDecoded = JWT.Payload(headerPsuFraudCheck);
+            jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+        }
+        catch (Exception)
         {
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrongFraud);
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid);
             return result;
         }
-
-        var jwtPayloadDecoded = JWT.Payload(headerPsuFraudCheck);
-        var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
 
         result = ValidateExPropertyFraud(context, errorCodeDetails, jwtPayloadJson);//Validate ex property
         if (!result.Result)
@@ -1454,15 +1482,8 @@ public static class OBConsentValidationHelper
         while (tryCount < maxRetryCount)
         {
             var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
-            if (!getPublicKeyResult.Result)
-            {
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
-                return result;
-            }
-
-            if (getPublicKeyResult.Data is null
+            if (getPublicKeyResult.Result == false
+                || getPublicKeyResult.Data is null
                 || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
             {
                 if (!isPublicKeyUpdated)
