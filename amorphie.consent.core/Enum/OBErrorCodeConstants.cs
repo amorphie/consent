@@ -111,6 +111,8 @@ public static class OBErrorCodeConstants
 
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
+        InternalServerErrorBodyEmptyValidateJwt = 153,
+        
         
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
@@ -120,7 +122,37 @@ public static class OBErrorCodeConstants
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201,
         InvalidContentConsentIdInHeader = 202,
-        MissingSignature = 300
+        InvalidContent = 203,
+        MissingSignature = 300,
+        InvalidSignatureHeaderAlgorithmWrong = 301,
+        InvalidSignatureHeaderExpireDatePassed = 302,
+        InvalidSignatureMissingBodyClaim = 303,
+        InvalidSignatureInvalidKey = 304,
+        InvalidSignatureExMissing = 305,
+        InvalidSignatureExWrong = 306,
+        
+        MissingSignaturePSUFraudCheck = 307,
+        InvalidSignatureHeaderAlgorithmWrongFraud = 308,
+        InvalidSignatureHeaderExpireDatePassedFraud = 309,
+        InvalidSignatureInvalidKeyFraud = 310,
+        InvalidSignatureFirstLoginFlagMissingFraud = 311,
+        InvalidSignatureExMissingFraud = 312,
+        InvalidSignatureExWrongFraud = 313,
+        InvalidSignatureFirstLoginFlagFraud = 314,
+        InvalidSignatureDeviceFirstLoginFlagMissingFraud = 315,
+        InvalidSignatureDeviceFirstLoginFlagFraud = 316,
+        InvalidSignatureLastPasswordChangeFlagMissingFraud = 317,
+        InvalidSignatureLastPasswordChangeFlagFraud = 318,
+        InvalidSignatureBlacklistFlagFraud = 319,
+        InvalidSignatureUnsafeAccountFlagFraud = 320,
+        InvalidSignatureAnomalyFlagFraud = 321,
+        InvalidSignatureMalwareFlagFraud = 322,
+  
+        InvalidPermissionGetAccount = 323,
+        InvalidPermissionGetBalance = 324,
+        InvalidPermissionGetTransaction = 325,
+        InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
+        InvalidSignatureXJwsSignatureHeaderInvalid = 327
 
     }
 }
