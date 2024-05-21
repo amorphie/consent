@@ -955,4 +955,98 @@ public static class SeedExtension
             MessageTr = "Istek başlığında bulunda xjwtsignature alanı kontrol edilirken beklenmedik bir durumla karşılaşıldı. Body değeri set edilmemiş."
         });
     }
+    
+     public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldPrBrmLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 3",
+            MessageTr = "boyut '3' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcRequiredIfNotKolas.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "If payment is not kolas, unv and hspno is required",
+            MessageTr = "Kolas işlemi değilse, unv hspno alanlarının doldu olması gerekmektedir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldTtrLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-24",
+            MessageTr = "boyut '1' ile  '24' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmAcklmLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-200",
+            MessageTr = "boyut '1' ile '200' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmKynkNotOpenBanking.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "odmKynk should be O refers to open banking",
+            MessageTr = "odmKynk “O” değeri atanarak iletilmelidir. “O” değeri “Açık bankacılık aracılığı ile gönderilen ödemelerde kullanılır.” anlamını taşımaktadır."
+        });
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIsyOdmBlgIsyKtgKodLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 4",
+            MessageTr = "boyut '4' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIsyOdmBlgAltIsyKtgKodLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 4",
+            MessageTr = "boyut '4' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIsyOdmBlgGenelUyeIsyeriNoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 8",
+            MessageTr = "boyut '8' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcKolasKolasDgrLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 7-50",
+            MessageTr = "boyut '7' ile '50' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmKkodUrtcKodLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 4",
+            MessageTr = "boyut '4' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidDataKareKodKolasCanNotBeUsedToGether.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+            Message =  "karekod and kolas can not be used together.",
+            MessageTr = "kkod kolas aynı mesajda dolu olarak gönderilemez."
+        });
+    }
+
 }

@@ -261,19 +261,7 @@ public static class ConstantHelper
         return typeof(OpenBankingConstants.RizaIptalDetayKodu).GetAllPublicConstantValues<string>();
     }
 
-    /// <summary>
-    /// Checks amount data pattern
-    /// </summary>
-    /// <param name="ttr">MksIslTtr data</param>
-    /// <returns>Is amount pattern is valid </returns>
-    public static bool IsValidAmount(string ttr)
-    {
-        // Define the regular expression pattern
-        string pattern = OpenBankingConstants.RegexPatterns.amount;
 
-        // Check if the input matches the pattern
-        return Regex.IsMatch(ttr, pattern);
-    }
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {

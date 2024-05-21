@@ -1930,7 +1930,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
-        //Check message required basic properties
+        //Check message required basic properties/objects
         if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
@@ -1948,7 +1948,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid_Hbr(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
         if (!result.Result)
         {
             return result;
@@ -1990,152 +1990,65 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
-        //Check message required basic properties
-        if (rizaIstegi is null
-            || rizaIstegi.katilimciBlg is null
-            || rizaIstegi.gkd == null
-            || rizaIstegi.odmBsltm == null
-            || rizaIstegi.odmBsltm.kmlk == null
-            || rizaIstegi.odmBsltm.islTtr == null
-            || rizaIstegi.odmBsltm.alc == null
-            || rizaIstegi.odmBsltm.odmAyr == null)
+         //Check message required basic properties/objects
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OERObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
-            result.Message =
-                "katilimciBlg, gkd,odmBsltm,odmBsltm-kmlk, odmBsltm-islttr, odmBsltm-alc, odmBsltm-odmAyr should be in consent request message";
+            result.Data = errorResponse;
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(rizaIstegi.katilimciBlg.hhsKod) //Required fields
-            || string.IsNullOrEmpty(rizaIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != rizaIstegi.katilimciBlg.hhsKod)
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required.";
+            //validation error in katiliciBilgisi data fields
             return result;
         }
-
+        
         //Check GKD
-        if (!IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk))
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. GKD data not valid.";
             return result;
         }
-
-        //Check if yos has subscription
-        if (rizaIstegi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik
-            && !await eventService.IsSubscsribedForAyrikGkd(rizaIstegi.katilimciBlg.yosKod, ConsentConstants.ConsentType.OpenBankingPayment))
-        {
-            result.Result = false;
-            result.Message = "Yos does not have subsription for Ayrik GKD";
-            return result;
-        }
-
+        
         //Check odmBsltm  Kimlik field validities
-        if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.ohkTur)
-            || !ConstantHelper.GetOHKTurList().Contains(rizaIstegi.odmBsltm.kmlk.ohkTur)
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Bireysel
-                && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkTur)
-                    || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.kmlkVrs)
-                    || !ConstantHelper.GetKimlikTurList().Contains(rizaIstegi.odmBsltm.kmlk.kmlkTur)))
-            || (rizaIstegi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
-                && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkTur)
-                    || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kmlk.krmKmlkVrs)
-                    || !ConstantHelper.GetKurumKimlikTurList().Contains(rizaIstegi.odmBsltm.kmlk.krmKmlkTur))))
+        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.odmBsltm.kmlk, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. odmBsltm => Kmlk data is not valid";
             return result;
         }
 
-        //Check odmBsltma Islem Tutarı
-        if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.ttr) //Check required fields
-            || string.IsNullOrEmpty(rizaIstegi.odmBsltm.islTtr.prBrm))
+        //Check odmBsltma Islem Tutarı object
+        result = OBConsentValidationHelper.CheckTtrData(rizaIstegi.odmBsltm.islTtr, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. odmBsltm => islTtr required fields empty";
             return result;
         }
 
-        //Check odmBsltma Alıcı
-        //Kolay Adres Sistemi kullanılmıyorsa zorunludur.
-        if (rizaIstegi.odmBsltm.alc.kolas == null
-            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.unv)
-                || string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.hspNo)))
+        //Check odmBsltma Alıcı,kkod,kolas
+        result = OBConsentValidationHelper.CheckKolasKarekodAlici(rizaIstegi.odmBsltm, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. If kolas is null, unv and hspno is required";
-            return result;
-        }
-
-        if (rizaIstegi.odmBsltm.alc.kolas != null
-            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.kolas.kolasDgr)
-                || string.IsNullOrEmpty(rizaIstegi.odmBsltm.alc.kolas.kolasTur)
-                || !ConstantHelper.GetKolasTurList().Contains(rizaIstegi.odmBsltm.alc.kolas.kolasTur)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. alc-kolas-kolasDgr, alc-kolas-kolasTur required fields.";
-            return result;
-        }
-
-        if (rizaIstegi.odmBsltm.alc.kolas != null
-            && rizaIstegi.odmBsltm.kkod != null)
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. Kolas and KareKod can not be used at the same time";
-            return result;
-        }
-
-        if (rizaIstegi.odmBsltm.kkod != null
-            && (string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.aksTur)
-                || string.IsNullOrEmpty(rizaIstegi.odmBsltm.kkod.kkodUrtcKod)
-                || !ConstantHelper.GetKolasTurList().Contains(rizaIstegi.odmBsltm.kkod.aksTur)))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. aksTur, kkodUrtcKod required fields.";
             return result;
         }
 
         //Check odemeayrintilari
-        if (string.IsNullOrEmpty(rizaIstegi.odmBsltm.odmAyr.odmKynk)
-            || string.IsNullOrEmpty(rizaIstegi.odmBsltm.odmAyr.odmAcklm))
+        result = OBConsentValidationHelper.CheckOdemeAyrinti(rizaIstegi.odmBsltm.odmAyr, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. odmBsltm-odmAyr-odmAcklm, odmBsltm-odmAyr-odmKynk required fields.";
-            return result;
-        }
-
-        if (rizaIstegi.odmBsltm.odmAyr.odmKynk !=
-            OpenBankingConstants.OdemeKaynak.AcikBankacilikAraciligiIleGonderilenOdemelerde)
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmKynk must be O.";
-            return result;
-        }
-
-        if (!ConstantHelper.GetOdemeAmaciList().Contains(rizaIstegi.odmBsltm.odmAyr.odmAmc))
-        {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat.  odmBsltm-odmAyr-odmAmc value is wrong.";
             return result;
         }
 
         //Check isyOdmBlg data
-        if (rizaIstegi.isyOdmBlg != null
-            && ((!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.isyKtgKod) && rizaIstegi.isyOdmBlg.isyKtgKod.Length != 4)
-                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.altIsyKtgKod) &&
-                    rizaIstegi.isyOdmBlg.altIsyKtgKod.Length != 4)
-                || (!string.IsNullOrEmpty(rizaIstegi.isyOdmBlg.genelUyeIsyeriNo) &&
-                    rizaIstegi.isyOdmBlg.genelUyeIsyeriNo.Length != 8)))
+        result = OBConsentValidationHelper.CheckIsyeriOdemeBilgileri(rizaIstegi.isyOdmBlg, httpContext, _errorCodeDetails);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat.  isyOdmBlg value validation error.";
             return result;
         }
-
+        
         return result;
     }
 
