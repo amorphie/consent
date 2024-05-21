@@ -1,4 +1,4 @@
-name: CONSENT-CI-CD
+name: PUSH-DOCKERHUB
 on:
   push:
     branches: [ dockerhub-test-mustafa ]
@@ -11,7 +11,7 @@ env:
   SECRET: docker-hub
 
 jobs:
-  ci-cd:
+  push-dockerhub:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
