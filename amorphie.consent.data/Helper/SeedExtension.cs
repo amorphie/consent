@@ -463,7 +463,7 @@ public static class SeedExtension
         });
 
 
-        
+
 
 
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -511,7 +511,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSyfKytSayi.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "syfKytSayi value is not valid. syfKytSayi can be between 1-100",
+            Message = "syfKytSayi value is not valid. syfKytSayi can be between 1-100",
             MessageTr = "syfKytSayi değeri geçersiz. 1-100 aralığında olabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -519,7 +519,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrAccount.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "srlmKrtr value is not valid. it should be hspRef",
+            Message = "srlmKrtr value is not valid. it should be hspRef",
             MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer hspRef."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -527,7 +527,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmYon.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "srlmYon value is not valid.",
+            Message = "srlmYon value is not valid.",
             MessageTr = "srlmYon değeri geçersiz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -535,7 +535,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBslBtsTrh.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "hesapIslemBtsTrh,hesapIslemBslTrh values not valid",
+            Message = "hesapIslemBtsTrh,hesapIslemBslTrh values not valid",
             MessageTr = "hesapIslemBtsTrh,hesapIslemBslTrh değerleri geçersiz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -543,7 +543,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormathesapIslemBtsTrhLaterThanToday.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "hesapIslemBtsTrh can not be later than enquiry datetime.",
+            Message = "hesapIslemBtsTrh can not be later than enquiry datetime.",
             MessageTr = "hesapIslemBtsTrh sorgulama zamanından sonra olamaz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -551,7 +551,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatesapIslemBslZmnLaterThanBtsZmn.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.",
+            Message = "hesapIslemBtsTrh can not be early than hesapIslemBslTrh.",
             MessageTr = "hesapIslemBtsTrh hesapIslemBslTrh den önce olamaz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -559,7 +559,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
+            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -567,7 +567,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
+            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -575,7 +575,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "For system enquiry, last 24 hours can be enquirable.",
+            Message = "For system enquiry, last 24 hours can be enquirable.",
             MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -583,7 +583,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "brcAlc value is not valid.",
+            Message = "brcAlc value is not valid.",
             MessageTr = "brcAlc değeri geçersiz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -591,7 +591,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSrlmKrtrTransaction.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "srlmKrtr value is not valid. it should be islGrckZaman",
+            Message = "srlmKrtr value is not valid. it should be islGrckZaman",
             MessageTr = "srlmKrtr değeri geçersiz. Olması gereken değer islGrckZaman."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -599,7 +599,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMinIslTtr.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "minIslTtr value is not valid.",
+            Message = "minIslTtr value is not valid.",
             MessageTr = "minIslTtr değeri geçersiz."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
@@ -607,17 +607,17 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "mksIslTtr value is not valid.",
+            Message = "mksIslTtr value is not valid.",
             MessageTr = "mksIslTtr değeri geçersiz."
         });
 
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -690,7 +690,7 @@ public static class SeedExtension
             Message = "Consent state is not authorization used. Not valid to process.",
             MessageTr = "Rıza durumu yetki kullanıldı olmadığı için işlem yapılamaz."
         });
-        
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -768,7 +768,7 @@ public static class SeedExtension
             Message = "X-JWS-Signature header in the TPP request ex is wrong.",
             MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex hatalı."
         });
-        
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -897,7 +897,7 @@ public static class SeedExtension
             Message = "PSU-Fraud-Check header in the TPP request MalwareFlag is wrong.",
             MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki MalwareFlag hatalı."
         });
-        
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -930,6 +930,10 @@ public static class SeedExtension
             Message = "Invalid post message",
             MessageTr = "İstek mesajı geçersiz."
         });
+    }
+
+    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -954,10 +958,6 @@ public static class SeedExtension
             Message = "By validating header jwt property, body not set.",
             MessageTr = "Istek başlığında bulunda xjwtsignature alanı kontrol edilirken beklenmedik bir durumla karşılaşıldı. Body değeri set edilmemiş."
         });
-    }
-    
-     public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
-    {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -998,7 +998,7 @@ public static class SeedExtension
             Message = "odmKynk should be O refers to open banking",
             MessageTr = "odmKynk “O” değeri atanarak iletilmelidir. “O” değeri “Açık bankacılık aracılığı ile gönderilen ödemelerde kullanılır.” anlamını taşımaktadır."
         });
-        
+
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -1044,7 +1044,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidDataKareKodKolasCanNotBeUsedToGether.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message =  "karekod and kolas can not be used together.",
+            Message = "karekod and kolas can not be used together.",
             MessageTr = "kkod kolas aynı mesajda dolu olarak gönderilemez."
         });
     }

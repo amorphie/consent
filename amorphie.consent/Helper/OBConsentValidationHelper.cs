@@ -485,7 +485,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.FieldNames.IsyOdmBlgAltIsyKtgKod,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldIsyOdmBlgAltIsyKtgKodLength);
         }
-        if (!string.IsNullOrEmpty(isyOdmBlg.genelUyeIsyeriNo) && isyOdmBlg.genelUyeIsyeriNo.Length != 4) //Check genelUyeIsyeriNo length
+        if (!string.IsNullOrEmpty(isyOdmBlg.genelUyeIsyeriNo) && isyOdmBlg.genelUyeIsyeriNo.Length != 8) //Check genelUyeIsyeriNo length
         {
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.IsyOdmBlgGenelUyeIsyeriNo,

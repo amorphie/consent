@@ -1567,7 +1567,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!dataValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(dataValidationResult.Message);
+                return Results.BadRequest(dataValidationResult.Data);
             }
 
             if (dataValidationResult.Data == null)
