@@ -1858,7 +1858,7 @@ public static class OBConsentValidationHelper
         string pattern = OpenBankingConstants.RegexPatterns.amount;
 
         // Check if the input matches the pattern
-        return Regex.IsMatch(ttr, pattern);
+        return Regex.IsMatch(ttr, pattern, RegexOptions.NonBacktracking);
     }
 
 
