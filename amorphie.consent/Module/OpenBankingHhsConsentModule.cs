@@ -8,17 +8,14 @@ using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
-using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Dapr;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace amorphie.consent.Module;
 
@@ -541,13 +538,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get consent additional data by Id casting to OdemeEmriRizasiHHSDto type of object
     /// </summary>
-    /// <param name="rizaNo"></param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="tokenService"></param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="httpContext">Httpcontext object</param>
-    /// <returns>OdemeEmriRizasiHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -1938,9 +1928,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
+        string objectName = OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi;
         //Check KatılımcıBilgisi
         result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
-            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             //validation error in katiliciBilgisi data fields
@@ -1948,7 +1939,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, objectName:objectName);
         if (!result.Result)
         {
             return result;
@@ -1956,13 +1947,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
         //Check Kimlik
-        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.kmlk, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.kmlk, httpContext, _errorCodeDetails,objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
-        result = OBConsentValidationHelper.CheckIznBlgTur(rizaIstegi.hspBlg.iznBlg, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckIznBlgTur(rizaIstegi.hspBlg.iznBlg, httpContext, _errorCodeDetails, objectName:objectName);
         return result;
     }
 
@@ -1997,10 +1988,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Data = errorResponse;
             return result;
         }
-
+        string objectName = OBErrorCodeConstants.ObjectNames.OdemeEmriRizasiIstegi;
         //Check KatılımcıBilgisi
         result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
-            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             //validation error in katiliciBilgisi data fields
@@ -2008,42 +1999,42 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService);
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
         
         //Check odmBsltm  Kimlik field validities
-        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.odmBsltm.kmlk, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.odmBsltm.kmlk, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
         //Check odmBsltma Islem Tutarı object
-        result = OBConsentValidationHelper.CheckTtrData(rizaIstegi.odmBsltm.islTtr, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckTtrData(rizaIstegi.odmBsltm.islTtr, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
         //Check odmBsltma Alıcı,kkod,kolas
-        result = OBConsentValidationHelper.CheckKolasKarekodAlici(rizaIstegi.odmBsltm, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckKolasKarekodAlici(rizaIstegi.odmBsltm, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
         //Check odemeayrintilari
-        result = OBConsentValidationHelper.CheckOdemeAyrinti(rizaIstegi.odmBsltm.odmAyr, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckOdemeAyrinti(rizaIstegi.odmBsltm.odmAyr, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
         //Check isyOdmBlg data
-        result = OBConsentValidationHelper.CheckIsyeriOdemeBilgileri(rizaIstegi.isyOdmBlg, httpContext, _errorCodeDetails);
+        result = OBConsentValidationHelper.CheckIsyeriOdemeBilgileri(rizaIstegi.isyOdmBlg, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;

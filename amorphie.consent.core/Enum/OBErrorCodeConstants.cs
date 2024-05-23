@@ -55,6 +55,7 @@ public static class OBErrorCodeConstants
     public static class ObjectNames
     {
         public const string HesapBilgisiRizasiIstegi = "HesapBilgisiRizasiIstegi";
+        public const string OdemeEmriRizasiIstegi = "OdemeEmriRizasiIstegi";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
         public const string Kmlk = "kmlk";
