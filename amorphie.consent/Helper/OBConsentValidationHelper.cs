@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
+using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -5,7 +8,9 @@ using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
 using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
-using Microsoft.EntityFrameworkCore;
+using Jose;
+
+using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.consent.Helper;
 
@@ -691,8 +696,8 @@ public static class OBConsentValidationHelper
 
         return result;
     }
-    
-    
+
+
     /// <summary>
     /// Checks if parameters valid to get balances and accounts
     /// </summary>
@@ -704,9 +709,9 @@ public static class OBConsentValidationHelper
     {
         ApiResult result = new();
         var today = DateTime.UtcNow;
-     
-        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
-            || syfKytSayi <=0 )
+
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
+            || syfKytSayi <= 0)
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -738,7 +743,7 @@ public static class OBConsentValidationHelper
     /// Checks if parameters valid to get transactions
     /// </summary>
     /// <returns>Parameters validation result</returns>
-    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails,Consent consent,
+    public static ApiResult IsParametersValidToGetTransactionsByHspRef(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails, Consent consent,
         string psuInitiated,
         DateTime hesapIslemBslTrh,
         DateTime hesapIslemBtsTrh,
@@ -819,7 +824,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBrcAlc);
             return result;
         }
-        
+
 
         if (!string.IsNullOrEmpty(minIslTtr) && !ConstantHelper.IsValidAmount(minIslTtr))
         {
@@ -835,9 +840,9 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatMksIslTtr);
             return result;
         }
-        
-        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi 
-            || syfKytSayi <=0 )
+
+        if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
+            || syfKytSayi <= 0)
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -891,14 +896,15 @@ public static class OBConsentValidationHelper
         bool? isUserRequired = false,
         bool? isConsentIdRequired = false,
         bool? isXJwsSignatureRequired = false,
-        List<OBErrorCodeDetail>? errorCodeDetails = null)
+        List<OBErrorCodeDetail>? errorCodeDetails = null,
+        string? body = null)
     {
         ApiResult result = new();
         header ??= OBModuleHelper.GetHeader(context);
 
         errorCodeDetails ??= new List<OBErrorCodeDetail>();
-       
-         // Separate method to prepare and check header properties
+
+        // Separate method to prepare and check header properties
         if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails, out var errorResponse))
         {
             result.Result = false;
@@ -942,7 +948,7 @@ public static class OBConsentValidationHelper
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentUserReference);
             return result;
         }
-        
+
         if (isConsentIdRequired.HasValue
             && isConsentIdRequired.Value
             && string.IsNullOrEmpty(header.ConsentId))
@@ -951,13 +957,16 @@ public static class OBConsentValidationHelper
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentConsentIdInHeader);
             return result;
         }
-        
-        if (isXJwsSignatureRequired.HasValue
-            && isXJwsSignatureRequired.Value
-            && string.IsNullOrEmpty(header.XJWSSignature))
+
+        result = await IsXJwsSignatureValid(context, configuration, yosInfoService, header, errorCodeDetails, body, isXJwsSignatureRequired);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+            return result;
+        }
+        
+        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails);
+        if (!result.Result)
+        {
             return result;
         }
 
@@ -985,7 +994,537 @@ public static class OBConsentValidationHelper
         return result;
     }
 
+    public static async Task<ApiResult> IsXJwsSignatureValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string? body,
+        bool? isXJwsSignatureRequired = false
+    )
+    {
+        ApiResult result = new();
+
+        //Check config value CheckXJWSSignature
+        if (bool.TryParse(configuration["CheckXJWSSignature"], out bool isXJWSSignatureCheckEnabled) &&
+            !isXJWSSignatureCheckEnabled)
+        {
+            //XJWSSignature check config is false
+            //NO need to check
+            return result;
+        }
+
+        if (isXJwsSignatureRequired.HasValue
+            && isXJwsSignatureRequired.Value
+            && string.IsNullOrEmpty(header.XJWSSignature))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.MissingSignature);
+            return result;
+        }
+
+        //No need to check header property
+        if (isXJwsSignatureRequired is null
+            || isXJwsSignatureRequired is false)
+        {
+            return result;
+        }
+        var headerXjwsSignature = header.XJWSSignature!;
+        //   "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaWd3LmJrbS5jb20udHIiLCJleHAiOjE2NjU0NzU1NjIsImlhdCI6MTY2NTM4OTE2MiwiYm9keSI6ImE2NGIxOWY5NWVlYjFmYjBhMGEzZTJkYmJjNmUzZDg0NzJjNTIxODRkNDU0MzQxN2RkYzZkMTU2ZmM1YzU1NzEifQ.Q65PI_1fTEzzBMirvmJvXgVX3orhhZ4_UqujtGdHkU7me-1ymIjvPrzy3kfyER1pedFb7HDCBuPvYoqjX8eUnpiiZsxfzCiEa0McIhoFeUOggq-O8VihItp8bLr2DWwQ9JHN1-WXB2mL31KAKFAL1VY9-DXuAdT-RfE_SLYsl2ycmNy4ti4XvfDvvlE56ZsieFZ727VuwR8wi7F0kKDc6UhjaMF9xcUeAM1fxX-bmcOaOo1NZGC0vvgjNZKz_OJrN-q8VhWYnQPiJ7wY7S9IG8bHIkBImKSVf8LuOEvl8u0BZzADLH1iOBd9x2l1plyI_NLPTrnOqhWhKlljkkJBCg";
+        try
+        {
+            // Decode JWT to get header
+            var jwtHeaderDecoded = JWT.Headers(headerXjwsSignature);
+            // Verify algorithm used is RS256
+            if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong);
+                return result;
+            }
+
+            var jwtPayloadDecoded = JWT.Payload(headerXjwsSignature);
+            var jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+            if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))//Get exp data in payload
+            {
+                if (expValue.TryGetInt64(out long expUnixTime))
+                {
+                    // Convert the Unix time to a DateTime object
+                    var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                    // Check if the token has expired
+                    if (expDateTime <= DateTime.UtcNow)
+                    {
+                        // Token is invalid
+                        result.Result = false;
+                        result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed);
+                        return result;
+                    }
+                }
+                else
+                {
+                    // Handle the case where "exp" property is not a valid JSON number
+                    result.Result = false;
+                    result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong);
+                    return result;
+                }
+            }
+            else
+            {
+                // Handle the case where "exp" property is missing
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing);
+                return result;
+            }
+        }
+        catch (Exception)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureXJwsSignatureHeaderInvalid);
+            return result;
+        }
+
+        if (body is null)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInternalServerError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorBodyEmptyValidateJwt);
+            return result;
+        }
+        var validateSignatureResult = await
+            ValidateJWTSignature(yosInfoService, header, headerXjwsSignature, context, errorCodeDetails, body);
+        if (!validateSignatureResult.Result)
+        {
+            return validateSignatureResult;
+        }
+
+        return result;
+    }
+
+    private static async Task<ApiResult> ValidateJWTSignature(IYosInfoService yosInfoService,
+        RequestHeaderDto header, string headerXjwsSignature, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, string body)
+    {
+        ApiResult result = new();
+        int maxRetryCount = 2;
+        int tryCount = 0;
+        bool isPublicKeyUpdated = false;
+        Dictionary<string, object>? payload = null;
+        while (tryCount < maxRetryCount)
+        {
+            var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
+            if (getPublicKeyResult.Result == false 
+                || getPublicKeyResult.Data is null
+                || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
+            {
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
+                ++tryCount;
+                continue;
+            }
+
+            string publicKey = getPublicKeyResult.Data.ToString()!;
+            // Convert the base64 encoded public key to bytes
+            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+
+           var verifyResult= VerifyJwt(headerXjwsSignature, publicKey);
+           if (verifyResult.Result)//Verified
+           {
+               payload = (Dictionary<string, object>?)verifyResult.Data;
+               break;
+           }
+           if (!isPublicKeyUpdated)
+           {
+               //Get yos public key and update system
+               await yosInfoService.SaveYos(header.XTPPCode);
+               isPublicKeyUpdated = true;
+           }
+           tryCount++;
+        }
+
+        if (tryCount == 2)
+        {
+            // If token validation fails, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+            return result;
+        }
+
+        var bodyClaim = payload?["body"]?.ToString();
+        if (string.IsNullOrEmpty(bodyClaim))
+        {
+            // If "body" claim is missing, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim);
+            return result;
+        }
+        
+        // Calculate SHA256 hash of the request body
+        var requestBodyHash = OBModuleHelper.GetChecksumSHA256(body);
+
+        // Compare the calculated hash with the value in the "body" claim
+        if (!string.Equals(bodyClaim, requestBodyHash, StringComparison.OrdinalIgnoreCase))
+        {
+            // If the hashes don't match, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey);
+            return result;
+        }
+
+        return result;
+    }
     
+    public static ApiResult VerifyJwt(string token, string publicKey)
+    {
+        ApiResult result = new();
+        RSA rsa = RSA.Create();
+ 
+        // Convert the public key string to byte array
+        byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
+ 
+        // Import the public key bytes to the RSA object
+        rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
+ 
+ 
+        // Create token validation parameters
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false, // Set to true if you want to validate the issuer
+            ValidateAudience = false, // Set to true if you want to validate the audience
+            ValidateLifetime = false, // Set to true to validate the token expiration
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new RsaSecurityKey(rsa)
+        };
+ 
+        try
+        {
+            // Try to validate the token
+            var handler = new JwtSecurityTokenHandler();
+            SecurityToken securityToken;
+            var principal = handler.ValidateToken(token, validationParameters, out securityToken);
+            // Token is valid
+            // Extract claims from the principal
+            var claims = principal.Claims.ToDictionary(c => c.Type, c => (object)c.Value);
+            result.Data = claims;
+            return result; // Return the payload (claims)
+        }
+        catch (Exception)
+        {
+            // Token validation failed
+            result.Result = false;
+            return result;
+        }
+    }
+
+
+    
+     public static async Task<ApiResult> IsPsuFraudCheckValid(HttpContext context,
+        IConfiguration configuration,
+        IYosInfoService yosInfoService,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail> errorCodeDetails
+        )
+    {
+        ApiResult result = new();
+
+        //No need to check header property
+        if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.SystemStarted)
+        {
+            return result;
+        }
+
+        //Check CheckPSUFraudCheck config value 
+        if (bool.TryParse(configuration["CheckPSUFraudCheck"], out bool isPSUFraudCheckEnabled) &&
+            !isPSUFraudCheckEnabled)
+        {
+            //CheckPSUFraudCheck config is false. No need to check
+            return result;
+        }
+
+        if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.OHKStarted
+            && string.IsNullOrEmpty(header.PSUFraudCheck)) //PSUFraudCheck is required when OHK started
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck);
+            return result;
+        }
+
+        var headerPsuFraudCheck = header.PSUFraudCheck!;
+        // "eyJhbGciOiJSUzI1NiJ9.eyJBbm9tYWx5RmxhZyI6IjAiLCJMYXN0UGFzc3dvcmRDaGFuZ2VGbGFnIjoiMSIsIkZpcnN0TG9naW5GbGFnIjoiMSIsIkRldmljZUZpcnN0TG9naW5GbGFnIjoiMSIsIkJsYWNrbGlzdEZsYWciOiIwIiwiTWFsd2FyZUZsYWciOiIwIiwiVW5zYWZlQWNjb3VudEZsYWciOiIwIiwiZXhwIjoxNjY1NDc1NTU2LCJpYXQiOjE2NjUzODkxNTYsImlzcyI6Imh0dHBzOi8vYXBpZ3cuYmttLmNvbS50ciJ9.DhUh_nsXDuNIrvsQ3KOhOXdVcJg6fTDVW8K1oea8kLtmb7n-_hJHY3mWX5zzobu-Vh2VvFzIxPhHtol6gLHFktmIMiQ9TDHb_mRZFXgJB4ToNfqc3Fy9mi5bS8By2IYi1HxDaCStstaZDaunzXfHCtqybfZXyk6teDrf-iIf6lqX9Keo7GZO-Y7mP7C13-c_QwyNKrZK4TZwUQbecRqXYn1DcEHM7kukQHTar_hKBWkXPmNpScY0J2rKksr4ejR1uLhdQm-Pdwoe9y6qrNEB79vMLBkRNtbuV0vc1GYHp_YKkzBKBI_58uuB2GD9877CsrcRnHMQb88xpxiPKh6-ew";
+        string jwtPayloadDecoded;
+        JsonDocument jwtPayloadJson;
+        try
+        {
+            // Decode JWT to get header
+            var jwtHeaderDecoded = JWT.Headers(headerPsuFraudCheck);
+            // Verify algorithm used is RS256
+            if (jwtHeaderDecoded["alg"].ToString() != "RS256")
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrongFraud);
+                return result;
+            }
+
+            jwtPayloadDecoded = JWT.Payload(headerPsuFraudCheck);
+            jwtPayloadJson = JsonDocument.Parse(jwtPayloadDecoded);
+        }
+        catch (Exception)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid);
+            return result;
+        }
+
+        result = ValidateExPropertyFraud(context, errorCodeDetails, jwtPayloadJson);//Validate ex property
+        if (!result.Result)
+            return result;
+
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "FirstLoginFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud);
+        if (!result.Result)
+            return result;
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "DeviceFirstLoginFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud);
+        if (!result.Result)
+            return result;
+        result = ValidateRequiredZmnAralikProperty(jwtPayloadJson, "LastPasswordChangeFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud, 
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud);
+        if (!result.Result)
+            return result;
+        
+      
+        result = ValidateVarYokProperty(jwtPayloadJson, "BlacklistFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud);
+        if (!result.Result)
+            return result;
+        
+        result = ValidateZmnAralikProperty(jwtPayloadJson, "MalwareFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud);
+        if (!result.Result)
+            return result;
+      
+        result = ValidateVarYokProperty(jwtPayloadJson, "AnomalyFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud);
+        if (!result.Result)
+            return result;
+      
+        result = ValidateZmnAralikProperty(jwtPayloadJson, "UnsafeAccountFlag", context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud);
+        if (!result.Result)
+            return result;
+        
+        //Validate fraud jwt with public key
+        var validateSignatureResult = await
+            ValidatePsuFraudCheckJWT(yosInfoService, header, headerPsuFraudCheck, context, errorCodeDetails);
+        if (!validateSignatureResult.Result)
+        {
+            return validateSignatureResult;
+        }
+
+        return result;
+    }
+
+     private static ApiResult ValidateExPropertyFraud(HttpContext context, List<OBErrorCodeDetail> errorCodeDetails, JsonDocument jwtPayloadJson)
+     {
+         ApiResult result =new();
+         if (jwtPayloadJson.RootElement.TryGetProperty("exp", out var expValue))
+         {
+             if (expValue.TryGetInt64(out long expUnixTime))
+             {
+                 // Convert the Unix time to a DateTime object
+                 var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnixTime).UtcDateTime;
+
+                 // Check if the token has expired
+                 if (expDateTime <= DateTime.UtcNow)
+                 {
+                     // Token is invalid
+                     result.Result = false;
+                     result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                         OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassedFraud);
+                     return result;
+                 }
+             }
+             else
+             {
+                 // Handle the case where "exp" property is not a valid JSON number
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrongFraud);
+                 return result;
+             }
+         }
+         else
+         {
+             // Handle the case where "exp" property is missing
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                 OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissingFraud);
+             return result;
+         }
+
+         return result;
+     }
+
+     /// <summary>
+     /// Validates property. It is  required property. Its value is in zmnaralik list enum.
+     /// </summary>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateRequiredZmnAralikProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum missingErrorCode, OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (string.IsNullOrEmpty(propertyValue.ToString())
+             || !Int32.TryParse(propertyValue.ToString(), out var propInt)
+                 || !ConstantHelper.GetZmnAralikList().Contains(propInt))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+         else
+         {
+             //property is missing
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                 missingErrorCode);
+             return result;
+         }
+
+         return result;
+     }
+     
+     /// <summary>
+     /// Validates property. Its not requeired property. Its value is in zmnaralik list enum.
+     /// </summary>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateZmnAralikProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (!string.IsNullOrEmpty(propertyValue.ToString())
+                && (!Int32.TryParse(propertyValue.ToString(), out var propInt)
+                 || !ConstantHelper.GetZmnAralikList().Contains(propInt)))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+
+         return result;
+     }
+     
+     /// <summary>
+     /// Validates property. Its not requeired property. Its value is in varyok enum.
+     /// </summary>
+     /// <param name="jwtPayloadJson">To be checked property object</param>
+     /// <param name="propertyName">property name</param>
+     /// <param name="context"></param>
+     /// <param name="errorCodeDetails"></param>
+     /// <param name="invalidErrorCode">If not valid, which error code result will be generated</param>
+     /// <returns>Validate property result</returns>
+     private static ApiResult ValidateVarYokProperty(JsonDocument jwtPayloadJson, string propertyName, HttpContext context, List<OBErrorCodeDetail> errorCodeDetails , OBErrorCodeConstants.ErrorCodesEnum invalidErrorCode)
+     {
+         ApiResult result = new();
+         if (jwtPayloadJson.RootElement.TryGetProperty(propertyName, out var propertyValue))
+         {
+             if (!string.IsNullOrEmpty(propertyValue.ToString())
+                 &&  (!Int32.TryParse(propertyValue.ToString(), out var propInt)
+                      || !ConstantHelper.GetVarYok().Contains(propInt)))
+             {
+                 //property  is invalid
+                 result.Result = false;
+                 result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                     invalidErrorCode);
+                 return result;
+             }
+         }
+
+         return result;
+     }
+     
+
+    private static async Task<ApiResult> ValidatePsuFraudCheckJWT(IYosInfoService yosInfoService,
+        RequestHeaderDto header, string headerPsuFraudCheck, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+        int maxRetryCount = 2;
+        int tryCount = 0;
+        bool isPublicKeyUpdated = false;
+        while (tryCount < maxRetryCount)
+        {
+            var getPublicKeyResult = await yosInfoService.GetYosPublicKey(header.XTPPCode);
+            if (getPublicKeyResult.Result == false
+                || getPublicKeyResult.Data is null
+                || string.IsNullOrEmpty((string)getPublicKeyResult.Data))
+            {
+                if (!isPublicKeyUpdated)
+                {
+                    //Get yos public key and update system
+                    await yosInfoService.SaveYos(header.XTPPCode);
+                    isPublicKeyUpdated = true;
+                }
+
+                ++tryCount;
+                continue;
+            }
+
+            string publicKey = getPublicKeyResult.Data.ToString()!;
+            var verifyResult= VerifyJwt(headerPsuFraudCheck, publicKey);
+            if (verifyResult.Result)//Verified
+            {
+                break;
+            }
+            if (!isPublicKeyUpdated)
+            {
+                //Get yos public key and update system
+                await yosInfoService.SaveYos(header.XTPPCode);
+                isPublicKeyUpdated = true;
+            }
+            tryCount++;
+        }
+
+        if (tryCount == 2)
+        {
+            // If token validation fails, return an error
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKeyFraud);
+            return result;
+        }
+        
+        return result;
+    }
+
+
     
     
 }

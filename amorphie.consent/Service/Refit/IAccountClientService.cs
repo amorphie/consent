@@ -13,7 +13,7 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Post("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
-    Task<ListHesapBilgileriDto?> GetAccounts([Header("izinTur")] string izinTur,
+    Task<GetAccountsResponseDto?> GetAccounts([Header("izinTur")] string izinTur,
         [Body] GetByAccountRefRequestDto accountRefs,
         string customerId,
         int syfKytSayi,
@@ -23,11 +23,11 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/{hspRef}")]
-    Task<HesapBilgileriDto?> GetAccountByHspRef(string customerId, string hspRef);
+    Task<GetAccountResponseDto?> GetAccountByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Post("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
-    Task<ListBakiyeBilgileriDto?> GetBalances([Body] GetByAccountRefRequestDto accountRefs,
+    Task<GetBalancesResponseDto?> GetBalances([Body] GetByAccountRefRequestDto accountRefs,
         string customerId,
         int syfKytSayi,
         int syfNo,
@@ -36,11 +36,11 @@ public interface IAccountClientService
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{customerId}/bakiye/{hspRef}")]
-    Task<BakiyeBilgileriDto?> GetBalanceByHspRef(string customerId, string hspRef);
+    Task<GetBalanceResponseDto?> GetBalanceByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
     [Get("/hesaplar/{hspRef}/islemler")]
-    Task<IslemBilgileriServiceResponseDto?> GetTransactionsByHspRef(
+    Task<GetTransactionsResponseDto?> GetTransactionsByHspRef(
         string hspRef,
         string hesapIslemBslTrh,
         string hesapIslemBtsTrh,

@@ -35,16 +35,14 @@ public interface IOBAuthorizationService
     public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions);
 
     /// <summary>
-    /// Get User's account consent of given account ref by consent id, tckn, yoscode, permissions.
+    /// Get User's account consent of given account ref by consent id, tckn, yoscode
     /// </summary>
     /// <param name="userTckn">User TCKN number</param>
     /// <param name="consentId"></param>
     /// <param name="yosCode">Yos Code - Bank Code</param>
-    /// <param name="permissions">Required Permissions</param>
     /// <param name="accountRef">Account ref</param>
     /// <returns>User's account consent</returns>
-    public Task<ApiResult> GetAccountConsentByAccountRef(string userTckn,string consentId, string yosCode, List<string> permissions,
-        string accountRef);
+    public Task<ApiResult> GetAccountConsentByAccountRef(string consentId,string userTckn, string yosCode,string accountRef);
 
     /// <summary>
     /// Get user consent by checking id, consentType

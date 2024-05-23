@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,13 +14,15 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240503132153_ErrorCodeDetailsHeaderScript")]
+    partial class ErrorCodeDetailsHeaderScript
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.4")
+                .HasAnnotation("ProductVersion", "8.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -53,9 +56,6 @@ namespace amorphie.consent.data.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastValidAccessDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -176,6 +176,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<string>("InstitutionIdentityType")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("LastValidAccessDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -258,6 +261,208 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBErrorCodeDetails");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("091c5ad5-e3ad-473a-b8b3-2ab010295eb3"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 301,
+                            Message = "X-JWS-Signature header in the TPP request is algorithm is wrong.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligindaki alg geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("b2a96301-c54b-4712-8d95-3d60bc5a42a8"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 302,
+                            Message = "X-JWS-Signature header in the TPP request is expired.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi zaman asimina ugramis."
+                        },
+                        new
+                        {
+                            Id = new Guid("34b8db4c-6d7f-41bb-83cc-7cad0d58464e"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 303,
+                            Message = "X-JWS-Signature header in the TPP request is body claim is missing.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basliginda body claim bulunmamaktadır."
+                        },
+                        new
+                        {
+                            Id = new Guid("b374e743-6222-476d-88af-99143a49ff7c"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 304,
+                            Message = "X-JWS-Signature signature does not match locally computed signature.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature kayitli public key ile dogrulanamadi."
+                        },
+                        new
+                        {
+                            Id = new Guid("44cad478-f9e7-4ca3-9275-d8e7347e3deb"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 305,
+                            Message = "X-JWS-Signature header in the TPP request ex is missing.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("c81e12ac-5b40-4ab3-82ba-c7064d4ce3fd"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 306,
+                            Message = "X-JWS-Signature header in the TPP request ex is wrong.",
+                            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("6b43dca7-359e-4075-8f0a-940b25235262"),
+                            BkmCode = "TR.OHVPS.Resource.MissingSignature",
+                            InternalCode = 307,
+                            Message = "Header PSU-Fraud-Check property is empty.",
+                            MessageTr = "İstek başlığında PSU-Fraud-Check alanı eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("123ab5ab-ee48-4b4f-9161-b1bbee7c8379"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 308,
+                            Message = "PSU-Fraud-Check header in the TPP request is algorithm is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligindaki alg geçersiz."
+                        },
+                        new
+                        {
+                            Id = new Guid("feb74fbb-d1bd-479e-a800-bd228bc7b5f7"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 309,
+                            Message = "PSU-Fraud-Check expired.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check tarihi gecmistir."
+                        },
+                        new
+                        {
+                            Id = new Guid("ec143d8c-7cd0-40f6-ae0a-88c75dc24899"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 310,
+                            Message = "PSU-Fraud-Check signature does not match locally computed signature.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check kayitli public key ile dogrulanamadi."
+                        },
+                        new
+                        {
+                            Id = new Guid("f2a9adb3-acac-47be-9737-acdd15d16c6f"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 312,
+                            Message = "PSU-Fraud-Check header in the TPP request ex is missing.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki ex eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("33af5a1a-ba25-47cd-a3d4-66e27f234f25"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 313,
+                            Message = "PSU-Fraud-Check header in the TPP request ex is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki ex hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("60f44090-8480-42d8-9e61-974853862991"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 311,
+                            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is missing.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("37000d9a-aa46-4d5b-8b22-8fd926d458b7"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 314,
+                            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("3780e5f0-1ca1-4625-8dbb-99f36da05970"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 315,
+                            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is missing.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("7e20161a-81ce-404b-8916-b38f43c02984"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 316,
+                            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("5cf95caf-fefb-4062-93bd-ca9661be9cf4"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 317,
+                            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is missing.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag eksik."
+                        },
+                        new
+                        {
+                            Id = new Guid("52901069-762b-49fd-bdec-94f76609faa2"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 318,
+                            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("f064254b-19e2-4af5-9fa5-128122d39f5a"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 319,
+                            Message = "PSU-Fraud-Check header in the TPP request BlacklistFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki BlacklistFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("f7ce3250-5eb9-43bc-b6c8-e0e333c3baa6"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 320,
+                            Message = "PSU-Fraud-Check header in the TPP request UnsafeAccountFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki UnsafeAccountFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("8e042fbd-b912-426e-ba10-11a3006f7d3f"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 321,
+                            Message = "PSU-Fraud-Check header in the TPP request AnomalyFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki AnomalyFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("4bedce71-1fe3-47a1-8120-05c4b6f34330"),
+                            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+                            InternalCode = 322,
+                            Message = "PSU-Fraud-Check header in the TPP request MalwareFlag is wrong.",
+                            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki MalwareFlag hatalı."
+                        },
+                        new
+                        {
+                            Id = new Guid("4a7ae714-c068-4afa-9bac-2b436185b0e8"),
+                            BkmCode = "TR.OHVPS.Resource.Forbidden",
+                            InternalCode = 315,
+                            Message = "There is no account permission for this consent.",
+                            MessageTr = "İzin türü kontrolü başarısız. Hesap yetkisi olmayan rıza no ile hesap sorgulanamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("4c820c3d-c298-4acb-9520-1deeb4aacb1b"),
+                            BkmCode = "TR.OHVPS.Resource.Forbidden",
+                            InternalCode = 316,
+                            Message = "There is no balance permission for this consent.",
+                            MessageTr = "İzin türü kontrolü başarısız. Bakiye yetkisi olmayan rıza no ile bakiye sorgulanamaz."
+                        },
+                        new
+                        {
+                            Id = new Guid("145dba06-7600-4b69-a56d-7fc042707ec4"),
+                            BkmCode = "TR.OHVPS.Resource.Forbidden",
+                            InternalCode = 317,
+                            Message = "There is no transaction permission for this consent.",
+                            MessageTr = "İzin türü kontrolü başarısız. İşlem yetkisi olmayan rıza no ile işlem bilgisi sorgulanamaz."
+                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>

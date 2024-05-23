@@ -40,10 +40,10 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .AsNoTracking()
                 .Where(c =>
                     c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                    && c.LastValidAccessDate > today
                     && c.State == consentState
                     && c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
                                                           && i.IdentityType == OpenBankingConstants.KimlikTur.TCKN
-                                                          && i.LastValidAccessDate > today
                                                           && i.UserType == OpenBankingConstants.OHKTur.Bireysel))
                 .ToListAsync();
             result.Data = activeAccountConsents;
@@ -69,11 +69,11 @@ public class OBAuthorizationService : IOBAuthorizationService
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.Id.ToString() == consentId
+                                && c.LastValidAccessDate > today
                                 && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                 && c.State == consentState
                                 && c.OBAccountConsentDetails.Any(i =>
-                                    i.LastValidAccessDate > today
-                                    && i.UserType == OpenBankingConstants.OHKTur.Bireysel
+                                    i.UserType == OpenBankingConstants.OHKTur.Bireysel
                                     && i.AccountReferences != null
                                     && i.AccountReferences.Contains(accountRef)))
                     .ToListAsync())
@@ -121,13 +121,12 @@ public class OBAuthorizationService : IOBAuthorizationService
         return result;
     }
 
-    public async Task<ApiResult> GetAccountConsentByAccountRef(string userTckn,string consentId, string yosCode, List<string> permissions,
-        string accountRef)
+    public async Task<ApiResult> GetAccountConsentByAccountRef(string consentId,string userTckn, string yosCode, string accountRef)
     {
         ApiResult result = new();
         try
         {
-            var consent = (await _context.Consents
+            var consent = await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
@@ -140,9 +139,7 @@ public class OBAuthorizationService : IOBAuthorizationService
                                                                           .Bireysel
                                                                       && i.AccountReferences != null
                                                                       && i.AccountReferences.Contains(accountRef)))
-                    .ToListAsync())
-                ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
-                .FirstOrDefault();
+                    .FirstOrDefaultAsync();
             result.Data = consent;
         }
         catch (Exception e)
@@ -195,10 +192,11 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id
                                           && consentTypes.Contains(c.ConsentType)
+                                          && (c.LastValidAccessDate == null
+                                              || (c.LastValidAccessDate != null && c.LastValidAccessDate > today))
                                           && (c.OBAccountConsentDetails.Any(i => i.IdentityData == userTCKN
                                                   && i.IdentityType ==
                                                   OpenBankingConstants.KimlikTur.TCKN
-                                                  && i.LastValidAccessDate > today
                                                   && i.UserType == OpenBankingConstants.OHKTur
                                                       .Bireysel
                                                   && i.Consent.ConsentType ==
@@ -234,9 +232,10 @@ public class OBAuthorizationService : IOBAuthorizationService
                 .Include(c => c.OBPaymentConsentDetails)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.ConsentType == consentType
+                                          && (c.LastValidAccessDate == null
+                                              || (c.LastValidAccessDate != null && c.LastValidAccessDate > today))
                                           && (c.OBAccountConsentDetails.Any(i =>
-                                                  i.LastValidAccessDate > today
-                                                  && i.YosCode == yosCode
+                                                  i.YosCode == yosCode
                                                   && i.CheckSumValue == checkSumValue
                                                   && i.CheckSumLastValiDateTime >= today
                                                   && i.Consent.ConsentType ==

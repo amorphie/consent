@@ -718,5 +718,241 @@ public static class SeedExtension
 
     }
 
-
+    public static void SeedOBErrorCodeDetailsVersion2(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrong.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is algorithm is wrong.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligindaki alg geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassed.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is expired.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi zaman asimina ugramis."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMissingBodyClaim.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request is body claim is missing.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basliginda body claim bulunmamaktadır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKey.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature signature does not match locally computed signature.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature kayitli public key ile dogrulanamadi."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissing.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request ex is missing.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrong.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header in the TPP request ex is wrong.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi içerisindeki ex hatalı."
+        });
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.MissingSignaturePSUFraudCheck.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.MissingSignature",
+            Message = "Header PSU-Fraud-Check property is empty.",
+            MessageTr = "İstek başlığında PSU-Fraud-Check alanı eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderAlgorithmWrongFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request is algorithm is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligindaki alg geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureHeaderExpireDatePassedFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check expired.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check tarihi gecmistir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureInvalidKeyFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check signature does not match locally computed signature.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check kayitli public key ile dogrulanamadi."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExMissingFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request ex is missing.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki ex eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureExWrongFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request ex is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki ex hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is missing.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is missing.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is missing.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag eksik."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request BlacklistFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki BlacklistFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request UnsafeAccountFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki UnsafeAccountFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request AnomalyFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki AnomalyFlag hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header in the TPP request MalwareFlag is wrong.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki MalwareFlag hatalı."
+        });
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetAccount.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no account permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. Hesap yetkisi olmayan rıza no ile hesap sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetBalance.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no balance permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. Bakiye yetkisi olmayan rıza no ile bakiye sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetTransaction.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.Forbidden",
+            Message = "There is no transaction permission for this consent.",
+            MessageTr = "İzin türü kontrolü başarısız. İşlem yetkisi olmayan rıza no ile işlem bilgisi sorgulanamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContent.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Invalid post message",
+            MessageTr = "İstek mesajı geçersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header is invalid.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureXJwsSignatureHeaderInvalid.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header is invalid.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi gecersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorBodyEmptyValidateJwt.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By validating header jwt property, body not set.",
+            MessageTr = "Istek başlığında bulunda xjwtsignature alanı kontrol edilirken beklenmedik bir durumla karşılaşıldı. Body değeri set edilmemiş."
+        });
+    }
 }
