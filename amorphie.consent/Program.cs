@@ -29,6 +29,7 @@ using Dapr;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
 using System.Net.Http;
+using amorphie.consent.Helper;
 using amorphie.core.Middleware.Logging;
 using amorphie.core.Middleware.Logging;
 
@@ -49,6 +50,7 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
 builder.Services.AddTransient<HttpClientHandler>();
+builder.Services.AddScoped<LoggingHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
@@ -115,6 +117,7 @@ builder.Services
                                 throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
     })
     .ConfigurePrimaryHttpMessageHandler(() => handler)
+    .AddHttpMessageHandler<LoggingHandler>()
     .AddPolicyHandler(retryPolicy);
 
 builder.Services
