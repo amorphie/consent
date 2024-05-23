@@ -45,6 +45,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/GetAuthorizedAccountConsents", GetAuthorizedAccountConsentsByUserTCKN);
+        routeGroupBuilder.MapGet("/GetInstitutionAuthorizedAccountConsents", GetInstitutionAuthorizedAccountConsents);
         routeGroupBuilder.MapGet("/GetConsentWebViewInfo/{rizaNo}", GetConsentWebViewInfo);
         routeGroupBuilder.MapGet("/hesap-bilgisi-rizasi/{rizaNo}", GetAccountConsentById)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
@@ -96,6 +97,52 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <returns>Account consent list of user</returns>
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     public async Task<IResult> GetAuthorizedAccountConsentsByUserTCKN(
+        [FromServices] ConsentDbContext dbContext,
+        [FromServices] IMapper mapper,
+        [FromServices] IAccountService accountService,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBAuthorizationService authorizationService,
+        HttpContext httpContext)
+    {
+        try
+        {
+            var header = OBModuleHelper.GetHeader(httpContext);
+            if (string.IsNullOrEmpty(header.UserReference))
+            {
+                //Missing header fields
+                return Results.BadRequest("Header user_reference can not be empty");
+            }
+
+            string userTCKN = header.UserReference; //get logged in user tckn
+            ApiResult getConsentsResponse = await authorizationService.GetAuthUsedAccountConsentsOfUser(userTCKN);
+            if (!getConsentsResponse.Result)
+            {
+                //Error in getting consents
+                return Results.Problem(getConsentsResponse.Message);
+            }
+
+            var userAccountConsents = (List<Consent>?)getConsentsResponse.Data;
+            if (!(userAccountConsents?.Any() ?? false))
+            {
+                //No authorized account consent in the system
+                //MObile ekip NoContenti yakalayamadığı için Ok ve boş liste dönüldü
+                return Results.Ok(new List<ListAccountConsentDto>());
+            }
+
+            //Get consent details
+            var consentDetails = await GetAccountConsentDetails(userTCKN, userAccountConsents, dbContext, mapper, accountService);
+            return Results.Ok(consentDetails);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
+    public async Task<IResult> GetInstitutionAuthorizedAccountConsents(
+        string customerNumber,
+        string institutionCustomerNumber,
         [FromServices] ConsentDbContext dbContext,
         [FromServices] IMapper mapper,
         [FromServices] IAccountService accountService,
@@ -1173,6 +1220,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(checkValidationResult.Data);
             }
+            //TODO:Emre Check Kimlik Validation
+            
             //Check Idempotency
             var getIdempotencyConsentResult = await OBModuleHelper.GetIdempotencyAccountConsent(rizaIstegi, header, authorizationService);
             if (!getIdempotencyConsentResult.Result)
