@@ -50,7 +50,7 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
 builder.Services.AddTransient<HttpClientHandler>();
-builder.Services.AddScoped<LoggingHandler>();
+builder.Services.AddTransient<LoggingHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 // Add services to the container.
@@ -106,8 +106,8 @@ builder.Services
 .AddPolicyHandler(retryPolicy);
 
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
-var handler = new HttpClientHandler();
-handler.ClientCertificates.Add(certificate);
+// var handler = new HttpClientHandler();
+// handler.ClientCertificates.Add(certificate);
 
 builder.Services
     .AddRefitClient<IBKMClientService>()
@@ -116,7 +116,11 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:BkmUrl"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
     })
-    .ConfigurePrimaryHttpMessageHandler(() => handler)
+    .ConfigurePrimaryHttpMessageHandler(() => {
+          var handler = new HttpClientHandler();
+                        handler.ClientCertificates.Add(certificate);
+                        return handler;
+    })
     .AddHttpMessageHandler<LoggingHandler>()
     .AddPolicyHandler(retryPolicy);
 
