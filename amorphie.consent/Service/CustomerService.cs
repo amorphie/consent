@@ -1,40 +1,36 @@
 using amorphie.consent.core.DTO;
-using amorphie.consent.core.DTO.OpenBanking.HHS;
-using amorphie.consent.core.Enum;
-using amorphie.consent.core.Model;
-using amorphie.consent.data;
-using amorphie.consent.Helper;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
-using AutoMapper;
 
 namespace amorphie.consent.Service;
 
 public class CustomerService : ICustomerService
 {
     private readonly ICustomerClientService _customerClientService;
-    private readonly IOBAuthorizationService _authorizationService;
-    private readonly ConsentDbContext _context;
-    private readonly IMapper _mapper;
 
-    public CustomerService(ICustomerClientService customerClientService,
-        ConsentDbContext context,
-        IMapper mapper)
+    public CustomerService(ICustomerClientService customerClientService)
     {
         _customerClientService = customerClientService;
-        _context = context;
-        _mapper = mapper;
     }
 
-    public Task<ApiResult> GetCustomerInformations(HttpContext httpContext, string userTCKN, string consentId, string yosCode,
-        List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo, string? srlmKrtr, string? srlmYon)
+    public async Task<ApiResult> GetCustomerInformations(KimlikDto kimlik)
     {
         ApiResult result = new();
         try
         {
-//Bireysel rızada Kişinin rıza kimlik turu tckn değilse K => kişinin tckn sine ulaşmak
-//Kurumsal rıza, bireysel müşteri numarası, kurumsal müşteri numarası
-           
+            var getCustomerRequestDto = new GetCustomerRequestDto
+            {
+                kmlkTur = kimlik.kmlkTur,
+                kmlkVrs = kimlik.kmlkVrs,
+                krmKmlkTur = kimlik.krmKmlkTur,
+                krmKmlkVrs = kimlik.krmKmlkVrs
+            };
+
+            var customerResult = await _customerClientService.GetCustomerInformation(getCustomerRequestDto);
+
+            result.Result = true;
+            result.Data = customerResult;
         }
         catch (Exception e)
         {
@@ -42,6 +38,6 @@ public class CustomerService : ICustomerService
             result.Message = e.Message;
         }
 
-        return null;
+        return result;
     }
 }
