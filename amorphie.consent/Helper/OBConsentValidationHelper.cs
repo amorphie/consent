@@ -627,6 +627,7 @@ public static class OBConsentValidationHelper
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, 
         IOBEventService eventService,
+        IYosInfoService yosInfoService,
         string objectName)
     {
         ApiResult result = new();
@@ -662,7 +663,22 @@ public static class OBConsentValidationHelper
             result.Result = false;
             return result;
         }
-
+        
+        if (gkd.yetYntm == OpenBankingConstants.GKDTur.Yonlendirmeli)
+        {//Check yonAdr
+            //Check setted yos value
+            var yosCheckResult = await yosInfoService.IsYosAddressCorrect(yosCode, gkd.yetYntm, gkd.yonAdr);
+            if (yosCheckResult.Result == false
+                || yosCheckResult.Data == null
+                || (bool)yosCheckResult.Data == false)
+            {
+                //No yos data in the system
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYonAdrIsNotYosAddress);
+                return result;
+            }
+        }
+        
         if (gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik)
         {
             //AyrikGKD object should be set

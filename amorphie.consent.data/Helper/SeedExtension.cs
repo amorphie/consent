@@ -930,11 +930,7 @@ public static class SeedExtension
             Message = "Invalid post message",
             MessageTr = "İstek mesajı geçersiz."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+          modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid.GetHashCode(),
@@ -1046,6 +1042,18 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "karekod and kolas can not be used together.",
             MessageTr = "kkod kolas aynı mesajda dolu olarak gönderilemez."
+        });
+    }
+
+    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYonAdrIsNotYosAddress.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Gkd yonadr does not match yos api yos addresses.",
+            MessageTr = "YonAdr değeri hatalı. Yos api içerisinde belirtilen temel addresler ile uyuşmamaktadır."
         });
     }
 

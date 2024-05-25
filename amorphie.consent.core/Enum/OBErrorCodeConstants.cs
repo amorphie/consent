@@ -138,7 +138,6 @@ public static class OBErrorCodeConstants
         InvalidFormatSrlmKrtrTransaction = 116,
         InvalidFormatMinIslTtr = 117,
         InvalidFormatMksIslTtr = 118,
-        
         InvalidDataKareKodKolasCanNotBeUsedToGether = 119,
         
         
@@ -158,6 +157,7 @@ public static class OBErrorCodeConstants
         InvalidContentUserReference = 201,
         InvalidContentConsentIdInHeader = 202,
         InvalidContent = 203,
+        InvalidContentYonAdrIsNotYosAddress = 204,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
