@@ -2127,6 +2127,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             return result;
         }
+        //Check isyOdmBlg data
+        result = OBConsentValidationHelper.CheckIsyeriOdemeBilgileri(odemeEmriIstegi.isyOdmBlg, httpContext, _errorCodeDetails, objectName:objectName);
+        if (!result.Result)
+        {
+            return result;
+        }
     
 
         //TODO:Özlem update when user service finished
@@ -2140,9 +2146,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return result;
         }
 
+        //TODO:Özlem select e işlem yapan kullanıcı bilgilerini de servis geliştirme bitince ekle
         //Do OdemeEmriRizasi validations
         var odemeEmriRizasiConsent = await context.Consents
-            .FirstOrDefaultAsync(c => c.Id == new Guid(odemeEmriIstegi.rzBlg.rizaNo)
+            .FirstOrDefaultAsync(c => c.Id.ToString() == odemeEmriIstegi.rzBlg.rizaNo
                                       && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
 
         if (odemeEmriRizasiConsent == null) //No consent in db
@@ -2170,70 +2177,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "Relational data is missing. No Payment Information consent additional data in system.";
             return result;
         }
-
-        //odmBsltma Kmlk must be same
-        if (odemeEmriRizasi.odmBsltm.kmlk.kmlkTur != odemeEmriIstegi.odmBsltm.kmlk.kmlkTur
-            || odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs
-            || (!string.IsNullOrEmpty(odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs) &&
-                odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkVrs)
-            || (!string.IsNullOrEmpty(odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur) &&
-                odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkTur)
-            || odemeEmriRizasi.odmBsltm.kmlk.ohkTur != odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
+        
+        //Check odeme emri rizasi and odeme emri istegi
+        result = OBConsentValidationHelper.CheckOdemeEmriRizasiOdemeEmri(odemeEmriRizasi, odemeEmriIstegi, httpContext, _errorCodeDetails, objectName:objectName);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "Kimlik data has to be equal with payment consent and payment order";
             return result;
         }
-
-        //odmBsltma islTtr must be same
-        if (odemeEmriRizasi.odmBsltm.islTtr.ttr != odemeEmriIstegi.odmBsltm.islTtr.ttr
-            || odemeEmriRizasi.odmBsltm.islTtr.prBrm != odemeEmriIstegi.odmBsltm.islTtr.prBrm)
-        {
-            result.Result = false;
-            result.Message = "islTtr data has to be equal with payment consent and payment order";
-            return result;
-        }
-
-        //odmBsltma gon hesapnumarasi must be same
-        if (odemeEmriRizasi.odmBsltm.gon.hspNo != odemeEmriIstegi.odmBsltm.gon.hspNo)
-        {
-            result.Result = false;
-            result.Message = "gon hspNo data has to be equal with payment consent and payment order";
-            return result;
-        }
-
-        //odmBsltma alc kolastur ve deger must be same
-        if (odemeEmriRizasi.odmBsltm?.alc.kolas != null
-            && (odemeEmriRizasi.odmBsltm.alc.kolas.kolasTur != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasTur
-                || odemeEmriRizasi.odmBsltm.alc.kolas.kolasDgr != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasDgr))
-        {
-            result.Result = false;
-            result.Message = "kolas kolasTur and kolasDgr data has to be equal with payment consent and payment order";
-            return result;
-        }
-
-        //odmBsltma karekod akisturu ve referansı must be same
-        if (odemeEmriRizasi.odmBsltm?.kkod != null
-            && (odemeEmriRizasi.odmBsltm.kkod.aksTur != odemeEmriIstegi.odmBsltm.kkod?.aksTur
-                || odemeEmriRizasi.odmBsltm.kkod.kkodRef != odemeEmriIstegi.odmBsltm.kkod?.kkodRef))
-        {
-            result.Result = false;
-            result.Message = "kkod akstur and kkod kkodref data has to be equal with payment consent and payment order";
-            return result;
-        }
-
-        //OdmAyr odmKynk,odmAmc, refBlg,odmStm must be same
-        if (odemeEmriRizasi.odmBsltm?.odmAyr.odmKynk != odemeEmriIstegi.odmBsltm.odmAyr.odmKynk
-            || odemeEmriRizasi.odmBsltm.odmAyr.odmAmc != odemeEmriIstegi.odmBsltm.odmAyr.odmAmc
-            || odemeEmriRizasi.odmBsltm.odmAyr.refBlg != odemeEmriIstegi.odmBsltm.odmAyr.refBlg
-            || odemeEmriRizasi.odmBsltm.odmAyr.odmStm != odemeEmriIstegi.odmBsltm.odmAyr.odmStm)
-        {
-            result.Result = false;
-            result.Message =
-                "odmKynk,odmAmc, refBlg,odmStm data has to be equal with payment consent and payment order";
-            return result;
-        }
-
         result.Data = odemeEmriRizasiConsent;
         return result;
     }

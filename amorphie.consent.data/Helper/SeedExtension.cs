@@ -1103,6 +1103,14 @@ public static class SeedExtension
             Message = "kmlk.kmlkVrs does not match processing user tckn.",
             MessageTr = "İşlem yapan kullanıcının tckn si, rıza içerisindeki kimlik verisi ile uyuşmamaktadır."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Incorrect or missing data.",
+            MessageTr = "Alan verisi eksik ya da hatalı."
+        });
     }
 
 }

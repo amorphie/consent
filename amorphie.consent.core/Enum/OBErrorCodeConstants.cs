@@ -41,6 +41,7 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmOdmAyrOdmAcklm = "odmBsltm.odmAyr.odmAcklm";
         public const string OdmBsltmOdmAyrOhkMsj = "odmBsltm.odmAyr.ohkMsj";
         public const string OdmBsltmOdmAyrOdmStm = "odmBsltm.odmAyr.odmStm";
+        public const string OdmBsltmOdmAyrRefBlg = "odmBsltm.odmAyr.refBlg";
         public const string OdmBsltmAlc = "odmBsltm.alc";
         public const string OdmBsltmAlcUnv = "odmBsltm.alc.unv";
         public const string OdmBsltmAlcHspNo = "odmBsltm.alc.hspNo";
@@ -50,7 +51,14 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmAlcKolasKolasHspTur = "odmBsltm.alc.kolas.kolasHspTur";
         public const string OdmBsltmKkodAksTur = "odmBsltm.kkod.aksTur";
         public const string OdmBsltmKkodUrtcKod = "odmBsltm.kkod.kkodUrtcKod";
-        public const string OdmBsltmGonUnv = "rzBlg.rizaDrm";
+        public const string OdmBsltmKkodKkodRef = "odmBsltm.kkod.kkodRef";
+        public const string OdmBsltmGonUnv = "odmBsltm.gon.unv";
+        public const string OdmBsltmGonHspNo = "odmBsltm.gon.hspNo";
+        public const string OdmBsltmKmlkKmlkTur = "odmBsltm.kmlk.kmlkTur";
+        public const string OdmBsltmKmlkKmlkVrs = "odmBsltm.kmlk.kmlkVrs";
+        public const string OdmBsltmKmlkKrmKmlkTur = "odmBsltm.kmlk.krmKmlkTur";
+        public const string OdmBsltmKmlkKrmKmlkVrs = "odmBsltm.kmlk.krmKmlkVrs";
+        public const string OdmBsltmKmlkOhkTur = "odmBsltm.kmlk.ohkTur";
         public const string RzBlgRizaDrm = "rzBlg.rizaDrm";
         public const string RzBlgRizaNo = "rzBlg.rizaNo";
         public const string RzBlgOlusZmn = "rzBlg.olusZmn";
@@ -118,7 +126,6 @@ public static class OBErrorCodeConstants
         InvalidFieldDateSetTransactionNotSelected = 23,
         InvalidFieldHesapIslemDateRange = 24,
         InvalidFieldesapIslemBslZmnLaterThanBtsZmn = 25,
-        
         InvalidFieldPrBrmLength = 26,
         InvalidFieldTtrLength = 27,
         InvalidFieldOdmAcklmLength = 28,
@@ -136,6 +143,7 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmAlcKolasKolasRefNo=38,
         InvalidFieldOdmBsltmOdmAyrOhkMsjLength=39,
         InvalidFieldOdmBsltmGonUnvLength = 40,
+        InvalidFieldMissingOrInCorrect = 41,
 
         
         InvalidFormatValidationError = 100,
