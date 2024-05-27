@@ -1055,6 +1055,54 @@ public static class SeedExtension
             Message = "Gkd yonadr does not match yos api yos addresses.",
             MessageTr = "YonAdr değeri hatalı. Yos api içerisinde belirtilen temel addresler ile uyuşmamaktadır."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcHspNoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 26",
+            MessageTr = "boyut '26' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcUnvLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 3-140",
+            MessageTr = "boyut '3' ile  '140' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcKolasKolasRefNo.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Numeric 12 length data",
+            MessageTr = "boyur '12' sayısal karakter olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmOdmAyrOhkMsjLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-200",
+            MessageTr = "boyut '1' ile  '200' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 3-140",
+            MessageTr = "boyut '3' ile  '140' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentProcessingUserNotInKmlData.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "kmlk.kmlkVrs does not match processing user tckn.",
+            MessageTr = "İşlem yapan kullanıcının tckn si, rıza içerisindeki kimlik verisi ile uyuşmamaktadır."
+        });
     }
 
 }
