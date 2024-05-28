@@ -131,6 +131,7 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 existingConsent.ModifiedAt = DateTime.UtcNow;
                 existingConsent.State = rizaIstegi.rzBlg?.rizaDrm;
                 existingConsent.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSAccount;
+                existingConsent.LastValidAccessDate = rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime();
                 existingConsent.XGroupId = rizaIstegi.XGroupId;
                 context.Consents.Update(existingConsent);
             }
@@ -148,7 +149,11 @@ public class OpenBankingYOSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
                 consentData.State = rizaIstegi.rzBlg?.rizaDrm;
                 consentData.ConsentType = ConsentConstants.ConsentType.OpenBankingYOSAccount;
+                consentData.StateModifiedAt = DateTime.UtcNow;
+                consentData.Variant = rizaIstegi.katilimciBlg.yosKod;
                 consentData.XGroupId = rizaIstegi.XGroupId;
+                consentData.ClientCode = string.Empty;
+                consentData.LastValidAccessDate = rizaIstegi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime();
                 context.Consents.Add(consentData);
                 returnData = consentData;
             }
