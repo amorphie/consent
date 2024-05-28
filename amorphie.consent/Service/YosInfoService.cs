@@ -191,6 +191,33 @@ public class YosInfoService : IYosInfoService
 
         return result;
     }
+    
+    public async Task<ApiResult> IsYosAddressCorrect(string yosCode, string authType, string address)
+    {
+        ApiResult result = new();
+        try
+        {
+            bool isAddressCorrect = false;
+           //Get yos
+            var yos = await _context.OBYosInfos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(y => y.Kod == yosCode);
+            if (yos != null)
+            {
+                //Check if yos address contains desired address
+                isAddressCorrect = _mapper.Map<OBYosInfoDto>(yos)?.adresler.Any(a => a.yetYntm == authType
+                    && a.adresDetaylari.Any(d => d.tmlAdr == address)) ?? false;
+            }
+            result.Data = isAddressCorrect;
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
 
     public async Task<ApiResult> SaveYos(string yosCode)
     {

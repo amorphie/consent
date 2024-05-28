@@ -19,6 +19,7 @@ public static class OBErrorCodeConstants
         public const string YosCodeHbr = "katilimciBlg.yosKod";
         public const string GkdTur = "gkd.yetYntm";
         public const string GkdyonAdr = "gkd.yonAdr";
+        public const string GkdYetTmmZmn = "gkd.yetTmmZmn";
         public const string GkdAyrikGkdHbr = "gkd.ayrikGkd";
         public const string GkdAyrikGkdOhkTanimDeger = "gkd.ayrikGkd.ohkTanimDeger";
         public const string GkdAyrikGkdOhkTanimTip = "gkd.ayrikGkd.ohkTanimTip";
@@ -38,13 +39,29 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmOdmAyrOdmKynk = "odmBsltm.odmAyr.odmKynk";
         public const string OdmBsltmOdmAyrOdmAmc = "odmBsltm.odmAyr.odmAmc";
         public const string OdmBsltmOdmAyrOdmAcklm = "odmBsltm.odmAyr.odmAcklm";
+        public const string OdmBsltmOdmAyrOhkMsj = "odmBsltm.odmAyr.ohkMsj";
+        public const string OdmBsltmOdmAyrOdmStm = "odmBsltm.odmAyr.odmStm";
+        public const string OdmBsltmOdmAyrRefBlg = "odmBsltm.odmAyr.refBlg";
         public const string OdmBsltmAlc = "odmBsltm.alc";
+        public const string OdmBsltmAlcUnv = "odmBsltm.alc.unv";
+        public const string OdmBsltmAlcHspNo = "odmBsltm.alc.hspNo";
         public const string OdmBsltmAlcKolasKolasDgr = "odmBsltm.alc.kolas.kolasDgr";
         public const string OdmBsltmAlcKolasKolasTur = "odmBsltm.alc.kolas.kolasTur";
+        public const string OdmBsltmAlcKolasKolasRefNo = "odmBsltm.alc.kolas.kolasRefNo";
+        public const string OdmBsltmAlcKolasKolasHspTur = "odmBsltm.alc.kolas.kolasHspTur";
         public const string OdmBsltmKkodAksTur = "odmBsltm.kkod.aksTur";
         public const string OdmBsltmKkodUrtcKod = "odmBsltm.kkod.kkodUrtcKod";
-
-
+        public const string OdmBsltmKkodKkodRef = "odmBsltm.kkod.kkodRef";
+        public const string OdmBsltmGonUnv = "odmBsltm.gon.unv";
+        public const string OdmBsltmGonHspNo = "odmBsltm.gon.hspNo";
+        public const string OdmBsltmKmlkKmlkTur = "odmBsltm.kmlk.kmlkTur";
+        public const string OdmBsltmKmlkKmlkVrs = "odmBsltm.kmlk.kmlkVrs";
+        public const string OdmBsltmKmlkKrmKmlkTur = "odmBsltm.kmlk.krmKmlkTur";
+        public const string OdmBsltmKmlkKrmKmlkVrs = "odmBsltm.kmlk.krmKmlkVrs";
+        public const string OdmBsltmKmlkOhkTur = "odmBsltm.kmlk.ohkTur";
+        public const string RzBlgRizaDrm = "rzBlg.rizaDrm";
+        public const string RzBlgRizaNo = "rzBlg.rizaNo";
+        public const string RzBlgOlusZmn = "rzBlg.olusZmn";
 
         public const string IsyOdmBlgIsyKtgKod = "isyOdmBlg.isyKtgKod";
         public const string IsyOdmBlgAltIsyKtgKod = "isyOdmBlg.altIsyKtgKod";
@@ -56,6 +73,8 @@ public static class OBErrorCodeConstants
     {
         public const string HesapBilgisiRizasiIstegi = "HesapBilgisiRizasiIstegi";
         public const string OdemeEmriRizasiIstegi = "OdemeEmriRizasiIstegi";
+        public const string OdemeEmriIstegi = "OdemeEmriIstegi";
+        public const string RzBlg = "rzBlg";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
         public const string Kmlk = "kmlk";
@@ -67,7 +86,7 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmIslTtr = "odmBsltm.islTtr";
         public const string OdmBsltmAlc = "odmBsltm.alc";
         public const string OdmBsltmOdmAyr = "odmBsltm.odmAyr";
-
+        public const string OdmBsltmGon = "odmBsltm.gon";
 
     }
 
@@ -107,7 +126,6 @@ public static class OBErrorCodeConstants
         InvalidFieldDateSetTransactionNotSelected = 23,
         InvalidFieldHesapIslemDateRange = 24,
         InvalidFieldesapIslemBslZmnLaterThanBtsZmn = 25,
-        
         InvalidFieldPrBrmLength = 26,
         InvalidFieldTtrLength = 27,
         InvalidFieldOdmAcklmLength = 28,
@@ -118,7 +136,16 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmAlcRequiredIfNotKolas = 33,
         InvalidFieldOdmBsltmAlcKolasKolasDgrLength = 34,
         InvalidFieldOdmBsltmKkodUrtcKodLength = 35,
+       
+        
+        InvalidFieldOdmBsltmAlcUnvLength = 36,
+        InvalidFieldOdmBsltmAlcHspNoLength = 37,
+        InvalidFieldOdmBsltmAlcKolasKolasRefNo=38,
+        InvalidFieldOdmBsltmOdmAyrOhkMsjLength=39,
+        InvalidFieldOdmBsltmGonUnvLength = 40,
+        InvalidFieldMissingOrInCorrect = 41,
 
+        
         InvalidFormatValidationError = 100,
         InvalidAspsp = 101,
         InvalidTpp = 102,
@@ -138,12 +165,10 @@ public static class OBErrorCodeConstants
         InvalidFormatSrlmKrtrTransaction = 116,
         InvalidFormatMinIslTtr = 117,
         InvalidFormatMksIslTtr = 118,
-        
         InvalidDataKareKodKolasCanNotBeUsedToGether = 119,
-        
+        NotFoundPaymentConsentToPaymentOrder = 120,
         
         NotFound = 150,
-
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
         InternalServerErrorBodyEmptyValidateJwt = 153,
@@ -154,10 +179,14 @@ public static class OBErrorCodeConstants
         ConsentMismatchAccountPostAlreadyAuthroized = 162,
         ConsentRevokedStateEnd = 163,
         ConsentRevokedStateNotAutUsed = 164,
+        ConsentMismatchStatusNotValidToPaymentOrder = 165,
+        
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201,
         InvalidContentConsentIdInHeader = 202,
         InvalidContent = 203,
+        InvalidContentYonAdrIsNotYosAddress = 204,
+        InvalidContentProcessingUserNotInKmlData = 205,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
