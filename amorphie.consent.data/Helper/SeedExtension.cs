@@ -1116,8 +1116,8 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStatusNotValidToPaymentOrder.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
-            Message = "Consent  not valid to process",
-            MessageTr = "Consent işlem yapılmaya uygun değil."
+            Message = "Consent state not valid to process",
+            MessageTr = "Odeme emri rıza durumu, ödeme emri işlemi yapılmaya uygun değil."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {

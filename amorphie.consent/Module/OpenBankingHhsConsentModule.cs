@@ -1532,6 +1532,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     protected async Task<IResult> PaymentOrderPost([FromBody] OdemeEmriIstegiHHSDto odemeEmriIstegi,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1540,13 +1541,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBEventService eventService,
         [FromServices] IOBAuthorizationService authorizationService,
+        [FromServices] ITokenService tokenService,
         HttpContext httpContext)
     {
         try
         {
             var header = OBModuleHelper.GetHeader(httpContext); //Get header
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi,header, context, yosInfoService,eventService:eventService,
+            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi,header, context, yosInfoService,eventService:eventService, tokenService:tokenService,
                 httpContext, configuration);
             if (!dataValidationResult.Result)
             {
@@ -2026,7 +2028,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (!result.Result)
         {
             return result;
-        }
+        }   
 
         //Check isyOdmBlg data
         result = OBConsentValidationHelper.CheckIsyeriOdemeBilgileri(rizaIstegi.isyOdmBlg, httpContext, _errorCodeDetails, objectName:objectName);
@@ -2047,13 +2049,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ConsentDbContext context,
         IYosInfoService yosInfoService,
         IOBEventService eventService,
+        ITokenService tokenService,
         HttpContext httpContext,
         IConfiguration configuration)
     {
         ApiResult result = new();
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
-            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true, isConsentIdRequired:true, errorCodeDetails: _errorCodeDetails);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2070,7 +2073,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         string objectName = OBErrorCodeConstants.ObjectNames.OdemeEmriIstegi;
         
         //Check rzBlg
-        result = OBConsentValidationHelper.CheckRizaBlg(odemeEmriIstegi.rzBlg, httpContext, errorCodeDetails: _errorCodeDetails, objectName:objectName);
+        result = OBConsentValidationHelper.CheckRizaBlg(odemeEmriIstegi.rzBlg, consentId:header.ConsentId, httpContext, errorCodeDetails: _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             //validation error in katiliciBilgisi data fields
@@ -2115,14 +2118,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
       
         //Check odmBsltma alc,kolas, kkod 
-        result = OBConsentValidationHelper.CheckKolasKarekodAliciOdemeEmri(odemeEmriIstegi.odmBsltm, httpContext, _errorCodeDetails, objectName:objectName);
+        result = OBConsentValidationHelper.CheckKolasKarekodAlici(odemeEmriIstegi.odmBsltm, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
         }
 
         //Check odmBsltma odemeayrintilari
-        result = OBConsentValidationHelper.CheckOdemeAyrintiOdemeEmri(odemeEmriIstegi.odmBsltm.odmAyr, httpContext, _errorCodeDetails, objectName:objectName);
+        result = OBConsentValidationHelper.CheckOdemeAyrinti(odemeEmriIstegi.odmBsltm.odmAyr, httpContext, _errorCodeDetails, objectName:objectName);
         if (!result.Result)
         {
             return result;
@@ -2145,13 +2148,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentProcessingUserNotInKmlData);
             return result;
         }
-
+        
+        //Check consent
+        await ProcessPaymentConsentToCancelOrEnd(new Guid(odemeEmriIstegi.rzBlg.rizaNo), context, tokenService);
+        
         //TODO:Özlem select e işlem yapan kullanıcı bilgilerini de servis geliştirme bitince ekle
-        //Do OdemeEmriRizasi validations
         var odemeEmriRizasiConsent = await context.Consents
             .FirstOrDefaultAsync(c => c.Id.ToString() == odemeEmriIstegi.rzBlg.rizaNo
                                       && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
 
+        //Do OdemeEmriRizasi validations
         if (odemeEmriRizasiConsent == null) //No consent in db
         {
             result.Result = false;
