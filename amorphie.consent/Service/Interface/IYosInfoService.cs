@@ -61,6 +61,15 @@ public interface IYosInfoService
     public Task<ApiResult> IsYosSubscsribed(string yosKod, string eventType, string sourceType);
 
     /// <summary>
+    /// Check if yos has desired address by given authorization type
+    /// </summary>
+    /// <param name="yosKod">Yos to be checked</param>
+    /// <param name="authType">Authorization type (Yonlendirmeli or Ayrik)</param>
+    /// <param name="address">Adddress</param>
+    /// <returns>if yos has desired address by given authorization type</returns>
+    public Task<ApiResult> IsYosAddressCorrect(string yosCode, string authType, string address);
+
+    /// <summary>
     /// Get yos from bkm service by yoscode
     /// Save result to system
     /// </summary>

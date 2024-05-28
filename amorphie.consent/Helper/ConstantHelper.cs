@@ -142,6 +142,8 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KolasTur).GetAllPublicConstantValues<string>();
     }
+    
+
 
     /// <summary>
     /// Get KareKodAksTur class items as string list

@@ -930,11 +930,7 @@ public static class SeedExtension
             Message = "Invalid post message",
             MessageTr = "İstek mesajı geçersiz."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+          modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid.GetHashCode(),
@@ -1046,6 +1042,90 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "karekod and kolas can not be used together.",
             MessageTr = "kkod kolas aynı mesajda dolu olarak gönderilemez."
+        });
+    }
+
+    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYonAdrIsNotYosAddress.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Gkd yonadr does not match yos api yos addresses.",
+            MessageTr = "YonAdr değeri hatalı. Yos api içerisinde belirtilen temel addresler ile uyuşmamaktadır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcHspNoLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be 26",
+            MessageTr = "boyut '26' olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcUnvLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 3-140",
+            MessageTr = "boyut '3' ile  '140' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcKolasKolasRefNo.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Numeric 12 length data",
+            MessageTr = "boyur '12' sayısal karakter olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmOdmAyrOhkMsjLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 1-200",
+            MessageTr = "boyut '1' ile  '200' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "size must be between 3-140",
+            MessageTr = "boyut '3' ile  '140' arasında olmalı"
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentProcessingUserNotInKmlData.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "kmlk.kmlkVrs does not match processing user tckn.",
+            MessageTr = "İşlem yapan kullanıcının tckn si, rıza içerisindeki kimlik verisi ile uyuşmamaktadır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Incorrect or missing data.",
+            MessageTr = "Alan verisi eksik ya da hatalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStatusNotValidToPaymentOrder.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent state not valid to process",
+            MessageTr = "Odeme emri rıza durumu, ödeme emri işlemi yapılmaya uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFoundPaymentConsentToPaymentOrder.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "Related Payment consent can not found to process payment order.",
+            MessageTr = "Ödeme emri yapılmak istenilen ilişkili ödeme emri rızası kaydı bulunamadı."
         });
     }
 
