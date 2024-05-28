@@ -143,12 +143,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <summary>
     /// Get account consent additional data by rizano- consentId casting to HesapBilgisiRizasiHHSDto type of object
     /// </summary>
-    /// <param name="rizaNo">Riza No</param>
-    /// <param name="context">Context DB object</param>
-    /// <param name="mapper">Aoutomapper object</param>
-    /// <param name="configuration">Configuration object</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
     /// <returns>HesapBilgisiRizasiHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -165,8 +159,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails, header:header);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -179,7 +174,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
+                                          && c.OBAccountConsentDetails.Any(d => d.YosCode == header.XTPPCode));
 
             if (entity == null
                 || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
@@ -553,12 +549,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var header = OBModuleHelper.GetHeader(httpContext);
             //Check header fields
-            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails);
+            ApiResult headerValidation = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, errorCodeDetails: _errorCodeDetails, header:header);
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Check consent
@@ -566,11 +564,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var entity = await context.Consents
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
-                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
-            ApiResult isDataValidResult = IsDataValidToGetPaymentConsent(entity);
-            if (!isDataValidResult.Result) //Error in data validation
+                                          && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
+                                          && c.OBPaymentConsentDetails.Any(d => d.YosCode == header.XTPPCode));
+            if (entity == null
+                || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-                return Results.BadRequest(isDataValidResult.Message);
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, _errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
             }
 
             var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity!.AdditionalData);
@@ -585,14 +587,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     /// <summary>
-    /// Get consent additional data by Id casting to OdemeEmriHHSDto type of object
+    /// Get odeme emri rizası consent
     /// </summary>
-    /// <param name="odemeEmriNo"></param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Httpcontext object</param>
     /// <returns>OdemeEmriHHSDto type of object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-Group-ID", ParameterLocation.Header, true)]
@@ -600,6 +596,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
+    [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
     public async Task<IResult> GetPaymentOrderConsentById(Guid odemeEmriNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -622,16 +619,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var entity = await context.OBPaymentOrders
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == odemeEmriNo);
+                .FirstOrDefaultAsync(c => c.Id == odemeEmriNo
+                && c.ConsentId.ToString() == header.ConsentId
+                && c.YosCode == header.XTPPCode);
 
-            if (entity == null)
+          
+            if (entity == null
+                || string.IsNullOrEmpty(entity.AdditionalData)) //No desired consent in system
             {
-                return Results.NotFound();
-            }
-            ApiResult isDataValidResult = IsDataValidToGetPaymentOrderConsent(entity);
-            if (!isDataValidResult.Result) //Error in data validation
-            {
-                return Results.BadRequest(isDataValidResult.Message);
+                var errorResponse = OBErrorResponseHelper.GetNotFoundError(httpContext, _errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFound);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
+                return Results.NotFound(errorResponse);
             }
 
             var serializedData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(entity.AdditionalData);
@@ -2195,42 +2194,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
-
-    /// <summary>
-    /// Checks if consent is valid to get
-    /// </summary>
-    /// <param name="entity">To be checked entity</param>
-    /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetPaymentConsent(Consent? entity)
-    {
-        ApiResult result = new();
-        if (entity == null)
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system";
-            return result;
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Checks if consent is valid to get
-    /// </summary>
-    /// <param name="entity">To be checked entity</param>
-    /// <returns>Validation result</returns>
-    private ApiResult IsDataValidToGetPaymentOrderConsent(OBPaymentOrder? entity)
-    {
-        ApiResult result = new();
-        if (entity == null)
-        {
-            result.Result = false;
-            result.Message = "No desired consent in system.";
-            return result;
-        }
-
-        return result;
-    }
+    
 
     /// <summary>
     /// Check if consent is valid to be deleted
