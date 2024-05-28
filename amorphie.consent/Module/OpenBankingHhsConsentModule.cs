@@ -2155,8 +2155,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (odemeEmriRizasiConsent == null) //No consent in db
         {
             result.Result = false;
-            result.Message =
-                $"Relational data is missing. No Payment Information consent in system with {odemeEmriIstegi.rzBlg.rizaNo}";
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.NotFoundPaymentConsentToPaymentOrder);
             return result;
         }
 
@@ -2165,7 +2165,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             OpenBankingConstants.RizaDurumu.YetkiKullanildi) //State must be yetki kullanıldı
         {
             result.Result = false;
-            result.Message = "Consent state not valid to process. Consent state have to be YetkiKullanildi";
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStatusNotValidToPaymentOrder);
             return result;
         }
 

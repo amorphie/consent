@@ -1111,6 +1111,22 @@ public static class SeedExtension
             Message = "Incorrect or missing data.",
             MessageTr = "Alan verisi eksik ya da hatalı."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStatusNotValidToPaymentOrder.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
+            Message = "Consent  not valid to process",
+            MessageTr = "Consent işlem yapılmaya uygun değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFoundPaymentConsentToPaymentOrder.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "Related Payment consent can not found to process payment order.",
+            MessageTr = "Ödeme emri yapılmak istenilen ilişkili ödeme emri rızası kaydı bulunamadı."
+        });
     }
 
 }

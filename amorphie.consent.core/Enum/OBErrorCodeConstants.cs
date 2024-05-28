@@ -166,9 +166,9 @@ public static class OBErrorCodeConstants
         InvalidFormatMinIslTtr = 117,
         InvalidFormatMksIslTtr = 118,
         InvalidDataKareKodKolasCanNotBeUsedToGether = 119,
+        NotFoundPaymentConsentToPaymentOrder = 120,
         
         NotFound = 150,
-
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
         InternalServerErrorBodyEmptyValidateJwt = 153,
@@ -179,6 +179,8 @@ public static class OBErrorCodeConstants
         ConsentMismatchAccountPostAlreadyAuthroized = 162,
         ConsentRevokedStateEnd = 163,
         ConsentRevokedStateNotAutUsed = 164,
+        ConsentMismatchStatusNotValidToPaymentOrder = 165,
+        
         InvalidContentPsuInitiated = 200,
         InvalidContentUserReference = 201,
         InvalidContentConsentIdInHeader = 202,

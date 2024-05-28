@@ -1156,8 +1156,9 @@ public static class OBConsentValidationHelper
             //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
             //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
             //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
-            if (kimlik.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
-                && kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger)
+            if (!string.IsNullOrEmpty(kimlik.kmlkVrs)
+                && (kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger
+                || kimlik.kmlkTur != gkd.ayrikGkd.ohkTanimTip))
             {
                 result.Result = false;
                 result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
