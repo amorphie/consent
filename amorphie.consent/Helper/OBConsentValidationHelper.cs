@@ -1113,8 +1113,7 @@ public static class OBConsentValidationHelper
             //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
             //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
             if (!string.IsNullOrEmpty(kimlik.kmlkVrs)
-                && (kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger
-                || kimlik.kmlkTur != gkd.ayrikGkd.ohkTanimTip))
+                && (kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger))
             {
                 result.Result = false;
                 result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
