@@ -206,7 +206,7 @@ public class YosInfoService : IYosInfoService
             {
                 //Check if yos address contains desired address
                 isAddressCorrect = _mapper.Map<OBYosInfoDto>(yos)?.adresler.Any(a => a.yetYntm == authType
-                    && a.adresDetaylari.Any(d => d.tmlAdr == address)) ?? false;
+                    && a.adresDetaylari.Any(d => address.StartsWith(d.tmlAdr))) ?? false;
             }
             result.Data = isAddressCorrect;
         }
