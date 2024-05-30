@@ -163,14 +163,14 @@ builder.Services.AddDbContext<ConsentDbContext>
 //     // (options => options.UseInMemoryDatabase("TemplateDbContext"));
 //     (options => options.UseNpgsql("Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres", b => b.MigrationsAssembly("amorphie.consent.data")));
 
-
+builder.Services.AddHealthChecks();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseAllElasticApm(app.Configuration);
 }
 app.UseLoggingHandlerMiddlewares();
-
+app.MapHealthChecks("/health");
 app.UseCloudEvents();
 app.UseRouting();
 app.UseEndpoints(endpoints =>
