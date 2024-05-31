@@ -7,7 +7,6 @@ using amorphie.core.Swagger;
 using Microsoft.OpenApi.Models;
 using amorphie.consent.data;
 using amorphie.consent.core.Model;
-using System.Text.Json;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -16,6 +15,8 @@ using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Dapr;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace amorphie.consent.Module;
 
@@ -1239,7 +1240,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
-            return Results.Ok(hesapBilgisiRizasi);
+            string jsonResponse = JsonConvert.SerializeObject(hesapBilgisiRizasi, Formatting.None);
+            httpContext.Response.ContentType = "application/json";
+            return Results.Ok(jsonResponse);
+           // return Results.Ok(hesapBilgisiRizasi);
         }
         catch (Exception ex)
         {
