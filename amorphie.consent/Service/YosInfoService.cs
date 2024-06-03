@@ -104,6 +104,7 @@ public class YosInfoService : IYosInfoService
             var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
                     abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
                 .Select(r => r.YOSRole)
+                .ToList()
                 .Distinct();
 
             //Set yosRole list
@@ -173,6 +174,7 @@ public class YosInfoService : IYosInfoService
             bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
                 s.ModuleName == OpenBankingConstants.ModuleName.HHS
                 && s.YOSCode == yosKod
+                && s.IsActive
                 && s.OBEventSubscriptionTypes.Any(t =>
                     t.SourceType == sourceType
                     && t.EventType == eventType));
