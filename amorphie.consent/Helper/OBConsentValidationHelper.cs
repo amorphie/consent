@@ -78,9 +78,6 @@ public static class OBConsentValidationHelper
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.odmBsltm,
             OBErrorCodeConstants.ObjectNames.OdmBsltm,
             errorCodeDetail, errorResponse);
-        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.odmBsltm?.kmlk,
-            OBErrorCodeConstants.ObjectNames.OdmBsltmKmlk,
-            errorCodeDetail, errorResponse);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.odmBsltm?.islTtr,
             OBErrorCodeConstants.ObjectNames.OdmBsltmIslTtr,
             errorCodeDetail, errorResponse);
@@ -1030,7 +1027,7 @@ public static class OBConsentValidationHelper
     /// Checks if gkd data is valid
     /// </summary>
     /// <returns>Is gkd data valid</returns>
-    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto? kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1100,24 +1097,11 @@ public static class OBConsentValidationHelper
                 return result;
             }
 
-            result = await ValidateAyrikGkd(gkd.ayrikGkd, yosCode, errorCodeDetails, errorResponse, eventService,
+            result = await ValidateAyrikGkd(gkd.ayrikGkd, kimlik, yosCode, errorCodeDetails, errorResponse, eventService,
                 context, objectName: objectName); //validate ayrik gkd data
             if (!result.Result)
             {
                 //Not valid
-                return result;
-            }
-
-            //From Document:
-            //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
-            //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
-            //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
-            if (!string.IsNullOrEmpty(kimlik.kmlkVrs)
-                && (kimlik.kmlkVrs != gkd.ayrikGkd.ohkTanimDeger))
-            {
-                result.Result = false;
-                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch);
                 return result;
             }
         }
@@ -1126,7 +1110,7 @@ public static class OBConsentValidationHelper
     }
 
 
-    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto? kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1168,7 +1152,7 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Validates ayrık gkd data inside gkd object
     /// </summary>
-    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, string yosCode,
+    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd,KimlikDto? kimlik, string yosCode,
         List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, IOBEventService eventService, HttpContext context, string objectName)
     {
@@ -1217,24 +1201,63 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTip,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipLength, objectName: objectName);
         }
-
-        if (errorResponse.FieldErrors.Any())
-        {
-            return result;
-        }
-
-        if (!ConstantHelper.GetOhkTanimTipList().Contains(ayrikGkd.ohkTanimTip))
+        else if (!ConstantHelper.GetOhkTanimTipList().Contains(ayrikGkd.ohkTanimTip))
         {
             //GDKTur value is not valid
             result.Result = false;
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTip,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+
+        if (errorResponse.FieldErrors.Any())
+        {
             return result;
         }
 
+        if (ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.GSM
+            || ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.IBAN)
+        {//Can only be used in tek seferlik ödeme
+            if (kimlik is not null
+                || !string.IsNullOrEmpty(kimlik?.kmlkVrs)
+                || !string.IsNullOrEmpty(kimlik?.kmlkTur))
+            {
+                result.Result = false;
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTip,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipGsmIban, objectName: objectName);
+            }
+            //TODO:Özlem 
+            //Kullanıcılar taranıp tekil bir kullanıcıya erişiliyor mu kontrol edilmeli.
+        }
+        if (errorResponse.FieldErrors.Any())
+        {
+            return result;
+        }
+        
+
         //Check GKDTanımDeger values
         result = ValidateOhkTanimDeger(ayrikGkd, errorCodeDetails, errorResponse, objectName: objectName);
+        if (!result.Result)
+        {
+            return result;
+        }
+        
+        //From Document:
+        //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
+        //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
+        //Kimlik alanı içermeyen tek seferlik ödeme emri akışlarında bu kural geçerli değildir. 
+        if (kimlik != null
+            && !string.IsNullOrEmpty(kimlik.kmlkVrs)
+            && (kimlik.kmlkVrs != ayrikGkd.ohkTanimDeger))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch);
+            return result;
+        }
+        
+        
         return result;
     }
 

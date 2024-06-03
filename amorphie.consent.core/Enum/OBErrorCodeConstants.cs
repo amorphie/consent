@@ -136,7 +136,6 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmAlcRequiredIfNotKolas = 33,
         InvalidFieldOdmBsltmAlcKolasKolasDgrLength = 34,
         InvalidFieldOdmBsltmKkodUrtcKodLength = 35,
-       
         
         InvalidFieldOdmBsltmAlcUnvLength = 36,
         InvalidFieldOdmBsltmAlcHspNoLength = 37,
@@ -144,6 +143,7 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmOdmAyrOhkMsjLength=39,
         InvalidFieldOdmBsltmGonUnvLength = 40,
         InvalidFieldMissingOrInCorrect = 41,
+        InvalidFieldOhkTanimTipGsmIban = 42,
 
         
         InvalidFormatValidationError = 100,

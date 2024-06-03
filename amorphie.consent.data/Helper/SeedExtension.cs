@@ -1043,11 +1043,7 @@ public static class SeedExtension
             Message = "karekod and kolas can not be used together.",
             MessageTr = "kkod kolas aynı mesajda dolu olarak gönderilemez."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYonAdrIsNotYosAddress.GetHashCode(),
@@ -1126,6 +1122,18 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Resource.NotFound",
             Message = "Related Payment consent can not found to process payment order.",
             MessageTr = "Ödeme emri yapılmak istenilen ilişkili ödeme emri rızası kaydı bulunamadı."
+        });
+    }
+
+    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipGsmIban.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "GSM/IBAN can only be used in One Usage Payment",
+            MessageTr = "GSM/IBAN Ohk Tanım Tipi sadece tek seferlik ödeme de kullanılabilir."
         });
     }
 
