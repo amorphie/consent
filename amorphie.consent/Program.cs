@@ -36,7 +36,6 @@ builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>(
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddTransient<HttpClientHandler>();
 builder.Services.AddScoped<LoggingHandler>();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
@@ -121,14 +120,6 @@ builder.Services
 })
 .AddPolicyHandler(retryPolicy);
 
-builder.Services
-.AddRefitClient<ICustomerClientService>()
-.ConfigureHttpClient(c =>
-{
-    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:CustomerUrl"] ??
-                            throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
-})
-.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {

@@ -1197,8 +1197,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         HttpContext httpContext,
         [FromServices] IPushService pushService,
         [FromServices] ITagService tagService,
-        [FromServices] IDeviceRecord deviceRecordService,
-        [FromServices] ICustomerService customerService
+        [FromServices] IDeviceRecord deviceRecordService
 )
     {
         try
@@ -1222,14 +1221,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(checkValidationResult.Data);
             }
-
-            //Get user
-            var checkCustomerResult = await customerService.GetCustomerInformations(rizaIstegi.kmlk);
-            if (!checkCustomerResult.Result)
-            {
-                return Results.BadRequest(checkCustomerResult.Message);
-            }
-
 
             //Check Idempotency
             var getIdempotencyConsentResult = await OBModuleHelper.GetIdempotencyAccountConsent(rizaIstegi, header, authorizationService);
@@ -1287,7 +1278,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.LastValidAccessDate = hesapBilgisiRizasi.hspBlg.iznBlg.erisimIzniSonTrh.ToUniversalTime();
             consentEntity.OBAccountConsentDetails = new List<OBAccountConsentDetail>
             {
-                GenerateAccountConsentDetailObject(hesapBilgisiRizasi, rizaIstegi, header,(GetCustomerResponseDto)checkCustomerResult.Data )
+                GenerateAccountConsentDetailObject(hesapBilgisiRizasi, rizaIstegi, header)
             };
             context.Consents.Add(consentEntity);
             await context.SaveChangesAsync();
@@ -3195,8 +3186,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     private static OBAccountConsentDetail GenerateAccountConsentDetailObject(
         HesapBilgisiRizasiHHSDto hesapBilgisiRizasi,
         HesapBilgisiRizaIstegiHHSDto rizaIstegi,
-        RequestHeaderDto header,
-        GetCustomerResponseDto getCustomerResponse
+        RequestHeaderDto header
         )
     {
         return new()
@@ -3226,8 +3216,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             XGroupId = header.XGroupID,
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow,
-            CustomerNumber = getCustomerResponse.customerNumber,
-            InstitutionCustomerNumber = getCustomerResponse.krmCustomerNumber
+            CustomerNumber = "123",
+            InstitutionCustomerNumber = "1234"
         };
     }
 
