@@ -1159,6 +1159,16 @@ public static class SeedExtension
             Message = "Gon Unv should not be sent in One Time Payment",
             MessageTr = "Gon Unv alanı tek seferlik ödeme de gönderilmemelidir/boş olmalıdır."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDataKrmKmlkDataShouldBeNull.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "When ohkTur is individual, institution data should not be in request data.",
+            MessageTr = "Ohk Tur bireysel olan rızalarda, kurumsal kimlik bilgileri gönderilmemelidir."
+        });
+        
+        
     }
 
 }
