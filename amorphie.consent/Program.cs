@@ -37,7 +37,8 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
 builder.Services.AddTransient<HttpClientHandler>();
-builder.Services.AddScoped<LoggingHandler>();
+builder.Services.AddTransient<LoggingHandler>();
+//builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -88,8 +89,8 @@ builder.Services
 .AddPolicyHandler(retryPolicy);
 
 X509Certificate2 certificate = new X509Certificate2("0125_480.pfx", pfxPassword);
-var handler = new HttpClientHandler();
-handler.ClientCertificates.Add(certificate);
+// var handler = new HttpClientHandler();
+// handler.ClientCertificates.Add(certificate);
 
 builder.Services
     .AddRefitClient<IBKMClientService>()
@@ -98,7 +99,11 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:BkmUrl"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
     })
-    .ConfigurePrimaryHttpMessageHandler(() => handler)
+    .ConfigurePrimaryHttpMessageHandler(() => {
+          var handler = new HttpClientHandler();
+                        handler.ClientCertificates.Add(certificate);
+                        return handler;
+    })
     .AddHttpMessageHandler<LoggingHandler>()
     .AddPolicyHandler(retryPolicy);
 
@@ -141,13 +146,14 @@ builder.Services.AddDbContext<ConsentDbContext>
 //     // (options => options.UseInMemoryDatabase("TemplateDbContext"));
 //     (options => options.UseNpgsql("Host=localhost:5432;Database=ConsentDb;Username=postgres;Password=postgres", b => b.MigrationsAssembly("amorphie.consent.data")));
 
+builder.Services.AddHealthChecks();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseAllElasticApm(app.Configuration);
 }
 app.UseLoggingHandlerMiddlewares();
-
+app.MapHealthChecks("/health");
 app.UseCloudEvents();
 app.UseRouting();
 app.UseEndpoints(endpoints =>

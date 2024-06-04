@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240528121635_OBPaymentOrderErrorCodes")]
+    partial class OBPaymentOrderErrorCodes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -146,9 +149,6 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CustomerNumber")
-                        .HasColumnType("text");
-
                     b.Property<string>("DiscreteGKDDefinitionType")
                         .HasColumnType("text");
 
@@ -171,9 +171,6 @@ namespace amorphie.consent.data.Migrations
 
                     b.Property<string>("IdentityType")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("InstitutionCustomerNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("InstitutionIdentityData")

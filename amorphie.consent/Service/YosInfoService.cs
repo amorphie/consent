@@ -104,6 +104,7 @@ public class YosInfoService : IYosInfoService
             var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
                     abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
                 .Select(r => r.YOSRole)
+                .ToList()
                 .Distinct();
 
             //Set yosRole list
@@ -173,6 +174,7 @@ public class YosInfoService : IYosInfoService
             bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
                 s.ModuleName == OpenBankingConstants.ModuleName.HHS
                 && s.YOSCode == yosKod
+                && s.IsActive
                 && s.OBEventSubscriptionTypes.Any(t =>
                     t.SourceType == sourceType
                     && t.EventType == eventType));
@@ -182,6 +184,33 @@ public class YosInfoService : IYosInfoService
                 result.Data = false;
                 return result;
             }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+    
+    public async Task<ApiResult> IsYosAddressCorrect(string yosCode, string authType, string address)
+    {
+        ApiResult result = new();
+        try
+        {
+            bool isAddressCorrect = false;
+           //Get yos
+            var yos = await _context.OBYosInfos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(y => y.Kod == yosCode);
+            if (yos != null)
+            {
+                //Check if yos address contains desired address
+                isAddressCorrect = _mapper.Map<OBYosInfoDto>(yos)?.adresler.Any(a => a.yetYntm == authType
+                    && a.adresDetaylari.Any(d => address.StartsWith(d.tmlAdr))) ?? false;
+            }
+            result.Data = isAddressCorrect;
         }
         catch (Exception e)
         {

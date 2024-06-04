@@ -221,6 +221,7 @@ public class OBEventService : IOBEventService
         bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
             s.ModuleName == OpenBankingConstants.ModuleName.HHS
             && s.YOSCode == yosKod
+            && s.IsActive
             && s.OBEventSubscriptionTypes.Any(t =>
                 t.SourceType == sourceType
                 && t.EventType == OpenBankingConstants.OlayTip
