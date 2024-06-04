@@ -3,16 +3,10 @@ using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using amorphie.consent.Validator;
-using amorphie.core.HealthCheck;
 using amorphie.core.Identity;
 using amorphie.core.Swagger;
-using amorphie.template.HealthCheck;
-using AutoMapper;
 using FluentValidation;
-using HealthChecks.UI.Client;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.Replication;
 using Prometheus;
 using Dapr.Client;
 using Elastic.Apm.NetCoreAll;
@@ -22,15 +16,8 @@ using Polly.Retry;
 using Polly.Timeout;
 using Refit;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Net.Http.Headers;
-using System;
 using amorphie.core.Extension;
-using Dapr;
-using Microsoft.AspNetCore.HttpLogging;
-using Serilog;
-using System.Net.Http;
 using amorphie.consent.Helper;
-using amorphie.core.Middleware.Logging;
 using amorphie.core.Middleware.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,8 +40,7 @@ builder.Services.AddTransient<HttpClientHandler>();
 builder.Services.AddTransient<LoggingHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
 builder.Services.AddScoped<IBBTIdentity, FakeIdentity>();
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 await builder.Configuration.AddVaultSecrets("amorphie-consent", new string[] { "amorphie-consent" });
 var postgreSql = builder.Configuration["PostgreSql"];
@@ -64,13 +50,9 @@ string jsonFilePath = Path.Combine(AppContext.BaseDirectory, "test.json");
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<AddSwaggerParameterFilter>();
-
 });
 
-
 builder.AddSeriLogWithHttpLogging<AmorphieLogEnricher>();
-
-
 
 //wait 1s and retry again 3 times when get timeout
 AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
@@ -98,6 +80,7 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TokenServiceURL"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "TokenServiceURL")))
     .AddPolicyHandler(retryPolicy);
+
 builder.Services
 .AddRefitClient<IDeviceRecordClientService>()
 .ConfigureHttpClient(c =>
@@ -129,7 +112,7 @@ builder.Services
 .ConfigureHttpClient(c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:TagUrl"] ??
-                            throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
+                            throw new ArgumentNullException("Parameter is not suplied.", "TagUrl"));
 })
 .AddPolicyHandler(retryPolicy);
 
@@ -138,9 +121,10 @@ builder.Services
 .ConfigureHttpClient(c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["MessagingGateway:MessagingGatewayUrl"] ??
-                            throw new ArgumentNullException("Parameter is not suplied.", "YosUrl"));
+                            throw new ArgumentNullException("Parameter is not suplied.", "MessagingGatewayUrl"));
 })
 .AddPolicyHandler(retryPolicy);
+
 
 builder.Services.AddCors(options =>
 {
@@ -155,7 +139,6 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddValidatorsFromAssemblyContaining<ConsentValidator>(includeInternalTypes: true);
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
-
 
 builder.Services.AddDbContext<ConsentDbContext>
     (options => options.UseNpgsql(postgreSql, b => b.MigrationsAssembly("amorphie.consent.data")));
@@ -188,22 +171,15 @@ var db = scope.ServiceProvider.GetRequiredService<ConsentDbContext>();
 db.Database.Migrate();
 DbInitializer.Initialize(db);
 
-
 // Configure the HTTP request pipeline.
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
 app.UseHttpsRedirection();
 
 app.AddRoutes();
 
-// app.MapHealthChecks("/healthz", new HealthCheckOptions
-// {
-//     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-// });
 app.MapMetrics();
 
 app.Run();
-

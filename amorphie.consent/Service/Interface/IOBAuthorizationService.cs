@@ -15,6 +15,15 @@ public interface IOBAuthorizationService
     public Task<ApiResult> GetAuthUsedAccountConsentsOfUser(string userTckn);
 
     /// <summary>
+    /// Get users yetkikullanildi state of account consents
+    /// Also Checks consent validity date
+    /// </summary>
+    /// <param name="customerNumber">Consent customer number</param>
+    /// <param name="institutionCustomerNumber">Consent institution customer number</param>
+    /// <returns>User's account consents</returns>
+    public Task<ApiResult> GetAuthUsedAccountConsentsOfInstitutionUser(string customerNumber, string institutionCustomerNumber);
+
+    /// <summary>
     /// Get yetki kullanıldı state of account consent by given id and permission.
     /// Also Checks consent validity date
     /// </summary>
@@ -42,7 +51,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="accountRef">Account ref</param>
     /// <returns>User's account consent</returns>
-    public Task<ApiResult> GetAccountConsentByAccountRef(string consentId,string userTckn, string yosCode,string accountRef);
+    public Task<ApiResult> GetAccountConsentByAccountRef(string consentId, string userTckn, string yosCode, string accountRef);
 
     /// <summary>
     /// Get user consent by checking id, consentType

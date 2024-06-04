@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240523143635_InstitutionConsent")]
+    partial class InstitutionConsent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,88 +267,6 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBErrorCodeDetails");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("32d7bc60-4ad3-4dc8-b1f3-3038d338748f"),
-                            BkmCode = "TR.OHVPS.Business.InvalidContent",
-                            InternalCode = 204,
-                            Message = "Gkd yonadr does not match yos api yos addresses.",
-                            MessageTr = "YonAdr değeri hatalı. Yos api içerisinde belirtilen temel addresler ile uyuşmamaktadır."
-                        },
-                        new
-                        {
-                            Id = new Guid("f20c8ab6-0642-4133-9a55-9399ac46807f"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 37,
-                            Message = "size must be 26",
-                            MessageTr = "boyut '26' olmalı"
-                        },
-                        new
-                        {
-                            Id = new Guid("548f940e-300a-42f8-9347-542c4539d14f"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 36,
-                            Message = "size must be between 3-140",
-                            MessageTr = "boyut '3' ile  '140' arasında olmalı"
-                        },
-                        new
-                        {
-                            Id = new Guid("77a67556-bf51-4c10-b70b-76f2ddd87d0b"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 38,
-                            Message = "Numeric 12 length data",
-                            MessageTr = "boyur '12' sayısal karakter olmalı"
-                        },
-                        new
-                        {
-                            Id = new Guid("5fe3c8c2-8782-47bc-b22a-3491eb981ca9"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 39,
-                            Message = "size must be between 1-200",
-                            MessageTr = "boyut '1' ile  '200' arasında olmalı"
-                        },
-                        new
-                        {
-                            Id = new Guid("6dc0633e-c857-4309-8b8e-86b2cf479e68"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 40,
-                            Message = "size must be between 3-140",
-                            MessageTr = "boyut '3' ile  '140' arasında olmalı"
-                        },
-                        new
-                        {
-                            Id = new Guid("e0a5e6cf-662d-4cc7-b171-131206ceb4c6"),
-                            BkmCode = "TR.OHVPS.Business.InvalidContent",
-                            InternalCode = 205,
-                            Message = "kmlk.kmlkVrs does not match processing user tckn.",
-                            MessageTr = "İşlem yapan kullanıcının tckn si, rıza içerisindeki kimlik verisi ile uyuşmamaktadır."
-                        },
-                        new
-                        {
-                            Id = new Guid("704009c8-8057-49b5-a3eb-8e0b1402b4ce"),
-                            BkmCode = "TR.OHVPS.Field.Invalid",
-                            InternalCode = 41,
-                            Message = "Incorrect or missing data.",
-                            MessageTr = "Alan verisi eksik ya da hatalı."
-                        },
-                        new
-                        {
-                            Id = new Guid("f71142f9-e36d-4a65-8eb5-6116a4286aac"),
-                            BkmCode = "TR.OHVPS.Resource.ConsentMismatch",
-                            InternalCode = 165,
-                            Message = "Consent state not valid to process",
-                            MessageTr = "Odeme emri rıza durumu, ödeme emri işlemi yapılmaya uygun değil."
-                        },
-                        new
-                        {
-                            Id = new Guid("66a09286-7861-49b3-a6f0-1323ff5436a3"),
-                            BkmCode = "TR.OHVPS.Resource.NotFound",
-                            InternalCode = 120,
-                            Message = "Related Payment consent can not found to process payment order.",
-                            MessageTr = "Ödeme emri yapılmak istenilen ilişkili ödeme emri rızası kaydı bulunamadı."
-                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>
