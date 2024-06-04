@@ -1132,8 +1132,32 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipGsmIban.GetHashCode(),
             BkmCode = "TR.OHVPS.Field.Invalid",
-            Message = "GSM/IBAN can only be used in One Usage Payment",
+            Message = "GSM/IBAN can only be used in One Time Payment",
             MessageTr = "GSM/IBAN Ohk Tanım Tipi sadece tek seferlik ödeme de kullanılabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTurOneTimePaymentIndividual.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "In One Time Payment, ohkTur must be individual.",
+            MessageTr = "Tek seferlik ödeme de ohkTur sadece bireysel olabilir."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKolasNotValidInOneTimePayment.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Kolas can not be used in one time payment.",
+            MessageTr = "Tek seferlik ödeme işlemlerinde kolas kullanılamaz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvOneShouldBeEmptyTimePayment.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "Gon Unv should not be sent in One Time Payment",
+            MessageTr = "Gon Unv alanı tek seferlik ödeme de gönderilmemelidir/boş olmalıdır."
         });
     }
 
