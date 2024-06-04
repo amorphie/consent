@@ -152,7 +152,7 @@ public static class OBConsentValidationHelper
     /// </summary>
     /// <returns></returns>
     public static ApiResult CheckKmlkData(KimlikDto kmlk, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName, bool? checkOneTimePayment = false)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -160,42 +160,24 @@ public static class OBConsentValidationHelper
             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
 
         errorResponse.FieldErrors = new List<FieldError>();
+        if ((checkOneTimePayment ?? false)
+            && IsOneTimePayment(kmlk.kmlkVrs, kmlk.kmlkTur))
+        {
+            ValidateOhkTur(kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
+            if (errorResponse.FieldErrors.Any())
+            {
+                result.Result = false;
+                result.Data = errorResponse;
+            }
+
+            return result;
+        }
+
         // Check each property and add errors if necessary
-        if (string.IsNullOrEmpty(kmlk.kmlkTur))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
-                objectName: objectName);
-
-        if (string.IsNullOrEmpty(kmlk.kmlkVrs))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKmlkVrs, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
-                objectName: objectName);
-
-        if (string.IsNullOrEmpty(kmlk.krmKmlkTur) != string.IsNullOrEmpty(kmlk.krmKmlkVrs))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
-                objectName: objectName);
-
-        if (string.IsNullOrEmpty(kmlk.ohkTur))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
-                objectName: objectName);
-
-        if (!ConstantHelper.GetKimlikTurList().Contains(kmlk.kmlkTur))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
-                objectName: objectName);
-
-        if (!ConstantHelper.GetOHKTurList().Contains(kmlk.ohkTur))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
-                objectName: objectName);
-
-        if (!string.IsNullOrEmpty(kmlk.krmKmlkTur) &&
-            !ConstantHelper.GetKurumKimlikTurList().Contains(kmlk.krmKmlkTur))
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
-                objectName: objectName);
+        ValidateKimlikTur(kmlk.kmlkTur, errorCodeDetails, errorResponse, objectName);
+        ValidateKimlikVrs(kmlk.kmlkVrs, errorCodeDetails, errorResponse, objectName);
+        ValidateOhkTur(kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
+        ValidateKrmKmlkTur(kmlk.krmKmlkTur, kmlk.krmKmlkVrs, errorCodeDetails, errorResponse, objectName);
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -270,6 +252,67 @@ public static class OBConsentValidationHelper
         }
 
         return result;
+    }
+
+    public static ApiResult CheckOneTimePayment(KimlikDto kmlk, KolasRequestDto? kolas, string? gonUnv,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+    {
+        ApiResult result = new();
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+
+        errorResponse.FieldErrors = new List<FieldError>();
+        result.Data = errorResponse;
+        // Check each property and add errors if necessary
+        if (IsOneTimePayment(kmlk.kmlkVrs, kmlk.kmlkTur))
+        {
+            //Tek seferlik ödeme
+            //Check Tek seferlik ödeme akışı sadece bireysel müşteriler için kullanılabilir.
+            if (kmlk.ohkTur != OpenBankingConstants.OHKTur.Bireysel)
+            {
+                result.Result = false;
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.KmlkOhkTur,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTurOneTimePaymentIndividual,
+                    objectName: objectName);
+                return result;
+            }
+
+            if (kolas != null)
+            {
+                //Tek seferlik ödemelerde ( kimlik bilgileri boş iletildiğinde) KOLAS nesnesi dolu iletiliyorsa; HHS tarafından TR.OHVPS.Business.InvalidContent hatası dönülmelidir
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKolasNotValidInOneTimePayment);
+                return result;
+            }
+
+            if (!string.IsNullOrEmpty(gonUnv))
+            {
+                //Unvan tek seferlik ödeme de boş olmalı
+                result.Result = false;
+                AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                    OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvOneShouldBeEmptyTimePayment,
+                    objectName: objectName);
+                return result;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if process is one time payment
+    /// </summary>
+    /// <param name="kmlkVrs">Identity Data</param>
+    /// <param name="kmlkTur">Identity Type</param>
+    /// <returns></returns>
+    public static bool IsOneTimePayment(string? kmlkVrs, string? kmlkTur)
+    {
+        return string.IsNullOrEmpty(kmlkTur) && string.IsNullOrEmpty(kmlkVrs);
     }
 
     public static ApiResult CheckIznBlgTur(IzinBilgisiRequestDto iznBlg, HttpContext context,
@@ -513,7 +556,8 @@ public static class OBConsentValidationHelper
         return result;
     }
 
-    public static void ValidateOdmKynk(string odmKynk, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateOdmKynk(string odmKynk, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(odmKynk)) //Check Odeme kaynak
         {
@@ -532,10 +576,10 @@ public static class OBConsentValidationHelper
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmKynkNotOpenBanking,
                 objectName: objectName);
         }
-
     }
 
-    public static void ValidateOdmAmc(string odmAmc, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateOdmAmc(string odmAmc, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(odmAmc))
         {
@@ -552,7 +596,8 @@ public static class OBConsentValidationHelper
         }
     }
 
-    public static void ValidateOdmAcklm(string odmAcklm, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateOdmAcklm(string odmAcklm, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         //Check odmAcklm length
         if (!string.IsNullOrEmpty(odmAcklm)
@@ -564,7 +609,8 @@ public static class OBConsentValidationHelper
         }
     }
 
-    public static void ValidateOhkMsj(string ohkMsj, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateOhkMsj(string ohkMsj, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         //Check ohkMsj length
         if (!string.IsNullOrEmpty(ohkMsj) && (ohkMsj.Length < 1 || ohkMsj.Length > 200))
@@ -575,7 +621,8 @@ public static class OBConsentValidationHelper
         }
     }
 
-    public static void ValidateOdmStm(string odmStm, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateOdmStm(string odmStm, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(odmStm))
         {
@@ -667,7 +714,7 @@ public static class OBConsentValidationHelper
             result.Result = false;
         }
 
-        ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName);//Check kolas
+        ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName); //Check kolas
         if (errorResponse.FieldErrors.Any())
         {
             result.Result = false;
@@ -710,8 +757,8 @@ public static class OBConsentValidationHelper
         result.Data = errorResponse;
 
 
-        ValidateAlici(odmBsltm, errorCodeDetails, errorResponse, objectName);//Check odmBsltma Alıcı
-        ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName);//Check kolas
+        ValidateAlici(odmBsltm, errorCodeDetails, errorResponse, objectName); //Check odmBsltma Alıcı
+        ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName); //Check kolas
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -742,7 +789,8 @@ public static class OBConsentValidationHelper
         return result;
     }
 
-    public static void ValidateAlici(OdemeBaslatmaDto odmBsltm, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateAlici(OdemeBaslatmaDto odmBsltm, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(odmBsltm.alc.unv))
         {
@@ -819,7 +867,6 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcKolasKolasDgrLength,
                 objectName: objectName);
         }
-
     }
 
     public static void ValidateKolasTur(string kolasTur, List<OBErrorCodeDetail> errorCodeDetails,
@@ -846,7 +893,8 @@ public static class OBConsentValidationHelper
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (kolasRefNo.ToString().Length != 12)
-        { //kolasRefNo value is not valid
+        {
+            //kolasRefNo value is not valid
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlcKolasKolasRefNo,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcKolasKolasRefNo, objectName);
@@ -857,21 +905,24 @@ public static class OBConsentValidationHelper
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(kolasHspTur))
-        { //kolasHspTur must be set
+        {
+            //kolasHspTur must be set
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlcKolasKolasHspTur,
                 OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName);
         }
 
         if (!string.IsNullOrEmpty(kolasHspTur) && !ConstantHelper.GetKolasHspTurList().Contains(kolasHspTur))
-        {//kolasTur value is not valid
+        {
+            //kolasTur value is not valid
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlcKolasKolasHspTur,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName);
         }
     }
 
-    public static void ValidateKarekod(KarekodDto? kkod, List<OBErrorCodeDetail> errorCodeDetails, OBCustomErrorResponseDto errorResponse, string objectName)
+    public static void ValidateKarekod(KarekodDto? kkod, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (kkod == null) return;
 
@@ -909,6 +960,58 @@ public static class OBConsentValidationHelper
     }
 
 
+    public static void ValidateKimlikTur(string? kmlkTur, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(kmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+
+        else if (!ConstantHelper.GetKimlikTurList().Contains(kmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                objectName: objectName);
+    }
+
+    public static void ValidateKimlikVrs(string? kmlkVrs, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(kmlkVrs))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKmlkVrs, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+    }
+
+    public static void ValidateOhkTur(string ohkTur, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(ohkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+        else if (!ConstantHelper.GetOHKTurList().Contains(ohkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkOhkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                objectName: objectName);
+    }
+
+    public static void ValidateKrmKmlkTur(string? krmKmlkTur, string? krmKmlkVrs,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(krmKmlkTur) != string.IsNullOrEmpty(krmKmlkVrs))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                objectName: objectName);
+
+        if (!string.IsNullOrEmpty(krmKmlkTur) &&
+            !ConstantHelper.GetKurumKimlikTurList().Contains(krmKmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                objectName: objectName);
+    }
+
     public static ApiResult CheckGonderen(GonderenHesapDto gonderen,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
@@ -922,23 +1025,7 @@ public static class OBConsentValidationHelper
         result.Data = errorResponse;
 
         //Check odmBsltma gon - Required
-        if (string.IsNullOrEmpty(gonderen.unv))
-        {
-            //odmBsltm.gon.unv must be set
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
-        }
-
-        if (!string.IsNullOrEmpty(gonderen.unv)
-            && (gonderen.unv.Length < 3
-                || gonderen.unv.Length > 140)) //Check alc.unv length
-        {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvLength, objectName: objectName);
-        }
-
+        ValidateGonUnv(gonderen.unv, errorCodeDetails, errorResponse, objectName);
         if (errorResponse.FieldErrors.Any())
         {
             result.Result = false;
@@ -949,6 +1036,27 @@ public static class OBConsentValidationHelper
         return result;
     }
 
+    public static void ValidateGonUnv(string? gonUnv, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(gonUnv))
+        {
+            //odmBsltm.gon.unv must be set
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
+        }
+
+        if (!string.IsNullOrEmpty(gonUnv)
+            && (gonUnv.Length < 3
+                || gonUnv.Length > 140)) //Check alc.unv length
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmGonUnvLength, objectName: objectName);
+        }
+    }
+
     public static ApiResult CheckRizaBlg(RizaBilgileriRequestDto rzBlg,
         string? consentId,
         HttpContext context,
@@ -956,61 +1064,23 @@ public static class OBConsentValidationHelper
     {
         ApiResult result = new();
 
-        if (consentId != rzBlg.rizaNo)//Processing token consent id not equal to rizano in post message
+        if (consentId != rzBlg.rizaNo) //Processing token consent id not equal to rizano in post message
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
                 OBErrorCodeConstants.ErrorCodesEnum.NotFoundPaymentConsentToPaymentOrder);
             return result;
         }
-        
+
         //Get 400 error response
         var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
         errorResponse.FieldErrors = new List<FieldError>();
         result.Data = errorResponse;
 
-        if (string.IsNullOrEmpty(rzBlg.rizaDrm))
-        {
-            //rizaDrm must be set
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaDrm,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
-        }
-
-        if (!string.IsNullOrEmpty(rzBlg.rizaDrm)
-            && !ConstantHelper.GetRizaDurumuList().Contains(rzBlg.rizaDrm))
-        {
-            //rizaDrm value is not valid
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaDrm,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
-        }
-
-        if (string.IsNullOrEmpty(rzBlg.rizaNo))
-        {
-            //rizaNo must be set
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaNo,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
-        }
-
-        if (!string.IsNullOrEmpty(rzBlg.rizaNo)
-            && !Guid.TryParse(rzBlg.rizaNo, out Guid rizaNo))
-        {
-            //rizaNo value is not valid
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaNo,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
-        }
-
-        if (rzBlg.olusZmn == DateTime.MinValue)
-        {
-            //olusZmn value is not valid
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.RzBlgOlusZmn,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
-        }
+        ValidateRizaDrm(rzBlg.rizaDrm, errorCodeDetails, errorResponse, objectName);
+        ValidateRizaNo(rzBlg.rizaNo, errorCodeDetails, errorResponse, objectName);
+        ValidateRizaOlusZmn(rzBlg.olusZmn, errorCodeDetails, errorResponse, objectName);
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -1020,6 +1090,59 @@ public static class OBConsentValidationHelper
         }
 
         return result;
+    }
+    
+    public static void ValidateRizaDrm(string rizaDrm, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(rizaDrm))
+        {
+            //rizaDrm must be set
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaDrm,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
+        }
+
+        if (!string.IsNullOrEmpty(rizaDrm)
+            && !ConstantHelper.GetRizaDurumuList().Contains(rizaDrm))
+        {
+            //rizaDrm value is not valid
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaDrm,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+    }
+    public static void ValidateRizaNo(string rizaNo, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(rizaNo))
+        {
+            //rizaNo must be set
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaNo,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
+        }
+
+        if (!string.IsNullOrEmpty(rizaNo)
+            && !Guid.TryParse(rizaNo, out Guid rizaNoGuid))
+        {
+            //rizaNo value is not valid
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.RzBlgRizaNo,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+    }
+    
+    public static void ValidateRizaOlusZmn(DateTime rzBlgOlusZmn, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (rzBlgOlusZmn == DateTime.MinValue)
+        {
+            //olusZmn value is not valid
+            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                propertyName: OBErrorCodeConstants.FieldNames.RzBlgOlusZmn,
+                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
     }
 
 
@@ -1097,7 +1220,8 @@ public static class OBConsentValidationHelper
                 return result;
             }
 
-            result = await ValidateAyrikGkd(gkd.ayrikGkd, kimlik, yosCode, errorCodeDetails, errorResponse, eventService,
+            result = await ValidateAyrikGkd(gkd.ayrikGkd, kimlik, yosCode, errorCodeDetails, errorResponse,
+                eventService,
                 context, objectName: objectName); //validate ayrik gkd data
             if (!result.Result)
             {
@@ -1152,7 +1276,7 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Validates ayrık gkd data inside gkd object
     /// </summary>
-    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd,KimlikDto? kimlik, string yosCode,
+    private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, KimlikDto kimlik, string yosCode,
         List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, IOBEventService eventService, HttpContext context, string objectName)
     {
@@ -1217,10 +1341,9 @@ public static class OBConsentValidationHelper
 
         if (ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.GSM
             || ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.IBAN)
-        {//Can only be used in tek seferlik ödeme
-            if (kimlik is not null
-                || !string.IsNullOrEmpty(kimlik?.kmlkVrs)
-                || !string.IsNullOrEmpty(kimlik?.kmlkTur))
+        {
+            //Can only be used in tek seferlik ödeme
+            if (!IsOneTimePayment(kimlik?.kmlkVrs,kimlik?.kmlkTur))
             {
                 result.Result = false;
                 AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
@@ -1230,11 +1353,12 @@ public static class OBConsentValidationHelper
             //TODO:Özlem 
             //Kullanıcılar taranıp tekil bir kullanıcıya erişiliyor mu kontrol edilmeli.
         }
+
         if (errorResponse.FieldErrors.Any())
         {
             return result;
         }
-        
+
 
         //Check GKDTanımDeger values
         result = ValidateOhkTanimDeger(ayrikGkd, errorCodeDetails, errorResponse, objectName: objectName);
@@ -1242,7 +1366,7 @@ public static class OBConsentValidationHelper
         {
             return result;
         }
-        
+
         //From Document:
         //Rıza başlatma akışı içerisinde kimlik bilgisinin olduğu durumlarda; ÖHK'ya ait kimlik verisi(kmlk.kmlkVrs) ile ayrık GKD içerisinde
         //yer alan OHK Tanım Değer alanı (ayrikGkd.ohkTanimDeger) birebir aynı olmalıdır.
@@ -1256,8 +1380,8 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.GkdTanimDegerKimlikNotMatch);
             return result;
         }
-        
-        
+
+
         return result;
     }
 
@@ -1455,31 +1579,8 @@ public static class OBConsentValidationHelper
             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
         errorResponse.FieldErrors = new List<FieldError>();
 
-        if (string.IsNullOrEmpty(katilimciBlg.hhsKod)) //Check hhskod 
-        {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
-                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
-        }
-        else if (katilimciBlg.hhsKod.Length != 4) //Check hhskod length
-        {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength, objectName: objectName);
-        }
-
-        if (string.IsNullOrEmpty(katilimciBlg.yosKod)) //Check yoskod 
-        {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.YosCodeHbr, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
-                objectName: objectName);
-        }
-        else if (katilimciBlg.yosKod.Length != 4) //Check yoskod length
-        {
-            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.YosCodeHbr,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength, objectName: objectName);
-        }
+        ValidateHhsKod(katilimciBlg.hhsKod, errorCodeDetails, errorResponse, objectName: objectName);
+        ValidateYosKod(katilimciBlg.yosKod, errorCodeDetails, errorResponse, objectName: objectName);
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -1500,6 +1601,40 @@ public static class OBConsentValidationHelper
         return result;
     }
 
+    private static void ValidateYosKod(string yosKod, List<OBErrorCodeDetail> errorCodeDetails, 
+        OBCustomErrorResponseDto errorResponse,string objectName)
+    {
+        if (string.IsNullOrEmpty(yosKod)) //Check yoskod 
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.YosCodeHbr, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+        }
+        else if (yosKod.Length != 4) //Check yoskod length
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.YosCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength, objectName: objectName);
+        }
+    }
+
+    public static void ValidateHhsKod(string hhsKod, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(hhsKod)) //Check hhskod 
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
+        }
+        else if (hhsKod.Length != 4) //Check hhskod length
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.HhsCodeHbr,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldHhsCodeYosCodeLength, objectName: objectName);
+        }
+    }
+
     public static ApiResult CheckOdemeEmriRizasiOdemeEmri(OdemeEmriRizasiHHSDto odemeEmriRizasi,
         OdemeEmriIstegiHHSDto odemeEmriIstegi,
         HttpContext context,
@@ -1512,21 +1647,48 @@ public static class OBConsentValidationHelper
         errorResponse.FieldErrors = new List<FieldError>();
         result.Data = errorResponse;
 
-        //odmBsltma Kmlk must be same
-        if (odemeEmriRizasi.odmBsltm.kmlk.kmlkTur != odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
+        if (!IsOneTimePayment(odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs, odemeEmriIstegi.odmBsltm.kmlk.kmlkTur))
         {
-            //kmlkTur should be same
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKmlkTur,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
+            //odmBsltma Kmlk must be same - Tek seferlik ödeme değilse
+            if (odemeEmriRizasi.odmBsltm.kmlk.kmlkTur != odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
+            {
+                //kmlkTur should be same
+                AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                    propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKmlkTur,
+                    errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect,
+                    objectName: objectName);
+            }
+
+            if (odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs)
+            {
+                //kmlkVrs should be same
+                AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                    propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKmlkVrs,
+                    errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect,
+                    objectName: objectName);
+            }
+
+            if (odemeEmriRizasi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
+                && odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkTur)
+            {
+                //krmKmlkTur should be same
+                AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                    propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKrmKmlkTur,
+                    errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect,
+                    objectName: objectName);
+            }
+
+            if (odemeEmriRizasi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
+                && odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkVrs)
+            {
+                //krmKmlkVrs should be same
+                AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
+                    propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKrmKmlkVrs,
+                    errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect,
+                    objectName: objectName);
+            }
         }
-        if (odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs)
-        {
-            //kmlkVrs should be same
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKmlkVrs,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
-        }
+
         if (odemeEmriRizasi.odmBsltm.kmlk.ohkTur != odemeEmriIstegi.odmBsltm.kmlk.ohkTur)
         {
             //ohkTur should be same
@@ -1534,22 +1696,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkOhkTur,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
-        if (odemeEmriRizasi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
-            && odemeEmriRizasi.odmBsltm.kmlk.krmKmlkTur != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkTur)
-        {
-            //krmKmlkTur should be same
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKrmKmlkTur,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
-        }
-        if (odemeEmriRizasi.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
-            && odemeEmriRizasi.odmBsltm.kmlk.krmKmlkVrs != odemeEmriIstegi.odmBsltm.kmlk.krmKmlkVrs)
-        {
-            //krmKmlkVrs should be same
-            AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
-                propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKmlkKrmKmlkVrs,
-                errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
-        }
+
         //odmBsltma gon must be same
         if (odemeEmriRizasi.odmBsltm.gon.hspNo != odemeEmriIstegi.odmBsltm.gon.hspNo)
         {
@@ -1558,6 +1705,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmGonHspNo,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm.gon.unv != odemeEmriIstegi.odmBsltm.gon.unv)
         {
             //unv should be same
@@ -1565,6 +1713,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmGonUnv,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm.alc.hspNo != odemeEmriIstegi.odmBsltm.alc.hspNo)
         {
             //alc.hspNo should be same
@@ -1572,6 +1721,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmAlcHspNo,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm.alc.kolas != null
             && odemeEmriRizasi.odmBsltm.alc.kolas.kolasTur != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasTur)
         {
@@ -1580,6 +1730,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmAlcKolasKolasTur,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm.alc.kolas != null
             && odemeEmriRizasi.odmBsltm.alc.kolas.kolasDgr != odemeEmriIstegi.odmBsltm.alc.kolas?.kolasDgr)
         {
@@ -1588,6 +1739,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmAlcKolasKolasDgr,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.kkod != null
             && odemeEmriRizasi.odmBsltm.kkod.aksTur != odemeEmriIstegi.odmBsltm.kkod?.aksTur)
         {
@@ -1596,6 +1748,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKkodAksTur,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.kkod != null
             && odemeEmriRizasi.odmBsltm.kkod.kkodRef != odemeEmriIstegi.odmBsltm.kkod?.kkodRef)
         {
@@ -1604,6 +1757,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmKkodKkodRef,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.odmAyr.odmKynk != odemeEmriIstegi.odmBsltm.odmAyr.odmKynk)
         {
             //odmKynk should be same
@@ -1611,6 +1765,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmOdmAyrOdmKynk,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.odmAyr.odmAmc != odemeEmriIstegi.odmBsltm.odmAyr.odmAmc)
         {
             //odmAmc should be same
@@ -1618,6 +1773,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmOdmAyrOdmAmc,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.odmAyr.refBlg != odemeEmriIstegi.odmBsltm.odmAyr.refBlg)
         {
             //refBlg should be same
@@ -1625,6 +1781,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmOdmAyrRefBlg,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.odmAyr.odmStm != odemeEmriIstegi.odmBsltm.odmAyr.odmStm)
         {
             //odmStm should be same
@@ -1632,6 +1789,7 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmOdmAyrOdmStm,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
+
         if (odemeEmriRizasi.odmBsltm?.islTtr.prBrm != odemeEmriIstegi.odmBsltm.islTtr.prBrm)
         {
             //prBrm should be same
@@ -1639,7 +1797,9 @@ public static class OBConsentValidationHelper
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmIslTtrPrBrm,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldMissingOrInCorrect, objectName: objectName);
         }
-        if (NormalizeAmount(odemeEmriRizasi.odmBsltm?.islTtr.ttr) != NormalizeAmount(odemeEmriIstegi.odmBsltm.islTtr.ttr))
+
+        if (NormalizeAmount(odemeEmriRizasi.odmBsltm?.islTtr.ttr) !=
+            NormalizeAmount(odemeEmriIstegi.odmBsltm.islTtr.ttr))
         {
             //ttr should be same
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
@@ -2549,7 +2709,8 @@ public static class OBConsentValidationHelper
         // Otherwise, normalize the amount
         if (decimal.TryParse(amount, out decimal decimalAmount))
         {
-            return decimalAmount.ToString("G29"); // G29 format removes trailing zeros and the decimal point if unnecessary
+            return
+                decimalAmount.ToString("G29"); // G29 format removes trailing zeros and the decimal point if unnecessary
         }
 
         return amount;

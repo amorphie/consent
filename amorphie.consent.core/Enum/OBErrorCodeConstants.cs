@@ -144,7 +144,8 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmGonUnvLength = 40,
         InvalidFieldMissingOrInCorrect = 41,
         InvalidFieldOhkTanimTipGsmIban = 42,
-
+        InvalidFieldOhkTurOneTimePaymentIndividual = 43,
+        InvalidFieldOdmBsltmGonUnvOneShouldBeEmptyTimePayment = 44,
         
         InvalidFormatValidationError = 100,
         InvalidAspsp = 101,
@@ -216,7 +217,8 @@ public static class OBErrorCodeConstants
         InvalidPermissionGetBalance = 324,
         InvalidPermissionGetTransaction = 325,
         InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
-        InvalidSignatureXJwsSignatureHeaderInvalid = 327
+        InvalidSignatureXJwsSignatureHeaderInvalid = 327,
+        InvalidContentKolasNotValidInOneTimePayment = 328
 
     }
 }
