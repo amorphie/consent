@@ -10,6 +10,9 @@ public class OBAccountConsentDetail : EntityBase
     public string IdentityData { get; set; } = string.Empty;
     public string? InstitutionIdentityType { get; set; }
     public string? InstitutionIdentityData { get; set; }
+
+    public string? CustomerNumber { get; set; }
+    public string? InstitutionCustomerNumber { get; set; }
     public string UserType { get; set; } = string.Empty;
 
     public string HhsCode { get; set; } = string.Empty;
