@@ -136,7 +136,6 @@ public static class OBErrorCodeConstants
         InvalidFieldOdmBsltmAlcRequiredIfNotKolas = 33,
         InvalidFieldOdmBsltmAlcKolasKolasDgrLength = 34,
         InvalidFieldOdmBsltmKkodUrtcKodLength = 35,
-        
         InvalidFieldOdmBsltmAlcUnvLength = 36,
         InvalidFieldOdmBsltmAlcHspNoLength = 37,
         InvalidFieldOdmBsltmAlcKolasKolasRefNo=38,
@@ -146,6 +145,7 @@ public static class OBErrorCodeConstants
         InvalidFieldOhkTanimTipGsmIban = 42,
         InvalidFieldOhkTurOneTimePaymentIndividual = 43,
         InvalidFieldOdmBsltmGonUnvOneShouldBeEmptyTimePayment = 44,
+        InvalidFieldDataKrmKmlkDataShouldBeNull = 45,
         
         InvalidFormatValidationError = 100,
         InvalidAspsp = 101,

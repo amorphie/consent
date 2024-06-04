@@ -177,7 +177,7 @@ public static class OBConsentValidationHelper
         ValidateKimlikTur(kmlk.kmlkTur, errorCodeDetails, errorResponse, objectName);
         ValidateKimlikVrs(kmlk.kmlkVrs, errorCodeDetails, errorResponse, objectName);
         ValidateOhkTur(kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
-        ValidateKrmKmlkTur(kmlk.krmKmlkTur, kmlk.krmKmlkVrs, errorCodeDetails, errorResponse, objectName);
+        ValidateKrmKmlkTur(kmlk.krmKmlkTur, kmlk.krmKmlkVrs,kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -996,19 +996,31 @@ public static class OBConsentValidationHelper
                 objectName: objectName);
     }
 
-    public static void ValidateKrmKmlkTur(string? krmKmlkTur, string? krmKmlkVrs,
+    public static void ValidateKrmKmlkTur(string? krmKmlkTur, string? krmKmlkVrs, string ohkTur,
         List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
-        if (string.IsNullOrEmpty(krmKmlkTur) != string.IsNullOrEmpty(krmKmlkVrs))
+        if (ohkTur == OpenBankingConstants.OHKTur.Bireysel 
+            && (!string.IsNullOrEmpty(krmKmlkTur) || !string.IsNullOrEmpty(krmKmlkVrs)))
+        {//Bireysel müşteride kurumsal veri olmamalı
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDataKrmKmlkDataShouldBeNull,
+                objectName: objectName);
+        }
+        if (ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+        && string.IsNullOrEmpty(krmKmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
                 objectName: objectName);
 
-        if (!string.IsNullOrEmpty(krmKmlkTur) &&
+        if (ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+            && !string.IsNullOrEmpty(krmKmlkTur) &&
             !ConstantHelper.GetKurumKimlikTurList().Contains(krmKmlkTur))
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
                 objectName: objectName);
     }
 
