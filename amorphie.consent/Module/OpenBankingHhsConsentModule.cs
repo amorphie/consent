@@ -69,7 +69,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapDelete("/hesap-bilgisi-rizasi/{rizaNo}", DeleteAccountConsentFromYos)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHS/{rizaNo}", DeleteAccountConsentFromHHS);
-         routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHSInstitution/{rizaNo}", DeleteAccountConsentFromHHSInstitution);
+         routeGroupBuilder.MapDelete("/DeleteAccountConsentFromHHSInstitution", DeleteAccountConsentFromHHSInstitution);
         routeGroupBuilder.MapPost("/hesap-bilgisi-rizasi", AccountInformationConsentPost)
             .AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("/odeme-emri-rizasi", PaymentConsentPost)
@@ -623,7 +623,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.NotFound(errorResponse);
             }
 
-            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity!.AdditionalData);
+            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentConsent);
             return Results.Ok(paymentConsent);
         }
@@ -1414,7 +1414,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            await CancelAccountConsent(rizaNo, context, tokenService, eventService, entity);
+            await CancelAccountConsent(context, tokenService, eventService, entity!);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1425,7 +1425,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     
 
 
-    protected async Task<IResult> DeleteAccountConsentFromHHSInstitution(Guid rizaNo,
+    protected async Task<IResult> DeleteAccountConsentFromHHSInstitution(Guid consentId,
         string customerNumber,
         string institutionCustomerNumber,
         [FromServices] ConsentDbContext context,
@@ -1440,12 +1440,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             
             //Check consent to cancel&/end
-            await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
+            await ProcessAccountConsentToCancelOrEnd(consentId, context);
 
             //get consent entity from db
             var entity = await context.Consents
                 .Include(c => c.OBAccountConsentDetails)
-                .FirstOrDefaultAsync(c => c.Id == rizaNo
+                .FirstOrDefaultAsync(c => c.Id == consentId
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                           && c.OBAccountConsentDetails.Any(i => i.CustomerNumber == customerNumber
                                                           && i.InstitutionCustomerNumber == institutionCustomerNumber
@@ -1459,7 +1459,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent rıza bilgileri properties
-            await CancelAccountConsent(rizaNo, context, tokenService, eventService, entity);
+            await CancelAccountConsent(context, tokenService, eventService, entity!);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1468,8 +1468,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
     
-    private static async Task CancelAccountConsent(Guid rizaNo, ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, Consent? entity)
+    private static async Task CancelAccountConsent(ConsentDbContext context, ITokenService tokenService,
+        IOBEventService eventService, Consent entity)
     {
         //Update consent rıza bilgileri properties
         var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
@@ -1495,7 +1495,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         await context.SaveChangesAsync();
 
         //Revoke token
-        await tokenService.RevokeConsentToken(rizaNo);
+        await tokenService.RevokeConsentToken(entity.Id);
 
         //Send event to yos
         await eventService.DoEventProcess(entity.Id.ToString(),
