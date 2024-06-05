@@ -218,7 +218,8 @@ public static class OBErrorCodeConstants
         InvalidPermissionGetTransaction = 325,
         InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
         InvalidSignatureXJwsSignatureHeaderInvalid = 327,
-        InvalidContentKolasNotValidInOneTimePayment = 328
+        InvalidContentKolasNotValidInOneTimePayment = 328,
+        InvalidContentOneTimePaymentPSUSessionId = 329
 
     }
 }

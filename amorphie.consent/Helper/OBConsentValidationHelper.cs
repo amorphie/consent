@@ -255,8 +255,10 @@ public static class OBConsentValidationHelper
     }
 
     public static ApiResult CheckOneTimePayment(KimlikDto kmlk, KolasRequestDto? kolas, string? gonUnv,
+        RequestHeaderDto header,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -299,6 +301,15 @@ public static class OBConsentValidationHelper
                     objectName: objectName);
                 return result;
             }
+            //PSU-Session-ID Tek seferlik ödeme gibi ÖHK’nın tanınmadan başlatıldığı işlemlerde bu değer boş olarak iletilmeli. Comment from document
+            if (!string.IsNullOrEmpty(header.PSUSessionId))
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOneTimePaymentPSUSessionId);
+                return result;
+            }
+            
         }
 
         return result;
