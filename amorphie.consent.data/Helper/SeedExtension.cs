@@ -1175,7 +1175,30 @@ public static class SeedExtension
             Message = "Header PSU-Session-ID must be empty in one time payment.",
             MessageTr = "Tek seferlik ödeme gibi ÖHK’nın tanınmadan başlatıldığı işlemlerde PSU-Session-ID başlık değeri boş olarak iletilmelidir."
         });
-        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleForSubscription.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Yos does not have desired role to make event subscription for selected eventype/sourcetypes",
+            MessageTr = "Yos abone olunmak istenilen abonelik tipleri için gerekli role e sahip değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYosNotHaveApiDefinition.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Yos does not have desired api definition.",
+            MessageTr = "Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı bulunmamaktadır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentThereIsAlreadyEventSubscriotion.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Yos already has event subscription in the system.",
+            MessageTr = "1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. Kaynak çakışması."
+        });
         
     }
 

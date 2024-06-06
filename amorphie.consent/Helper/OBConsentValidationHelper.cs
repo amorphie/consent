@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
@@ -142,6 +143,38 @@ public static class OBConsentValidationHelper
             errorCodeDetail, errorResponse);
 
 
+        // Return false if any errors were added, indicating an issue with the header
+        return !errorResponse.FieldErrors.Any();
+    }
+    
+     /// <summary>
+    /// Checks olay abonelik post data null objects
+    /// </summary>
+    /// <returns></returns>
+    public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiDto olayAbonelikIstegi,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+    {
+        //Get 400 error response
+        errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+
+        //Field can not be empty error code
+        var errorCodeDetail = OBErrorResponseHelper.GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        // Check each property and add errors if necessary
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi,
+            OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi,
+            errorCodeDetail, errorResponse);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.katilimciBlg,
+            OBErrorCodeConstants.ObjectNames.KatilimciBlg,
+            errorCodeDetail, errorResponse);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.abonelikTipleri,
+            OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
+            errorCodeDetail, errorResponse);
+        
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
@@ -1834,7 +1867,135 @@ public static class OBConsentValidationHelper
 
         return result;
     }
+    
+     /// <summary>
+    /// Checks if AbonelikTipleriObject is valid
+    /// </summary>
+    /// <returns></returns>
+    public static ApiResult IsAbonelikTipleriObjectDataValid(HttpContext context,
+        IConfiguration configuration,
+        List<AbonelikTipleriDto> abonelikTipleri,
+        List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
+    {
+        ApiResult result = new();
 
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+        result.Data = errorResponse;
+        if (!abonelikTipleri.Any())
+        {
+            result.Result = false;
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
+                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+            return result;
+        }
+        ValidateOlayTipi(abonelikTipleri,eventTypeSourceTypeRelations, errorCodeDetails, errorResponse, objectName: objectName);
+        ValidateKaynakTipi(abonelikTipleri, eventTypeSourceTypeRelations, errorCodeDetails, errorResponse, objectName: objectName);
+        
+        if (errorResponse.FieldErrors.Any())
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+        return result;
+    }
+
+    private static void ValidateOlayTipi(List<AbonelikTipleriDto> abonelikTipleri, List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations, List<OBErrorCodeDetail> errorCodeDetails, 
+        OBCustomErrorResponseDto errorResponse,string objectName)
+    {
+         //Check eventType 
+        if (!abonelikTipleri.Any(a => ConstantHelper.GetOlayTipList().Contains(a.olayTipi)))
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.OlayTipiOA,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+        //Event Type check. Descpriton from document:
+        //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
+        else if (abonelikTipleri.Any(a => eventTypeSourceTypeRelations.All(r => r.EventType != a.olayTipi)))
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.OlayTipiOA,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+    }
+    private static void ValidateKaynakTipi(List<AbonelikTipleriDto> abonelikTipleri, List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations, List<OBErrorCodeDetail> errorCodeDetails, 
+        OBCustomErrorResponseDto errorResponse,string objectName)
+    {
+        
+        if (!abonelikTipleri.Any(a => ConstantHelper.GetKaynakTipList().Contains(a.kaynakTipi)))
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KaynakTipiOA,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+        //Event Type check. Descpriton from document:
+        //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
+        else if (abonelikTipleri.Any(a => eventTypeSourceTypeRelations.All(r => r.SourceType != a.kaynakTipi)))
+        {
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KaynakTipiOA,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
+        }
+    }
+    
+    public static async Task<ApiResult> CheckIfYosHasDesiredRole(HttpContext context,
+        IYosInfoService yosInfoService,
+        string yosKod,
+        List<AbonelikTipleriDto> abonelikTipleri,
+        List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
+    {
+        //Source Type check.  Descpriton from document:
+        //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+        ApiResult result = new();
+        var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(yosKod,
+            abonelikTipleri, eventTypeSourceTypeRelations);
+        if (yosInfoResponse.Result == false
+            || yosInfoResponse.Data == null
+            || (bool)yosInfoResponse.Data == false)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleForSubscription);
+            return result;
+        }
+
+        return result;
+    }
+    
+    public static async Task<ApiResult> CheckIfYosProvidesDesiredApi(HttpContext context,
+        IYosInfoService yosInfoService,
+        string yosKod,
+        string apiName,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
+    {
+        //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
+        //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
+        ApiResult result = new();
+        var  yosInfoResponse = await yosInfoService.CheckIfYosProvidesDesiredApi(yosKod,
+            OpenBankingConstants.YosApi.OlayDinleme);
+        if (yosInfoResponse.Result == false
+            || yosInfoResponse.Data == null
+            || (bool)yosInfoResponse.Data == false)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYosNotHaveApiDefinition);
+            return result;
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Checks if parameters valid to get balances and accounts

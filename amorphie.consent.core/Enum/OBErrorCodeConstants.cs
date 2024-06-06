@@ -62,10 +62,11 @@ public static class OBErrorCodeConstants
         public const string RzBlgRizaDrm = "rzBlg.rizaDrm";
         public const string RzBlgRizaNo = "rzBlg.rizaNo";
         public const string RzBlgOlusZmn = "rzBlg.olusZmn";
-
         public const string IsyOdmBlgIsyKtgKod = "isyOdmBlg.isyKtgKod";
         public const string IsyOdmBlgAltIsyKtgKod = "isyOdmBlg.altIsyKtgKod";
         public const string IsyOdmBlgGenelUyeIsyeriNo = "isyOdmBlg.genelUyeIsyeriNo";
+        public const string OlayTipiOA = "abonelikTipleri.olayTipi";
+        public const string KaynakTipiOA = "abonelikTipleri.kaynakTipi";
 
 
     }
@@ -74,6 +75,7 @@ public static class OBErrorCodeConstants
         public const string HesapBilgisiRizasiIstegi = "HesapBilgisiRizasiIstegi";
         public const string OdemeEmriRizasiIstegi = "OdemeEmriRizasiIstegi";
         public const string OdemeEmriIstegi = "OdemeEmriIstegi";
+        public const string OlayAbonelikIstegi = "OlayAbonelikIstegi";
         public const string RzBlg = "rzBlg";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
@@ -87,7 +89,7 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmAlc = "odmBsltm.alc";
         public const string OdmBsltmOdmAyr = "odmBsltm.odmAyr";
         public const string OdmBsltmGon = "odmBsltm.gon";
-
+        public const string AbonelikTipleri = "abonelikTipleri";
     }
 
     public static class HttpMessage
@@ -188,6 +190,9 @@ public static class OBErrorCodeConstants
         InvalidContent = 203,
         InvalidContentYonAdrIsNotYosAddress = 204,
         InvalidContentProcessingUserNotInKmlData = 205,
+        InvalidContentNoYosRoleForSubscription = 206,
+        InvalidContentYosNotHaveApiDefinition = 207,
+        InvalidContentThereIsAlreadyEventSubscriotion = 208,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,

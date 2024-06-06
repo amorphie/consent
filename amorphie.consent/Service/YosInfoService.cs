@@ -105,7 +105,7 @@ public class YosInfoService : IYosInfoService
                     abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
                 .Select(r => r.YOSRole)
                 .ToList()
-                .Distinct();
+                .Distinct().ToList();
 
             //Set yosRole list
             List<string> toBeCheckedRoles = new List<string>();
