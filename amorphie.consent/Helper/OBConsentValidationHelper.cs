@@ -7,7 +7,6 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
-using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
 using Jose;
 using Microsoft.IdentityModel.Tokens;
@@ -1147,7 +1146,7 @@ public static class OBConsentValidationHelper
         }
 
         if (!string.IsNullOrEmpty(rizaNo)
-            && !Guid.TryParse(rizaNo, out Guid rizaNoGuid))
+            && !Guid.TryParse(rizaNo, out _))
         {
             //rizaNo value is not valid
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
@@ -1173,7 +1172,7 @@ public static class OBConsentValidationHelper
     /// Checks if gkd data is valid
     /// </summary>
     /// <returns>Is gkd data valid</returns>
-    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto? kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1257,7 +1256,7 @@ public static class OBConsentValidationHelper
     }
 
 
-    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto? kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1584,10 +1583,6 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Checks if KatilimciBlgData is valid
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="configuration"></param>
-    /// <param name="katilimciBlg"></param>
-    /// <param name="errorCodeDetails"></param>
     /// <returns></returns>
     public static ApiResult IsKatilimciBlgDataValid(HttpContext context,
         IConfiguration configuration,
@@ -1852,7 +1847,6 @@ public static class OBConsentValidationHelper
         string srlmYon)
     {
         ApiResult result = new();
-        var today = DateTime.UtcNow;
 
         if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
             || syfKytSayi <= 0)
@@ -2293,9 +2287,7 @@ public static class OBConsentValidationHelper
             }
 
             string publicKey = getPublicKeyResult.Data.ToString()!;
-            // Convert the base64 encoded public key to bytes
-            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
-
+           
             var verifyResult = VerifyJwt(headerXjwsSignature, publicKey);
             if (verifyResult.Result) //Verified
             {

@@ -834,7 +834,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
             {
                 //Account consent
-                return await UpdateAccountConsentStatusForUsage(updateConsentState, context, mapper);
+                return await UpdateAccountConsentStatusForUsage(updateConsentState, context);
             }
             if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
             {
@@ -982,8 +982,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// <param name="mapper"></param>
     /// <returns></returns>
     private async Task<IResult> UpdateAccountConsentStatusForUsage(UpdateConsentStateDto updateConsentState,
-        ConsentDbContext context,
-        IMapper mapper)
+        ConsentDbContext context)
     {
         try
         {
