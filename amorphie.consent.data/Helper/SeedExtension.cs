@@ -1123,11 +1123,7 @@ public static class SeedExtension
             Message = "Related Payment consent can not found to process payment order.",
             MessageTr = "Ödeme emri yapılmak istenilen ilişkili ödeme emri rızası kaydı bulunamadı."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+          modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipGsmIban.GetHashCode(),
@@ -1159,6 +1155,28 @@ public static class SeedExtension
             Message = "Gon Unv should not be sent in One Time Payment",
             MessageTr = "Gon Unv alanı tek seferlik ödeme de gönderilmemelidir/boş olmalıdır."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDataKrmKmlkDataShouldBeNull.GetHashCode(),
+            BkmCode = "TR.OHVPS.Field.Invalid",
+            Message = "When ohkTur is individual, institution data should not be in request data.",
+            MessageTr = "Ohk Tur bireysel olan rızalarda, kurumsal kimlik bilgileri gönderilmemelidir."
+        });
+    }
+
+    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOneTimePaymentPSUSessionId.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Header PSU-Session-ID must be empty in one time payment.",
+            MessageTr = "Tek seferlik ödeme gibi ÖHK’nın tanınmadan başlatıldığı işlemlerde PSU-Session-ID başlık değeri boş olarak iletilmelidir."
+        });
+        
+        
     }
 
 }

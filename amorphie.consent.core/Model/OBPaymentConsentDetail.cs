@@ -27,8 +27,8 @@ public class OBPaymentConsentDetail : EntityBase
     public string? SenderAccountNumber { get; set; }
     public string? SenderAccountReference { get; set; }
 
-    public string ReceiverTitle { get; set; }= String.Empty;
-    public string ReceiverAccountNumber { get; set; }= String.Empty;
+    public string? ReceiverTitle { get; set; }
+    public string? ReceiverAccountNumber { get; set; }
     public string? KolasType { get; set; }
     public string? KolasValue { get; set; }
     public long? KolasRefNum { get; set; }

@@ -7,7 +7,6 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
-using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
 using Jose;
 using Microsoft.IdentityModel.Tokens;
@@ -177,7 +176,7 @@ public static class OBConsentValidationHelper
         ValidateKimlikTur(kmlk.kmlkTur, errorCodeDetails, errorResponse, objectName);
         ValidateKimlikVrs(kmlk.kmlkVrs, errorCodeDetails, errorResponse, objectName);
         ValidateOhkTur(kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
-        ValidateKrmKmlkTur(kmlk.krmKmlkTur, kmlk.krmKmlkVrs, errorCodeDetails, errorResponse, objectName);
+        ValidateKrmKmlkTur(kmlk.krmKmlkTur, kmlk.krmKmlkVrs,kmlk.ohkTur, errorCodeDetails, errorResponse, objectName);
 
         if (errorResponse.FieldErrors.Any())
         {
@@ -255,8 +254,10 @@ public static class OBConsentValidationHelper
     }
 
     public static ApiResult CheckOneTimePayment(KimlikDto kmlk, KolasRequestDto? kolas, string? gonUnv,
+        RequestHeaderDto header,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -299,6 +300,15 @@ public static class OBConsentValidationHelper
                     objectName: objectName);
                 return result;
             }
+            //PSU-Session-ID Tek seferlik ödeme gibi ÖHK’nın tanınmadan başlatıldığı işlemlerde bu değer boş olarak iletilmeli. Comment from document
+            if (!string.IsNullOrEmpty(header.PSUSessionId))
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOneTimePaymentPSUSessionId);
+                return result;
+            }
+            
         }
 
         return result;
@@ -996,19 +1006,31 @@ public static class OBConsentValidationHelper
                 objectName: objectName);
     }
 
-    public static void ValidateKrmKmlkTur(string? krmKmlkTur, string? krmKmlkVrs,
+    public static void ValidateKrmKmlkTur(string? krmKmlkTur, string? krmKmlkVrs, string ohkTur,
         List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
-        if (string.IsNullOrEmpty(krmKmlkTur) != string.IsNullOrEmpty(krmKmlkVrs))
+        if (ohkTur == OpenBankingConstants.OHKTur.Bireysel 
+            && (!string.IsNullOrEmpty(krmKmlkTur) || !string.IsNullOrEmpty(krmKmlkVrs)))
+        {//Bireysel müşteride kurumsal veri olmamalı
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldDataKrmKmlkDataShouldBeNull,
+                objectName: objectName);
+        }
+        if (ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+        && string.IsNullOrEmpty(krmKmlkTur))
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
                 objectName: objectName);
 
-        if (!string.IsNullOrEmpty(krmKmlkTur) &&
+        if (ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+            && !string.IsNullOrEmpty(krmKmlkTur) &&
             !ConstantHelper.GetKurumKimlikTurList().Contains(krmKmlkTur))
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur, OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
+                OBErrorCodeConstants.FieldNames.KmlkKrmKmlkTur,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData,
                 objectName: objectName);
     }
 
@@ -1124,7 +1146,7 @@ public static class OBConsentValidationHelper
         }
 
         if (!string.IsNullOrEmpty(rizaNo)
-            && !Guid.TryParse(rizaNo, out Guid rizaNoGuid))
+            && !Guid.TryParse(rizaNo, out _))
         {
             //rizaNo value is not valid
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
@@ -1150,7 +1172,7 @@ public static class OBConsentValidationHelper
     /// Checks if gkd data is valid
     /// </summary>
     /// <returns>Is gkd data valid</returns>
-    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto? kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdRequestDto gkd, KimlikDto kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1234,7 +1256,7 @@ public static class OBConsentValidationHelper
     }
 
 
-    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto? kimlik, string yosCode,
+    public static async Task<ApiResult> IsGkdValid(GkdDto gkd, KimlikDto kimlik, string yosCode,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
@@ -1561,10 +1583,6 @@ public static class OBConsentValidationHelper
     /// <summary>
     /// Checks if KatilimciBlgData is valid
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="configuration"></param>
-    /// <param name="katilimciBlg"></param>
-    /// <param name="errorCodeDetails"></param>
     /// <returns></returns>
     public static ApiResult IsKatilimciBlgDataValid(HttpContext context,
         IConfiguration configuration,
@@ -1829,7 +1847,6 @@ public static class OBConsentValidationHelper
         string srlmYon)
     {
         ApiResult result = new();
-        var today = DateTime.UtcNow;
 
         if (syfKytSayi > OpenBankingConstants.AccountServiceParameters.syfKytSayi
             || syfKytSayi <= 0)
@@ -2270,9 +2287,7 @@ public static class OBConsentValidationHelper
             }
 
             string publicKey = getPublicKeyResult.Data.ToString()!;
-            // Convert the base64 encoded public key to bytes
-            byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
-
+           
             var verifyResult = VerifyJwt(headerXjwsSignature, publicKey);
             if (verifyResult.Result) //Verified
             {
