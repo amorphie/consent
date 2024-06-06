@@ -10,11 +10,11 @@ public static class OBErrorCodeConstants
 
     public static class FieldNames
     {
-        public const string HeaderPsuInitiated = "X-Request-ID";
+        public const string HeaderPsuInitiated = "PSU-Initiated";
         public const string HeaderXGroupId = "X-Group-ID";
         public const string HeaderXaspspCode = "X-ASPSP-Code";
-        public const string HeaderXRequestId = "X-TPP-Code";
-        public const string HeaderXtppCode = "PSU-Initiated";
+        public const string HeaderXRequestId = "X-Request-ID";
+        public const string HeaderXtppCode = "X-TPP-Code";
         public const string HhsCodeHbr = "katilimciBlg.hhsKod";
         public const string YosCodeHbr = "katilimciBlg.yosKod";
         public const string GkdTur = "gkd.yetYntm";
