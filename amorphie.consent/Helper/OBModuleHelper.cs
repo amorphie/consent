@@ -69,6 +69,10 @@ public static class OBModuleHelper
         {
             header.PSUFraudCheck = traceValue;
         }
+        if (httpContext.Request.Headers.TryGetValue("PSU-Session-ID", out traceValue))
+        {
+            header.PSUSessionId = traceValue;
+        }
 
         return header;
     }
@@ -210,7 +214,7 @@ public static class OBModuleHelper
         return Convert.ToHexString(bytes);
     }
 
-   
+
     /// <summary>
     /// Generates sha256 hash of body and xrequestId
     /// </summary>
