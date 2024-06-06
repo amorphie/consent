@@ -45,11 +45,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Get YOS's active event subscription record
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="yosInfoService"></param>
-    /// <param name="httpContext"></param>
     /// <returns>YOS's active event subscription record</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -58,18 +53,22 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
+            List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
             var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+                await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                    errorCodeDetails: errorCodeDetails,  isEventHeader:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
+                return Results.Content(headerValidation.Data.ToJsonString(),"application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //Get entity from db
@@ -81,7 +80,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                           && s.IsActive);
             var activeSubscription = mapper.Map<OlayAbonelikDto>(entity);
-            return Results.Ok(activeSubscription);
+            OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, activeSubscription);
+            return Results.Content(activeSubscription.ToJsonString(),"application/json" ,statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -115,18 +115,21 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
             var header = OBModuleHelper.GetHeader(httpContext); //Get header object
+            List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+                await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                    errorCodeDetails: errorCodeDetails,  isEventHeader:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             if (string.IsNullOrEmpty(olayAbonelikNo))
@@ -199,12 +202,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Do Event Subcscription process of yos.
     /// </summary>
-    /// <param name="olayAbonelikIstegi">Request object</param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="yosInfoService"></param>
-    /// <param name="httpContext"></param>
     /// <returns>EventSubscription response</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -214,21 +211,24 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
+            List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToEventSubsrciptionPost(olayAbonelikIstegi, context, configuration, yosInfoService,
+                await IsDataValidToEventSubsrciptionPost(olayAbonelikIstegi,header, errorCodeDetails:errorCodeDetails, context, configuration, yosInfoService,
                     httpContext);
             if (!checkValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
+                return Results.Content(checkValidationResult.Data.ToJsonString(),"application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
-
-            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
+            
             //Generate entity object
             var eventSubscriptionEntity = new OBEventSubscription()
             {
@@ -254,7 +254,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             };
 
             await context.SaveChangesAsync();
-            return Results.Ok(olayAbonelik);
+            httpContext.Response.ContentType = "application/json";
+            return Results.Content(olayAbonelik.ToJsonString(), "application/json", statusCode: 200);
         }
         catch (Exception ex)
         {
@@ -265,13 +266,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Updates current event subcsription by eventSubscriptionNumber
     /// </summary>
-    /// <param name="olayAbonelik">Updated data</param>
-    /// <param name="olayAbonelikNo">To be updated data's eventSubscriptionNumber</param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="yosInfoService"></param>
-    /// <param name="httpContext"></param>
     /// <returns>Updated Event Subscription Object</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -282,23 +276,25 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
+            List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToUpdateEventSubsrciption(olayAbonelik, olayAbonelikNo, context, configuration,
+                await IsDataValidToUpdateEventSubsrciption(olayAbonelik, olayAbonelikNo, errorCodeDetails:errorCodeDetails, header, context, configuration,
                     yosInfoService,
                     httpContext);
             if (!checkValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
+                return Results.Content(checkValidationResult.Data.ToJsonString(),"application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
-
-            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
-
+            
             //Get entity from db
             var entity = await context.OBEventSubscriptions
                 .Include(s => s.OBEventSubscriptionTypes)
@@ -326,7 +322,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             entity.ModifiedAt = DateTime.UtcNow;
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
-            return Results.Ok(mapper.Map<OlayAbonelikDto>(entity));
+            var responseObject = mapper.Map<OlayAbonelikDto>(entity);
+            httpContext.Response.ContentType = "application/json";
+            return Results.Content(responseObject.ToJsonString(), "application/json", statusCode: 200);
         }
         catch (Exception ex)
         {
@@ -353,18 +351,21 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
+            List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
             var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check header fields
             ApiResult headerValidation =
-                await IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header);
+                await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+                    errorCodeDetails: errorCodeDetails, isEventHeader:true);
             if (!headerValidation.Result)
             {
                 //Missing header fields
-                return Results.BadRequest(headerValidation.Message);
+                return Results.BadRequest(headerValidation.Data);
             }
 
             //Get entity from db
@@ -407,15 +408,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// BKM calls this method post sistem-olay-dinleme process.
     /// Creates system event record.
     /// </summary>
-    /// <param name="olayIstegi">To be created system event request object</param>
-    /// <param name="context"></param>
-    /// <param name="mapper"></param>
-    /// <param name="configuration"></param>
-    /// <param name="yosInfoService"></param>
-    /// <param name="yosInfoModule"></param>
-    /// <param name="logger"></param>
-    /// <param name="httpContext"></param>
-    /// <param name="eventService"></param>
     /// <returns>Does successfully get the system event message</returns>
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
@@ -427,22 +419,25 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         [FromServices] IYosInfoService yosInfoService,
         [FromServices] IOBEventService eventService,
         [FromServices] ILogger<OpenBankingHHSEventModule> logger,
+        [FromServices] IOBErrorCodeDetailService errorCodeDetailService,
         HttpContext httpContext)
     {
         try
         {
+             List<OBErrorCodeDetail> errorCodeDetails =  await errorCodeDetailService.GetErrorCodeDetailsAsync();
+            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToSystemEventPost(olayIstegi, context, configuration, yosInfoService,
+                await IsDataValidToSystemEventPost(olayIstegi, header,errorCodeDetails, context, configuration, yosInfoService,
                     httpContext);
             if (!checkValidationResult.Result)
             {
                 //Data not valid
-                return Results.BadRequest(checkValidationResult.Message);
+                return Results.BadRequest(checkValidationResult.Data);
             }
 
             //Check if any system record in database with same data
-            var header = OBModuleHelper.GetHeader(httpContext); //Get header object
+           
             var systemEventEntity = await context.OBSystemEvents.FirstOrDefaultAsync(se =>
                 se.YOSCode == olayIstegi.katilimciBlg.yosKod
                 && se.ModuleName == OpenBankingConstants.ModuleName.HHS
@@ -564,19 +559,24 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
-    /// <param name="olayAbonelikIstegi">To be checked data</param>
-    /// <param name="context"></param>
-    /// <param name="configuration">Config object</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Context object to get header parameters</param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToEventSubsrciptionPost(OlayAbonelikIstegiDto olayAbonelikIstegi,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail>? errorCodeDetails,
         ConsentDbContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         ApiResult result = new();
+        //Check header fields
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
+            katilimciBlg: olayAbonelikIstegi.katilimciBlg, errorCodeDetails: errorCodeDetails, isEventHeader:true);
+        if (!result.Result)
+        {
+            //validation error in header fields
+            return result;
+        }
 
         //Check message required basic properties
         if (olayAbonelikIstegi?.katilimciBlg is null
@@ -598,15 +598,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
             return result;
         }
-
-        //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService,
-            katilimciBlg: olayAbonelikIstegi.katilimciBlg);
-        if (!result.Result)
-        {
-            //validation error in header fields
-            return result;
-        }
+        
 
         //Check aboneliktipleri data validation
         var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
@@ -669,22 +661,25 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
-    /// <param name="olayAbonelik">To be checked data</param>
-    /// <param name="context"></param>
-    /// <param name="configuration">Config object</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <param name="httpContext">Context object to get header parameters</param>
-    /// <param name="olayAbonelikNo"></param>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
         string olayAbonelikNo,
+        List<OBErrorCodeDetail>? errorCodeDetails,
+        RequestHeaderDto header,
         ConsentDbContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         ApiResult result = new();
-
+        //Check header fields
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
+            katilimciBlg: olayAbonelik.katilimciBlg, errorCodeDetails: errorCodeDetails, isEventHeader:true);
+        if (!result.Result)
+        {
+            //validation error in header fields
+            return result;
+        }
         //Get entity from db
         var entity = await context.OBEventSubscriptions
             .AsNoTracking()
@@ -711,15 +706,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 "Event subscription data not match with system data";
             return result;
         }
-
-        //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService,
-            katilimciBlg: olayAbonelik.katilimciBlg);
-        if (!result.Result)
-        {
-            //validation error in header fields
-            return result;
-        }
+        
 
         //Check aboneliktipleri data validation
         var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
@@ -790,12 +777,22 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     }
 
     private async Task<ApiResult> IsDataValidToSystemEventPost(OlayIstegiDto olayIstegi,
+        RequestHeaderDto header,
+        List<OBErrorCodeDetail> errorCodeDetails,
         ConsentDbContext context,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         HttpContext httpContext)
     {
         ApiResult result = new();
+        //Check header fields
+        result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
+            katilimciBlg: olayIstegi.katilimciBlg, isXJwsSignatureRequired: true, errorCodeDetails: errorCodeDetails,  isEventHeader:true);
+        if (!result.Result)
+        {
+            //validation error in header fields
+            return result;
+        }
 
         //Check message required basic properties
         if (olayIstegi?.katilimciBlg is null
@@ -818,15 +815,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
             return result;
         }
-
-        //Check header fields
-        result = await IsHeaderDataValid(httpContext, configuration, yosInfoService,
-            katilimciBlg: olayIstegi.katilimciBlg);
-        if (!result.Result)
-        {
-            //validation error in header fields
-            return result;
-        }
+        
 
         //Check aboneliktipleri data validation
         var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
@@ -845,62 +834,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             result.Message =
                 "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
             return result;
-        }
-
-        return result;
-    }
-
-
-    /// <summary>
-    ///  Checks if header is varlid.
-    /// Checks required fields.
-    /// Checks 
-    /// </summary>
-    /// <param name="context">Context</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">Yos service instance</param>
-    /// <param name="header"></param>
-    /// <param name="katilimciBlg">Katilimci data object default value with null</param>
-    /// <returns>Validation result</returns>
-    private async Task<ApiResult> IsHeaderDataValid(HttpContext context,
-        IConfiguration configuration,
-        IYosInfoService yosInfoService,
-        RequestHeaderDto? header = null,
-        KatilimciBilgisiDto? katilimciBlg = null)
-    {
-        ApiResult result = new();
-        if (header == null) //Get header
-        {
-            header = OBModuleHelper.GetHeader(context); //Get header object
-        }
-
-        if (!await OBModuleHelper.IsHeaderValidForEvents(header, configuration, yosInfoService))
-        {
-            //Header is not valid
-            result.Result = false;
-            result.Message = "There is a problem in header required values. Some key(s) can be missing or wrong.";
-            return result;
-        }
-
-        //If there is katilimciBlg object, validate data in it with header
-        if (katilimciBlg != null)
-        {
-            //Check header data and message data
-            if (header.XASPSPCode != katilimciBlg.hhsKod)
-            {
-                //HHSCode must match with header x-aspsp-code
-                result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidASPSP. HHSKod must match with header x-aspsp-code";
-                return result;
-            }
-
-            if (header.XTPPCode != katilimciBlg.yosKod)
-            {
-                //YOSCode must match with header x-tpp-code
-                result.Result = false;
-                result.Message = "TR.OHVPS.Connection.InvalidTPP. YosKod must match with header x-tpp-code";
-                return result;
-            }
         }
 
         return result;

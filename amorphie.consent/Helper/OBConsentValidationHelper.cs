@@ -2038,7 +2038,8 @@ public static class OBConsentValidationHelper
         bool? isConsentIdRequired = false,
         bool? isXJwsSignatureRequired = false,
         List<OBErrorCodeDetail>? errorCodeDetails = null,
-        string? body = null)
+        string? body = null,
+        bool isEventHeader = false)
     {
         ApiResult result = new();
         header ??= OBModuleHelper.GetHeader(context);
@@ -2046,7 +2047,7 @@ public static class OBConsentValidationHelper
         errorCodeDetails ??= new List<OBErrorCodeDetail>();
 
         // Separate method to prepare and check header properties
-        if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatProperties(header, context, errorCodeDetails,
+        if (!OBErrorResponseHelper.PrepareAndCheckHeaderInvalidFormatPropertiesHeader(header, context, errorCodeDetails,
                 out var errorResponse))
         {
             result.Result = false;
@@ -2112,7 +2113,7 @@ public static class OBConsentValidationHelper
             return result;
         }
 
-        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails);
+        result = await IsPsuFraudCheckValid(context, configuration, yosInfoService, header, errorCodeDetails, isEventHeader:isEventHeader);
         if (!result.Result)
         {
             return result;
@@ -2387,13 +2388,21 @@ public static class OBConsentValidationHelper
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         RequestHeaderDto header,
-        List<OBErrorCodeDetail> errorCodeDetails
+        List<OBErrorCodeDetail> errorCodeDetails,
+        bool isEventHeader = false
     )
     {
         ApiResult result = new();
 
         //No need to check header property
         if (header.PSUInitiated == OpenBankingConstants.PSUInitiated.SystemStarted)
+        {
+            return result;
+        }
+        //ÖHK’lı işlemlerde (PSU-Initiated = E gönderildiği durumlarda) gönderilmesi zorunludur.
+        //Sistemsel yapılan API çağrımlarımda, Olay Bildirim Servis Çağrımlarında
+        //ve HHS-YÖS API çağrımlarında gönderilmesine gerek bulunmamaktadır.
+        if (isEventHeader)
         {
             return result;
         }
