@@ -387,13 +387,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 return Results.NotFound();
             }
 
-            ApiResult dataValidationResult = IsDataValidToDeleteEventSubsrciption(entity); //Check data validation
-            if (!dataValidationResult.Result)
-            {
-                //Data not valid
-                return Results.BadRequest(dataValidationResult.Message);
-            }
-
             //Update entity
             entity.ModifiedAt = DateTime.UtcNow;
             entity.IsActive = false;
@@ -674,19 +667,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             //validation error in header fields
             return result;
         }
-        //Get entity from db
-        var entity = await context.OBEventSubscriptions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNoParameter
-                                      && s.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                      && s.IsActive);
-        if (entity is null) //No event subscription in system to update
-        {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.NotFoundAbonelikNo);
-            return result;
-        }
         
         string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikPut;
         
@@ -760,26 +740,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
         return result;
     }
-
-
-    /// <summary>
-    ///  Checks if data is valid to delete EventSubsrciption
-    /// </summary>
-    /// <param name="entity">To be checked entity</param>
-    /// <returns>Is data valid to delete EventSubsrciption</returns>
-    private ApiResult IsDataValidToDeleteEventSubsrciption(OBEventSubscription? entity)
-    {
-        ApiResult result = new();
-        if (entity is null) //No event subscription in system to update
-        {
-            result.Result = false;
-            result.Message = "No event subscription in the system";
-            return result;
-        }
-        //TODO:Özlem If there is any undeliverable object, or not finished consent state. Will I delete the subscription?
-
-        return result;
-    }
+    
 
     private async Task<ApiResult> IsDataValidToSystemEventPost(OlayIstegiDto olayIstegi,
         RequestHeaderDto header,
