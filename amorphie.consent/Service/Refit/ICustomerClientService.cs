@@ -5,7 +5,7 @@ namespace amorphie.consent.Service.Refit;
 public interface ICustomerClientService
 {
 
-    [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Post("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    [Headers("Content-Type: application/json", "user:EBT\\INTERNETUSER")]
+    [Post("/customer/openbanking/iscustomer")]
     Task<GetCustomerResponseDto?> GetCustomerInformation(GetCustomerRequestDto requestDto);
 }
