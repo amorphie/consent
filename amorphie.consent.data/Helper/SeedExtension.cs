@@ -1178,25 +1178,33 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleForSubscription.GetHashCode(),
-            BkmCode = "TR.OHVPS.Business.InvalidContent",
-            Message = "Yos does not have desired role to make event subscription for selected eventype/sourcetypes",
-            MessageTr = "Yos abone olunmak istenilen abonelik tipleri için gerekli role e sahip değil."
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleHbhsRequired.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPPRole",
+            Message = "Invalid TPP Role. TPP role must have hbhs.",
+            MessageTr = "Geçersiz Yos rolü. Yosde hbhs rolü olmalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleObhsRequired.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPPRole",
+            Message = "Invalid TPP Role. TPP role must have obhs.",
+            MessageTr = "Geçersiz Yos rolü. Yosde obhs rolü olmalı."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYosNotHaveApiDefinition.GetHashCode(),
             BkmCode = "TR.OHVPS.Business.InvalidContent",
-            Message = "Yos does not have desired api definition.",
-            MessageTr = "Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı bulunmamaktadır."
+            Message = "Invalid TPP api definition. TPP should have ods api definition.",
+            MessageTr = "Geçersiz TPP api tanımı. TPP, ods api tanımına sahip olmalıdır."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentThereIsAlreadyEventSubscriotion.GetHashCode(),
             BkmCode = "TR.OHVPS.Business.InvalidContent",
-            Message = "Yos already has event subscription in the system.",
+            Message = "An entity already exists for this YOS.",
             MessageTr = "1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. Kaynak çakışması."
         });
         

@@ -1957,17 +1957,41 @@ public static class OBConsentValidationHelper
         //Source Type check.  Descpriton from document:
         //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
         ApiResult result = new();
-        var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(yosKod,
-            abonelikTipleri, eventTypeSourceTypeRelations);
-        if (yosInfoResponse.Result == false
-            || yosInfoResponse.Data == null
-            || (bool)yosInfoResponse.Data == false)
+        //Get yos role of desired abonelik tipleri
+        var requiredYosRoles = eventTypeSourceTypeRelations.Where(r =>
+                abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
+            .Select(r => r.YOSRole)
+            .Distinct()
+            .ToList();
+        if (requiredYosRoles.Any(r => r == OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
         {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleForSubscription);
-            return result;
+            var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(yosKod,
+                OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH);
+            if (yosInfoResponse.Result == false
+                || yosInfoResponse.Data == null
+                || (bool)yosInfoResponse.Data == false)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleHbhsRequired);
+                return result;
+            }
         }
+        if (requiredYosRoles.Any(r => r == OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
+        {
+            var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(yosKod,
+                OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH);
+            if (yosInfoResponse.Result == false
+                || yosInfoResponse.Data == null
+                || (bool)yosInfoResponse.Data == false)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleObhsRequired);
+                return result;
+            }
+        }
+      
 
         return result;
     }
