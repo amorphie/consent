@@ -192,11 +192,11 @@ public static class OBErrorResponseHelper
     }
 
     public static void CheckInvalidFormatProperty_Object(Object? objectValue, string propertyName,
-        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
+        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse, string objectName = null)
     {
         if (objectValue is null)
         {
-            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
+            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail,objectName:objectName));
         }
     }
 

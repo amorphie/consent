@@ -67,7 +67,7 @@ public static class OBErrorCodeConstants
         public const string IsyOdmBlgGenelUyeIsyeriNo = "isyOdmBlg.genelUyeIsyeriNo";
         public const string OlayTipiOA = "abonelikTipleri.olayTipi";
         public const string KaynakTipiOA = "abonelikTipleri.kaynakTipi";
-
+        public const string OlayAbonelikNo = "olayAbonelik.olayAbonelikNo";
 
     }
     public static class ObjectNames
@@ -76,6 +76,7 @@ public static class OBErrorCodeConstants
         public const string OdemeEmriRizasiIstegi = "OdemeEmriRizasiIstegi";
         public const string OdemeEmriIstegi = "OdemeEmriIstegi";
         public const string OlayAbonelikIstegi = "OlayAbonelikIstegi";
+        public const string OlayAbonelikPut = "OlayAbonelikIstegi";
         public const string RzBlg = "rzBlg";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
@@ -175,6 +176,7 @@ public static class OBErrorCodeConstants
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
         InternalServerErrorBodyEmptyValidateJwt = 153,
+        NotFoundAbonelikNo = 154,
         
         
         ConsentMismatch = 160,
@@ -194,6 +196,7 @@ public static class OBErrorCodeConstants
         InvalidContentNoYosRoleObhsRequired = 207,
         InvalidContentYosNotHaveApiDefinition = 208,
         InvalidContentThereIsAlreadyEventSubscriotion = 209,
+        InvalidContentOlayAbonelikNoNotMatch = 210,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,

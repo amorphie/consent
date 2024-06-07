@@ -304,9 +304,15 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                           && s.IsActive);
-            if (entity == null)
+            
+            if (entity is null) //No event subscription in system to update
             {
-                return Results.NotFound();
+                var response = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.NotFoundAbonelikNo); 
+                
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, response);
+                return Results.Content(response.ToJsonString(), "application/json",
+                    statusCode: HttpStatusCode.NotFound.GetHashCode());
             }
 
             //Delete OBEventSubscriptionTypes
@@ -578,16 +584,17 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             //validation error in header fields
             return result;
         }
+        string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi;
         
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelikIstegi, httpContext, errorCodeDetails, out var errorResponse))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelikIstegi, httpContext, errorCodeDetails, out var errorResponse,objectName))
         {
             result.Result = false;
             result.Data = errorResponse;
             return result;
         }
         
-        string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi;
+        
         //Check KatılımcıBilgisi
         result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
             katilimciBlg: olayAbonelikIstegi.katilimciBlg, errorCodeDetails: errorCodeDetails, objectName: objectName);
@@ -650,8 +657,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// </summary>
     /// <exception cref="NotImplementedException"></exception>
     private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
-        string olayAbonelikNo,
-        List<OBErrorCodeDetail>? errorCodeDetails,
+        string olayAbonelikNoParameter,
+        List<OBErrorCodeDetail> errorCodeDetails,
         RequestHeaderDto header,
         ConsentDbContext context,
         IConfiguration configuration,
@@ -670,75 +677,86 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         //Get entity from db
         var entity = await context.OBEventSubscriptions
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNo
+            .FirstOrDefaultAsync(s => s.Id.ToString() == olayAbonelikNoParameter
                                       && s.ModuleName == OpenBankingConstants.ModuleName.HHS
                                       && s.IsActive);
         if (entity is null) //No event subscription in system to update
         {
             result.Result = false;
-            result.Message = "No event subscription in the system";
-            return result;
-        }
-
-        //Check message required basic properties
-        if (olayAbonelik.katilimciBlg is null
-            || olayAbonelik.abonelikTipleri?.Any() is null or false
-            || olayAbonelik.olayAbonelikNo != entity.Id.ToString()
-            || olayAbonelik.katilimciBlg.hhsKod != entity.HHSCode
-            || olayAbonelik.katilimciBlg.yosKod != entity.YOSCode
-           )
-        {
-            result.Result = false;
-            result.Message =
-                "Event subscription data not match with system data";
+            result.Data = OBErrorResponseHelper.GetNotFoundError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.NotFoundAbonelikNo);
             return result;
         }
         
+        string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikPut;
+        
+        //Check message required basic properties/objects
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelik, httpContext, errorCodeDetails, out var errorResponse,objectName))
+        {
+            result.Result = false;
+            result.Data = errorResponse;
+            return result;
+        }
+        //Check Olayabonelikno
+        result = OBConsentValidationHelper.CheckOlayAbonelikNo(olayAbonelikNoParameter, olayAbonelik.olayAbonelikNo, httpContext, errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
+        {
+            //validation error in katiliciBilgisi data fields
+            return result;
+        }
+        //Check KatılımcıBilgisi
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
+            katilimciBlg: olayAbonelik.katilimciBlg, errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
+        {
+            //validation error in katiliciBilgisi data fields
+            return result;
+        }
 
         //Check aboneliktipleri data validation
         var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
             .AsNoTracking()
             .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.HHS)
             .ToListAsync();
+        
 
-
-        //Event Type check. Descpriton from document:
-        //"Olay Tipleri ve Kaynak Tipleri İlişkisi" tablosunda "Olay Bildirim Yapan" kolonu "HHS" olan olay tipleri ile veri girişine izin verilir. 
-        if (olayAbonelik.abonelikTipleri.Any(a =>
-                !eventTypeSourceTypeRelations.Any(r => r.EventType == a.olayTipi && r.SourceType == a.kaynakTipi)))
+        //Check AbonelikTipleriObject
+        result = OBConsentValidationHelper.IsAbonelikTipleriObjectDataValid(httpContext, configuration,
+            olayAbonelik.abonelikTipleri, eventTypeSourceTypeRelations, errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
+            //validation error in abonelikTipleri data fields
+            return result;
+        }
+      
+
+        //Source Type check.  Descpriton from document:
+        //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
+        result = await OBConsentValidationHelper.CheckIfYosHasDesiredRole(httpContext, yosInfoService,olayAbonelik.katilimciBlg.yosKod,
+            olayAbonelik.abonelikTipleri, eventTypeSourceTypeRelations, errorCodeDetails:errorCodeDetails, objectName:objectName);
+        if (!result.Result)
+        {
             return result;
         }
 
-        // //Source Type check.  Descpriton from document:
-        // //HHS, YÖS API üzerinden YÖS'ün rollerini alarak uygun kaynak tiplerine kayıt olmasını sağlar.
-        // var yosInfoResponse = await yosInfoService.CheckIfYosHasDesiredRole(olayAbonelik.katilimciBlg.yosKod,
-        //     olayAbonelik.abonelikTipleri, eventTypeSourceTypeRelations);
-        // if (yosInfoResponse.Result == false
-        //     || yosInfoResponse.Data == null
-        //     || (bool)yosInfoResponse.Data == false)
-        // {
-        //     //Yos does not have required roles
-        //     result.Result = false;
-        //     result.Message = "Yos does not have desired roles.";
-        //     return result;
-        // }
+        //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
+        //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
+        result = await  OBConsentValidationHelper.CheckIfYosProvidesDesiredApi(httpContext, yosInfoService,olayAbonelik.katilimciBlg.yosKod,
+            OpenBankingConstants.YosApi.OlayDinleme,errorCodeDetails,objectName:objectName);
+        if (!result.Result)
+        {
+            return result;
+        }
 
-        // //Descpriton from document: Olay Abonelik kaydı oluşturmak isteyen YÖS'ün ODS API tanımı HHS tarafından kontrol edilmelidir. 
-        // //YÖS'ün tanımı olmaması halinde "HTTP 400-TR.OHVPS.Business.InvalidContent" hatası verilmelidir.
-        // yosInfoResponse = await yosInfoService.CheckIfYosProvidesDesiredApi(olayAbonelik.katilimciBlg.yosKod,
-        //     OpenBankingConstants.YosApi.OlayDinleme);
-        // if (yosInfoResponse.Result == false
-        //     || yosInfoResponse.Data == null
-        //     || (bool)yosInfoResponse.Data == false)
-        // {
-        //     //Yos does not provide olay dinleme api ods
-        //     result.Result = false;
-        //     return result;
-        // }
+        //Descpriton from document: 1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. HTTP 400 -TR.OHVPS.Business.InvalidContent -Kaynak Çakışması"
+        if (await context.OBEventSubscriptions.AnyAsync(s =>
+                s.YOSCode == olayAbonelik.katilimciBlg.yosKod && s.IsActive))
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentThereIsAlreadyEventSubscriotion);
+            return result;
+        }
 
         return result;
     }

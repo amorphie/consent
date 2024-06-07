@@ -22,7 +22,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse,string objectName)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -36,17 +36,17 @@ public static class OBConsentValidationHelper
         // Check each property and add errors if necessary
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.katilimciBlg,
             OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.gkd, OBErrorCodeConstants.ObjectNames.Gkd,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.kmlk, OBErrorCodeConstants.ObjectNames.Kmlk,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg,
             OBErrorCodeConstants.ObjectNames.HspBlg,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(rizaIstegi.hspBlg?.iznBlg,
             OBErrorCodeConstants.ObjectNames.HspBlgIznBlg,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse, objectName);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
@@ -153,7 +153,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiDto olayAbonelikIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, string objectName)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -167,18 +167,50 @@ public static class OBConsentValidationHelper
         // Check each property and add errors if necessary
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi,
             OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse,objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.katilimciBlg,
             OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse,objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.abonelikTipleri,
             OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
-            errorCodeDetail, errorResponse);
+            errorCodeDetail, errorResponse,objectName);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
 
+    /// <summary>
+    /// Checks olay abonelik post data null objects
+    /// </summary>
+    /// <returns></returns>
+    public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikDto olayAbonelik,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        //Get 400 error response
+        errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+
+        //Field can not be empty error code
+        var errorCodeDetail = OBErrorResponseHelper.GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        // Check each property and add errors if necessary
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik,
+            OBErrorCodeConstants.ObjectNames.OlayAbonelikPut,
+            errorCodeDetail, errorResponse,objectName);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik.katilimciBlg,
+            OBErrorCodeConstants.ObjectNames.KatilimciBlg,
+            errorCodeDetail, errorResponse,objectName);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik.abonelikTipleri,
+            OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
+            errorCodeDetail, errorResponse,objectName);
+
+        // Return false if any errors were added, indicating an issue with the header
+        return !errorResponse.FieldErrors.Any();
+    }
+    
     /// <summary>
     /// Cheks kmlk object and data
     /// </summary>
@@ -1944,6 +1976,39 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.FieldNames.KaynakTipiOA,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
         }
+    }
+    
+     public static ApiResult CheckOlayAbonelikNo(string olayAbonelikNoParameter,
+        string olayAbonelikNoInObject,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+    {
+        ApiResult result = new();
+
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+        result.Data = errorResponse;
+        if (string.IsNullOrEmpty(olayAbonelikNoParameter)
+            || string.IsNullOrEmpty(olayAbonelikNoInObject))
+        {
+            result.Result = false;
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.FieldNames.OlayAbonelikNo, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+            return result;
+        }
+
+        if (olayAbonelikNoInObject != olayAbonelikNoParameter)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlayAbonelikNoNotMatch);
+            return result;
+        }
+        
+        return result;
     }
 
     public static async Task<ApiResult> CheckIfYosHasDesiredRole(HttpContext context,

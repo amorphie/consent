@@ -1207,6 +1207,22 @@ public static class SeedExtension
             Message = "An entity already exists for this YOS.",
             MessageTr = "1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. Kaynak çakışması."
         });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlayAbonelikNoNotMatch.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Olay Abonelik No in parameter and object not match.",
+            MessageTr = "Parametre olarak gelen olay abone no ile olayabonelik nesnesi içerisinde gelen olay abonelik no verileri aynı değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFoundAbonelikNo.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "OlayAbonelikNo not found.",
+            MessageTr = "OlayAbonelikNo bulunamadı."
+        });
         
     }
 
