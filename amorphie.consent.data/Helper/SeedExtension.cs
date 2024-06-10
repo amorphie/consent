@@ -1165,7 +1165,7 @@ public static class SeedExtension
         });
     }
 
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    public static void SeedOBErrorCodeDetailsEvent(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
