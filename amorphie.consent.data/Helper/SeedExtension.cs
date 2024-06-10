@@ -1165,7 +1165,7 @@ public static class SeedExtension
         });
     }
 
-    public static void SeedOBErrorCodeDetailsVersion3Payment(this ModelBuilder modelBuilder)
+    public static void SeedOBErrorCodeDetailsEvent(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
@@ -1175,7 +1175,54 @@ public static class SeedExtension
             Message = "Header PSU-Session-ID must be empty in one time payment.",
             MessageTr = "Tek seferlik ödeme gibi ÖHK’nın tanınmadan başlatıldığı işlemlerde PSU-Session-ID başlık değeri boş olarak iletilmelidir."
         });
-        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleHbhsRequired.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPPRole",
+            Message = "Invalid TPP Role. TPP role must have hbhs.",
+            MessageTr = "Geçersiz Yos rolü. Yosde hbhs rolü olmalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentNoYosRoleObhsRequired.GetHashCode(),
+            BkmCode = "TR.OHVPS.Connection.InvalidTPPRole",
+            Message = "Invalid TPP Role. TPP role must have obhs.",
+            MessageTr = "Geçersiz Yos rolü. Yosde obhs rolü olmalı."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentYosNotHaveApiDefinition.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Invalid TPP api definition. TPP should have ods api definition.",
+            MessageTr = "Geçersiz TPP api tanımı. TPP, ods api tanımına sahip olmalıdır."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentThereIsAlreadyEventSubscriotion.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "An entity already exists for this YOS.",
+            MessageTr = "1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. Kaynak çakışması."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlayAbonelikNoNotMatch.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Olay Abonelik No in parameter and object not match.",
+            MessageTr = "Parametre olarak gelen olay abone no ile olayabonelik nesnesi içerisinde gelen olay abonelik no verileri aynı değil."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.NotFoundAbonelikNo.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.NotFound",
+            Message = "OlayAbonelikNo not found.",
+            MessageTr = "OlayAbonelikNo bulunamadı."
+        });
         
     }
 
