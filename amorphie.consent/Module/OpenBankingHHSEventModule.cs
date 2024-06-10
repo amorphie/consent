@@ -271,7 +271,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    protected async Task<IResult> UpdateEventSubsrciption([FromBody] OlayAbonelikDto olayAbonelik,
+    protected async Task<IResult> UpdateEventSubsrciption([FromBody] OlayAbonelikIstegiUpdateDto olayAbonelik,
         string olayAbonelikNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -649,7 +649,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// Checks if data is valid for EventSubsrciption consent post process
     /// </summary>
     /// <exception cref="NotImplementedException"></exception>
-    private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikDto olayAbonelik,
+    private async Task<ApiResult> IsDataValidToUpdateEventSubsrciption(OlayAbonelikIstegiUpdateDto olayAbonelik,
         string olayAbonelikNoParameter,
         List<OBErrorCodeDetail> errorCodeDetails,
         RequestHeaderDto header,
@@ -725,16 +725,6 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             OpenBankingConstants.YosApi.OlayDinleme,errorCodeDetails,objectName:objectName);
         if (!result.Result)
         {
-            return result;
-        }
-
-        //Descpriton from document: 1 YÖS'ün 1 HHS'de 1 adet abonelik kaydı olabilir. HTTP 400 -TR.OHVPS.Business.InvalidContent -Kaynak Çakışması"
-        if (await context.OBEventSubscriptions.AnyAsync(s =>
-                s.YOSCode == olayAbonelik.katilimciBlg.yosKod && s.IsActive))
-        {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentThereIsAlreadyEventSubscriotion);
             return result;
         }
 

@@ -183,7 +183,7 @@ public static class OBConsentValidationHelper
     /// Checks olay abonelik post data null objects
     /// </summary>
     /// <returns></returns>
-    public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikDto olayAbonelik,
+    public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiUpdateDto olayAbonelik,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, string objectName)
     {
