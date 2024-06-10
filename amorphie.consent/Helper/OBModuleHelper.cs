@@ -79,46 +79,6 @@ public static class OBModuleHelper
 
 
     /// <summary>
-    /// Checks if header is valid by controlling;
-    /// PSU Initiated value is in predefined values
-    /// Required fields are checked
-    /// XASPSPCode is equal with BurganBank hhscode
-    /// </summary>
-    /// <param name="header">Data to be checked</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <returns>If header is valid</returns>
-    public static async Task<bool> IsHeaderValidForEvents(RequestHeaderDto header,
-        IConfiguration configuration,
-        IYosInfoService yosInfoService)
-    {
-        if (string.IsNullOrEmpty(header.XASPSPCode)
-            || string.IsNullOrEmpty(header.XRequestID)
-            || string.IsNullOrEmpty(header.XTPPCode))
-        {
-            return false;
-        }
-
-        if (configuration["HHSCode"] != header.XASPSPCode)
-        {
-            //XASPSPCode value should be BurganBanks hhscode value
-            return false;
-        }
-
-        //Check setted yos value
-        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
-        if (yosCheckResult.Result == false
-            || yosCheckResult.Data == null
-            || (bool)yosCheckResult.Data == false)
-        {
-            //No yos data in the system
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
     /// Set X-JWS-Signature header property
     /// </summary>
     /// <param name="httpContext"></param>
