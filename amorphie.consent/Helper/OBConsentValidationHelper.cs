@@ -153,7 +153,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiDto olayAbonelikIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName, out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -185,7 +185,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiUpdateDto olayAbonelik,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails,string objectName, out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
