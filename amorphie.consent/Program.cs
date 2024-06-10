@@ -37,6 +37,7 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IOpenBankingIntegrationService, OpenBankingIntegrationService>();
 builder.Services.AddTransient<HttpClientHandler>();
 builder.Services.AddTransient<LoggingHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();

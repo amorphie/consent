@@ -109,7 +109,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         HttpContext httpContext)
     {
         try
-        {         
+        {
             var header = OBModuleHelper.GetHeader(httpContext);
             if (string.IsNullOrEmpty(header.UserReference))
             {
