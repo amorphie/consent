@@ -262,8 +262,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.RizaIptalDetayKodu).GetAllPublicConstantValues<string>();
     }
-
-
+    
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {

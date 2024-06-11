@@ -34,12 +34,10 @@ public interface IYosInfoService
     /// Check yos by code, if has desired role
     /// </summary>
     /// <param name="yosCode">Yos Code</param>
-    /// <param name="abonelikTipleri">Wanted subscription types</param>
-    /// <param name="eventTypeSourceTypeRelations">Information Object</param>
-    /// <returns>Any yos having desired role by yoscode</returns>
+    /// <param name="eventTypeSourceTypeRelationYosRole">Required yos role</param>
+    /// <returns>If yos has desired role</returns>
     public Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
-        List<AbonelikTipleriDto> abonelikTipleri,
-        List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations);
+        string eventTypeSourceTypeRelationYosRole);
 
 
     /// <summary>

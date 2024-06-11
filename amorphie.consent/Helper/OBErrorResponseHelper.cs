@@ -150,8 +150,8 @@ public static class OBErrorResponseHelper
     }
 
 
-    public static bool PrepareAndCheckHeaderInvalidFormatProperties(RequestHeaderDto header, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+    public static bool PrepareAndCheckHeaderInvalidFormatPropertiesHeader(RequestHeaderDto header, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, bool isEventHeader = false)
     {
         //Get 400 error response
         errorResponse = GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
@@ -161,16 +161,19 @@ public static class OBErrorResponseHelper
         var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
 
         // Check each header property and add errors if necessary
-        CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_String(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
-            errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XASPSPCode, OBErrorCodeConstants.FieldNames.HeaderXaspspCode,
             errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XRequestID, OBErrorCodeConstants.FieldNames.HeaderXRequestId,
             errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XTPPCode, OBErrorCodeConstants.FieldNames.HeaderXtppCode,
             errorCodeDetail, errorResponse);
+        if (!isEventHeader)
+        {//Should not be set in event services
+            CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
+                errorCodeDetail, errorResponse);
+            CheckInvalidFormatProperty_String(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
+                errorCodeDetail, errorResponse);
+        }
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
@@ -189,11 +192,11 @@ public static class OBErrorResponseHelper
     }
 
     public static void CheckInvalidFormatProperty_Object(Object? objectValue, string propertyName,
-        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
+        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse, string objectName = null)
     {
         if (objectValue is null)
         {
-            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
+            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail,objectName:objectName));
         }
     }
 
