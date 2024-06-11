@@ -30,12 +30,12 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
+        routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
         routeGroupBuilder.MapGet("/olay-abonelik/{olayAbonelikNo}/iletilemeyen-olaylar",
-            GetEventSubscriptionUnDeliveredEvents);
-        routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
-        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
-        routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
+            GetEventSubscriptionUnDeliveredEvents).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
         routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventSchedulerProcess);
         routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
