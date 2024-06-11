@@ -330,6 +330,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
             var responseObject = mapper.Map<OlayAbonelikDto>(entity);
+            OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, responseObject);
             httpContext.Response.ContentType = "application/json";
             return Results.Content(responseObject.ToJsonString(), "application/json", statusCode: 200);
         }
@@ -343,7 +344,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Deletes given event subscription
     /// </summary>
-    /// <param name="id">To be deleted event subscription record id</param>
+    /// <param name="olayAbonelikNo">To be deleted event subscription record id</param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <param name="configuration"></param>
@@ -353,7 +354,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    protected async Task<IResult> DeleteEventSubsrciption(Guid id,
+    protected async Task<IResult> DeleteEventSubsrciption(Guid olayAbonelikNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
@@ -377,7 +378,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
             //Get entity from db
             var entity = await context.OBEventSubscriptions
-                .FirstOrDefaultAsync(s => s.Id == id
+                .FirstOrDefaultAsync(s => s.Id == olayAbonelikNo
                                           && s.YOSCode == header.XTPPCode
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
