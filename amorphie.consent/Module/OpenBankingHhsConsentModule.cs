@@ -218,7 +218,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 //Data not valid
-                return Results.Content(headerValidation.Data.ToJsonString(),"application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(headerValidation.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //Check consent
@@ -240,7 +240,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
-            return Results.Content(accountConsent.ToJsonString(),"application/json" ,statusCode: HttpStatusCode.OK.GetHashCode());
+            return Results.Content(accountConsent.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -1262,7 +1262,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkAccountConsentResult.Data);
                 return Results.Content(checkAccountConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
-            
+
             GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
 
             var consentEntity = new Consent();
@@ -2040,14 +2040,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         string objectName = OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi;
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName:objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName: objectName))
         {
             result.Result = false;
             result.Data = errorResponse;
             return result;
         }
 
-       
+
         //Check KatılımcıBilgisi
         result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, objectName: objectName);
@@ -3141,10 +3141,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem("TCKN error");
         }
 
-        var additionalData = JsonConvert.DeserializeObject<ConsentAdditionalData>(consent.AdditionalData);
-        // var additionalData = JsonConvert.DeserializeObject<ConsentAdditionalData>("{\"rzBlg\":{\"rizaNo\":\"00245386-d232-4a70-af32-47e51a657c03\",\"olusZmn\":\"2024-02-27T11:46:23.8893874Z\",\"gnclZmn\":\"2024-02-27T11:46:45.5500893Z\",\"rizaDrm\":\"Y\",\"rizaIptDtyKod\":null},\"kmlk\":{\"kmlkTur\":\"K\",\"kmlkVrs\":\"40876191451\",\"krmKmlkTur\":\"K\",\"krmKmlkVrs\":\"11111111111\",\"ohkTur\":\"B\"},\"katilimciBlg\":{\"hhsKod\":\"0125\",\"yosKod\":\"2710\"},\"gkd\":{\"yetYntm\":\"A\",\"yonAdr\":\"string\",\"ayrikGkd\":{\"ohkTanimTip\":\"TCKN\",\"ohkTanimDeger\":\"11111111111\"},\"hhsYonAdr\":\"\",\"yetTmmZmn\":\"2024-02-27T11:51:23.8893913Z\"},\"hspBlg\":{\"iznBlg\":{\"iznTur\":[\"01\",\"04\",\"05\"],\"erisimIzniSonTrh\":\"2024-03-22T08:43:50.37Z\",\"hesapIslemBslZmn\":\"2023-08-02T08:43:50.37Z\",\"hesapIslemBtsZmn\":\"2023-12-22T08:43:50.37Z\"},\"ayrBlg\":null}}");
+        var kimlik = new KimlikDto();
 
-        var customerResult = await customerService.GetCustomerInformations(additionalData.kmlk);
+        if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+        {
+            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
+            kimlik = accountConsent.kmlk;
+        }
+        else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+        {
+            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
+            kimlik = paymentConsent.odmBsltm.kmlk;
+        }
+
+        var customerResult = await customerService.GetCustomerInformations(kimlik);
 
         if (customerResult.Result == false)
         {
@@ -3160,20 +3170,25 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.NotFound("Consent Detail not found");
         }
 
-        var sb = new StringBuilder();
-        sb.Append("[");
+        string strAccountList = null;
 
-        foreach (string accountRef in consentDetail.AccountReferences)
+        if (consentDetail.AccountReferences != null && consentDetail.AccountReferences.Count > 0)
         {
-            sb.Append("\"");
-            sb.Append(accountRef);
-            sb.Append("\"");
-            sb.Append(",");
+            var sb = new StringBuilder();
+            sb.Append("[");
+
+            foreach (string accountRef in consentDetail.AccountReferences)
+            {
+                sb.Append("\"");
+                sb.Append(accountRef);
+                sb.Append("\"");
+                sb.Append(",");
+            }
+
+            strAccountList = sb.ToString().TrimEnd(',');
+
+            strAccountList = strAccountList + "]";
         }
-
-        var strAccountList = sb.ToString().TrimEnd(',');
-
-        strAccountList = strAccountList + "]";
 
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
