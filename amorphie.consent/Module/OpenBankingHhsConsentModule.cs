@@ -18,6 +18,8 @@ using amorphie.consent.Service.Refit;
 using Dapr;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Newtonsoft.Json.Linq;
+using System.Text;
 
 namespace amorphie.consent.Module;
 
@@ -81,6 +83,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
+        routeGroupBuilder.MapPost("/CheckAuthorize", CheckAuthorize);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -3124,6 +3127,90 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         return responseList;
+    }
+
+    private async Task<IResult> CheckAuthorize(
+       Guid consentId,
+       string tckn,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
+       [FromServices] ICustomerService customerService
+       )
+    {
+        var consent = await context.Consents.FirstOrDefaultAsync(c => c.Id == consentId);
+
+        if (consent == null)
+        {
+            return Results.NotFound("Consent not found");
+        }
+
+        if (tckn != consent.UserTCKN.ToString())
+        {
+            return Results.Problem("TCKN error");
+        }
+
+        var kimlik = new KimlikDto();
+
+        if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+        {
+            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
+            kimlik = accountConsent.kmlk;
+        }
+        else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+        {
+            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
+            kimlik = paymentConsent.odmBsltm.kmlk;
+        }
+
+        var customerResult = await customerService.GetCustomerInformations(kimlik);
+
+        if (customerResult.Result == false)
+        {
+            return Results.Problem(customerResult.Message);
+        }
+
+        var customerResponse = (GetCustomerResponseDto)customerResult.Data;
+
+        var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
+
+        if (consentDetail == null)
+        {
+            return Results.NotFound("Consent Detail not found");
+        }
+
+        string strAccountList = null;
+
+        if (consentDetail.AccountReferences != null && consentDetail.AccountReferences.Count > 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append("[");
+
+            foreach (string accountRef in consentDetail.AccountReferences)
+            {
+                sb.Append("\"");
+                sb.Append(accountRef);
+                sb.Append("\"");
+                sb.Append(",");
+            }
+
+            strAccountList = sb.ToString().TrimEnd(',');
+
+            strAccountList = strAccountList + "]";
+        }
+
+        var result = await openBankingIntegrationService.VerificationUser
+                                                (
+                                                 customerResponse.customerNumber,
+                                                 customerResponse.krmCustomerNumber,
+                                                 strAccountList
+                                                );
+
+        if (result.Result == false)
+        {
+            return Results.Problem(result.Message);
+        }
+
+        return Results.Ok();
     }
 
 }
