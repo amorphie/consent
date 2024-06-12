@@ -18,6 +18,8 @@ using amorphie.consent.Service.Refit;
 using Dapr;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Newtonsoft.Json.Linq;
+using System.Text;
 
 namespace amorphie.consent.Module;
 
@@ -81,6 +83,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
+        routeGroupBuilder.MapPost("/CheckAuthorize", CheckAuthorize);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -3108,6 +3111,75 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         return responseList;
+    }
+
+    private async Task<IResult> CheckAuthorize(
+       Guid consentId,
+       string tckn,
+       [FromServices] ConsentDbContext context,
+       [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
+       [FromServices] ICustomerService customerService
+       )
+    {
+        var consent = await context.Consents.FirstOrDefaultAsync(c => c.Id == consentId);
+
+        if (consent == null)
+        {
+            return Results.NotFound("Consent not found");
+        }
+
+        if (tckn != consent.UserTCKN.ToString())
+        {
+            return Results.Problem("TCKN error");
+        }
+
+        var additionalData = JsonConvert.DeserializeObject<ConsentAdditionalData>(consent.AdditionalData);
+        // var additionalData = JsonConvert.DeserializeObject<ConsentAdditionalData>("{\"rzBlg\":{\"rizaNo\":\"00245386-d232-4a70-af32-47e51a657c03\",\"olusZmn\":\"2024-02-27T11:46:23.8893874Z\",\"gnclZmn\":\"2024-02-27T11:46:45.5500893Z\",\"rizaDrm\":\"Y\",\"rizaIptDtyKod\":null},\"kmlk\":{\"kmlkTur\":\"K\",\"kmlkVrs\":\"40876191451\",\"krmKmlkTur\":\"K\",\"krmKmlkVrs\":\"11111111111\",\"ohkTur\":\"B\"},\"katilimciBlg\":{\"hhsKod\":\"0125\",\"yosKod\":\"2710\"},\"gkd\":{\"yetYntm\":\"A\",\"yonAdr\":\"string\",\"ayrikGkd\":{\"ohkTanimTip\":\"TCKN\",\"ohkTanimDeger\":\"11111111111\"},\"hhsYonAdr\":\"\",\"yetTmmZmn\":\"2024-02-27T11:51:23.8893913Z\"},\"hspBlg\":{\"iznBlg\":{\"iznTur\":[\"01\",\"04\",\"05\"],\"erisimIzniSonTrh\":\"2024-03-22T08:43:50.37Z\",\"hesapIslemBslZmn\":\"2023-08-02T08:43:50.37Z\",\"hesapIslemBtsZmn\":\"2023-12-22T08:43:50.37Z\"},\"ayrBlg\":null}}");
+
+        var customerResult = await customerService.GetCustomerInformations(additionalData.kmlk);
+
+        if (customerResult.Result == false)
+        {
+            return Results.Problem(customerResult.Message);
+        }
+
+        var customerResponse = (GetCustomerResponseDto)customerResult.Data;
+
+        var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
+
+        if (consentDetail == null)
+        {
+            return Results.NotFound("Consent Detail not found");
+        }
+
+        var sb = new StringBuilder();
+        sb.Append("[");
+
+        foreach (string accountRef in consentDetail.AccountReferences)
+        {
+            sb.Append("\"");
+            sb.Append(accountRef);
+            sb.Append("\"");
+            sb.Append(",");
+        }
+
+        var strAccountList = sb.ToString().TrimEnd(',');
+
+        strAccountList = strAccountList + "]";
+
+        var result = await openBankingIntegrationService.VerificationUser
+                                                (
+                                                 customerResponse.customerNumber,
+                                                 customerResponse.krmCustomerNumber,
+                                                 strAccountList
+                                                );
+
+        if (result.Result == false)
+        {
+            return Results.Problem(result.Message);
+        }
+
+        return Results.Ok();
     }
 
 }
