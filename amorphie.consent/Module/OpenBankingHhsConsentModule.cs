@@ -215,7 +215,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 //Data not valid
-                return Results.Content(headerValidation.Data.ToJsonString(),"application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(headerValidation.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //Check consent
@@ -237,7 +237,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity.AdditionalData);
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountConsent);
-            return Results.Content(accountConsent.ToJsonString(),"application/json" ,statusCode: HttpStatusCode.OK.GetHashCode());
+            return Results.Content(accountConsent.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -379,7 +379,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
-
+            
+            //Check consent
+            await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
             //Get authorized accounts
             ApiResult accountApiResult =
                 await accountService.GetAuthorizedAccounts(httpContext, userTCKN: header.UserReference!, consentId: header.ConsentId!, header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo,
@@ -437,7 +439,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
-
+            //Check consent
+            await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
             ApiResult accountApiResult =
                 await accountService.GetAuthorizedBalanceByHspRef(httpContext, userTCKN: header.UserReference!, yosCode: header.XTPPCode,
                    hspRef: hspRef, consentId: header.ConsentId!, errorCodeDetails: _errorCodeDetails); //Get data from service
@@ -500,6 +503,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+            
+            //Check consent
+            await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
 
             ApiResult accountApiResult = await accountService.GetAuthorizedBalances(httpContext, userTCKN: header.UserReference!,
              consentId: header.ConsentId!, yosCode: header.XTPPCode, _errorCodeDetails, syfKytSayi, syfNo, srlmKrtr, srlmYon);
@@ -557,6 +563,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+            //Check consent
+            await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
 
             //Get transactions from service
             ApiResult accountApiResult = await accountService.GetTransactionsByHspRef(httpContext, userTCKN: header.UserReference!,
@@ -1252,16 +1260,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
             }
 
+            GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
             //Get user's active account consents from db and process them
-            var checkAccountConsentResult = await CheckAccountConsents(authorizationService, rizaIstegi, context, httpContext);
+            var checkAccountConsentResult = await CheckAccountConsents(rizaIstegi,customerResponse, authorizationService,  context, httpContext);
             if (!checkAccountConsentResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkAccountConsentResult.Data);
                 return Results.Content(checkAccountConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
             
-            GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
-
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
@@ -2037,14 +2044,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         string objectName = OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi;
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName:objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName: objectName))
         {
             result.Result = false;
             result.Data = errorResponse;
             return result;
         }
 
-       
+
         //Check KatılımcıBilgisi
         result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
             katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, objectName: objectName);
@@ -2637,14 +2644,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Check yetki kullanıldı, yetkilendirildi state consents validity
     /// </summary>
     /// <returns></returns>
-    private async Task<ApiResult> CheckAccountConsents(IOBAuthorizationService authorizationService,
-        HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+    private async Task<ApiResult> CheckAccountConsents(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
+        GetCustomerResponseDto customerResponse,
+        IOBAuthorizationService authorizationService,
         ConsentDbContext context,
         HttpContext httpContext)
     {
         ApiResult result = new();
         var getConsentsResult =
-            await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod);
+            await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod,customerResponse.citizenshipNumber.ToNullableLong(), customerResponse.customerNumber, customerResponse.krmCustomerNumber);
         if (getConsentsResult.Result == false)
         {
             //Error getting consents
