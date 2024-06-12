@@ -134,6 +134,7 @@ builder.Services
     c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:CustomerUrl"] ??
                             throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
 })
+.AddHttpMessageHandler<LoggingHandler>()
 .AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
