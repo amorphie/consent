@@ -10,11 +10,11 @@ public static class OBErrorCodeConstants
 
     public static class FieldNames
     {
-        public const string HeaderPsuInitiated = "X-Request-ID";
+        public const string HeaderPsuInitiated = "PSU-Initiated";
         public const string HeaderXGroupId = "X-Group-ID";
         public const string HeaderXaspspCode = "X-ASPSP-Code";
-        public const string HeaderXRequestId = "X-TPP-Code";
-        public const string HeaderXtppCode = "PSU-Initiated";
+        public const string HeaderXRequestId = "X-Request-ID";
+        public const string HeaderXtppCode = "X-TPP-Code";
         public const string HhsCodeHbr = "katilimciBlg.hhsKod";
         public const string YosCodeHbr = "katilimciBlg.yosKod";
         public const string GkdTur = "gkd.yetYntm";
@@ -62,11 +62,12 @@ public static class OBErrorCodeConstants
         public const string RzBlgRizaDrm = "rzBlg.rizaDrm";
         public const string RzBlgRizaNo = "rzBlg.rizaNo";
         public const string RzBlgOlusZmn = "rzBlg.olusZmn";
-
         public const string IsyOdmBlgIsyKtgKod = "isyOdmBlg.isyKtgKod";
         public const string IsyOdmBlgAltIsyKtgKod = "isyOdmBlg.altIsyKtgKod";
         public const string IsyOdmBlgGenelUyeIsyeriNo = "isyOdmBlg.genelUyeIsyeriNo";
-
+        public const string OlayTipiOA = "abonelikTipleri.olayTipi";
+        public const string KaynakTipiOA = "abonelikTipleri.kaynakTipi";
+        public const string OlayAbonelikNo = "olayAbonelik.olayAbonelikNo";
 
     }
     public static class ObjectNames
@@ -74,6 +75,8 @@ public static class OBErrorCodeConstants
         public const string HesapBilgisiRizasiIstegi = "HesapBilgisiRizasiIstegi";
         public const string OdemeEmriRizasiIstegi = "OdemeEmriRizasiIstegi";
         public const string OdemeEmriIstegi = "OdemeEmriIstegi";
+        public const string OlayAbonelikIstegi = "OlayAbonelikIstegi";
+        public const string OlayAbonelikPut = "OlayAbonelikIstegi";
         public const string RzBlg = "rzBlg";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
@@ -87,7 +90,7 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmAlc = "odmBsltm.alc";
         public const string OdmBsltmOdmAyr = "odmBsltm.odmAyr";
         public const string OdmBsltmGon = "odmBsltm.gon";
-
+        public const string AbonelikTipleri = "abonelikTipleri";
     }
 
     public static class HttpMessage
@@ -173,6 +176,8 @@ public static class OBErrorCodeConstants
         InternalServerError = 151,
         InternalServerErrorCheckingIdempotency = 152,
         InternalServerErrorBodyEmptyValidateJwt = 153,
+        NotFoundAbonelikNo = 154,
+        InternalServerErrorIsCustomerService = 155,
         
         
         ConsentMismatch = 160,
@@ -188,6 +193,11 @@ public static class OBErrorCodeConstants
         InvalidContent = 203,
         InvalidContentYonAdrIsNotYosAddress = 204,
         InvalidContentProcessingUserNotInKmlData = 205,
+        InvalidContentNoYosRoleHbhsRequired = 206,
+        InvalidContentNoYosRoleObhsRequired = 207,
+        InvalidContentYosNotHaveApiDefinition = 208,
+        InvalidContentThereIsAlreadyEventSubscriotion = 209,
+        InvalidContentOlayAbonelikNoNotMatch = 210,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
@@ -195,7 +205,6 @@ public static class OBErrorCodeConstants
         InvalidSignatureInvalidKey = 304,
         InvalidSignatureExMissing = 305,
         InvalidSignatureExWrong = 306,
-        
         MissingSignaturePSUFraudCheck = 307,
         InvalidSignatureHeaderAlgorithmWrongFraud = 308,
         InvalidSignatureHeaderExpireDatePassedFraud = 309,
@@ -212,14 +221,14 @@ public static class OBErrorCodeConstants
         InvalidSignatureUnsafeAccountFlagFraud = 320,
         InvalidSignatureAnomalyFlagFraud = 321,
         InvalidSignatureMalwareFlagFraud = 322,
-  
         InvalidPermissionGetAccount = 323,
         InvalidPermissionGetBalance = 324,
         InvalidPermissionGetTransaction = 325,
         InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
         InvalidSignatureXJwsSignatureHeaderInvalid = 327,
         InvalidContentKolasNotValidInOneTimePayment = 328,
-        InvalidContentOneTimePaymentPSUSessionId = 329
+        InvalidContentOneTimePaymentPSUSessionId = 329,
+        InvalidContentCustomerNotFound = 330
 
     }
 }

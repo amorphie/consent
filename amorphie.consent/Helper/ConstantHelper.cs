@@ -35,14 +35,6 @@ public static class ConstantHelper
         };
     }
 
-    /// <summary>
-    /// Get authorized account consent status 
-    /// </summary>
-    /// <returns>Authorized account consent status</returns>
-    public static string GetAuthorizedConsentStatusForAccount()
-    {
-        return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-    }
 
     /// <summary>
     /// Get authorized payment consent status list 
@@ -262,8 +254,7 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.RizaIptalDetayKodu).GetAllPublicConstantValues<string>();
     }
-
-
+    
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {
