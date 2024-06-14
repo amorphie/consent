@@ -24,8 +24,8 @@ public class CustomerService : ICustomerService
             {
                 kmlkTur = kimlik.kmlkTur,
                 kmlkVrs = kimlik.kmlkVrs,
-                krmKmlkTur = kimlik.krmKmlkTur,
-                krmKmlkVrs = kimlik.krmKmlkVrs
+                krmKmlkTur = kimlik.krmKmlkTur ?? string.Empty,
+                krmKmlkVrs = kimlik.krmKmlkVrs ?? string.Empty
             };
 
             var customerInformation = await _customerClientService.GetCustomerInformation(getCustomerRequestDto);
