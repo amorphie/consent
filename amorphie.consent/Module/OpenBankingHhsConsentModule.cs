@@ -1306,7 +1306,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
-    [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     protected async Task<IResult> DeleteAccountConsentFromYos(Guid rizaNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
@@ -1322,7 +1321,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check header fields
             ApiResult headerValidation =
                 await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header: header,
-                    isUserRequired: true, errorCodeDetails: errorCodeDetails);
+                    errorCodeDetails: errorCodeDetails);
             if (!headerValidation.Result)
             {
                 //Missing header fields
@@ -1414,7 +1413,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            await CancelAccountConsent(context, tokenService, eventService, entity!);
+            await CancelAccountConsent(context, tokenService, eventService,yosInfoService, entity!);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1459,7 +1458,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent rıza bilgileri properties
-            await CancelAccountConsent(context, tokenService, eventService, entity!);
+            await CancelAccountConsent(context, tokenService, eventService, yosInfoService, entity!);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1469,7 +1468,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
     
     private static async Task CancelAccountConsent(ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, Consent entity)
+        IOBEventService eventService, IYosInfoService yosInfoService,  Consent entity)
     {
         //Update consent rıza bilgileri properties
         var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
@@ -1497,12 +1496,21 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Revoke token
         await tokenService.RevokeConsentToken(entity.Id);
 
-        //Send event to yos
-        await eventService.DoEventProcess(entity.Id.ToString(),
-            additionalData.katilimciBlg,
-            eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
-            sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
-            sourceNumber: entity.Id.ToString());
+        //If YOS has subscription, Do event process
+        ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(entity.Variant!,
+            OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi);
+        if (yosHasSubscription.Result
+            && yosHasSubscription.Data != null
+            && (bool)yosHasSubscription.Data)
+        {
+
+            //Send event to yos
+            await eventService.DoEventProcess(entity.Id.ToString(),
+                additionalData.katilimciBlg,
+                eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
+                sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
+                sourceNumber: entity.Id.ToString());
+        }
     }
 
 
@@ -2675,7 +2683,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             .Include(c => c.OBAccountConsentDetails)
             .FirstOrDefaultAsync(c => c.Id == rizaNo
                                       && c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount);
-        var today = DateTime.UtcNow;
+
         if (entity == null
             || string.IsNullOrEmpty(entity.AdditionalData)
             || entity.State == OpenBankingConstants.RizaDurumu.YetkiIptal
