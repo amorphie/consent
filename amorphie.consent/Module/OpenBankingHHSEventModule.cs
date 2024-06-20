@@ -744,55 +744,49 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         ApiResult result = new();
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: olayIstegi.katilimciBlg, isXJwsSignatureRequired: true, errorCodeDetails: errorCodeDetails,  isEventHeader:true);
+            katilimciBlg: olayIstegi.katilimciBlg,  errorCodeDetails: errorCodeDetails,  isEventHeader:true);
         if (!result.Result)
         {
             //validation error in header fields
             return result;
         }
+        string objectName = OBErrorCodeConstants.ObjectNames.SistemOlayDinleme;
 
-        //Check message required basic properties
-        if (olayIstegi?.katilimciBlg is null
-            || olayIstegi.olaylar?.Any() is null or false
-            || olayIstegi.olaylar.Count != 1
-           )
+        //Check message required basic properties/objects
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_SOBObject(olayIstegi, httpContext, errorCodeDetails,objectName, out var errorResponse))
         {
             result.Result = false;
-            result.Message =
-                "katilimciBlg, olaylar should be in event request message and there should only be 1 event.";
+            result.Data = errorResponse;
+            return result;
+        }
+
+        //Check message required basic properties
+        result = OBConsentValidationHelper.CheckOlaylarForSystemEventPost(olayIstegi.olaylar, httpContext, errorCodeDetails,
+            objectName);
+        if (!result.Result)
+        {
+            //validation error in olaylar data fields
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(olayIstegi.katilimciBlg.hhsKod) //Required fields
-            || string.IsNullOrEmpty(olayIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != olayIstegi.katilimciBlg.hhsKod)
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
+            katilimciBlg: olayIstegi.katilimciBlg, errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
+            //validation error in katiliciBilgisi data fields
             return result;
         }
         
 
         //Check aboneliktipleri data validation
-        var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
-            .AsNoTracking()
-            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
-                        && r.SourceType == olayIstegi.olaylar[0].kaynakTipi
-                        && r.EventType == olayIstegi.olaylar[0].olayTipi)
-            .ToListAsync();
-
-
-        //Event Type source type check.
-        if (!(eventTypeSourceTypeRelations?.Any() ?? false))
+        result = await OBConsentValidationHelper.CheckEventTypeSourceTypeRelationForSystemEvent(httpContext, context,
+            olaylar: olayIstegi.olaylar[0], errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
         {
-            //no relation in db
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
+            //validation error
             return result;
         }
-
         return result;
     }
 }

@@ -77,6 +77,7 @@ public static class OBErrorCodeConstants
         public const string OdemeEmriIstegi = "OdemeEmriIstegi";
         public const string OlayAbonelikIstegi = "OlayAbonelikIstegi";
         public const string OlayAbonelikPut = "OlayAbonelikIstegi";
+        public const string SistemOlayDinleme = "SistemOlayDinlemeIstegi";
         public const string RzBlg = "rzBlg";
         public const string KatilimciBlg = "katilimciBlg";
         public const string Gkd = "gkd";
@@ -91,6 +92,7 @@ public static class OBErrorCodeConstants
         public const string OdmBsltmOdmAyr = "odmBsltm.odmAyr";
         public const string OdmBsltmGon = "odmBsltm.gon";
         public const string AbonelikTipleri = "abonelikTipleri";
+        public const string Olaylar = "olaylar";
     }
 
     public static class HttpMessage
@@ -197,6 +199,8 @@ public static class OBErrorCodeConstants
         InvalidContentYosNotHaveApiDefinition = 208,
         InvalidContentThereIsAlreadyEventSubscriotion = 209,
         InvalidContentOlayAbonelikNoNotMatch = 210,
+        InvalidContentOlaylarLength = 211,
+        InvalidContentBkmSystemEventTypeSourceTypeRelation = 212,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
