@@ -580,7 +580,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi;
         
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelikIstegi, httpContext, errorCodeDetails, out var errorResponse,objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelikIstegi, httpContext, errorCodeDetails,objectName, out var errorResponse))
         {
             result.Result = false;
             result.Data = errorResponse;
@@ -671,7 +671,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         string objectName = OBErrorCodeConstants.ObjectNames.OlayAbonelikPut;
         
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelik, httpContext, errorCodeDetails, out var errorResponse,objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_OAObject(olayAbonelik, httpContext, errorCodeDetails,objectName, out var errorResponse))
         {
             result.Result = false;
             result.Data = errorResponse;

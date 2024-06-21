@@ -71,8 +71,14 @@ public interface IOBAuthorizationService
     /// </summary>
     /// <param name="identity">Identity object in account consent</param>
     /// <param name="yosCode">Yos code</param>
+    /// <param name="userTckn">Processing user tckn</param>
+    /// <param name="customerNumber">Processing user Customer Number</param>
+    /// <param name="institutionCustomerNumber">Processing user institution customer number</param>
     /// <returns>Get active account consents response</returns>
-    public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
+    public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode, 
+        long? userTckn,
+    string? customerNumber, 
+    string? institutionCustomerNumber);
 
     /// <summary>
     /// Getting consent data by checking checksum value in database of account/payment consents

@@ -27,6 +27,7 @@
     <PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.26.0" />
     <PackageReference Include="jose-jwt" Version="4.1.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+    <PackageReference Include="System.ServiceModel.Http" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

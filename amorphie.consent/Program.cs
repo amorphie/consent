@@ -36,6 +36,8 @@ builder.Services.AddScoped<IOBErrorCodeDetailService, OBErrorCodeDetailService>(
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPushService, PushService>();
 builder.Services.AddScoped<IDeviceRecord, DeviceRecordService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IOpenBankingIntegrationService, OpenBankingIntegrationService>();
 builder.Services.AddTransient<HttpClientHandler>();
 builder.Services.AddTransient<LoggingHandler>();
 //builder.Services.AddHealthChecks().AddBBTHealthCheck();
@@ -125,6 +127,15 @@ builder.Services
 })
 .AddPolicyHandler(retryPolicy);
 
+builder.Services
+.AddRefitClient<ICustomerClientService>()
+.ConfigureHttpClient(c =>
+{
+    c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:CustomerUrl"] ??
+                            throw new ArgumentNullException("Parameter is not suplied.", "CustomerUrl"));
+})
+.AddHttpMessageHandler<LoggingHandler>()
+.AddPolicyHandler(retryPolicy);
 
 builder.Services.AddCors(options =>
 {
