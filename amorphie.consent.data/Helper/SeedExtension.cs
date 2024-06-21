@@ -68,7 +68,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             EventType = "KAYNAK_GUNCELLENDI",
             YOSRole = "HBH",
-            SourceType = "COKLU_ISLEM_TALEBI ( bulk-data)",
+            SourceType = "COKLU_ISLEM_TALEBI",
             EventCase = "İlgili API İlke ve kurallarına eklendiğinde güncellenecektir.",
             SourceNumber = string.Empty,
             APIToGetData = string.Empty,
@@ -182,7 +182,7 @@ public static class SeedExtension
             Id = Guid.NewGuid(),
             EventType = "HHS_YOS_GUNCELLENDI",
             YOSRole = "HHS",
-            SourceType = "YÖS",
+            SourceType = "YOS",
             EventCase = "YÖS bilgilerinde değişiklik olduğunda, HHS'nin yosKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir.",
             SourceNumber = "yosKod",
             APIToGetData = "GET /yos/{yosKod}",
@@ -1163,10 +1163,6 @@ public static class SeedExtension
             Message = "When ohkTur is individual, institution data should not be in request data.",
             MessageTr = "Ohk Tur bireysel olan rızalarda, kurumsal kimlik bilgileri gönderilmemelidir."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsEvent(this ModelBuilder modelBuilder)
-    {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -1222,6 +1218,27 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Resource.NotFound",
             Message = "OlayAbonelikNo not found.",
             MessageTr = "OlayAbonelikNo bulunamadı."
+        });
+    }
+
+    public static void SeedOBErrorCodeDetailsEvent(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlaylarLength.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "There can be only one item in olaylar object.",
+            MessageTr = "Olaylar nesnesi içerisinde sadece 1 tane olay olabilir."
+        });
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBkmSystemEventTypeSourceTypeRelation.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "Event type source type relation is incorrect in BKM system event post process.",
+            MessageTr = "BKM sistem olay dinleme mesajında yer alan olay tipi - kaynak tipi verileri hatalı."
         });
         
     }
