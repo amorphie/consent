@@ -181,6 +181,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 .Take(100)
                 .ToList();
 
+            var olaylarDtoList = mapper.Map<List<OlaylarDto>>(eventItems);
+
             OlayIstegiDto responseObject = new OlayIstegiDto()
             {
                 katilimciBlg = new KatilimciBilgisiDto()
@@ -188,7 +190,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                     hhsKod = subscription.HHSCode,
                     yosKod = subscription.YOSCode
                 },
-                olaylar = mapper.Map<List<OlaylarDto>>(eventItems)
+                olaylar = olaylarDtoList
             };
             return Results.Ok(responseObject);
         }
