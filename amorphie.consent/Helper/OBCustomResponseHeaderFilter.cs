@@ -2,6 +2,11 @@ namespace amorphie.consent.Helper;
 
 public class OBCustomResponseHeaderFilter : IEndpointFilter
 {
+    private readonly bool _isEvent;
+    public OBCustomResponseHeaderFilter(bool isEvent = false)
+    {
+        _isEvent = isEvent;
+    }
     /// <summary>
     /// Add open banking header properties to response message.
     /// </summary>
@@ -24,7 +29,7 @@ public class OBCustomResponseHeaderFilter : IEndpointFilter
         {
             context.HttpContext.Response.Headers["X-TPP-Code"] = traceValue;
         }
-        if (context.HttpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
+        if (!_isEvent && context.HttpContext.Request.Headers.TryGetValue("X-Group-ID", out traceValue))
         {
             context.HttpContext.Response.Headers["X-Group-ID"] = traceValue;
         }

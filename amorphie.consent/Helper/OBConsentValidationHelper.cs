@@ -8,8 +8,10 @@ using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
+using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
 using Jose;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace amorphie.consent.Helper;
@@ -205,6 +207,38 @@ public static class OBConsentValidationHelper
             errorCodeDetail, errorResponse,objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik.abonelikTipleri,
             OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
+            errorCodeDetail, errorResponse,objectName);
+
+        // Return false if any errors were added, indicating an issue with the header
+        return !errorResponse.FieldErrors.Any();
+    }
+    
+    /// <summary>
+    /// Checks sistem-olay-dinleme post data null objects
+    /// </summary>
+    /// <returns></returns>
+    public static bool PrepareAndCheckInvalidFormatProperties_SOBObject(OlayIstegiDto olayIstegi,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails,string objectName, out OBCustomErrorResponseDto errorResponse)
+    {
+        //Get 400 error response
+        errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+
+        //Field can not be empty error code
+        var errorCodeDetail = OBErrorResponseHelper.GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
+
+        // Check each property and add errors if necessary
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi,
+            OBErrorCodeConstants.ObjectNames.SistemOlayDinleme,
+            errorCodeDetail, errorResponse,objectName);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi.katilimciBlg,
+            OBErrorCodeConstants.ObjectNames.KatilimciBlg,
+            errorCodeDetail, errorResponse,objectName);
+        OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi.olaylar,
+            OBErrorCodeConstants.ObjectNames.Olaylar,
             errorCodeDetail, errorResponse,objectName);
 
         // Return false if any errors were added, indicating an issue with the header
@@ -2010,6 +2044,69 @@ public static class OBConsentValidationHelper
         
         return result;
     }
+     
+     public static ApiResult CheckOlaylarForSystemEventPost(List<OlaylarDto> olaylar,
+         HttpContext context,
+         List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+     {
+         ApiResult result = new();
+
+         //Get 400 error response
+         var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+         errorResponse.FieldErrors = new List<FieldError>();
+         result.Data = errorResponse;
+         
+         if (olaylar.Any() is false)
+         {
+             result.Result = false;
+             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                 OBErrorCodeConstants.ObjectNames.Olaylar, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                 objectName: objectName);
+             return result;
+         }
+         if (olaylar.Count != 1)
+         {
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlaylarLength);
+             return result;
+         }
+        
+         return result;
+     }
+     
+     public static async Task<ApiResult> CheckEventTypeSourceTypeRelationForSystemEvent(HttpContext context,
+         ConsentDbContext dbContext,
+         OlaylarDto olaylar,
+         List<OBErrorCodeDetail> errorCodeDetails,
+         string objectName)
+     {
+         ApiResult result = new();
+
+         //Get 400 error response
+         var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+         errorResponse.FieldErrors = new List<FieldError>();
+         result.Data = errorResponse;
+         var eventTypeSourceTypeRelations = await dbContext.OBEventTypeSourceTypeRelations
+             .AsNoTracking()
+             .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
+                         && r.SourceType == olaylar.kaynakTipi
+                         && r.EventType == olaylar.olayTipi)
+             .ToListAsync();
+         //Event Type source type check.
+         if (!(eventTypeSourceTypeRelations?.Any() ?? false))
+         {
+             //no relation in db
+             result.Result = false;
+             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBkmSystemEventTypeSourceTypeRelation);
+             return result;
+         }
+        
+         return result;
+     }
 
     public static async Task<ApiResult> CheckIfYosHasDesiredRole(HttpContext context,
         IYosInfoService yosInfoService,

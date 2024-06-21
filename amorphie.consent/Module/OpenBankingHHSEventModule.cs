@@ -30,12 +30,12 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     public override void AddRoutes(RouteGroupBuilder routeGroupBuilder)
     {
         base.AddRoutes(routeGroupBuilder);
-        routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription);
+        routeGroupBuilder.MapGet("/olay-abonelik", GetEventSubscription).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
         routeGroupBuilder.MapGet("/olay-abonelik/{olayAbonelikNo}/iletilemeyen-olaylar",
-            GetEventSubscriptionUnDeliveredEvents);
-        routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost);
-        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption);
-        routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption);
+            GetEventSubscriptionUnDeliveredEvents).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapPost("/olay-abonelik", EventSubsrciptionPost).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapPut("/olay-abonelik/{olayAbonelikNo}", UpdateEventSubsrciption).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
+        routeGroupBuilder.MapDelete("/olay-abonelik/{olayAbonelikNo}", DeleteEventSubsrciption).AddEndpointFilter(new OBCustomResponseHeaderFilter(true));
         routeGroupBuilder.MapPost("/olay-dinleme/{eventType}/{sourceType}/{eventId}", DoEventSchedulerProcess);
         routeGroupBuilder.MapPost("/sistem-olay-dinleme", SystemEventPost);
     }
@@ -181,6 +181,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 .Take(100)
                 .ToList();
 
+            var olaylarDtoList = mapper.Map<List<OlaylarDto>>(eventItems);
+
             OlayIstegiDto responseObject = new OlayIstegiDto()
             {
                 katilimciBlg = new KatilimciBilgisiDto()
@@ -188,7 +190,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                     hhsKod = subscription.HHSCode,
                     yosKod = subscription.YOSCode
                 },
-                olaylar = mapper.Map<List<OlaylarDto>>(eventItems)
+                olaylar = olaylarDtoList
             };
             return Results.Ok(responseObject);
         }
@@ -330,6 +332,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
             var responseObject = mapper.Map<OlayAbonelikDto>(entity);
+            OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, responseObject);
             httpContext.Response.ContentType = "application/json";
             return Results.Content(responseObject.ToJsonString(), "application/json", statusCode: 200);
         }
@@ -343,7 +346,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     /// <summary>
     /// Deletes given event subscription
     /// </summary>
-    /// <param name="id">To be deleted event subscription record id</param>
+    /// <param name="olayAbonelikNo">To be deleted event subscription record id</param>
     /// <param name="context"></param>
     /// <param name="mapper"></param>
     /// <param name="configuration"></param>
@@ -353,7 +356,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
     [AddSwaggerParameter("X-Request-ID", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-ASPSP-Code", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-TPP-Code", ParameterLocation.Header, true)]
-    protected async Task<IResult> DeleteEventSubsrciption(Guid id,
+    protected async Task<IResult> DeleteEventSubsrciption(Guid olayAbonelikNo,
         [FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
@@ -377,7 +380,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
 
             //Get entity from db
             var entity = await context.OBEventSubscriptions
-                .FirstOrDefaultAsync(s => s.Id == id
+                .FirstOrDefaultAsync(s => s.Id == olayAbonelikNo
                                           && s.YOSCode == header.XTPPCode
                                           && s.HHSCode == header.XASPSPCode
                                           && s.ModuleName == OpenBankingConstants.ModuleName.HHS
@@ -743,55 +746,49 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
         ApiResult result = new();
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header,
-            katilimciBlg: olayIstegi.katilimciBlg, isXJwsSignatureRequired: true, errorCodeDetails: errorCodeDetails,  isEventHeader:true);
+            katilimciBlg: olayIstegi.katilimciBlg,  errorCodeDetails: errorCodeDetails,  isEventHeader:true);
         if (!result.Result)
         {
             //validation error in header fields
             return result;
         }
+        string objectName = OBErrorCodeConstants.ObjectNames.SistemOlayDinleme;
 
-        //Check message required basic properties
-        if (olayIstegi?.katilimciBlg is null
-            || olayIstegi.olaylar?.Any() is null or false
-            || olayIstegi.olaylar.Count != 1
-           )
+        //Check message required basic properties/objects
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_SOBObject(olayIstegi, httpContext, errorCodeDetails,objectName, out var errorResponse))
         {
             result.Result = false;
-            result.Message =
-                "katilimciBlg, olaylar should be in event request message and there should only be 1 event.";
+            result.Data = errorResponse;
+            return result;
+        }
+
+        //Check message required basic properties
+        result = OBConsentValidationHelper.CheckOlaylarForSystemEventPost(olayIstegi.olaylar, httpContext, errorCodeDetails,
+            objectName);
+        if (!result.Result)
+        {
+            //validation error in olaylar data fields
             return result;
         }
 
         //Check KatılımcıBilgisi
-        if (string.IsNullOrEmpty(olayIstegi.katilimciBlg.hhsKod) //Required fields
-            || string.IsNullOrEmpty(olayIstegi.katilimciBlg.yosKod)
-            || configuration["HHSCode"] != olayIstegi.katilimciBlg.hhsKod)
+        result = OBConsentValidationHelper.IsKatilimciBlgDataValid(httpContext, configuration,
+            katilimciBlg: olayIstegi.katilimciBlg, errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
         {
-            result.Result = false;
-            result.Message = "TR.OHVPS.Resource.InvalidFormat. HHSKod YOSKod required";
+            //validation error in katiliciBilgisi data fields
             return result;
         }
         
 
         //Check aboneliktipleri data validation
-        var eventTypeSourceTypeRelations = await context.OBEventTypeSourceTypeRelations
-            .AsNoTracking()
-            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
-                        && r.SourceType == olayIstegi.olaylar[0].kaynakTipi
-                        && r.EventType == olayIstegi.olaylar[0].olayTipi)
-            .ToListAsync();
-
-
-        //Event Type source type check.
-        if (!(eventTypeSourceTypeRelations?.Any() ?? false))
+        result = await OBConsentValidationHelper.CheckEventTypeSourceTypeRelationForSystemEvent(httpContext, context,
+            olaylar: olayIstegi.olaylar[0], errorCodeDetails: errorCodeDetails, objectName: objectName);
+        if (!result.Result)
         {
-            //no relation in db
-            result.Result = false;
-            result.Message =
-                "TR.OHVPS.Resource.InvalidFormat. TR.OHVPS.DataCode.OlayTip and/or TR.OHVPS.DataCode.KaynakTip wrong.";
+            //validation error
             return result;
         }
-
         return result;
     }
 }
