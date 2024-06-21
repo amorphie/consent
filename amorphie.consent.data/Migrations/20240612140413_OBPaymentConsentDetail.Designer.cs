@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240612140413_OBPaymentConsentDetail")]
+    partial class OBPaymentConsentDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -526,206 +529,6 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBEventTypeSourceTypeRelations");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("b1a20d09-d60f-47c0-8140-a9037654eddf"),
-                            APIToGetData = "GET /odeme-emri/{odemeEmriNo}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4720),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Tüm ödeme durum değişikliklerinde",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4730),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "odemeEmriNo",
-                            SourceType = "ODEME_EMRI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("60de6441-dc10-4df5-8f1e-1641b11da815"),
-                            APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4750),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Rıza iptal detay kodu ‘02’ : Kullanıcı İsteği ile HHS üzerinden İptal durumunda",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4750),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("d338cd31-ce5d-411d-ad8e-4df4924c1f31"),
-                            APIToGetData = "GET /hesaplar/{hspRef}/bakiye",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4770),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "Bakiye nesnesindeki tutarla ilgili bir bilgi değiştiğinde ve HBH rızası içerisinde \"06-Anlık Bakiye Bildirimi\" izin türü varsa oluşturulur.\n\nMevcutta alınmış rızalar için bakiye kaynak tipi özelinde 06 izin türü gerektiğinden; mevcut rızanın yenilenmesine dair müşteriye bilgilendirme yapılarak 06 izin türünü kapsayan yeni rıza alınması süreci YÖS tarafından gerçekleştirilebilir.\n\nBloke tutar değişikliği için olay oluşturma ve bildirimi HHS inisiyatifindedir.\n\nKrdHsp içerisinde yer alan kulKrdTtr değerinin değiştiği durumda olay bildirim gönderilmesi gerekmektedir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Maksimum 10 dakika içerisinde",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4770),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryPolicy = "Retry policy uygulanmamalıdır. İlk istek gönderilemediği durumda İletilemeyen Olaylara eklenmelidir.",
-                            SourceNumber = "hspRef",
-                            SourceType = "BAKIYE",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("f4386d9e-9df0-4fbd-9b9e-a532e1d98809"),
-                            APIToGetData = "",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4850),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "İlgili API İlke ve kurallarına eklendiğinde güncellenecektir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "",
-                            EventType = "KAYNAK_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4850),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 30,
-                            RetryPolicy = "30 Dakika - 3 Deneme",
-                            SourceNumber = "",
-                            SourceType = "COKLU_ISLEM_TALEBI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("0a9d7a66-339f-4ee4-8e08-a2021d44108c"),
-                            APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=O",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4870),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARILI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4870),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "ODEME_EMRI_RIZASI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("326b700f-1a5d-4ac5-9db3-4d447a59a6c6"),
-                            APIToGetData = "GET /yetkilendirme-kodu?rizaNo={rizaNo}}&rizaTip=H",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4890),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladığında rıza oluşturulur. YÖS'e rıza oluşturulduğuna dair bildirim yapılır. YÖS yetkod değerini sorgulama sonucunda elde eder.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARILI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4890),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("740b07fd-b0ad-46f8-9f4e-70a881941c1b"),
-                            APIToGetData = "GET /odeme-emri-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4920),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARISIZ",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4920),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "ODEME_EMRI_RIZASI",
-                            YOSRole = "ÖBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("74fb00c2-32fd-47f3-9973-da1d1dfb7a97"),
-                            APIToGetData = "GET /hesap-bilgisi-rizasi/{RizaNo}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4940),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS sisteminde ÖHK kendini doğruladıktan sonra yaptığı kontroller neticesinde logine izin vermez ise YÖS'e bildirim yapılır. YÖS rıza durumunu sorgulayarak işlemin neden iletilmediğine dair bilgi edinebilir.",
-                            EventNotificationReporter = "HHS",
-                            EventNotificationTime = "Anlık",
-                            EventType = "AYRIK_GKD_BASARISIZ",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4940),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 1,
-                            RetryPolicy = "1 Dakika - 3 Deneme",
-                            SourceNumber = "RizaNo",
-                            SourceType = "HESAP_BILGISI_RIZASI",
-                            YOSRole = "HBH"
-                        },
-                        new
-                        {
-                            Id = new Guid("db3e1652-bb2b-4dcf-801d-cc6d0ce4cca9"),
-                            APIToGetData = "GET /hhs/{hhsKod}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4960),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "HHS bilgilerinde değişiklik olduğunda, YÖS'ün hhsKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir",
-                            EventNotificationReporter = "BKM",
-                            EventNotificationTime = "Anlık",
-                            EventType = "HHS_YOS_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4960),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 5,
-                            RetryPolicy = "5 Dakika - 3 Deneme",
-                            SourceNumber = "hhsKod",
-                            SourceType = "HHS",
-                            YOSRole = "YÖS"
-                        },
-                        new
-                        {
-                            Id = new Guid("92e2ec7d-5aae-426f-9a11-e511239a6a89"),
-                            APIToGetData = "GET /yos/{yosKod}",
-                            CreatedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4990),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            EventCase = "YÖS bilgilerinde değişiklik olduğunda, HHS'nin yosKod ile sorgulama yapması ve değişen bilgiyi güncellemesi beklenmektedir.",
-                            EventNotificationReporter = "BKM",
-                            EventNotificationTime = "Anlık",
-                            EventType = "HHS_YOS_GUNCELLENDI",
-                            IsImmediateNotification = false,
-                            ModifiedAt = new DateTime(2024, 6, 21, 11, 13, 36, 220, DateTimeKind.Utc).AddTicks(4990),
-                            ModifiedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            RetryCount = 3,
-                            RetryInMinute = 5,
-                            RetryPolicy = "5 Dakika - 3 Deneme",
-                            SourceNumber = "yosKod",
-                            SourceType = "YOS",
-                            YOSRole = "HHS"
-                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBHhsInfo", b =>

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using amorphie.consent.core.DTO;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
@@ -23,11 +19,14 @@ namespace amorphie.consent.Mapper
             CreateMap<Consent, OdemeEmriRizaIstegiDto>().ReverseMap();
             CreateMap<Consent, OpenBankingConsentDto>()
                 .ReverseMap();
-            CreateMap<Consent, HHSAccountConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)));
-            CreateMap<Consent, HHSPaymentConsentDto>().ForMember(dest => dest.AdditionalData,
-                opt => opt.MapFrom(src =>
-                    JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)));
+            CreateMap<Consent, HHSAccountConsentDto>()
+                .ForMember(dest => dest.AdditionalData, opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)))
+                .ForMember(dest => dest.CustomerNumber, opt => opt.MapFrom<CustomerNumberResolver>())
+                .ForMember(dest => dest.InstitutionCustomerNumber, opt => opt.MapFrom<InstitutionCustomerNumberResolver>());
+            CreateMap<Consent, HHSPaymentConsentDto>()
+                .ForMember(dest => dest.AdditionalData, opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)))
+                .ForMember(dest => dest.CustomerNumber, opt => opt.MapFrom<CustomerNumberResolverPayment>())
+                .ForMember(dest => dest.InstitutionCustomerNumber, opt => opt.MapFrom<InstitutionCustomerNumberResolverPayment>());;
             CreateMap<Token, TokenDto>().ReverseMap();
             CreateMap<Consent, YOSConsentDto>().ReverseMap();
             // CreateMap<Token, TokenModel>().ReverseMap();

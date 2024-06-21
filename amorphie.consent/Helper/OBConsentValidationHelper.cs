@@ -3087,4 +3087,35 @@ public static class OBConsentValidationHelper
 
         return amount;
     }
+    
+    public static async Task<ApiResult> CheckCustomerInformation(ICustomerService customerService,
+        KimlikDto kmlk,
+        HttpContext httpContext,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+   
+        var checkCustomerResult = await customerService.GetCustomerInformations(kmlk);//Get customer information
+        if (!checkCustomerResult.Result
+            || checkCustomerResult.Data is null)//Error in service
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorIsCustomerService);
+            return result;
+        }
+
+        GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data;
+        if (!customerResponse.isCustomer
+            || (kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+                && !customerResponse.krmIsCustomer))//No customer in system with given consent data
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentCustomerNotFound);
+            return result;
+        }
+        result.Data = customerResponse;
+        return result;
+    }
 }

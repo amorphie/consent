@@ -1243,4 +1243,25 @@ public static class SeedExtension
         
     }
 
+    
+    public static void SeedOBErrorCodeDetailsInstitution(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorIsCustomerService.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By checking customer information from customer service, service error occured.",
+            MessageTr = "Müşteri bilgilerinin sorgulandığı servis sürecinde hata oluştu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentCustomerNotFound.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
+            Message = "There is no customer in the system with given kmlk data",
+            MessageTr = "Kmlk alanında girilen bilgiler ile müşteri bulunamamıştır."
+        });
+    }
+    
 }

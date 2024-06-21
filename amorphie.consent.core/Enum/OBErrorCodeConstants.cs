@@ -179,6 +179,7 @@ public static class OBErrorCodeConstants
         InternalServerErrorCheckingIdempotency = 152,
         InternalServerErrorBodyEmptyValidateJwt = 153,
         NotFoundAbonelikNo = 154,
+        InternalServerErrorIsCustomerService = 155,
         
         
         ConsentMismatch = 160,
@@ -208,7 +209,6 @@ public static class OBErrorCodeConstants
         InvalidSignatureInvalidKey = 304,
         InvalidSignatureExMissing = 305,
         InvalidSignatureExWrong = 306,
-        
         MissingSignaturePSUFraudCheck = 307,
         InvalidSignatureHeaderAlgorithmWrongFraud = 308,
         InvalidSignatureHeaderExpireDatePassedFraud = 309,
@@ -225,14 +225,14 @@ public static class OBErrorCodeConstants
         InvalidSignatureUnsafeAccountFlagFraud = 320,
         InvalidSignatureAnomalyFlagFraud = 321,
         InvalidSignatureMalwareFlagFraud = 322,
-  
         InvalidPermissionGetAccount = 323,
         InvalidPermissionGetBalance = 324,
         InvalidPermissionGetTransaction = 325,
         InvalidSignaturePsuFraudCheckHeaderInvalid = 326,
         InvalidSignatureXJwsSignatureHeaderInvalid = 327,
         InvalidContentKolasNotValidInOneTimePayment = 328,
-        InvalidContentOneTimePaymentPSUSessionId = 329
+        InvalidContentOneTimePaymentPSUSessionId = 329,
+        InvalidContentCustomerNotFound = 330
 
     }
 }
