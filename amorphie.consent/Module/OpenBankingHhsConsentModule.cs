@@ -1447,8 +1447,6 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
 
-
-
     protected async Task<IResult> DeleteAccountConsentFromHHSInstitution(Guid consentId,
         string customerNumber,
         string institutionCustomerNumber,
