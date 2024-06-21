@@ -112,20 +112,17 @@ namespace amorphie.consent.Mapper
                 .ForMember(dest => dest.olusturmaZamani, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.guncellemeZamani, opt => opt.MapFrom(src => src.ModifiedAt))
                 .ForMember(dest => dest.abonelikTipleri, opt => opt.MapFrom(src => src.OBEventSubscriptionTypes));
+            CreateMap<OBEvent, OlaylarDto>()
+                .ForMember(dest => dest.kaynakTipi, opt => opt.MapFrom(src => src.SourceType))
+                .ForMember(dest => dest.kaynakNo, opt => opt.MapFrom(src => src.SourceNumber))
+                .ForMember(dest => dest.olayTipi, opt => opt.MapFrom(src => src.EventType))
+                .ForMember(dest => dest.olayNo, opt => opt.MapFrom(src => src.EventNumber))
+                .ForMember(dest => dest.olayZamani, opt => opt.MapFrom(src => src.EventDate));
+
             CreateMap<OBEvent, OlayIstegiDto>()
                 .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
-                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
-                .ForMember(dest => dest.olaylar, opt => opt.MapFrom(src =>
-                 new List<OlaylarDto> // Assuming olaylar is a List<OlaylarDto>
-                 {
-                    new OlaylarDto
-                    {
-                        kaynakTipi = src.SourceType,
-                        kaynakNo = src.SourceNumber,
-                        olayTipi = src.EventType,
-                        olayNo = src.EventNumber,
-                        olayZamani = src.EventDate
-                    }}));
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode));
+
 
             CreateMap<OBYosInfo, OBYosInfoDto>().ReverseMap();
             CreateMap<OBYosInfoDto, OBYosInfo>()

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -13,9 +14,11 @@ using amorphie.consent.data;
 namespace amorphie.consent.data.Migrations
 {
     [DbContext(typeof(ConsentDbContext))]
-    partial class ConsentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240621111336_OBEventInsertUpdateScript")]
+    partial class OBEventInsertUpdateScript
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -268,19 +271,19 @@ namespace amorphie.consent.data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("bd68012f-0ca9-4ed2-9704-7212938896bc"),
-                            BkmCode = "TR.OHVPS.Server.InternalError",
-                            InternalCode = 155,
-                            Message = "By checking customer information from customer service, service error occured.",
-                            MessageTr = "Müşteri bilgilerinin sorgulandığı servis sürecinde hata oluştu."
+                            Id = new Guid("1bf82773-c74a-43a8-98ad-253b3183b485"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 211,
+                            Message = "There can be only one item in olaylar object.",
+                            MessageTr = "Olaylar nesnesi içerisinde sadece 1 tane olay olabilir."
                         },
                         new
                         {
-                            Id = new Guid("a4fe0111-a842-4a02-aa81-41e8c0eb622d"),
+                            Id = new Guid("ef21aad7-bae6-4e05-b228-e78362e60c07"),
                             BkmCode = "TR.OHVPS.Business.InvalidContent",
-                            InternalCode = 330,
-                            Message = "There is no customer in the system with given kmlk data",
-                            MessageTr = "Kmlk alanında girilen bilgiler ile müşteri bulunamamıştır."
+                            InternalCode = 212,
+                            Message = "Event type source type relation is incorrect in BKM system event post process.",
+                            MessageTr = "BKM sistem olay dinleme mesajında yer alan olay tipi - kaynak tipi verileri hatalı."
                         });
                 });
 
@@ -826,9 +829,6 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CustomerNumber")
-                        .HasColumnType("text");
-
                     b.Property<string>("DiscreteGKDDefinitionType")
                         .HasColumnType("text");
 
@@ -855,9 +855,6 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("IdentityType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("InstitutionCustomerNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("InstitutionIdentityData")
