@@ -512,7 +512,7 @@ public class AccountService : IAccountService
         string srlmKrtr, string srlmYon)
     {
         string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
     /// <summary>
@@ -528,7 +528,7 @@ public class AccountService : IAccountService
         string srlmKrtr, string srlmYon)
     {
         string basePath = $"ohvps/hbh/s1.1/bakiye?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
     /// <summary>
@@ -538,36 +538,10 @@ public class AccountService : IAccountService
     {
         string basePath = GetTransactionBaseUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, srlmKrtr, srlmYon,
             minIslTtr, mksIslTtr, brcAlc);
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
-    /// <summary>
-    /// Set header x-total-count and link properties
-    /// </summary>
-    /// <param name="basePath"></param>
-    /// <param name="httpContext"></param>
-    /// <param name="totalCount"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
-    private static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
-    {
-        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
-        if (totalCount == 0)
-        {//No record
-            return;
-        }
-
-        int lastPageNumber = totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0);//Calculte lastpage number
-        // Construct the Link header value with conditional inclusion of "first" and "last" cases
-        string linkHeaderValue = string.Join(", ",
-            (syfNo != 1) ? $"</{basePath}&syfNo=1>;rel=\"first\"" : null,
-            (syfNo > 1) ? $"</{basePath}&syfNo={syfNo - 1}>;rel=\"prev\"" : null,
-            (syfNo < lastPageNumber) ? $"</{basePath}&syfNo={syfNo + 1}>;rel=\"next\"" : null,
-            (syfNo != lastPageNumber) ? $"</{basePath}&syfNo={lastPageNumber}>;rel=\"last\"" : null);
-
-        linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
-        httpContext.Response.Headers["Link"] = linkHeaderValue;
-    }
+   
 
     /// <summary>
     /// Generates transaction call base url according to query paramaters
