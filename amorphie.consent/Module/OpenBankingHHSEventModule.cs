@@ -164,22 +164,27 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                     ? olyZmnBtsTrh.Value
                     : queryTime;
             int skipCount = syfNo.HasValue && syfNo.Value > 1 ? ((syfNo.Value - 1) * 100) : 0;
-            var eventItems = (await context.OBEvents.Where(e =>
-                        e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Undeliverable
-                        && e.HHSCode == subscription.HHSCode
-                        && e.YOSCode == subscription.YOSCode
-                        && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                        && e.EventDate >= eventQueryStartDate
-                        && e.EventDate <= eventQueryEndDate)
-                    .ToListAsync())
-                .Where(e =>
-                    subscription.OBEventSubscriptionTypes.Any(st =>
-                        st.EventType == e.EventType && st.SourceType == e.SourceType)
-                )
+            
+            // Build the base query once
+            var query = context.OBEvents.Where(e =>
+                e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Undeliverable
+                && e.HHSCode == subscription.HHSCode
+                && e.YOSCode == subscription.YOSCode
+                && e.ModuleName == OpenBankingConstants.ModuleName.HHS
+                && e.EventDate >= eventQueryStartDate
+                && e.EventDate <= eventQueryEndDate
+                && subscription.OBEventSubscriptionTypes.Any(st =>
+                    st.EventType == e.EventType && st.SourceType == e.SourceType));
+            
+            // Get the total count
+            var totalCount = await query.CountAsync();
+            // Get the paginated results
+            var eventItems = await query
                 .OrderBy(e => e.EventDate)
                 .Skip(skipCount)
                 .Take(100)
-                .ToList();
+                .ToListAsync();
+           
 
             var olaylarDtoList = mapper.Map<List<OlaylarDto>>(eventItems);
 
@@ -192,6 +197,8 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
                 },
                 olaylar = olaylarDtoList
             };
+            //Set header total count and link properties
+            SetHeaderLinkForUndeliverableEvents(httpContext, totalCount, 100, syfNo ?? 1, eventQueryStartDate, eventQueryEndDate);
             return Results.Ok(responseObject);
         }
         catch (Exception ex)
@@ -790,5 +797,15 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             return result;
         }
         return result;
+    }
+    
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    private static void SetHeaderLinkForUndeliverableEvents(HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo,
+        DateTime olyZmnBslTrh, DateTime olyZmnBtsTrh)
+    {
+        string basePath = $"ohvps/oas/s1.1/iletilemeyen-olaylar?syfNo={syfNo}&olyZmnBslTrh={olyZmnBslTrh}&olyZmnBtsTrh={olyZmnBtsTrh}";
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 }

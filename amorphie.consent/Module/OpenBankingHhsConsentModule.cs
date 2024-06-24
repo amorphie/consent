@@ -2410,8 +2410,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             result.Message = "HesapBilgisiRizasi data in system is null";
             return result;
         }
-        if (hesapBilgisiRizasi.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
-            && hesapBilgisiRizasi.kmlk.kmlkVrs != userTCKN)
+        if (entity.UserTCKN == null ||
+            entity.UserTCKN.ToString() != userTCKN)
         {
             result.Result = false;
             result.Message = "Consent does not belong to this user.";
