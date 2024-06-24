@@ -332,6 +332,45 @@ public static class OBModuleHelper
         }
         return result;
     }
+    
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="basePath"></param>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    public static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
+    {
+        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
+        
+        // Calculate last page number
+        int lastPageNumber = totalCount > 0 ? (totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0)) : 1;
+
+        // Ensure first and last links are correctly set even when totalCount is 0
+        // Construct the Link header value with conditional inclusion of "first" and "last"
+        var links = new List<string>
+        {
+            $"</{basePath}&syfNo=1>; rel=\"first\"",
+            $"</{basePath}&syfNo={lastPageNumber}>; rel=\"last\""
+        };
+        // Include "prev" and "next" links based on current page number
+        if (totalCount > 0)
+        {
+            if (syfNo > 1)
+            {
+                links.Add($"</{basePath}&syfNo={syfNo - 1}>; rel=\"prev\"");
+            }
+
+            if (syfNo < lastPageNumber)
+            {
+                links.Add($"</{basePath}&syfNo={syfNo + 1}>; rel=\"next\"");
+            }
+        }
+        // Join the links with commas and set the header
+        httpContext.Response.Headers["Link"] = string.Join(", ", links);
+    }
 
 
 
