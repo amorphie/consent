@@ -382,7 +382,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
-            
+
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
             //Get authorized accounts
@@ -506,7 +506,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
-            
+
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
 
@@ -1266,13 +1266,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
             //Get user's active account consents from db and process them
-            var checkAccountConsentResult = await CheckAccountConsents(rizaIstegi,customerResponse, authorizationService,  context, httpContext);
+            var checkAccountConsentResult = await CheckAccountConsents(rizaIstegi, customerResponse, authorizationService, context, httpContext);
             if (!checkAccountConsentResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkAccountConsentResult.Data);
                 return Results.Content(checkAccountConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
-            
+
             var consentEntity = new Consent();
             context.Consents.Add(consentEntity);
             //Generate response object
@@ -1438,7 +1438,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            await CancelAccountConsent(context, tokenService, eventService,yosInfoService, entity!);
+            await CancelAccountConsent(context, tokenService, eventService, yosInfoService, entity!);
             return Results.Ok();
         }
         catch (Exception ex)
@@ -1490,7 +1490,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     }
 
     private static async Task CancelAccountConsent(ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, IYosInfoService yosInfoService,  Consent entity)
+        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity)
     {
         //Update consent rıza bilgileri properties
         var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
@@ -2679,7 +2679,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         ApiResult result = new();
         var getConsentsResult =
-            await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod,customerResponse.citizenshipNumber.ToNullableLong(), customerResponse.customerNumber, customerResponse.krmCustomerNumber);
+            await authorizationService.GetActiveAccountConsentsOfUser(rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, customerResponse.citizenshipNumber.ToNullableLong(), customerResponse.customerNumber, customerResponse.krmCustomerNumber);
         if (getConsentsResult.Result == false)
         {
             //Error getting consents
@@ -3019,8 +3019,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <returns>paymentconsentdetail object</returns>
     private static OBPaymentConsentDetail GeneratePaymentConsentDetailObject(
-        OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi, 
-        OdemeEmriRizaIstegiHHSDto rizaIstegi, 
+        OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi,
+        OdemeEmriRizaIstegiHHSDto rizaIstegi,
         RequestHeaderDto header,
         GetCustomerResponseDto? customerInfo)
     {
@@ -3206,31 +3206,18 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.NotFound("Consent Detail not found");
         }
 
-        string strAccountList = null;
+        var verificationUserJsonData = new VerificationUserJsonData();
 
-        if (consentDetail.AccountReferences != null && consentDetail.AccountReferences.Count > 0)
-        {
-            var sb = new StringBuilder();
-            sb.Append("[");
-
-            foreach (string accountRef in consentDetail.AccountReferences)
-            {
-                sb.Append("\"");
-                sb.Append(accountRef);
-                sb.Append("\"");
-                sb.Append(",");
-            }
-
-            strAccountList = sb.ToString().TrimEnd(',');
-
-            strAccountList = strAccountList + "]";
-        }
+        if (consentDetail.AccountReferences != null)
+            verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
+        else
+            verificationUserJsonData.account = [];
 
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
                                                  customerResponse.customerNumber,
                                                  customerResponse.krmCustomerNumber,
-                                                 strAccountList
+                                                 Newtonsoft.Json.JsonConvert.SerializeObject(verificationUserJsonData)
                                                 );
 
         if (result.Result == false)
