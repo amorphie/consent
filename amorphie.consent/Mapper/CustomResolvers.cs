@@ -26,7 +26,7 @@ public class CustomerNumberResolverPayment : IValueResolver<Consent, HHSPaymentC
 {
     public string Resolve(Consent source, HHSPaymentConsentDto destination, string? destMember, ResolutionContext context)
     {
-        return source.OBAccountConsentDetails.FirstOrDefault()?.CustomerNumber ?? string.Empty;
+        return source.OBPaymentConsentDetails.FirstOrDefault()?.CustomerNumber ?? string.Empty;
     }
 }
 
@@ -34,6 +34,6 @@ public class InstitutionCustomerNumberResolverPayment : IValueResolver<Consent, 
 {
     public string Resolve(Consent source, HHSPaymentConsentDto destination, string? destMember, ResolutionContext context)
     {
-        return source.OBAccountConsentDetails.FirstOrDefault()?.InstitutionCustomerNumber ?? string.Empty;
+        return source.OBPaymentConsentDetails.FirstOrDefault()?.InstitutionCustomerNumber ?? string.Empty;
     }
 }
