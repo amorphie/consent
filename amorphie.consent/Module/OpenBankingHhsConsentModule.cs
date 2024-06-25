@@ -723,6 +723,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             await ProcessPaymentConsentToCancelOrEnd(rizaNo, context, tokenService);
             //Get entity from db
             var entity = await context.Consents
+                .Include(consent => consent.OBPaymentConsentDetails)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == rizaNo
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
