@@ -3210,7 +3210,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (consentDetail.AccountReferences != null)
             verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
         else
-            verificationUserJsonData.account = [];
+            verificationUserJsonData.account = Array.Empty<string>();
 
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
