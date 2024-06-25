@@ -61,4 +61,8 @@ public interface IAccountClientService
         string consentId,
         string instantBalanceNotificationPermission,
         string sharePermission);
+    
+    [Headers("Content-Type: application/json")]
+    [Post("/accounts/customerscan")]
+    Task<string> CheckUniqueCustomer([Body] CustomerScanRequestDto customerScanRequestDto);
 }

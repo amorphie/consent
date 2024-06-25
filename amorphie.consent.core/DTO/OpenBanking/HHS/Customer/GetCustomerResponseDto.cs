@@ -9,3 +9,8 @@
     public string krmCitizenshipNumber { get; set; }
     public string krmTaxNo { get; set; }
 }
+
+public class VerificationUserJsonData
+{
+    public string[] account { get; set; }
+}
