@@ -2086,7 +2086,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         string objectName = OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi;
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName: objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, objectName: objectName, out var errorResponse))
         {
             result.Result = false;
             result.Data = errorResponse;

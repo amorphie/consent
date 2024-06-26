@@ -24,7 +24,9 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse,string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails, 
+        string objectName,
+        out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
