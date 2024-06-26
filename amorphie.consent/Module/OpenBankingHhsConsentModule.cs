@@ -18,8 +18,6 @@ using amorphie.consent.Service.Refit;
 using Dapr;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using Newtonsoft.Json.Linq;
-using System.Text;
 
 namespace amorphie.consent.Module;
 
@@ -1211,7 +1209,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IPushService pushService,
         [FromServices] ITagService tagService,
         [FromServices] IDeviceRecord deviceRecordService,
-        [FromServices] ICustomerService customerService
+        [FromServices] ICustomerService customerService,
+        [FromServices] IAccountService accountService
 )
     {
         try
@@ -1228,7 +1227,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
             var checkValidationResult =
-                await IsDataValidToAccountConsentPost(rizaIstegi, requestBody, configuration, yosInfoService, eventService, httpContext, context);
+                await IsDataValidToAccountConsentPost(rizaIstegi,
+                    requestBody, 
+                    configuration,
+                    yosInfoService, 
+                    eventService, 
+                    accountService,
+                    httpContext,
+                    context);
 
             if (!checkValidationResult.Result)
             {
@@ -1561,14 +1567,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IOBAuthorizationService authorizationService,
         [FromServices] IDeviceRecord deviceRecordService,
         HttpContext httpContext,
-        [FromServices] ICustomerService customerService)
+        [FromServices] ICustomerService customerService,
+        [FromServices] IAccountService accountService)
     {
         try
         {
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
             var dataValidationResult =
-                await IsDataValidToPaymentConsentPost(rizaIstegi, header, configuration, yosInfoService, eventService, httpContext, context);
+                await IsDataValidToPaymentConsentPost(rizaIstegi,
+                    header, 
+                    configuration,
+                    yosInfoService,
+                    eventService,
+                    accountService,
+                    httpContext, 
+                    context);
             if (!dataValidationResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
@@ -1695,6 +1709,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IOBEventService eventService,
         [FromServices] IOBAuthorizationService authorizationService,
         [FromServices] ITokenService tokenService,
+        [FromServices] IAccountService accountService,
         HttpContext httpContext)
     {
         try
@@ -1702,6 +1717,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             var header = OBModuleHelper.GetHeader(httpContext); //Get header
             //Check if post data is valid to process.
             var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi, header, context, yosInfoService, eventService: eventService, tokenService: tokenService,
+                accountService: accountService,
                 httpContext, configuration);
             if (!dataValidationResult.Result)
             {
@@ -1799,7 +1815,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.OBPaymentOrders.Add(orderEntity);
             await context.SaveChangesAsync();//Save order
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriDto);
-            return Results.Ok(odemeEmriDto.ToJsonString());
+            return Results.Content(odemeEmriDto.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -2054,11 +2070,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         IOBEventService eventService,
+        IAccountService accountService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
-        //TODO:Ozlem Check if user is customer
-
         ApiResult result = new();
         var header = OBModuleHelper.GetHeader(httpContext);
         //Check header fields
@@ -2071,7 +2086,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         string objectName = OBErrorCodeConstants.ObjectNames.HesapBilgisiRizasiIstegi;
         //Check message required basic properties/objects
-        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, out var errorResponse, objectName: objectName))
+        if (!OBConsentValidationHelper.PrepareAndCheckInvalidFormatProperties_HBRObject(rizaIstegi, httpContext, _errorCodeDetails, objectName: objectName, out var errorResponse))
         {
             result.Result = false;
             result.Data = errorResponse;
@@ -2089,7 +2104,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService, objectName: objectName);
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService,
+            yosInfoService: yosInfoService, 
+            accountService:accountService,
+            objectName: objectName);
         if (!result.Result)
         {
             return result;
@@ -2117,6 +2135,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         IConfiguration configuration,
         IYosInfoService yosInfoService,
         IOBEventService eventService,
+        IAccountService accountService,
         HttpContext httpContext,
         ConsentDbContext dbContext)
     {
@@ -2148,7 +2167,15 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.odmBsltm.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService, objectName: objectName);
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, 
+            rizaIstegi.odmBsltm.kmlk,
+            rizaIstegi.katilimciBlg.yosKod, 
+            httpContext,
+            _errorCodeDetails,
+            eventService,
+            yosInfoService: yosInfoService,
+            accountService:accountService,
+            objectName: objectName);
         if (!result.Result)
         {
             return result;
@@ -2209,6 +2236,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         IYosInfoService yosInfoService,
         IOBEventService eventService,
         ITokenService tokenService,
+        IAccountService accountService,
         HttpContext httpContext,
         IConfiguration configuration)
     {
@@ -2249,7 +2277,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk, odemeEmriIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService, objectName: objectName);
+        result = await OBConsentValidationHelper.IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk, odemeEmriIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService, 
+            accountService: accountService, 
+            objectName: objectName);
         if (!result.Result)
         {
             return result;
@@ -3211,7 +3241,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (consentDetail.AccountReferences != null)
             verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
         else
-            verificationUserJsonData.account = [];
+            verificationUserJsonData.account = Array.Empty<string>();
 
         var result = await openBankingIntegrationService.VerificationUser
                                                 (

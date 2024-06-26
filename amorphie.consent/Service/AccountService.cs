@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
@@ -468,6 +469,36 @@ public class AccountService : IAccountService
 
         return result;
     }
+
+    public async Task<ApiResult> GetUniqueCustomer(AyrikGkdDto ayrikGkd,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+        try
+        {
+            CustomerScanRequestDto requestObj = new CustomerScanRequestDto()
+            {
+                ohkTanimDeger = ayrikGkd.ohkTanimDeger,
+                ohkTanimTip = ayrikGkd.ohkTanimTip
+            };
+            //Send account consent details to account service
+            var serviceResponse = await _accountClientService.GetUniqueCustomer(requestObj);
+            if (serviceResponse.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                return result;
+            }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+    
 
 
     private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
