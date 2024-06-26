@@ -1219,11 +1219,7 @@ public static class SeedExtension
             Message = "OlayAbonelikNo not found.",
             MessageTr = "OlayAbonelikNo bulunamadı."
         });
-    }
-
-    public static void SeedOBErrorCodeDetailsEvent(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+          modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlaylarLength.GetHashCode(),
@@ -1240,12 +1236,6 @@ public static class SeedExtension
             Message = "Event type source type relation is incorrect in BKM system event post process.",
             MessageTr = "BKM sistem olay dinleme mesajında yer alan olay tipi - kaynak tipi verileri hatalı."
         });
-        
-    }
-
-    
-    public static void SeedOBErrorCodeDetailsInstitution(this ModelBuilder modelBuilder)
-    {
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
@@ -1261,6 +1251,28 @@ public static class SeedExtension
             BkmCode = "TR.OHVPS.Business.InvalidContent",
             Message = "There is no customer in the system with given kmlk data",
             MessageTr = "Kmlk alanında girilen bilgiler ile müşteri bulunamamıştır."
+        });
+    }
+
+    
+    public static void SeedOBErrorCodeDetailsCheckCustomer(this ModelBuilder modelBuilder)
+    {
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckUniqueCustomerService.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By checking is unique customer by iban/gsm from customer service, service error occured.",
+            MessageTr = "GSM/IBAN ile tekil müşteri bilgilerinin sorgulandığı servis sürecinde hata oluştu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentGsmIbanUniqueCustomerNotFount.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidCustomerInfo",
+            Message = "Unique customer information can not be found by given gsm/iban",
+            MessageTr = "Verilmiş olan ohkTanimTip = GSM-IBAN ile sistemde kayıtlı tekil bir kullanıcıya erişilemedi."
         });
     }
     
