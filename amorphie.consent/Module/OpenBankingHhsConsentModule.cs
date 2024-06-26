@@ -1815,7 +1815,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             context.OBPaymentOrders.Add(orderEntity);
             await context.SaveChangesAsync();//Save order
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriDto);
-            return Results.Ok(odemeEmriDto.ToJsonString());
+            return Results.Content(odemeEmriDto.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
