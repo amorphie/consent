@@ -64,5 +64,5 @@ public interface IAccountClientService
     
     [Headers("Content-Type: application/json")]
     [Post("/accounts/customerscan")]
-    Task<string> CheckUniqueCustomer([Body] CustomerScanRequestDto customerScanRequestDto);
+    Task<CustomerScanResponseDto> GetUniqueCustomer([Body] CustomerScanRequestDto customerScanRequestDto);
 }

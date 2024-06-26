@@ -24,7 +24,9 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse,string objectName)
+        List<OBErrorCodeDetail> errorCodeDetails, 
+        string objectName,
+        out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -1276,6 +1278,7 @@ public static class OBConsentValidationHelper
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
         IYosInfoService yosInfoService,
+        IAccountService accountService,
         string objectName)
     {
         ApiResult result = new();
@@ -1343,7 +1346,9 @@ public static class OBConsentValidationHelper
 
             result = await ValidateAyrikGkd(gkd.ayrikGkd, kimlik, yosCode, errorCodeDetails, errorResponse,
                 eventService,
-                context, objectName: objectName); //validate ayrik gkd data
+                accountService: accountService,
+                context, 
+                objectName: objectName); //validate ayrik gkd data
             if (!result.Result)
             {
                 //Not valid
@@ -1360,6 +1365,7 @@ public static class OBConsentValidationHelper
         List<OBErrorCodeDetail> errorCodeDetails,
         IOBEventService eventService,
         IYosInfoService yosInfoService,
+        IAccountService accountService,
         string objectName)
     {
         ApiResult result = new();
@@ -1379,7 +1385,10 @@ public static class OBConsentValidationHelper
 
         return await IsGkdValid(
             new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr },
-            kimlik, yosCode, context, errorCodeDetails, eventService, yosInfoService, objectName);
+            kimlik, yosCode, context, errorCodeDetails, eventService, 
+            yosInfoService,
+            accountService,
+            objectName);
     }
 
     /// <summary>
@@ -1399,7 +1408,11 @@ public static class OBConsentValidationHelper
     /// </summary>
     private static async Task<ApiResult> ValidateAyrikGkd(AyrikGkdDto ayrikGkd, KimlikDto kimlik, string yosCode,
         List<OBErrorCodeDetail> errorCodeDetails,
-        OBCustomErrorResponseDto errorResponse, IOBEventService eventService, HttpContext context, string objectName)
+        OBCustomErrorResponseDto errorResponse,
+        IOBEventService eventService,
+        IAccountService accountService,
+        HttpContext context,
+        string objectName)
     {
         ApiResult result = new()
         {
@@ -1471,15 +1484,18 @@ public static class OBConsentValidationHelper
                     OBErrorCodeConstants.FieldNames.GkdAyrikGkdOhkTanimTip,
                     OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimTipGsmIban, objectName: objectName);
             }
-            //TODO:Özlem 
-            //Kullanıcılar taranıp tekil bir kullanıcıya erişiliyor mu kontrol edilmeli.
+            //Tek seferlik ödeme işlemlerinde "ohkTanimTip" = "GSM"/"IBAN" olarak gönderilmiş ise, HHS sisteminde bu GSM/IBAN ile eşleşen müşterileri taramalıdır. 
+            result = await CheckIsUniqueCustomerByIbanGsm(accountService, ayrikGkd, context, errorCodeDetails);
+            if (!result.Result)
+            {
+                return result;
+            }
         }
 
         if (errorResponse.FieldErrors.Any())
         {
             return result;
         }
-
 
         //Check GKDTanımDeger values
         result = ValidateOhkTanimDeger(ayrikGkd, errorCodeDetails, errorResponse, objectName: objectName);
@@ -3113,6 +3129,35 @@ public static class OBConsentValidationHelper
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentCustomerNotFound);
+            return result;
+        }
+        result.Data = customerResponse;
+        return result;
+    }
+    
+    public static async Task<ApiResult> CheckIsUniqueCustomerByIbanGsm(IAccountService accountService,
+        AyrikGkdDto ayrikGkd,
+        HttpContext httpContext,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+   
+        var checkCustomerResult = await accountService.GetUniqueCustomer(ayrikGkd, errorCodeDetails );//Get customer information
+        if (!checkCustomerResult.Result
+            || checkCustomerResult.Data is null)//Error in service
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckUniqueCustomerService);
+            return result;
+        }
+
+        CustomerScanResponseDto customerResponse = (CustomerScanResponseDto)checkCustomerResult.Data;
+        if (!customerResponse.isUniqueUserFound)
+        {//Unique customer can not be found in system
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentGsmIbanUniqueCustomerNotFount);
             return result;
         }
         result.Data = customerResponse;

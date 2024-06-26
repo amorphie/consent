@@ -180,7 +180,7 @@ public static class OBErrorCodeConstants
         InternalServerErrorBodyEmptyValidateJwt = 153,
         NotFoundAbonelikNo = 154,
         InternalServerErrorIsCustomerService = 155,
-        
+        InternalServerErrorCheckUniqueCustomerService = 156,
         
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
@@ -202,6 +202,7 @@ public static class OBErrorCodeConstants
         InvalidContentOlayAbonelikNoNotMatch = 210,
         InvalidContentOlaylarLength = 211,
         InvalidContentBkmSystemEventTypeSourceTypeRelation = 212,
+        InvalidContentGsmIbanUniqueCustomerNotFount = 213,
         MissingSignature = 300,
         InvalidSignatureHeaderAlgorithmWrong = 301,
         InvalidSignatureHeaderExpireDatePassed = 302,
@@ -233,6 +234,5 @@ public static class OBErrorCodeConstants
         InvalidContentKolasNotValidInOneTimePayment = 328,
         InvalidContentOneTimePaymentPSUSessionId = 329,
         InvalidContentCustomerNotFound = 330
-
     }
 }
