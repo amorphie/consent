@@ -24,7 +24,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_HBRObject(HesapBilgisiRizaIstegiHHSDto rizaIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, 
+        List<OBErrorCodeDetail> errorCodeDetails,
         string objectName,
         out OBCustomErrorResponseDto errorResponse)
     {
@@ -171,13 +171,13 @@ public static class OBConsentValidationHelper
         // Check each property and add errors if necessary
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi,
             OBErrorCodeConstants.ObjectNames.OlayAbonelikIstegi,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.katilimciBlg,
             OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelikIstegi.abonelikTipleri,
             OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
@@ -189,7 +189,7 @@ public static class OBConsentValidationHelper
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_OAObject(OlayAbonelikIstegiUpdateDto olayAbonelik,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails,string objectName, out OBCustomErrorResponseDto errorResponse)
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName, out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -203,25 +203,25 @@ public static class OBConsentValidationHelper
         // Check each property and add errors if necessary
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik,
             OBErrorCodeConstants.ObjectNames.OlayAbonelikPut,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik.katilimciBlg,
             OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayAbonelik.abonelikTipleri,
             OBErrorCodeConstants.ObjectNames.AbonelikTipleri,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
-    
+
     /// <summary>
     /// Checks sistem-olay-dinleme post data null objects
     /// </summary>
     /// <returns></returns>
     public static bool PrepareAndCheckInvalidFormatProperties_SOBObject(OlayIstegiDto olayIstegi,
         HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails,string objectName, out OBCustomErrorResponseDto errorResponse)
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName, out OBCustomErrorResponseDto errorResponse)
     {
         //Get 400 error response
         errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
@@ -235,18 +235,18 @@ public static class OBConsentValidationHelper
         // Check each property and add errors if necessary
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi,
             OBErrorCodeConstants.ObjectNames.SistemOlayDinleme,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi.katilimciBlg,
             OBErrorCodeConstants.ObjectNames.KatilimciBlg,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
         OBErrorResponseHelper.CheckInvalidFormatProperty_Object(olayIstegi.olaylar,
             OBErrorCodeConstants.ObjectNames.Olaylar,
-            errorCodeDetail, errorResponse,objectName);
+            errorCodeDetail, errorResponse, objectName);
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
     }
-    
+
     /// <summary>
     /// Cheks kmlk object and data
     /// </summary>
@@ -1347,7 +1347,7 @@ public static class OBConsentValidationHelper
             result = await ValidateAyrikGkd(gkd.ayrikGkd, kimlik, yosCode, errorCodeDetails, errorResponse,
                 eventService,
                 accountService: accountService,
-                context, 
+                context,
                 objectName: objectName); //validate ayrik gkd data
             if (!result.Result)
             {
@@ -1385,7 +1385,7 @@ public static class OBConsentValidationHelper
 
         return await IsGkdValid(
             new GkdRequestDto() { ayrikGkd = gkd.ayrikGkd, yetYntm = gkd.yetYntm, yonAdr = gkd.yonAdr },
-            kimlik, yosCode, context, errorCodeDetails, eventService, 
+            kimlik, yosCode, context, errorCodeDetails, eventService,
             yosInfoService,
             accountService,
             objectName);
@@ -2027,11 +2027,11 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldData, objectName: objectName);
         }
     }
-    
-     public static ApiResult CheckOlayAbonelikNo(string olayAbonelikNoParameter,
-        string olayAbonelikNoInObject,
-        HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+
+    public static ApiResult CheckOlayAbonelikNo(string olayAbonelikNoParameter,
+       string olayAbonelikNoInObject,
+       HttpContext context,
+       List<OBErrorCodeDetail> errorCodeDetails, string objectName)
     {
         ApiResult result = new();
 
@@ -2057,72 +2057,72 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlayAbonelikNoNotMatch);
             return result;
         }
-        
+
         return result;
     }
-     
-     public static ApiResult CheckOlaylarForSystemEventPost(List<OlaylarDto> olaylar,
-         HttpContext context,
-         List<OBErrorCodeDetail> errorCodeDetails, string objectName)
-     {
-         ApiResult result = new();
 
-         //Get 400 error response
-         var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
-         errorResponse.FieldErrors = new List<FieldError>();
-         result.Data = errorResponse;
-         
-         if (olaylar.Any() is false)
-         {
-             result.Result = false;
-             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
-                 OBErrorCodeConstants.ObjectNames.Olaylar, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
-                 objectName: objectName);
-             return result;
-         }
-         if (olaylar.Count != 1)
-         {
-             result.Result = false;
-             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlaylarLength);
-             return result;
-         }
-        
-         return result;
-     }
-     
-     public static async Task<ApiResult> CheckEventTypeSourceTypeRelationForSystemEvent(HttpContext context,
-         ConsentDbContext dbContext,
-         OlaylarDto olaylar,
-         List<OBErrorCodeDetail> errorCodeDetails,
-         string objectName)
-     {
-         ApiResult result = new();
+    public static ApiResult CheckOlaylarForSystemEventPost(List<OlaylarDto> olaylar,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, string objectName)
+    {
+        ApiResult result = new();
 
-         //Get 400 error response
-         var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-             OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
-         errorResponse.FieldErrors = new List<FieldError>();
-         result.Data = errorResponse;
-         var eventTypeSourceTypeRelations = await dbContext.OBEventTypeSourceTypeRelations
-             .AsNoTracking()
-             .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
-                         && r.SourceType == olaylar.kaynakTipi
-                         && r.EventType == olaylar.olayTipi)
-             .ToListAsync();
-         //Event Type source type check.
-         if (!(eventTypeSourceTypeRelations?.Any() ?? false))
-         {
-             //no relation in db
-             result.Result = false;
-             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                 OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBkmSystemEventTypeSourceTypeRelation);
-             return result;
-         }
-        
-         return result;
-     }
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+        result.Data = errorResponse;
+
+        if (olaylar.Any() is false)
+        {
+            result.Result = false;
+            AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
+                OBErrorCodeConstants.ObjectNames.Olaylar, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull,
+                objectName: objectName);
+            return result;
+        }
+        if (olaylar.Count != 1)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentOlaylarLength);
+            return result;
+        }
+
+        return result;
+    }
+
+    public static async Task<ApiResult> CheckEventTypeSourceTypeRelationForSystemEvent(HttpContext context,
+        ConsentDbContext dbContext,
+        OlaylarDto olaylar,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
+    {
+        ApiResult result = new();
+
+        //Get 400 error response
+        var errorResponse = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+            OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
+        errorResponse.FieldErrors = new List<FieldError>();
+        result.Data = errorResponse;
+        var eventTypeSourceTypeRelations = await dbContext.OBEventTypeSourceTypeRelations
+            .AsNoTracking()
+            .Where(r => r.EventNotificationReporter == OpenBankingConstants.EventNotificationReporter.BKM
+                        && r.SourceType == olaylar.kaynakTipi
+                        && r.EventType == olaylar.olayTipi)
+            .ToListAsync();
+        //Event Type source type check.
+        if (!(eventTypeSourceTypeRelations?.Any() ?? false))
+        {
+            //no relation in db
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBkmSystemEventTypeSourceTypeRelation);
+            return result;
+        }
+
+        return result;
+    }
 
     public static async Task<ApiResult> CheckIfYosHasDesiredRole(HttpContext context,
         IYosInfoService yosInfoService,
@@ -2169,7 +2169,7 @@ public static class OBConsentValidationHelper
                 return result;
             }
         }
-      
+
 
         return result;
     }
@@ -3103,14 +3103,14 @@ public static class OBConsentValidationHelper
 
         return amount;
     }
-    
+
     public static async Task<ApiResult> CheckCustomerInformation(ICustomerService customerService,
         KimlikDto kmlk,
         HttpContext httpContext,
         List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
-   
+
         var checkCustomerResult = await customerService.GetCustomerInformations(kmlk);//Get customer information
         if (!checkCustomerResult.Result
             || checkCustomerResult.Data is null)//Error in service
@@ -3123,7 +3123,7 @@ public static class OBConsentValidationHelper
 
         GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data;
         if (!customerResponse.isCustomer
-            || (kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal 
+            || (kmlk.ohkTur == OpenBankingConstants.OHKTur.Kurumsal
                 && !customerResponse.krmIsCustomer))//No customer in system with given consent data
         {
             result.Result = false;
@@ -3134,15 +3134,15 @@ public static class OBConsentValidationHelper
         result.Data = customerResponse;
         return result;
     }
-    
+
     public static async Task<ApiResult> CheckIsUniqueCustomerByIbanGsm(IAccountService accountService,
         AyrikGkdDto ayrikGkd,
         HttpContext httpContext,
         List<OBErrorCodeDetail> errorCodeDetails)
     {
         ApiResult result = new();
-   
-        var checkCustomerResult = await accountService.GetUniqueCustomer(ayrikGkd, errorCodeDetails );//Get customer information
+
+        var checkCustomerResult = await accountService.GetUniqueCustomer(ayrikGkd, errorCodeDetails);//Get customer information
         if (!checkCustomerResult.Result
             || checkCustomerResult.Data is null)//Error in service
         {
@@ -3163,4 +3163,78 @@ public static class OBConsentValidationHelper
         result.Data = customerResponse;
         return result;
     }
+
+    public static async Task<ApiResult> CheckInstitutionConsent
+   (
+       string consentId,
+       ConsentDbContext context,
+       ITokenService tokenService,
+       IOBEventService eventService,
+       IYosInfoService yosInfoService,
+       string cancelDetailCode,
+       HttpContext httpContext,
+       List<OBErrorCodeDetail> errorCodeDetails
+   )
+    {
+        ApiResult result = new();
+        Guid guidConsentId = new Guid(consentId);
+
+        try
+        {
+            var consent = await context.Consents.FirstOrDefaultAsync(t => t.Id == guidConsentId);
+
+            if (consent == null)
+            {
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatch);
+
+                return result;
+            }
+
+            if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+            {
+                var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
+
+                if (accountConsent.kmlk.ohkTur == OpenBankingConstants.OHKTur.Bireysel)
+                {
+                    result.Result = true;
+                    return result;
+                }
+            }
+            else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+            {
+                var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
+
+                if (paymentConsent.odmBsltm.kmlk.ohkTur == OpenBankingConstants.OHKTur.Bireysel)
+                {
+                    result.Result = true;
+                    return result;
+                }
+            }
+
+            var checkResult = await OBModuleHelper.CancelInstitutionConsentUnAuthorized
+                                (
+                                  context,
+                                  tokenService,
+                                  eventService,
+                                  yosInfoService,
+                                  consent,
+                                  cancelDetailCode
+                                );
+
+            return checkResult;
+
+        }
+        catch (Exception ex)
+        {
+            result.Result = false;
+            result.Data = ex.Message;
+
+            return result;
+        }
+
+        return result;
+    }
+
 }
