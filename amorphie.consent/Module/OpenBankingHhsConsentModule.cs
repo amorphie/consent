@@ -1136,7 +1136,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-           var cancelResult = await  CancelConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
+           var cancelResult = await  OBModuleHelper.CancelConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
                 cancelData.CancelDetailCode);
             if(!cancelResult.Result)
             {
@@ -1407,7 +1407,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            await CancelAccountConsent(context, 
+            await OBModuleHelper.CancelAccountConsent(context, 
                 tokenService, 
                 eventService,
                 yosInfoService,
@@ -1454,7 +1454,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             //Update consent rıza bilgileri properties
-            await CancelAccountConsent(context,
+            await OBModuleHelper.CancelAccountConsent(context,
                 tokenService,
                 eventService, 
                 yosInfoService, 
@@ -1468,133 +1468,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
     }
     
-    
-    public static async Task<ApiResult> CancelInstitutionConsentUnAuthorized(ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode)
 
-    {
-        ApiResult result = new();
-        //State list can be cancelled from login
-        var canBeCancelledStates = new List<string>()
-        {
-            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
-            OpenBankingConstants.RizaDurumu.Yetkilendirildi,
-            OpenBankingConstants.RizaDurumu.YetkiKullanildi
-        };
-       
-        if (!canBeCancelledStates.Contains(entity.State))
-        {
-            result.Result = false;
-            result.Message = "Consent state not valid to be cancelled.";
-            return result;
-        }
-
-        //TODO:EKip iptal detay kodu uygun bir kod ile set edilmeli. OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_OHKHHSKontrolleriniAsamadi
-       return await CancelConsent(context, tokenService, eventService, yosInfoService, entity,cancelDetailCode);
-    }
-
-     private static async Task<ApiResult> CancelConsent(ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode )
-    {
-        ApiResult result = new();
-        if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-        {
-            //Account consent
-            //Update consent rıza bilgileri properties
-            await  CancelAccountConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
-                cancelDetailCode);
-        }
-        else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
-        {
-            //Payment consent
-            //Update consent rıza bilgileri properties
-            await  CancelPaymentConsent(context, tokenService, entity,
-                cancelDetailCode);
-        }
-        else
-        {
-            //Not related type
-            result.Result = false;
-            result.Message = "Consent type not valid";
-        }
-        return result;
-    }
-
-    private static async Task CancelAccountConsent(ConsentDbContext context, ITokenService tokenService,
-        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode )
-    {
-       var currentState = entity.State;//current consent state
-        //Update consent rıza bilgileri properties
-        var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
-        additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
-        additionalData.rzBlg.rizaIptDtyKod = cancelDetailCode;
-        additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
-        entity.AdditionalData = JsonSerializer.Serialize(additionalData);
-        entity.ModifiedAt = DateTime.UtcNow;
-        entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
-        entity.StateModifiedAt = DateTime.UtcNow;
-        entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
-        //Update consent detail to send consent information to account service.
-        var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
-        if (consentDetail is not null)
-        {
-            consentDetail.SendToServiceTryCount = 0;
-            consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
-            context.OBAccountConsentDetails.Update(consentDetail);
-        }
-
-        context.Consents.Update(entity);
-        await context.SaveChangesAsync();
-
-        if (currentState == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
-        {
-            //Revoke token
-            await tokenService.RevokeConsentToken(entity.Id);
-        }
-        
-        //If YOS has subscription, Do event process
-        ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(entity.Variant!,
-            OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi);
-        if (yosHasSubscription.Result
-            && yosHasSubscription.Data != null
-            && (bool)yosHasSubscription.Data)
-        {
-
-            //Send event to yos
-            await eventService.DoEventProcess(entity.Id.ToString(),
-                additionalData.katilimciBlg,
-                eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
-                sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
-                sourceNumber: entity.Id.ToString());
-        }
-    }
-
-    
-      private static async Task CancelPaymentConsent(ConsentDbContext context, ITokenService tokenService,
-          Consent entity, string cancelDetailCode )
-    {
-       var currentState = entity.State;//current consent state
-        //Update consent rıza bilgileri properties
-        var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
-        additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
-        additionalData.rzBlg.rizaIptDtyKod = cancelDetailCode;
-        additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
-        entity.AdditionalData = JsonSerializer.Serialize(additionalData);
-        entity.ModifiedAt = DateTime.UtcNow;
-        entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
-        entity.StateModifiedAt = DateTime.UtcNow;
-        entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
-        context.Consents.Update(entity);
-        await context.SaveChangesAsync();
-
-        if (currentState == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
-        {
-            //Revoke token
-            await tokenService.RevokeConsentToken(entity.Id);
-        }
-    }
-
-  
     /// <summary>
     /// Does payment information consent post process.
     /// odeme-emri-rizasi post method.
