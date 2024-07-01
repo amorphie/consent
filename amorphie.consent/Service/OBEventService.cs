@@ -271,19 +271,25 @@ public class OBEventService : IOBEventService
             return result;
         }
 
-        //Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
-        var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType
-                                                  && e.SourceType == sourceType
-                                                  && e.SourceNumber == sourceNumber
-                                                  && e.YOSCode == katilimciBilgisi.yosKod
-                                                  && e.ModuleName == OpenBankingConstants.ModuleName.HHS
-                                                  && e.DeliveryStatus != OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully);
-        if (anyEventInDb)
+        //Ödeme durumu ve bakiye değişiminde, yeniden olay kaydı oluşturulmalı
+        if (sourceType != OpenBankingConstants.KaynakTip.Bakiye
+            && sourceType != OpenBankingConstants.KaynakTip.OdemeEmri)
         {
-            result.Result = false;
-            result.Message = "Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir.";
-            return result;
+            //Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir. Bunu incele
+            var anyEventInDb = await context.OBEvents.AnyAsync(e => e.EventType == eventType
+                                                                    && e.SourceType == sourceType
+                                                                    && e.SourceNumber == sourceNumber
+                                                                    && e.YOSCode == katilimciBilgisi.yosKod
+                                                                    && e.ModuleName == OpenBankingConstants.ModuleName.HHS
+                                                                    && e.DeliveryStatus != OpenBankingConstants.RecordDeliveryStatus.CompletedSuccessfully);
+            if (anyEventInDb)
+            {
+                result.Result = false;
+                result.Message = "Aynı kaynak numarası ile aynı olay-kaynak tipinde, 1 YÖS’e ait, 1 adet iletilemeyen olay kaydı olabilir.";
+                return result;
+            }
         }
+        
         //Create event entity
         OBEvent eventEntity = new()
         {
