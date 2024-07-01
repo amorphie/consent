@@ -22,9 +22,8 @@ public class Data
     public int ACCOUNT_BRANCH_CODE { get; set; }
     public int ACCOUNT_NUMBER { get; set; }
     public int ACCOUNT_SUFFIX { get; set; }
-    public string? LAST_UPDATE_DATE { get; set; }
     public string? INSTANT_BALANCE_NOTIFICATION_PERMISSION { get; set; }
     public string? OPEN_BANKING_SHARE_PERMISSION { get; set; }
     public string? OPEN_BANKING_CONSENT_NUMBER { get; set; }
-    public string? HESAP_REF { get; set; }
+    public string? hspRef { get; set; }
 }

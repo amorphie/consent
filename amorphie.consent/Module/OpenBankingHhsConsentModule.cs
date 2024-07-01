@@ -1999,7 +1999,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             BalanceChangedKafkaRecordDto? kafkaRecord = await httpContext.Deserialize<BalanceChangedKafkaRecordDto>();
             if (kafkaRecord is { message.data: not null }
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.OPEN_BANKING_CONSENT_NUMBER)
-                && !string.IsNullOrEmpty(kafkaRecord.message.data.HESAP_REF)
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.hspRef)
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.INSTANT_BALANCE_NOTIFICATION_PERMISSION)
                 && kafkaRecord.message.data.INSTANT_BALANCE_NOTIFICATION_PERMISSION == OpenBankingConstants.BalanceChangedServiceYesNo.Yes
                 && !string.IsNullOrEmpty(kafkaRecord.message.data.OPEN_BANKING_SHARE_PERMISSION)
@@ -2008,7 +2008,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Get active account consent
                 var getConsentResult = await authorizationService.GetAuthUsedAccountConsent(
                     kafkaRecord.message.data.OPEN_BANKING_CONSENT_NUMBER,
-                    kafkaRecord.message.data.HESAP_REF,
+                    kafkaRecord.message.data.hspRef,
                     new List<string>() { OpenBankingConstants.IzinTur.AnlikBakiyeBildirimi });
 
                 if (!getConsentResult.Result)
@@ -2027,7 +2027,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 {//Do event process
                     await obEventService.DoEventProcess(consent.Id.ToString(), new KatilimciBilgisiDto() { hhsKod = consentDetail.HhsCode, yosKod = consentDetail.YosCode },
                         OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.Bakiye,
-                        kafkaRecord.message.data.HESAP_REF);
+                        kafkaRecord.message.data.hspRef);
                 }
 
             }
