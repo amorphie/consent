@@ -205,6 +205,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -219,6 +223,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.Content(headerValidation.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                                (
+                                                    rizaNo.ToString(),
+                                                    context,
+                                                    tokenService,
+                                                    oBEventService,
+                                                    yosInfoService,
+                                                    openBankingIntegrationService,
+                                                    customerService,
+                                                    httpContext,
+                                                    _errorCodeDetails
+                                                );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
@@ -305,6 +325,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -319,6 +343,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                              (
+                                                  header.ConsentId,
+                                                  context,
+                                                  tokenService,
+                                                  oBEventService,
+                                                  yosInfoService,
+                                                  openBankingIntegrationService,
+                                                  customerService,
+                                                  httpContext,
+                                                  _errorCodeDetails
+                                              );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
 
             ApiResult accountApiResult =
                 await accountService.GetAuthorizedAccountByHspRef(httpContext, header.UserReference!, header.ConsentId!, yosCode: header.XTPPCode,
@@ -367,6 +407,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -381,6 +425,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                              (
+                                                  header.ConsentId,
+                                                  context,
+                                                  tokenService,
+                                                  oBEventService,
+                                                  yosInfoService,
+                                                  openBankingIntegrationService,
+                                                  customerService,
+                                                  httpContext,
+                                                  _errorCodeDetails
+                                              );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -427,6 +487,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -441,6 +505,23 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                                   (
+                                                       header.ConsentId,
+                                                       context,
+                                                       tokenService,
+                                                       oBEventService,
+                                                       yosInfoService,
+                                                       openBankingIntegrationService,
+                                                       customerService,
+                                                       httpContext,
+                                                       _errorCodeDetails
+                                                   );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
+
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
             ApiResult accountApiResult =
@@ -491,6 +572,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -505,6 +590,22 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                              (
+                                                  header.ConsentId,
+                                                  context,
+                                                  tokenService,
+                                                  oBEventService,
+                                                  yosInfoService,
+                                                  openBankingIntegrationService,
+                                                  customerService,
+                                                  httpContext,
+                                                  _errorCodeDetails
+                                              );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -551,6 +652,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] IAccountService accountService,
         [FromServices] IConfiguration configuration,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ITokenService tokenService,
+        [FromServices] IOBEventService oBEventService,
+        [FromServices] ICustomerService customerService,
+        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
         HttpContext httpContext)
     {
         try
@@ -565,6 +670,23 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 return Results.BadRequest(headerValidation.Data);
             }
+
+            var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
+                                              (
+                                                  header.ConsentId!,
+                                                  context,
+                                                  tokenService,
+                                                  oBEventService,
+                                                  yosInfoService,
+                                                  openBankingIntegrationService,
+                                                  customerService,
+                                                  httpContext,
+                                                  _errorCodeDetails
+                                              );
+
+            if (checkInstitutionConsentResult.IsConsentCancelled)
+                return Results.Problem("Consent is cancelled");
+
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
 
@@ -1136,9 +1258,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 return Results.BadRequest(isDataValidResult.Message);
             }
 
-           var cancelResult = await  OBModuleHelper.CancelConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
-                cancelData.CancelDetailCode);
-            if(!cancelResult.Result)
+            var cancelResult = await OBModuleHelper.CancelConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
+                 cancelData.CancelDetailCode);
+            if (!cancelResult.Result)
             {
                 //Not related type
                 return Results.BadRequest(cancelResult.Message);
@@ -1191,10 +1313,10 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check if post data is valid to process.
             var checkValidationResult =
                 await IsDataValidToAccountConsentPost(rizaIstegi,
-                    requestBody, 
+                    requestBody,
                     configuration,
-                    yosInfoService, 
-                    eventService, 
+                    yosInfoService,
+                    eventService,
                     accountService,
                     httpContext,
                     context);
@@ -1407,8 +1529,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Data not valid
                 return Results.BadRequest(dataValidationResult.Message);
             }
-            await OBModuleHelper.CancelAccountConsent(context, 
-                tokenService, 
+            await OBModuleHelper.CancelAccountConsent(context,
+                tokenService,
                 eventService,
                 yosInfoService,
                 entity!,
@@ -1456,8 +1578,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Update consent rıza bilgileri properties
             await OBModuleHelper.CancelAccountConsent(context,
                 tokenService,
-                eventService, 
-                yosInfoService, 
+                eventService,
+                yosInfoService,
                 entity!,
                 OpenBankingConstants.RizaIptalDetayKodu.KullaniciIstegiIleHHSUzerindenIptal);
             return Results.Ok();
@@ -1467,7 +1589,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-    
+
 
     /// <summary>
     /// Does payment information consent post process.
@@ -1503,12 +1625,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check if post data is valid to process.
             var dataValidationResult =
                 await IsDataValidToPaymentConsentPost(rizaIstegi,
-                    header, 
+                    header,
                     configuration,
                     yosInfoService,
                     eventService,
                     accountService,
-                    httpContext, 
+                    httpContext,
                     context);
             if (!dataValidationResult.Result)
             {
@@ -2032,8 +2154,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         //Check GKD
         result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService,
-            yosInfoService: yosInfoService, 
-            accountService:accountService,
+            yosInfoService: yosInfoService,
+            accountService: accountService,
             objectName: objectName);
         if (!result.Result)
         {
@@ -2094,14 +2216,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, 
+        result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd,
             rizaIstegi.odmBsltm.kmlk,
-            rizaIstegi.katilimciBlg.yosKod, 
+            rizaIstegi.katilimciBlg.yosKod,
             httpContext,
             _errorCodeDetails,
             eventService,
             yosInfoService: yosInfoService,
-            accountService:accountService,
+            accountService: accountService,
             objectName: objectName);
         if (!result.Result)
         {
@@ -2204,8 +2326,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
 
         //Check GKD
-        result = await OBConsentValidationHelper.IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk, odemeEmriIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService, 
-            accountService: accountService, 
+        result = await OBConsentValidationHelper.IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk, odemeEmriIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService,
+            accountService: accountService,
             objectName: objectName);
         if (!result.Result)
         {
@@ -2913,7 +3035,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
             OpenBankingConstants.RizaDurumu.Yetkilendirildi
         };
-       
+
         if (!canBeCancelledStates.Contains(entity.State))
         {
             result.Result = false;
@@ -3134,6 +3256,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
        [FromServices] ICustomerService customerService
        )
     {
+
+        var result1 = await openBankingIntegrationService.VerificationUser
+                                              (
+                                              "20070950",
+                                               "172534",
+                                               "{\"account\":[\"9255-20070950-353\", \"9255-20070950-354\",\"9255-20070950-364\"]}"
+                                              );
+
+
+
         var consent = await context.Consents.FirstOrDefaultAsync(c => c.Id == consentId);
 
         if (consent == null)

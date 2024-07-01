@@ -180,6 +180,8 @@ public partial class OpenBankingGenericResponse : ResponseTransactionData
     
     private string errorCodeFieldField;
     
+    private System.Nullable<bool> isCustomerErrorFieldField;
+    
     private bool isSuccessFieldField;
     
     private string jSONResultFieldField;
@@ -213,7 +215,21 @@ public partial class OpenBankingGenericResponse : ResponseTransactionData
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(Order=2)]
+    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true, Order=2)]
+    public System.Nullable<bool> isCustomerErrorField
+    {
+        get
+        {
+            return this.isCustomerErrorFieldField;
+        }
+        set
+        {
+            this.isCustomerErrorFieldField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlElementAttribute(Order=3)]
     public bool isSuccessField
     {
         get
@@ -227,7 +243,7 @@ public partial class OpenBankingGenericResponse : ResponseTransactionData
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true, Order=3)]
+    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true, Order=4)]
     public string jSONResultField
     {
         get
@@ -402,17 +418,22 @@ public partial class PaymentCheckRequest
     [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
     public string corporateUserCustomerID;
     
+    [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=4)]
+    [System.Xml.Serialization.XmlElementAttribute(IsNullable=true)]
+    public string jsonData;
+    
     public PaymentCheckRequest()
     {
     }
     
-    public PaymentCheckRequest(VeriBranchMessageHeader VeriBranchMessageHeader, string username, string password, string customerID, string corporateUserCustomerID)
+    public PaymentCheckRequest(VeriBranchMessageHeader VeriBranchMessageHeader, string username, string password, string customerID, string corporateUserCustomerID, string jsonData)
     {
         this.VeriBranchMessageHeader = VeriBranchMessageHeader;
         this.username = username;
         this.password = password;
         this.customerID = customerID;
         this.corporateUserCustomerID = corporateUserCustomerID;
+        this.jsonData = jsonData;
     }
 }
 
@@ -532,7 +553,7 @@ public partial class OpenBankingIntegrationClient : System.ServiceModel.ClientBa
         return base.Channel.PaymentCheckAsync(request);
     }
     
-    public System.Threading.Tasks.Task<PaymentCheckResponse> PaymentCheckAsync(VeriBranchMessageHeader VeriBranchMessageHeader, string username, string password, string customerID, string corporateUserCustomerID)
+    public System.Threading.Tasks.Task<PaymentCheckResponse> PaymentCheckAsync(VeriBranchMessageHeader VeriBranchMessageHeader, string username, string password, string customerID, string corporateUserCustomerID, string jsonData)
     {
         PaymentCheckRequest inValue = new PaymentCheckRequest();
         inValue.VeriBranchMessageHeader = VeriBranchMessageHeader;
@@ -540,6 +561,7 @@ public partial class OpenBankingIntegrationClient : System.ServiceModel.ClientBa
         inValue.password = password;
         inValue.customerID = customerID;
         inValue.corporateUserCustomerID = corporateUserCustomerID;
+        inValue.jsonData = jsonData;
         return ((IOpenBankingIntegration)(this)).PaymentCheckAsync(inValue);
     }
     
