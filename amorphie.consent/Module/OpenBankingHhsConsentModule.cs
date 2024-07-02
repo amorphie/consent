@@ -758,7 +758,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(entity.AdditionalData);
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentConsent);
-            return Results.Ok(paymentConsent);
+            return Results.Content(paymentConsent.ToJsonString(),"application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -816,7 +816,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var serializedData = JsonSerializer.Deserialize<OdemeEmriHHSDto>(entity.AdditionalData);
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, serializedData);
-            return Results.Ok(serializedData);
+            return Results.Content(serializedData.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
