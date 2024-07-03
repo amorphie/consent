@@ -3323,63 +3323,87 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
        [FromServices] ICustomerService customerService
        )
     {
+        List<string> consentTypes = new List<string>()
+        {
+            ConsentConstants.ConsentType.OpenBankingAccount, ConsentConstants.ConsentType.OpenBankingPayment
+        };
+        
+        var consent = await context.Consents
+            .Include(c => c.OBAccountConsentDetails)
+            .Include(c => c.OBPaymentConsentDetails)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == consentId
+                                      && consentTypes.Contains(c.ConsentType));
 
-        var result1 = await openBankingIntegrationService.VerificationUser
-                                              (
-                                              "20070950",
-                                               "172534",
-                                               "{\"account\":[\"9255-20070950-353\", \"9255-20070950-354\",\"9255-20070950-364\"]}"
-                                              );
-
-
-
-        var consent = await context.Consents.FirstOrDefaultAsync(c => c.Id == consentId);
-
+        
         if (consent == null)
         {
             return Results.NotFound("Consent not found");
         }
-
-        if (tckn != consent.UserTCKN.ToString())
+        //Check consent state
+        var consentStatusList = new List<string>() { OpenBankingConstants.RizaDurumu.Yetkilendirildi,
+            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+            OpenBankingConstants.RizaDurumu.YetkiKullanildi
+        };
+        if (!consentStatusList.Contains(consent.State))
         {
-            return Results.Problem("TCKN error");
+            //State not valid to check
+            return Results.BadRequest($"State not valid.{consent.State}");
+        }
+        //Check institution consent
+        if (consent.OBAccountConsentDetails.Any(i => i.UserType == OpenBankingConstants.OHKTur.Kurumsal
+                                                     && i.Consent.ConsentType ==
+                                                     ConsentConstants.ConsentType.OpenBankingAccount)
+            || consent.OBPaymentConsentDetails.Any(i =>
+                i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
+                && i.UserType == OpenBankingConstants.OHKTur.Kurumsal) == false)
+        {//Bireysel
+            return Results.Ok();
+        }
+        
+
+        if (consent.UserTCKN != null 
+            && tckn != consent.UserTCKN.ToString())
+        {
+            return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
         }
 
         var kimlik = new KimlikDto();
-
         if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
         {
             var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
-            kimlik = accountConsent.kmlk;
+            kimlik = accountConsent?.kmlk;
         }
         else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
         {
             var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
-            kimlik = paymentConsent.odmBsltm.kmlk;
+            kimlik = paymentConsent?.odmBsltm.kmlk;
         }
 
-        var customerResult = await customerService.GetCustomerInformations(kimlik);
-
-        if (customerResult.Result == false)
+        var customerResult = await customerService.GetCustomerInformations(kimlik!);
+        if (customerResult.Result == false
+            || customerResult.Data is null)
         {
-            return Results.Problem(customerResult.Message);
+            return Results.Problem($"Error in get institution customer number service error. {customerResult.Message}");
         }
 
         var customerResponse = (GetCustomerResponseDto)customerResult.Data;
+        // var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
+        //
+        // if (consentDetail == null)
+        // {
+        //     return Results.NotFound("Consent Detail not found");
+        // }
 
-        var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
-
-        if (consentDetail == null)
+        var verificationUserJsonData = new VerificationUserJsonData
         {
-            return Results.NotFound("Consent Detail not found");
-        }
+            account = Array.Empty<string>()
+        };
 
-        var verificationUserJsonData = new VerificationUserJsonData();
-
-        if (consentDetail.AccountReferences != null)
-            verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
-        else
-            verificationUserJsonData.account = Array.Empty<string>();
+        // if (consentDetail.AccountReferences != null)
+        //     verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
+        // else
+        //     verificationUserJsonData.account = Array.Empty<string>();
 
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
@@ -3388,10 +3412,14 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                  Newtonsoft.Json.JsonConvert.SerializeObject(verificationUserJsonData)
                                                 );
 
-        if (result.Result == false)
+        if (result.Result == false
+            || result.Data is null)
         {
             return Results.Problem(result.Message);
         }
+
+        var verificationUserResponse = (VerificationUserResponse)result.Data;
+       //TODO:Emre verificationUserResponse handle edilmeli
 
         return Results.Ok();
     }

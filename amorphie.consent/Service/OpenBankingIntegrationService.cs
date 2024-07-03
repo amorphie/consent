@@ -7,12 +7,14 @@ public class OpenBankingIntegrationService : IOpenBankingIntegrationService
     private readonly string _url;
     private readonly string _username;
     private readonly string _password;
+    private readonly IConfiguration _configuration; 
 
     public OpenBankingIntegrationService
         (
-            [FromServices] IConfiguration configuration
+            IConfiguration configuration
         )
     {
+        _configuration = configuration;
         _url = configuration["OB_Integration_Url"];
         _username = configuration["OB_Integration_Username"];
         _password = configuration["OB_Integration_Password"];
@@ -44,7 +46,6 @@ public class OpenBankingIntegrationService : IOpenBankingIntegrationService
         try
         {
             var client = new OpenBankingIntegrationClient();
-
             client.Endpoint.Address = new System.ServiceModel.EndpointAddress(_url);
 
             var serviceResult =
