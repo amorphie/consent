@@ -78,6 +78,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("/UpdateAccountConsentForAuthorization", UpdateAccountConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdatePaymentConsentForAuthorization", UpdatePaymentConsentForAuthorization);
         routeGroupBuilder.MapPost("/UpdateConsentStatusForUsage", UpdateConsentStatusForUsage);
+        routeGroupBuilder.MapPost("/UpdateConsentInOtp", UpdateConsentInOtp);
         routeGroupBuilder.MapDelete("/Cancel", CancelConsentFromLogin);
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
@@ -1233,7 +1234,41 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
+    
+    public async Task<IResult> UpdateConsentInOtp([FromBody] UpdateConsentUserTcknDto updateConsent,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromServices] ITokenService tokenService)
+    {
+        try
+        {
+            await ProcessConsentToCancelOrEnd(updateConsent.Id, context,tokenService);
+            //Get entity from db
+            var entity = await context.Consents
+                .FirstOrDefaultAsync(c => c.Id == updateConsent.Id);
+            if (entity == null)
+            {
+                return Results.NoContent();
+            }
+            //Check consent validity
+            ApiResult isDataValidResult = IsDataValidToUpdateConsentUserTcknInOtp(entity, updateConsent);
+            if (!isDataValidResult.Result) //Error in data validation
+            {
+                return Results.BadRequest(isDataValidResult.Message);
+            }
 
+            entity.ModifiedAt = DateTime.UtcNow;
+            entity.UserTCKN = updateConsent.UserTckn;
+            context.Consents.Update(entity);
+            await context.SaveChangesAsync();
+            return Results.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+    
 
     public async Task<IResult> CancelConsentFromLogin([FromBody] CancelConsentDto cancelData,
         [FromServices] ConsentDbContext context,
@@ -2374,23 +2409,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             return result;
         }
-
-
-        //TODO:Özlem update when user service finished
-        if (!string.IsNullOrEmpty(odemeEmriIstegi.odmBsltm.kmlk.kmlkTur)
-            && odemeEmriIstegi.odmBsltm.kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN
-            && odemeEmriIstegi.odmBsltm.kmlk.kmlkVrs != header.UserReference)
-        {
-            result.Result = false;
-            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentProcessingUserNotInKmlData);
-            return result;
-        }
+        
 
         //Check consent
         await ProcessPaymentConsentToCancelOrEnd(new Guid(odemeEmriIstegi.rzBlg.rizaNo), context, tokenService);
-
-        //TODO:Özlem select e işlem yapan kullanıcı bilgilerini de servis geliştirme bitince ekle
+        
         var odemeEmriRizasiConsent = await context.Consents
             .FirstOrDefaultAsync(c => c.Id.ToString() == odemeEmriIstegi.rzBlg.rizaNo
                                       && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
@@ -2413,7 +2436,16 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatchStatusNotValidToPaymentOrder);
             return result;
         }
-
+        
+        //TODO:Özlem buna yeni bir hata kodu tanımla
+        if (odemeEmriRizasiConsent.UserTCKN == null
+            || odemeEmriRizasiConsent.UserTCKN.ToString() != header.UserReference)
+        {
+            result.Result = false;
+            result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentProcessingUserNotInKmlData);
+            return result;
+        }
 
         var odemeEmriRizasi = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(odemeEmriRizasiConsent.AdditionalData);
         if (odemeEmriRizasi == null)
@@ -2688,7 +2720,39 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return result;
     }
 
+    /// <summary>
+    /// Checks if consent is valid to update usertckn clm in otp step
+    /// </summary>
+    /// <returns>Check result</returns>
+    private ApiResult IsDataValidToUpdateConsentUserTcknInOtp(Consent? entity,
+        UpdateConsentUserTcknDto updateConsent)
+    {
+        ApiResult result = new();
+        if (entity == null)
+        {
+            result.Result = false;
+            result.Message = "No consent in system.";
+            return result;
+        }
 
+        if (entity.State != OpenBankingConstants.RizaDurumu.YetkiBekleniyor)
+        {
+            result.Result = false;
+            result.Message = "Consent state not valid to process. Only Yetki Bekleniyor state consent can be updated.";
+            return result;
+        }
+
+        //Consent state parameter not valid
+        if (entity.UserTCKN != null 
+            && entity.UserTCKN != updateConsent.UserTckn)
+        {
+            result.Result = false;
+            result.Message = $"Consent usertckn is already set as {entity.UserTCKN}. This value not matches with {updateConsent.UserTckn}";
+            return result;
+        }
+
+        return result;
+    }
 
 
     /// <summary>
@@ -3004,6 +3068,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //TODO:Özlem bu durum nasıl handle edilecek bilmiyorum
     }
 
+    /// <summary>
+    /// Gets consent by id from database and process consent state validity by consent type
+    /// </summary>
     private async Task ProcessConsentToCancelOrEnd(Guid rizaNo, ConsentDbContext context,
         ITokenService tokenService)
     {
