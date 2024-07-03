@@ -21,10 +21,12 @@ namespace amorphie.consent.Mapper
                 .ReverseMap();
             CreateMap<Consent, HHSAccountConsentDto>()
                 .ForMember(dest => dest.AdditionalData, opt => opt.MapFrom(src => JsonConvert.DeserializeObject<HesapBilgisiRizasiHHSDto>(src.AdditionalData)))
+                .ForMember(dest => dest.UserTckn, opt => opt.MapFrom(src => src.UserTCKN))
                 .ForMember(dest => dest.CustomerNumber, opt => opt.MapFrom<CustomerNumberResolver>())
                 .ForMember(dest => dest.InstitutionCustomerNumber, opt => opt.MapFrom<InstitutionCustomerNumberResolver>());
             CreateMap<Consent, HHSPaymentConsentDto>()
                 .ForMember(dest => dest.AdditionalData, opt => opt.MapFrom(src => JsonConvert.DeserializeObject<OdemeEmriRizasiWithMsrfTtrHHSDto>(src.AdditionalData)))
+                .ForMember(dest => dest.UserTckn, opt => opt.MapFrom(src => src.UserTCKN))
                 .ForMember(dest => dest.CustomerNumber, opt => opt.MapFrom<CustomerNumberResolverPayment>())
                 .ForMember(dest => dest.InstitutionCustomerNumber, opt => opt.MapFrom<InstitutionCustomerNumberResolverPayment>());;
             CreateMap<Token, TokenDto>().ReverseMap();
