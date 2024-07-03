@@ -166,24 +166,28 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             int skipCount = syfNo.HasValue && syfNo.Value > 1 ? ((syfNo.Value - 1) * 100) : 0;
             
             // Build the base query once
-            var query = context.OBEvents.Where(e =>
+            var query = await context.OBEvents.Where(e =>
                 e.DeliveryStatus == OpenBankingConstants.RecordDeliveryStatus.Undeliverable
                 && e.HHSCode == subscription.HHSCode
                 && e.YOSCode == subscription.YOSCode
                 && e.ModuleName == OpenBankingConstants.ModuleName.HHS
                 && e.EventDate >= eventQueryStartDate
-                && e.EventDate <= eventQueryEndDate
-                && subscription.OBEventSubscriptionTypes.Any(st =>
-                    st.EventType == e.EventType && st.SourceType == e.SourceType));
+                && e.EventDate <= eventQueryEndDate)
+                    .ToListAsync();
             
-            // Get the total count
-            var totalCount = await query.CountAsync();
-            // Get the paginated results
-            var eventItems = await query
+            // Filter in memory to avoid LINQ translation issues
+            var filteredEvents = query
+                .Where(e => subscription.OBEventSubscriptionTypes.Any(st =>
+                    st.EventType == e.EventType && st.SourceType == e.SourceType))
                 .OrderBy(e => e.EventDate)
+                .ToList();
+            // Get the total count
+            var totalCount = filteredEvents.Count();
+            // Get the paginated results
+            var eventItems = filteredEvents
                 .Skip(skipCount)
                 .Take(100)
-                .ToListAsync();
+                .ToList();
            
 
             var olaylarDtoList = mapper.Map<List<OlaylarDto>>(eventItems);
