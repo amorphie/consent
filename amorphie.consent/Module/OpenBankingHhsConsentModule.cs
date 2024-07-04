@@ -83,7 +83,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         routeGroupBuilder.MapPost("odeme-emri", PaymentOrderPost).AddEndpointFilter<OBCustomResponseHeaderFilter>();
         routeGroupBuilder.MapPost("PaymentStateChanged", PaymentStateChanged);
         routeGroupBuilder.MapPost("BalanceChanged", BalanceChanged);
-        routeGroupBuilder.MapPost("/CheckAuthorize", CheckAuthorize);
+        routeGroupBuilder.MapPost("/CheckAuthorizeForInstitutionConsent", CheckAuthorizeForInstitutionConsent);
     }
 
     //hhs bizim bankamizi acacaklar. UI web ekranlarimiz
@@ -3315,7 +3315,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         return responseList;
     }
 
-    private async Task<IResult> CheckAuthorize(
+    private async Task<IResult> CheckAuthorizeForInstitutionConsent(
        Guid consentId,
        string tckn,
        [FromServices] ConsentDbContext context,
