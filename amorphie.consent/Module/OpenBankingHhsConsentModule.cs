@@ -1018,11 +1018,17 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
             additionalData.rzBlg.rizaDrm = updateConsentState.State;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+            //IF one time payment, set customer's identity data
+            if (OBConsentValidationHelper.IsOneTimePayment(additionalData.odmBsltm.kmlk.kmlkVrs, additionalData.odmBsltm.kmlk.kmlkTur))
+            {
+                additionalData.odmBsltm.kmlk.kmlkTur = OpenBankingConstants.KimlikTur.TCKN;
+                additionalData.odmBsltm.kmlk.kmlkVrs = entity.UserTCKN?.ToString() ?? String.Empty;
+            }
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
             entity.StateModifiedAt = DateTime.UtcNow;
             entity.ModifiedAt = DateTime.UtcNow;
-
+           
             context.Consents.Update(entity);
             await context.SaveChangesAsync();
             return Results.Ok(true);
