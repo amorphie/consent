@@ -8,6 +8,6 @@ namespace amorphie.consent.core.DTO.OpenBanking.HHS;
 
 public class HHSConsentDto : DtoBase
 {
-    public long? UserTckn { get; set; }
+    public long? UserTCKN { get; set; }
 }
 
