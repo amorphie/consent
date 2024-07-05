@@ -1748,7 +1748,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             consentEntity.ConsentType = ConsentConstants.ConsentType.OpenBankingPayment;
             consentEntity.Variant = odemeEmriRizasi.katilimciBlg.yosKod;
             consentEntity.ClientCode = string.Empty;
-            consentEntity.UserTCKN = customerResponse != null ? GenericMethodsHelper.ConvertStringToNullableLong(customerResponse.citizenshipNumber) : null;
+            consentEntity.UserTCKN = await SetPaymentConsentUserTckn(customerResponse, odemeEmriRizasi, accountService, httpContext);
             consentEntity.OBPaymentConsentDetails = new List<OBPaymentConsentDetail>
             {
                 GeneratePaymentConsentDetailObject(odemeEmriRizasi, rizaIstegi, header, customerResponse)
@@ -1774,7 +1774,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
+    
 
     /// <summary>
     /// Payment order consent post process.
@@ -3320,6 +3320,37 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
         return responseList;
     }
+    
+    /// <summary>
+    /// Calculates usertckn in payment consent.
+    /// If one time payment with gsm/iban discrete gkd, calls account customerscanservice
+    /// </summary>
+    /// <returns>Consent usertckn</returns>
+    private async Task<long?> SetPaymentConsentUserTckn(GetCustomerResponseDto? customerResponse, 
+        OdemeEmriRizasiWithMsrfTtrHHSDto odemeEmriRizasi,
+        IAccountService accountService,
+        HttpContext context)
+    {
+        long? userTckn = null;
+        if (customerResponse is null 
+            && odemeEmriRizasi.gkd.yetYntm == OpenBankingConstants.GKDTur.Ayrik 
+            && OBConsentValidationHelper.IsOneTimePayment(odemeEmriRizasi.odmBsltm.kmlk.kmlkVrs, odemeEmriRizasi.odmBsltm.kmlk.kmlkTur)
+            && (odemeEmriRizasi.gkd.ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.GSM
+                || odemeEmriRizasi.gkd.ayrikGkd.ohkTanimTip == OpenBankingConstants.OhkTanimTip.IBAN))
+        {
+            //Tek seferlik ödeme işlemlerinde "ohkTanimTip" = "GSM"/"IBAN" olarak gönderilmiş ise, HHS sisteminde bu GSM/IBAN ile eşleşen müşterileri taramalıdır. 
+            var result = await OBConsentValidationHelper.CheckIsUniqueCustomerByIbanGsm(accountService, odemeEmriRizasi.gkd.ayrikGkd, context, _errorCodeDetails);
+            if (!result.Result
+                && result.Data != null )
+            {
+                CustomerScanResponseDto customerScanResponse = (CustomerScanResponseDto)result.Data;
+                string? stringTckn = customerScanResponse.isUniqueUserFound ? customerScanResponse.tckn : string.Empty;
+                userTckn = GenericMethodsHelper.ConvertStringToNullableLong(stringTckn);
+            }
+        }
+        return customerResponse != null ? GenericMethodsHelper.ConvertStringToNullableLong(customerResponse.citizenshipNumber) : userTckn;
+    }
+
 
     private async Task<IResult> CheckAuthorizeForInstitutionConsent(
        Guid consentId,
