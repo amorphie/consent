@@ -1444,7 +1444,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                await pushService.OpenBankingSendPush(hesapBilgisiRizasi.kmlk, consentEntity.Id);
+                await pushService.OpenBankingSendPush(consentEntity.UserTCKN?.ToString() ?? string.Empty, consentEntity.Id);
             }
 
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
@@ -1759,7 +1759,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (isAyrikGKD)
             {
                 //Send notification to user
-                await pushService.OpenBankingSendPush(odemeEmriRizasi.odmBsltm.kmlk, consentEntity.Id);
+                await pushService.OpenBankingSendPush(consentEntity.UserTCKN?.ToString() ?? string.Empty, consentEntity.Id);
             }
 
             var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi); //Send consent to YOS without hhsmsrfttr property
