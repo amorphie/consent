@@ -238,8 +238,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                     _errorCodeDetails
                                                 );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(rizaNo, context);
@@ -358,8 +362,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                   _errorCodeDetails
                                               );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             ApiResult accountApiResult =
                 await accountService.GetAuthorizedAccountByHspRef(httpContext, header.UserReference!, header.ConsentId!, yosCode: header.XTPPCode,
@@ -440,8 +448,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                   _errorCodeDetails
                                               );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -520,8 +532,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                        _errorCodeDetails
                                                    );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -605,8 +621,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                   _errorCodeDetails
                                               );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -685,8 +705,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                                                   _errorCodeDetails
                                               );
 
-            if (checkInstitutionConsentResult.IsConsentCancelled)
-                return Results.Problem("Consent is cancelled");
+            if (!checkInstitutionConsentResult.Result)
+            {
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkInstitutionConsentResult.Data);
+                //Data not valid
+                return Results.Content(checkInstitutionConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
 
             //Check consent
             await ProcessAccountConsentToCancelOrEnd(new Guid(header.ConsentId!), context);
@@ -3409,40 +3433,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
         }
 
-        string customerNumber, krmCustomerNumber;
-        customerNumber = string.Empty;
-        krmCustomerNumber = string.Empty;
-        if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-        {
-            var accountConsent = consent.OBAccountConsentDetails.FirstOrDefault();
-            if (accountConsent is null)
-            {
-                return Results.Problem($"Consent detail data in system is null");
-            }
-            customerNumber = accountConsent.CustomerNumber!;
-            krmCustomerNumber = accountConsent.InstitutionCustomerNumber!;
-        }
-        else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
-        {
-            var paymentConsent = consent.OBPaymentConsentDetails.FirstOrDefault();
-            if (paymentConsent is null)
-            {
-                return Results.Problem($"Consent detail data in system is null");
-            }
-            customerNumber = paymentConsent.CustomerNumber!;
-            krmCustomerNumber = paymentConsent.InstitutionCustomerNumber!;
-        }
-
-        var verificationUserJsonData = new VerificationUserJsonData
-        {
-            account = Array.Empty<string>()
-        };
+     
         
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
-                                                 customerNumber,
-                                                 krmCustomerNumber,
-                                                 Newtonsoft.Json.JsonConvert.SerializeObject(verificationUserJsonData)
+                                                 consent
                                                 );
 
         if (result.Result == false
