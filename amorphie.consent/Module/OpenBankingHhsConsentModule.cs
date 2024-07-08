@@ -3362,7 +3362,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         List<string> consentTypes = new List<string>()
         {
-            ConsentConstants.ConsentType.OpenBankingAccount, ConsentConstants.ConsentType.OpenBankingPayment
+            ConsentConstants.ConsentType.OpenBankingAccount,
+            ConsentConstants.ConsentType.OpenBankingPayment
         };
         
         var consent = await context.Consents
@@ -3405,47 +3406,39 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
         }
 
-        var kimlik = new KimlikDto();
+        string customerNumber, krmCustomerNumber;
+        customerNumber = string.Empty;
+        krmCustomerNumber = string.Empty;
         if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
         {
-            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
-            kimlik = accountConsent?.kmlk;
+            var accountConsent = consent.OBAccountConsentDetails.FirstOrDefault();
+            if (accountConsent is null)
+            {
+                return Results.Problem($"Consent detail data in system is null");
+            }
+            customerNumber = accountConsent.CustomerNumber!;
+            krmCustomerNumber = accountConsent.InstitutionCustomerNumber!;
         }
         else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
         {
-            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
-            kimlik = paymentConsent?.odmBsltm.kmlk;
+            var paymentConsent = consent.OBPaymentConsentDetails.FirstOrDefault();
+            if (paymentConsent is null)
+            {
+                return Results.Problem($"Consent detail data in system is null");
+            }
+            customerNumber = paymentConsent.CustomerNumber!;
+            krmCustomerNumber = paymentConsent.InstitutionCustomerNumber!;
         }
-
-        var customerResult = await customerService.GetCustomerInformations(kimlik!);
-        if (customerResult.Result == false
-            || customerResult.Data is null)
-        {
-            return Results.Problem($"Error in get institution customer number service error. {customerResult.Message}");
-        }
-
-        var customerResponse = (GetCustomerResponseDto)customerResult.Data;
-        // var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
-        //
-        // if (consentDetail == null)
-        // {
-        //     return Results.NotFound("Consent Detail not found");
-        // }
 
         var verificationUserJsonData = new VerificationUserJsonData
         {
             account = Array.Empty<string>()
         };
-
-        // if (consentDetail.AccountReferences != null)
-        //     verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
-        // else
-        //     verificationUserJsonData.account = Array.Empty<string>();
-
+        
         var result = await openBankingIntegrationService.VerificationUser
                                                 (
-                                                 customerResponse.customerNumber,
-                                                 customerResponse.krmCustomerNumber,
+                                                 customerNumber,
+                                                 krmCustomerNumber,
                                                  Newtonsoft.Json.JsonConvert.SerializeObject(verificationUserJsonData)
                                                 );
 
