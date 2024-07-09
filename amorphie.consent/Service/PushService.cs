@@ -31,14 +31,14 @@ public class PushService : IPushService
         _logger = logger;
     }
 
-    public async Task<ApiResult> OpenBankingSendPush(KimlikDto data, Guid consentId)
+    public async Task<ApiResult> OpenBankingSendPush(string userTckn, Guid consentId)
     {
         ApiResult result = new();
         try
         {
             string targetUrl;
             var templateParameters = new Dictionary<string, object>();
-            var getCustomerInfoResult = await _tagService.GetCustomer(data.kmlkVrs);
+            var getCustomerInfoResult = await _tagService.GetCustomer(userTckn);
 
             if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //error from service
             {
@@ -47,7 +47,7 @@ public class PushService : IPushService
                 return result;
             }
 
-            var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
+            var deviceRecordData = await _deviceRecord.GetDeviceRecord(userTckn);
             if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
             {
                 _logger.LogError("Error in deviceRecord.GetDeviceRecord");
@@ -104,7 +104,7 @@ public class PushService : IPushService
                 var sendPush = new SendPushDto
                 {
                     Sender = "AutoDetect",
-                    CitizenshipNo = data.kmlkVrs,
+                    CitizenshipNo = userTckn,
                     Template = _configuration["PushTemplateName"] ?? String.Empty,
                     TemplateParams = JsonConvert.SerializeObject(templateParameters),
                     CustomParameters = "",

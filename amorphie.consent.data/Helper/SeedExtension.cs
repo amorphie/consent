@@ -1276,4 +1276,33 @@ public static class SeedExtension
         });
     }
     
+    public static void SeedOBErrorCodeDetailsVerificationUserInstitution(this ModelBuilder modelBuilder)
+    {
+        
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorVerificationUser.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By checking is institution customer has authorization for open banking from verification service, service error occured.",
+            MessageTr = "Kurumsal müşterinin açık bankacılık işlemi yapabilir mi yetkilerinin sorgulandığı servis sürecinde hata oluştu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.GenericServiceErrorMessageInstitutionValidation.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By checking is institution customer has authorization for open banking from verification service, handled service error occured.",
+            MessageTr = "Kurumsal müşterinin açık bankacılık işlemi yapabilir mi yetkilerinin sorgulandığı servis sürecinde servis hatası oluştu."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InstitutionConsentUnAuthorized.GetHashCode(),
+            BkmCode = "TR.OHVPS.Business.InvalidAccount",
+            Message = "Institution customer validation error. {0}",
+            MessageTr = "Kurumsal müşteri yetkisiz işlem. Hata detayı: {0}"
+        });
+    }
+    
 }

@@ -1,9 +1,10 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Service.Interface;
 
 public interface IOpenBankingIntegrationService
 {
     Task<ApiResult> AccountList(string customerId, string corporateUserCustomerID);
-    Task<ApiResult> VerificationUser(string customerId, string corporateUserCustomerID, string jsonData);
+    Task<ApiResult> VerificationUser(Consent consent);
 }

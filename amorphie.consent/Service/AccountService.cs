@@ -17,16 +17,19 @@ public class AccountService : IAccountService
     private readonly IOBAuthorizationService _authorizationService;
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
+    private readonly ILogger<IBKMService> _logger;
 
     public AccountService(IAccountClientService accountClientService,
         IOBAuthorizationService authorizationService,
         ConsentDbContext context,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<IBKMService> logger)
     {
         _accountClientService = accountClientService;
         _authorizationService = authorizationService;
         _context = context;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
@@ -98,6 +101,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccounts {serviceResponse.error}");
                 return result;
             }
         
@@ -113,6 +117,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccounts");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -154,6 +159,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccountsForUI {serviceResponse.error}");
                 return result;
             }
             
@@ -162,6 +168,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccountsForUI");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -203,6 +210,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccountByHspRef {serviceResponse.error}");
                 return result;
             }
 
@@ -216,6 +224,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccountByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -282,6 +291,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedBalances {serviceResponse.error}");
                 return result;
             }
             List<BakiyeBilgileriDto>? balances = serviceResponse?.data?.bakiyeBilgileri;
@@ -291,6 +301,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedBalances");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -332,12 +343,14 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedBalanceByHspRef {serviceResponse.error}");
                 return result;
             }
             result.Data = serviceResponse?.data;
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedBalanceByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -433,6 +446,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetTransactionsByHspRef {serviceResponse.error}");
                 return result;
             }
             result.Data =_mapper.Map<IslemBilgileriDto>(serviceResponse?.data);
@@ -442,6 +456,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetTransactionsByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -463,6 +478,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in SendConsentToAccountService");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -487,15 +503,16 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetUniqueCustomer {serviceResponse.error}");
                 return result;
             }
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetUniqueCustomer");
             result.Result = false;
             result.Message = e.Message;
         }
-
         return result;
     }
     
