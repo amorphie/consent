@@ -9,7 +9,7 @@ namespace amorphie.consent.Helper;
 public static class OBErrorResponseHelper
 {
     public static OBCustomErrorResponseDto BuildErrorResponse(HttpStatusCode httpCode, string httpMessage, string path,
-        OBErrorCodeDetail errorCodeDetail, List<FieldError>? fieldErrors = null)
+        OBErrorCodeDetail errorCodeDetail, List<FieldError>? fieldErrors = null, params object[] messageParams)
     {
         return new OBCustomErrorResponseDto
         {
@@ -18,8 +18,8 @@ public static class OBErrorResponseHelper
             Timestamp = DateTime.UtcNow,
             HttpCode = (int)httpCode,
             HttpMessage = httpMessage,
-            MoreInformation = errorCodeDetail.Message,
-            MoreInformationTr = errorCodeDetail.MessageTr,
+            MoreInformation = string.Format(errorCodeDetail.Message, messageParams),
+            MoreInformationTr = string.Format(errorCodeDetail.MessageTr, messageParams),
             ErrorCode = errorCodeDetail.BkmCode,
             FieldErrors = fieldErrors,
         };
@@ -84,15 +84,16 @@ public static class OBErrorResponseHelper
     /// <param name="context">HttpContext</param>
     /// <param name="errorCodeDetails">All error code constant data</param>
     /// <param name="errorCode">To be created error internal code</param>
+    /// <param name="messageParams">Parameters if any to format message</param>
     /// <returns>OBCustomErrorResponseDto type of object</returns>
     public static OBCustomErrorResponseDto GetForbiddenError(HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
+        List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode, params object[] messageParams)
     {
         //Get errorCode detail
         var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
         //Generate customerrorresponse of forbidden
         return BuildErrorResponse(HttpStatusCode.Forbidden,
-            OBErrorCodeConstants.HttpMessage.Forbidden, context.Request.Path, errorCodeDetail);
+            OBErrorCodeConstants.HttpMessage.Forbidden, context.Request.Path, errorCodeDetail,messageParams:messageParams);
     }
 
     /// <summary>

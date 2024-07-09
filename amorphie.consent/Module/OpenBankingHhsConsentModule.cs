@@ -3415,7 +3415,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //State not valid to check
             return Results.BadRequest($"State not valid.{consent.State}");
         }
-        //Check institution consent
+        //Check if institution consent
         if (consent.OBAccountConsentDetails.Any(i => i.UserType == OpenBankingConstants.OHKTur.Kurumsal
                                                      && i.Consent.ConsentType ==
                                                      ConsentConstants.ConsentType.OpenBankingAccount)
@@ -3426,30 +3426,41 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Ok();
         }
         
-
+        //Check consent tckn and processing user
         if (consent.UserTCKN != null 
             && tckn != consent.UserTCKN.ToString())
         {
             return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
         }
 
-     
-        
-        var result = await openBankingIntegrationService.VerificationUser
-                                                (
-                                                 consent
-                                                );
-
+        //Validate institution consent from veripark service
+        var result = await openBankingIntegrationService.VerificationUser(consent);
         if (result.Result == false
             || result.Data is null)
-        {
+        {//Error in service
             return Results.Problem(result.Message);
         }
 
-        var verificationUserResponse = (VerificationUserResponse)result.Data;
-       //TODO:Emre verificationUserResponse handle edilmeli
+        var verificationUserResultData = (VerificationUserResponse)result.Data;
+        if (verificationUserResultData.VerificationUserResult.isSuccessField)
+        {
+            //Authorized user
+            return Results.Ok();
+        }
 
-        return Results.Ok();
+        if (verificationUserResultData.VerificationUserResult.isCustomerErrorField.HasValue
+            && verificationUserResultData.VerificationUserResult.isCustomerErrorField.Value)
+        {
+            //TODO:Kurumsal Cancel consent
+            //Show error to user
+            return Results.BadRequest(verificationUserResultData.VerificationUserResult.displayMessageField);
+        }
+        else
+        {
+            //Show generic error
+            return Results.Problem("Service error occured in checking authorization.");
+        }
+
     }
 
 }

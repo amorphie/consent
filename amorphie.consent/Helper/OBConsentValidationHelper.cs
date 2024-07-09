@@ -3177,7 +3177,6 @@ public static class OBConsentValidationHelper
        List<OBErrorCodeDetail> errorCodeDetails
    )
     {
-        CheckInstitutionConsentResult checkInstitutionConsentResult = new();
         ApiResult result = new();
         try
         {
@@ -3205,52 +3204,15 @@ public static class OBConsentValidationHelper
             {//Do nothing
                 return result;
             }
-            
-            // var verificationUserJsonData = new VerificationUserJsonData
-            // {
-            //     account = Array.Empty<string>()
-            // };
-            //
-            // string customerNumber, krmCustomerNumber;
-            // if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-            // {//Account consent
-            //     var accountConsent = consent.OBAccountConsentDetails.FirstOrDefault();
-            //     if (accountConsent is null)
-            //     {
-            //         result.Result = false;
-            //         result.Message = "internal server error";
-            //         return result;
-            //     }
-            //     if (accountConsent.AccountReferences != null)
-            //         verificationUserJsonData.account = accountConsent.AccountReferences.ToArray();
-            //     customerNumber = accountConsent.CustomerNumber!;
-            //     krmCustomerNumber = accountConsent.InstitutionCustomerNumber!;
-            // }
-            // else
-            // {//Payment consent
-            //     var paymentConsent = consent.OBPaymentConsentDetails.FirstOrDefault();
-            //     if (paymentConsent is null)
-            //     {
-            //         result.Result = false;
-            //         result.Message = "internal server error";
-            //         return result;
-            //     }
-            //     customerNumber = paymentConsent.CustomerNumber!;
-            //     krmCustomerNumber = paymentConsent.InstitutionCustomerNumber!;
-            // }
-
-            
-            result = await openBankingIntegrationService.VerificationUser
-            (
-                consent
-            );
+            //Check institution authorization
+            result = await openBankingIntegrationService.VerificationUser(consent);
             
             if (result.Result == false
                 || result.Data is null)
-            {
+            {//Service error
                 result.Result = false;
                 result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckUniqueCustomerService);
+                    OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorVerificationUser);
                 return result;
             }
 
@@ -3260,26 +3222,27 @@ public static class OBConsentValidationHelper
             {//Authorized user
                 return result;
             }
-            result.Result = false;
-            var cancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali;
-            await OBModuleHelper.CancelInstitutionConsentUnAuthorized
-                                (
-                                  context,
-                                  tokenService,
-                                  eventService,
-                                  yosInfoService,
-                                  consent,
-                                  cancelDetailCode
-                                );
+            
 
             if (verificationUserResultData.VerificationUserResult.isCustomerErrorField.HasValue 
                 && verificationUserResultData.VerificationUserResult.isCustomerErrorField.Value)
             {//Show error to user
+                //Cancel consent
+                var cancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali;
+                await OBModuleHelper.CancelInstitutionConsentUnAuthorized(context,tokenService,eventService,yosInfoService,consent,cancelDetailCode);
                 result.Message = verificationUserResultData.VerificationUserResult.displayMessageField;
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InstitutionConsentUnAuthorized,
+                    verificationUserResultData.VerificationUserResult.displayMessageField);
+                return result;
             }
             else
             {//Show generic error
-                result.Message = "Generic error";
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.GenericServiceErrorMessageInstitutionValidation);
+                return result;
             }
             return result;
         }

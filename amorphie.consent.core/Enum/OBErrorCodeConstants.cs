@@ -181,6 +181,7 @@ public static class OBErrorCodeConstants
         NotFoundAbonelikNo = 154,
         InternalServerErrorIsCustomerService = 155,
         InternalServerErrorCheckUniqueCustomerService = 156,
+        InternalServerErrorVerificationUser = 157,
         
         ConsentMismatch = 160,
         ConsentMismatchStateNotValidToDelete = 161,
@@ -233,6 +234,8 @@ public static class OBErrorCodeConstants
         InvalidSignatureXJwsSignatureHeaderInvalid = 327,
         InvalidContentKolasNotValidInOneTimePayment = 328,
         InvalidContentOneTimePaymentPSUSessionId = 329,
-        InvalidContentCustomerNotFound = 330
+        InvalidContentCustomerNotFound = 330,
+        GenericServiceErrorMessageInstitutionValidation = 400,
+        InstitutionConsentUnAuthorized = 401
     }
 }

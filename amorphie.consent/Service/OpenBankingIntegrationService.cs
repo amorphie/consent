@@ -11,16 +11,17 @@ public class OpenBankingIntegrationService : IOpenBankingIntegrationService
     private readonly string _username;
     private readonly string _password;
     private readonly IConfiguration _configuration; 
+    private readonly ILogger<OpenBankingIntegrationService> _logger;
 
-    public OpenBankingIntegrationService
-        (
-            IConfiguration configuration
+    public OpenBankingIntegrationService(IConfiguration configuration,
+        ILogger<OpenBankingIntegrationService> logger
         )
     {
         _configuration = configuration;
         _url = configuration["OB_Integration_Url"];
         _username = configuration["OB_Integration_Username"];
         _password = configuration["OB_Integration_Password"];
+        _logger = logger;
     }
     public async Task<ApiResult> AccountList(string customerId, string corporateUserCustomerID)
     {
@@ -47,7 +48,6 @@ public class OpenBankingIntegrationService : IOpenBankingIntegrationService
 
     public async Task<ApiResult> VerificationUser(Consent consent)
     {
-        //TODO:Özlem add logging
         ApiResult result = new();
         try
         {
@@ -96,6 +96,7 @@ public class OpenBankingIntegrationService : IOpenBankingIntegrationService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in VerificationUser");
             result.Result = false;
             result.Message = $"Error in VerificationUser. {e.Message}";
         }
