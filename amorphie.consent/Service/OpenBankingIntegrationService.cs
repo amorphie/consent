@@ -4,7 +4,7 @@ using amorphie.consent.core.Model;
 using amorphie.consent.Helper;
 using amorphie.consent.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
-
+namespace amorphie.consent.Service;
 public class OpenBankingIntegrationService : IOpenBankingIntegrationService
 {
     private readonly string _url;
