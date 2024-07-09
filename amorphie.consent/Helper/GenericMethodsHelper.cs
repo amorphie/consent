@@ -23,7 +23,7 @@ public static class GenericMethodsHelper
     /// </summary>
     /// <param name="stringData">To be parsed data</param>
     /// <returns>long? converted data</returns>
-    public static long? ConvertStringToNullableLong(string  stringData)
+    public static long? ConvertStringToNullableLong(string?  stringData)
     {
         if (!string.IsNullOrEmpty(stringData) && long.TryParse(stringData, out long parsedValue))
         {

@@ -3164,87 +3164,7 @@ public static class OBConsentValidationHelper
         return result;
     }
 
-    public static async Task<ApiResult> VerificationUser(
-       Guid consentId,
-       string tckn,
-       ConsentDbContext context,
-       IOpenBankingIntegrationService openBankingIntegrationService,
-       ICustomerService customerService
-       )
-    {
-        ApiResult apiResult = new();
-
-        var consent = await context.Consents.FirstOrDefaultAsync(c => c.Id == consentId);
-
-        if (consent == null)
-        {
-            apiResult.Result = false;
-            apiResult.Data = "Consent not found";
-
-            return apiResult;
-        }
-
-        if (tckn != consent.UserTCKN.ToString())
-        {
-            apiResult.Result = false;
-            apiResult.Data = "TCKN error";
-
-            return apiResult;
-        }
-
-        var kimlik = new KimlikDto();
-
-        if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-        {
-            var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
-            kimlik = accountConsent.kmlk;
-        }
-        else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
-        {
-            var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
-            kimlik = paymentConsent.odmBsltm.kmlk;
-        }
-
-        var customerResult = await customerService.GetCustomerInformations(kimlik);
-
-        if (customerResult.Result == false)
-        {
-            apiResult.Result = false;
-            apiResult.Data = customerResult.Message;
-
-            return apiResult;
-        }
-
-        var customerResponse = (GetCustomerResponseDto)customerResult.Data;
-
-        var consentDetail = await context.OBAccountConsentDetails.FirstOrDefaultAsync(c => c.ConsentId == consentId);
-
-        if (consentDetail == null)
-        {
-            apiResult.Result = false;
-            apiResult.Data = "Consent Detail not found";
-
-            return apiResult;
-        }
-
-        var verificationUserJsonData = new VerificationUserJsonData();
-
-        if (consentDetail.AccountReferences != null)
-            verificationUserJsonData.account = consentDetail.AccountReferences.ToArray();
-        else
-            verificationUserJsonData.account = Array.Empty<string>();
-
-        var result = await openBankingIntegrationService.VerificationUser
-                                                (
-                                                 customerResponse.customerNumber,
-                                                 customerResponse.krmCustomerNumber,
-                                                 Newtonsoft.Json.JsonConvert.SerializeObject(verificationUserJsonData)
-                                                );
-
-        return result;
-    }
-
-    public static async Task<CheckInstitutionConsentResult> CheckInstitutionConsent
+    public static async Task<ApiResult> CheckInstitutionConsent
    (
        string consentId,
        ConsentDbContext context,
@@ -3257,103 +3177,82 @@ public static class OBConsentValidationHelper
        List<OBErrorCodeDetail> errorCodeDetails
    )
     {
-        CheckInstitutionConsentResult checkInstitutionConsentResult = new();
         ApiResult result = new();
-        Guid guidConsentId = new Guid(consentId);
-
         try
         {
-            var consent = await context.Consents.FirstOrDefaultAsync(t => t.Id == guidConsentId);
-
+            List<string> consentTypes = new List<string>()
+            {
+                ConsentConstants.ConsentType.OpenBankingAccount,
+                ConsentConstants.ConsentType.OpenBankingPayment
+            };
+        
+            //Get consent from database
+            var consent = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
+                .Include(c => c.OBPaymentConsentDetails)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id.ToString() == consentId
+                                          && consentTypes.Contains(c.ConsentType)
+                                          && (c.OBAccountConsentDetails.Any(i => i.UserType == OpenBankingConstants.OHKTur.Kurumsal
+                                              && i.Consent.ConsentType ==
+                                              ConsentConstants.ConsentType.OpenBankingAccount)
+                                          || c.OBPaymentConsentDetails.Any(i =>
+                                              i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
+                                              && i.UserType == OpenBankingConstants.OHKTur.Kurumsal)));
+            //No consent to process
             if (consent == null)
-            {
+            {//Do nothing
+                return result;
+            }
+            //Check institution authorization
+            result = await openBankingIntegrationService.VerificationUser(consent);
+            
+            if (result.Result == false
+                || result.Data is null)
+            {//Service error
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetBadRequestError(httpContext, errorCodeDetails,
-                    OBErrorCodeConstants.ErrorCodesEnum.ConsentMismatch);
-
-                checkInstitutionConsentResult.IsConsentCancelled = false;
-                checkInstitutionConsentResult.ApiResult = result;
-                return checkInstitutionConsentResult;
-            }
-
-            var kimlik = new KimlikDto();
-
-            if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-            {
-                var accountConsent = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(consent.AdditionalData);
-                kimlik = accountConsent.kmlk;
-            }
-            else if (consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
-            {
-                var paymentConsent = JsonSerializer.Deserialize<OdemeEmriRizasiHHSDto>(consent.AdditionalData);
-                kimlik = paymentConsent.odmBsltm.kmlk;
-            }
-
-            if (kimlik.ohkTur == OpenBankingConstants.OHKTur.Bireysel)
-            {
-                result.Result = true;
-
-                checkInstitutionConsentResult.IsConsentCancelled = false;
-                checkInstitutionConsentResult.ApiResult = result;
-                return checkInstitutionConsentResult;
-            }
-
-            var verificationUserResult = await VerificationUser
-                                                    (
-                                                        new Guid(consentId),
-                                                        kimlik.krmKmlkVrs,
-                                                        context,
-                                                        openBankingIntegrationService,
-                                                        customerService
-                                                    );
-
-            if (verificationUserResult.Result == true)
-            {
-                result.Result = true;
-
-                checkInstitutionConsentResult.IsConsentCancelled = false;
-                checkInstitutionConsentResult.ApiResult = result;
-                return checkInstitutionConsentResult;
+                result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorVerificationUser);
+                return result;
             }
 
             var verificationUserResultData = (VerificationUserResponse)result.Data;
-
-            if (verificationUserResultData.VerificationUserResult.isCustomerErrorField == false)
-            {
-                result.Result = true;
-
-                checkInstitutionConsentResult.IsConsentCancelled = false;
-                checkInstitutionConsentResult.ApiResult = result;
-                return checkInstitutionConsentResult;
+            //Check authorization
+            if (verificationUserResultData.VerificationUserResult.isSuccessField)
+            {//Authorized user
+                return result;
             }
+            
 
-            var cancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali;
-
-
-            var checkResult = await OBModuleHelper.CancelInstitutionConsentUnAuthorized
-                                (
-                                  context,
-                                  tokenService,
-                                  eventService,
-                                  yosInfoService,
-                                  consent,
-                                  cancelDetailCode
-                                );
-
-            checkInstitutionConsentResult.IsConsentCancelled = checkResult.Result;
-            checkInstitutionConsentResult.ApiResult = checkResult;
-            return checkInstitutionConsentResult;
-
+            if (verificationUserResultData.VerificationUserResult.isCustomerErrorField.HasValue 
+                && verificationUserResultData.VerificationUserResult.isCustomerErrorField.Value)
+            {//Show error to user
+                //Cancel consent
+                var cancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali;
+                await OBModuleHelper.CancelInstitutionConsentUnAuthorized(context,tokenService,eventService,yosInfoService,consent,cancelDetailCode);
+                result.Message = verificationUserResultData.VerificationUserResult.displayMessageField;
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InstitutionConsentUnAuthorized,
+                    verificationUserResultData.VerificationUserResult.displayMessageField);
+                return result;
+            }
+            else
+            {//Show generic error
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetInternalServerError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.GenericServiceErrorMessageInstitutionValidation);
+                return result;
+            }
+            return result;
         }
         catch (Exception ex)
         {
             result.Result = false;
             result.Data = ex.Message;
-
-            checkInstitutionConsentResult.IsConsentCancelled = false;
-            checkInstitutionConsentResult.ApiResult = result;
-            return checkInstitutionConsentResult;
         }
+
+        return result;
     }
 
 }

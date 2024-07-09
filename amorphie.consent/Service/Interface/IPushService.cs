@@ -9,5 +9,5 @@ namespace amorphie.consent.Service.Interface;
 
 public interface IPushService
 {
-    public Task<ApiResult> OpenBankingSendPush(KimlikDto data, Guid consentId);
+    public Task<ApiResult> OpenBankingSendPush(string userTckn, Guid consentId);
 }
