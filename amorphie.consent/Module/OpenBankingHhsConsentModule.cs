@@ -1028,6 +1028,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //Check consent
             await ProcessPaymentConsentToCancelOrEnd(updateConsentState.Id, context, tokenService);
             var entity = await context.Consents
+                .Include(c => c.OBPaymentConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == updateConsentState.Id
                                           && c.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment);
             //Check consent validity
@@ -1043,6 +1044,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 return Results.BadRequest("Payment consent data can not be deserialized.");
             }
+            var consentDetail = entity.OBPaymentConsentDetails.FirstOrDefault();
+            if (consentDetail is null)
+            {
+                return Results.BadRequest("Consent detail is empty");
+            }
             additionalData.rzBlg.rizaDrm = updateConsentState.State;
             additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
             //IF one time payment, set customer's identity data
@@ -1050,6 +1056,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 additionalData.odmBsltm.kmlk.kmlkTur = OpenBankingConstants.KimlikTur.TCKN;
                 additionalData.odmBsltm.kmlk.kmlkVrs = entity.UserTCKN?.ToString() ?? String.Empty;
+                consentDetail.IdentityType = OpenBankingConstants.KimlikTur.TCKN;
+                consentDetail.IdentityData =  entity.UserTCKN?.ToString() ?? String.Empty;
+                context.OBPaymentConsentDetails.Update(consentDetail);
             }
             entity.AdditionalData = JsonSerializer.Serialize(additionalData);
             entity.State = updateConsentState.State;
