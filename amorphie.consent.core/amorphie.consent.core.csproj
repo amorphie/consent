@@ -12,5 +12,6 @@
 <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
 <PackageReference Include="amorphie.core" Version="1.1.30" />
 <PackageReference Include="System.Text.Json" Version="8.0.4" />
+<PackageReference Include="System.Security.Cryptography.Pkcs" Version="7.0.2" />
 </ItemGroup>
 </Project>
