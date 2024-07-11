@@ -1279,7 +1279,8 @@ public static class OBConsentValidationHelper
         IOBEventService eventService,
         IYosInfoService yosInfoService,
         IAccountService accountService,
-        string objectName)
+        string objectName, 
+        string consentType)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -1348,7 +1349,8 @@ public static class OBConsentValidationHelper
                 eventService,
                 accountService: accountService,
                 context,
-                objectName: objectName); //validate ayrik gkd data
+                objectName: objectName,
+                consentType:consentType); //validate ayrik gkd data
             if (!result.Result)
             {
                 //Not valid
@@ -1366,7 +1368,8 @@ public static class OBConsentValidationHelper
         IOBEventService eventService,
         IYosInfoService yosInfoService,
         IAccountService accountService,
-        string objectName)
+        string objectName,
+        string consentType)
     {
         ApiResult result = new();
         //Get 400 error response
@@ -1388,7 +1391,8 @@ public static class OBConsentValidationHelper
             kimlik, yosCode, context, errorCodeDetails, eventService,
             yosInfoService,
             accountService,
-            objectName);
+            objectName,
+            consentType);
     }
 
     /// <summary>
@@ -1412,14 +1416,15 @@ public static class OBConsentValidationHelper
         IOBEventService eventService,
         IAccountService accountService,
         HttpContext context,
-        string objectName)
+        string objectName,
+        string consentType)
     {
         ApiResult result = new()
         {
             Data = errorResponse
         };
         bool isSubscribed =
-            await eventService.IsSubscsribedForAyrikGkd(yosCode, ConsentConstants.ConsentType.OpenBankingAccount);
+            await eventService.IsSubscsribedForAyrikGkd(yosCode, consentType);
         if (!isSubscribed)
         {
             //No subscription for ayrik gkd
