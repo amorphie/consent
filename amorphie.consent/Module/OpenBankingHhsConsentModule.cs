@@ -2233,7 +2233,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         result = await OBConsentValidationHelper.IsGkdValid(rizaIstegi.gkd, rizaIstegi.kmlk, rizaIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService,
             yosInfoService: yosInfoService,
             accountService: accountService,
-            objectName: objectName);
+            objectName: objectName,
+            consentType: ConsentConstants.ConsentType.OpenBankingAccount);
         if (!result.Result)
         {
             return result;
@@ -2301,7 +2302,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             eventService,
             yosInfoService: yosInfoService,
             accountService: accountService,
-            objectName: objectName);
+            objectName: objectName,
+            consentType: ConsentConstants.ConsentType.OpenBankingPayment);
         if (!result.Result)
         {
             return result;
@@ -2405,7 +2407,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         //Check GKD
         result = await OBConsentValidationHelper.IsGkdValid(odemeEmriIstegi.gkd, odemeEmriIstegi.odmBsltm.kmlk, odemeEmriIstegi.katilimciBlg.yosKod, httpContext, _errorCodeDetails, eventService, yosInfoService: yosInfoService,
             accountService: accountService,
-            objectName: objectName);
+            objectName: objectName,
+            consentType: ConsentConstants.ConsentType.OpenBankingPayment);
         if (!result.Result)
         {
             return result;
@@ -3376,7 +3379,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         {
             //Tek seferlik ödeme işlemlerinde "ohkTanimTip" = "GSM"/"IBAN" olarak gönderilmiş ise, HHS sisteminde bu GSM/IBAN ile eşleşen müşterileri taramalıdır. 
             var result = await OBConsentValidationHelper.CheckIsUniqueCustomerByIbanGsm(accountService, odemeEmriRizasi.gkd.ayrikGkd, context, _errorCodeDetails);
-            if (!result.Result
+            if (result.Result
                 && result.Data != null )
             {
                 CustomerScanResponseDto customerScanResponse = (CustomerScanResponseDto)result.Data;

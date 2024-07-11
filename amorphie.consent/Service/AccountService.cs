@@ -506,6 +506,7 @@ public class AccountService : IAccountService
                 _logger.LogError( $"Error in GetUniqueCustomer {serviceResponse.error}");
                 return result;
             }
+            result.Data = serviceResponse;
         }
         catch (Exception e)
         {
