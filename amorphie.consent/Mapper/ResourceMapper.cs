@@ -123,8 +123,8 @@ namespace amorphie.consent.Mapper
 
             CreateMap<OBEvent, OlayIstegiDto>()
                 .ForPath(dest => dest.katilimciBlg.hhsKod, opt => opt.MapFrom(src => src.HHSCode))
-                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode));
-
+                .ForPath(dest => dest.katilimciBlg.yosKod, opt => opt.MapFrom(src => src.YOSCode))
+                .ForMember(dest => dest.olaylar, opt => opt.MapFrom<OlaylarResolver>());
 
             CreateMap<OBYosInfo, OBYosInfoDto>().ReverseMap();
             CreateMap<OBYosInfoDto, OBYosInfo>()
