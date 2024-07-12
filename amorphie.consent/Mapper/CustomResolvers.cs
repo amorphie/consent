@@ -1,3 +1,4 @@
+using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Model;
 
@@ -37,3 +38,12 @@ public class InstitutionCustomerNumberResolverPayment : IValueResolver<Consent, 
         return source.OBPaymentConsentDetails?.FirstOrDefault()?.InstitutionCustomerNumber ?? string.Empty;
     }
 }
+
+public class OlaylarResolver : IValueResolver<OBEvent, OlayIstegiDto, List<OlaylarDto>>
+{
+    public List<OlaylarDto> Resolve(OBEvent source, OlayIstegiDto destination, List<OlaylarDto> destMember, ResolutionContext context)
+    {
+        return new List<OlaylarDto> { context.Mapper.Map<OlaylarDto>(source) };
+    }
+}
+
