@@ -1402,7 +1402,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
                 //Data not valid
-                return Results.Content(checkValidationResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(checkValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //Check customer
@@ -1413,7 +1413,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {//Error in customer service
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkCustomerResult.Data);
                 //Data not valid
-                return Results.Content(checkCustomerResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(checkCustomerResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //Check Idempotency
@@ -1424,12 +1424,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var errorResponse = OBErrorResponseHelper.GetInternalServerError(httpContext, _errorCodeDetails,
                     OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency);
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
-                return Results.Content(errorResponse.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(errorResponse.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
             if (getIdempotencyConsentResult.Data != null)
             {//Idempotency occured. Return previous response
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, getIdempotencyConsentResult.Data);
-                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
+                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
             }
 
             GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
@@ -1438,7 +1438,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!checkAccountConsentResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkAccountConsentResult.Data);
-                return Results.Content(checkAccountConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(checkAccountConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             var consentEntity = new Consent();
@@ -1484,7 +1484,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
-            return Results.Content(hesapBilgisiRizasi.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
+            return Results.Content(hesapBilgisiRizasi.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -1681,8 +1681,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("PSU-Initiated", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     [AddSwaggerParameter("PSU-Fraud-Check", ParameterLocation.Header)]
-    protected async Task<IResult> PaymentConsentPost([FromBody] OdemeEmriRizaIstegiHHSDto rizaIstegi,
-        [FromServices] ConsentDbContext context,
+    protected async Task<IResult> PaymentConsentPost([FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
@@ -1698,10 +1697,20 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var requestBody = await new StreamReader(httpContext.Request.Body).ReadToEndAsync();
+            var rizaIstegi = JsonSerializer.Deserialize<OdemeEmriRizaIstegiHHSDto>(requestBody);
+            if (rizaIstegi == null)
+            {
+                var nullError = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContent);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, nullError);
+                httpContext.Response.ContentType = OpenBankingConstants.ContentTypes.ApplicationJson;
+                return Results.Content(nullError.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
             var dataValidationResult =
                 await IsDataValidToPaymentConsentPost(rizaIstegi,
+                    requestBody,
                     header,
                     configuration,
                     yosInfoService,
@@ -1713,8 +1722,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
                 //Data not valid
-                httpContext.Response.ContentType = "application/json";
-                return Results.Content(dataValidationResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                httpContext.Response.ContentType = OpenBankingConstants.ContentTypes.ApplicationJson;
+                return Results.Content(dataValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             GetCustomerResponseDto? customerResponse = null;
@@ -1728,7 +1737,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 {//Error in customer service
                     OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkCustomerResult.Data);
                     //Data not valid
-                    return Results.Content(checkCustomerResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                    return Results.Content(checkCustomerResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
                 }
                 customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
             }
@@ -1741,19 +1750,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
                     OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency);
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
-                return Results.Content(errorResponse.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(errorResponse.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
             if (getIdempotencyConsentResult.Data != null)
             {//Idempotency occured. Return previous response
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, getIdempotencyConsentResult.Data);
-                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
+                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
             }
 
             ApiResult paymentServiceResponse = await paymentService.SendOdemeEmriRizasi(rizaIstegi);
             if (!paymentServiceResponse.Result) //Error in service
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentServiceResponse.Data);
-                return Results.Content(paymentServiceResponse.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(paymentServiceResponse.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             var consentEntity = new Consent();
@@ -1801,8 +1810,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             var resObject = mapper.Map<OdemeEmriRizasiHHSDto>(odemeEmriRizasi); //Send consent to YOS without hhsmsrfttr property
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, resObject);
-            httpContext.Response.ContentType = "application/json";
-            return Results.Content(resObject.ToJsonString(), "application/json", statusCode: 200);
+            httpContext.Response.ContentType = OpenBankingConstants.ContentTypes.ApplicationJson;
+            return Results.Content(resObject.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: 200);
 
         }
         catch (Exception ex)
@@ -1826,8 +1835,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     [AddSwaggerParameter("user_reference", ParameterLocation.Header, true)]
     [AddSwaggerParameter("X-JWS-Signature", ParameterLocation.Header, true)]
     [AddSwaggerParameter("openbanking_consent_id", ParameterLocation.Header, true)]
-    protected async Task<IResult> PaymentOrderPost([FromBody] OdemeEmriIstegiHHSDto odemeEmriIstegi,
-        [FromServices] ConsentDbContext context,
+    protected async Task<IResult> PaymentOrderPost([FromServices] ConsentDbContext context,
         [FromServices] IMapper mapper,
         [FromServices] IConfiguration configuration,
         [FromServices] IPaymentService paymentService,
@@ -1840,16 +1848,27 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            var requestBody = await new StreamReader(httpContext.Request.Body).ReadToEndAsync();
+            var odemeEmriIstegi = JsonSerializer.Deserialize<OdemeEmriIstegiHHSDto>(requestBody);
+            if (odemeEmriIstegi == null)
+            {
+                var nullError = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContent);
+                OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, nullError);
+                httpContext.Response.ContentType = OpenBankingConstants.ContentTypes.ApplicationJson;
+                return Results.Content(nullError.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+            }
             var header = OBModuleHelper.GetHeader(httpContext); //Get header
             //Check if post data is valid to process.
-            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi, header, context, yosInfoService, eventService: eventService, tokenService: tokenService,
+            var dataValidationResult = await IsDataValidToPaymentOrderPost(odemeEmriIstegi,
+                requestBody,
+                header, context, yosInfoService, eventService: eventService, tokenService: tokenService,
                 accountService: accountService,
                 httpContext, configuration);
             if (!dataValidationResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
                 //Data not valid
-                return Results.Content(dataValidationResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(dataValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             if (dataValidationResult.Data == null)
@@ -1866,12 +1885,12 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var errorResponse = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails,
                     OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorCheckingIdempotency);
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, errorResponse);
-                return Results.Content(errorResponse.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(errorResponse.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
             if (getIdempotencyConsentResult.Data != null)
             {//Idempotency occured. Return previous response
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, getIdempotencyConsentResult.Data);
-                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
+                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
             }
 
             //Send payment order to payment service
@@ -1885,7 +1904,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!paymentServiceResponse.Result) //Error in service
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, paymentServiceResponse.Data);
-                return Results.Content(paymentServiceResponse.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(paymentServiceResponse.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
 
             //TODO:Özlem error oluşma caseleri için konuş
@@ -1938,10 +1957,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
             orderEntity.XRequestId = header.XRequestID;
             orderEntity.XGroupId = header.XGroupID;
+            orderEntity.CheckSumLastValiDateTime = DateTime.UtcNow.AddMinutes(5);
+            orderEntity.SaveResponseMessage = JsonSerializer.Serialize(odemeEmriDto);
+            orderEntity.CheckSumValue = OBModuleHelper.GetChecksumForXRequestIdSHA256(odemeEmriIstegi, header.XRequestID);
             context.OBPaymentOrders.Add(orderEntity);
             await context.SaveChangesAsync();//Save order
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, odemeEmriDto);
-            return Results.Content(odemeEmriDto.ToJsonString(), "application/json", statusCode: HttpStatusCode.OK.GetHashCode());
+            return Results.Content(odemeEmriDto.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
         }
         catch (Exception ex)
         {
@@ -2258,6 +2280,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// </summary>
     /// <returns></returns>
     private async Task<ApiResult> IsDataValidToPaymentConsentPost(OdemeEmriRizaIstegiHHSDto rizaIstegi,
+        string requestBody,
         RequestHeaderDto header,
         IConfiguration configuration,
         IYosInfoService yosInfoService,
@@ -2269,7 +2292,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
-            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: rizaIstegi.katilimciBlg, errorCodeDetails: _errorCodeDetails, body:requestBody);
         if (!result.Result)
         {
             //validation error in header fields
@@ -2359,6 +2382,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     /// Check if consent is valid to payment order post
     /// </summary>
     private async Task<ApiResult> IsDataValidToPaymentOrderPost(OdemeEmriIstegiHHSDto odemeEmriIstegi,
+        string requestBody,
         RequestHeaderDto header,
         ConsentDbContext context,
         IYosInfoService yosInfoService,
@@ -2371,7 +2395,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         ApiResult result = new();
         //Check header fields
         result = await OBConsentValidationHelper.IsHeaderDataValid(httpContext, configuration, yosInfoService, header, isXJwsSignatureRequired: true,
-            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true, isConsentIdRequired: true, errorCodeDetails: _errorCodeDetails);
+            katilimciBlg: odemeEmriIstegi.katilimciBlg, isUserRequired: true, isConsentIdRequired: true, errorCodeDetails: _errorCodeDetails, body:requestBody);
         if (!result.Result)
         {
             //validation error in header fields
