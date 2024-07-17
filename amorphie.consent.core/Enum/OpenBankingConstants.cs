@@ -413,5 +413,10 @@ public static class OpenBankingConstants
         public const int Android = 1;
         public const int Ios = 2;
     }
+    
+    public static class ContentTypes
+    {
+        public const string ApplicationJson = "application/json";
+    }
 
 }
