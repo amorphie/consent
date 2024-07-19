@@ -164,6 +164,15 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.OdemeKaynak).GetAllPublicConstantValues<string>();
     }
+    
+    /// <summary>
+    /// Get OdemeDurumu constants values list
+    /// </summary>
+    /// <returns>OdemeDurumu constants values list</returns>
+    public static List<string> GetOdemeDurumuList()
+    {
+        return typeof(OpenBankingConstants.OdemeDurumu).GetAllPublicConstantValues<string>();
+    }
 
     /// <summary>
     /// Get RizaDurumu constants values list

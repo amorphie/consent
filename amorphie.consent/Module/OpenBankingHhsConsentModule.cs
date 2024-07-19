@@ -2014,80 +2014,87 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         [FromServices] ConsentDbContext context,
         [FromServices] IOBEventService obEventService,
         [FromServices] IYosInfoService yosInfoService,
+        [FromServices] ILogger<OpenBankingHHSConsentModule> logger,
         HttpContext httpContext)
     {
         try
         {
             //Get payment system record.
-            PaymentRecordDto? model = await httpContext.Deserialize<PaymentRecordDto>();
-            if (model != null
-                && model.message?.data?.TRAN_BRANCH_CODE ==
-                OpenBankingConstants.PaymentServiceInformation.PaymentServiceBranchCode
-                && !string.IsNullOrEmpty(model.message.data.TRAN_DATE)
-                && !string.IsNullOrEmpty(model.message.data.RECORD_STATUS))
+            PaymentStateChangedKafkaRecordDto? kafkaRecord = await httpContext.Deserialize<PaymentStateChangedKafkaRecordDto>();
+            if (kafkaRecord != null
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.RIZANO)
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.EFT_RESPONSE)
+                && !string.IsNullOrEmpty(kafkaRecord.message.data.UPDATE_DATE))
             {
                 //Check must fields
-                string recordStatus = model.message.data.RECORD_STATUS; //New status
-                DateTime tranDate = DateTime.ParseExact(model.message.data.TRAN_DATE, "yyyy-MM-dd HH:mm:ss",
-                    CultureInfo.InvariantCulture);
-                DateTime utcTranDate = DateTime.SpecifyKind(tranDate, DateTimeKind.Utc);
-                DateTime lastUpdateDate = DateTime.ParseExact(model.message.data.LAST_UPDATE_DATE,
-                    "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                int refNum = model.message.data.REF_NUM;
-                //Get related payment order entity
-                var paymentOrderEntity = context.OBPaymentOrders.Where(o => o.PSNRefNum == refNum
-                                                                            && o.PSNDate != null).AsEnumerable()
-                    .FirstOrDefault(o =>
-                        o.PSNDate != null && DateTime.ParseExact(o.PSNDate, "yyyy-MM-dd HH:mm:ss", null).Date == utcTranDate.Date);
-                if (paymentOrderEntity != null)
+                string recordPaymentState = kafkaRecord.message.data.EFT_RESPONSE; //New status
+                if (!ConstantHelper.GetOdemeDurumuList().Contains(recordPaymentState))
                 {
-                    if (paymentOrderEntity.PaymentServiceUpdateTime != null
-                        && DateTime.ParseExact(paymentOrderEntity.PaymentServiceUpdateTime, "yyyy-MM-dd HH:mm:ss.fff",
-                            null) > lastUpdateDate)
-                    {
-                        //Payment order updated with latest record
-                        //TODO:Ozlem log this case
-                        return Results.Ok();
-                    }
+                    //Payment state not  valid.
+                     logger.LogWarning("Message read from Kafka. But EFT_RESPONSE data not valid {@KafkaRecord}", kafkaRecord);
+                    return Results.BadRequest();
+                }
+                
+                DateTime lastUpdateDate = DateTime.ParseExact(kafkaRecord.message.data.UPDATE_DATE,
+                    "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+               
+                //Get related payment order entity
+                var paymentOrderEntity = await context.OBPaymentOrders
+                    .FirstOrDefaultAsync(o => o.ConsentId.ToString() == kafkaRecord.message.data.RIZANO);
+                if (paymentOrderEntity is null)
+                {//No consent in system
+                    logger.LogWarning("Message read from Kafka. But no related consent data in system. {@KafkaRecord}", kafkaRecord);
+                    return Results.NoContent();
+                }
 
-                    //Calculate new state
-                    var paymentState = GetPaymentState(recordStatus, paymentOrderEntity.PaymentSystem,
-                        paymentOrderEntity.PaymentState);
-                    if (paymentState != paymentOrderEntity.PaymentState) //Payment state changed
+                if (paymentOrderEntity.PaymentServiceUpdateTime != null
+                    && DateTime.ParseExact(paymentOrderEntity.PaymentServiceUpdateTime, "yyyy-MM-dd HH:mm:ss.fff",
+                        null) > lastUpdateDate)
+                {
+                    //Payment order updated with latest record
+                    logger.LogWarning("Message read from Kafka. State not updated. Entity in database already updated with updated record. {@KafkaRecord}", kafkaRecord);
+                    return Results.Ok();
+                }
+
+                if (recordPaymentState != paymentOrderEntity.PaymentState) //Payment state changed
+                {
+                    //Update payment message
+                    var additionalData =
+                        JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
+                    additionalData!.odmBsltm.odmAyr.odmDrm = recordPaymentState;
+                    //Update payment order data
+                    paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
+                    paymentOrderEntity.PaymentServiceUpdateTime = kafkaRecord.message.data.UPDATE_DATE;
+                    paymentOrderEntity.PaymentState = recordPaymentState;
+                    paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
+                    context.OBPaymentOrders.Update(paymentOrderEntity);
+                    await context.SaveChangesAsync();
+                    //If YOS has subscription, Do event process
+                    ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(paymentOrderEntity.YosCode,
+                        OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
+                    if (yosHasSubscription.Result
+                        && yosHasSubscription.Data != null
+                        && (bool)yosHasSubscription.Data)
                     {
-                        //Update payment message
-                        var additionalData =
-                            JsonSerializer.Deserialize<OdemeEmriHHSDto>(paymentOrderEntity.AdditionalData);
-                        additionalData!.odmBsltm.odmAyr.odmDrm = paymentState;
-                        //Update payment order data
-                        paymentOrderEntity.AdditionalData = JsonSerializer.Serialize(additionalData);
-                        paymentOrderEntity.PaymentServiceUpdateTime = model.message.data.LAST_UPDATE_DATE;
-                        paymentOrderEntity.PaymentState = paymentState;
-                        paymentOrderEntity.ModifiedAt = DateTime.UtcNow;
-                        context.OBPaymentOrders.Update(paymentOrderEntity);
-                        await context.SaveChangesAsync();
-                        //If YOS has subscription, Do event process
-                        ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(paymentOrderEntity.YosCode,
-                            OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.OdemeEmri);
-                        if (yosHasSubscription.Result
-                            && yosHasSubscription.Data != null
-                           && (bool)yosHasSubscription.Data)
-                        {
-                            //Yos has subscrition. Do event process.
-                            await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(),
-                                additionalData.katilimciBlg,
-                                OpenBankingConstants.OlayTip.KaynakGuncellendi,
-                                OpenBankingConstants.KaynakTip.OdemeEmri,
-                                paymentOrderEntity.Id.ToString());
-                        }
+                        //Yos has subscrition. Do event process.
+                        await obEventService.DoEventProcess(paymentOrderEntity.Id.ToString(),
+                            additionalData.katilimciBlg,
+                            OpenBankingConstants.OlayTip.KaynakGuncellendi,
+                            OpenBankingConstants.KaynakTip.OdemeEmri,
+                            paymentOrderEntity.Id.ToString());
                     }
                 }
             }
-
+            else
+            {//Kafka record data is not  valid
+                logger.LogWarning("Message read from Kafka. But not valid. {@KafkaRecord}", kafkaRecord);
+                return Results.BadRequest();
+            }
             return Results.Ok();
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error processing Payment state changed request.");
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
@@ -2155,63 +2162,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Problem($"An error occurred: {ex.Message}");
         }
     }
-
-
-
-    private string GetPaymentState(string recordStatus, string paymentSystem, string currentPaymentState)
-    {
-        string paymentState = currentPaymentState;
-        if (paymentSystem == OpenBankingConstants.OdemeSistemi.Fast)
-        {
-            switch (recordStatus)
-            {
-                case "TM":
-                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesti;
-                    break;
-                case "HM":
-                case "FR":
-                case "IT":
-                case "I":
-                case "FI":
-                case "EM":
-                case "T":
-                case "W":
-                case "Y":
-                case "G":
-                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesmedi;
-                    break;
-                default:
-                    paymentState = currentPaymentState;
-                    break;
-            }
-        }
-        else if (paymentSystem == OpenBankingConstants.OdemeSistemi.EFT_POS)
-        {
-            switch (recordStatus)
-            {
-                case "T":
-                case "B":
-                case "O":
-                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesti;
-                    break;
-                case "I":
-                case "Q":
-                case "U":
-                    paymentState = OpenBankingConstants.OdemeDurumu.Gerceklesmedi;
-                    break;
-                case "G":
-                    paymentState = OpenBankingConstants.OdemeDurumu.Gonderildi;
-                    break;
-                default:
-                    paymentState = currentPaymentState;
-                    break;
-
-            }
-        }
-
-        return paymentState;
-    }
-
+    
     #endregion
 
 
