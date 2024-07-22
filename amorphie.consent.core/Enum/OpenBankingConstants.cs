@@ -375,7 +375,7 @@ public static class OpenBankingConstants
     public static class KafkaInformation
     {
         public const string KafkaName = "openbanking-kafka";
-        public const string TopicName_PaymentStatusUpdated = "EFT.SGOD_MASTER_OPENBANKING";
+        public const string TopicName_PaymentStatusUpdated = "EFT.SGOD_MASTER_OPENBANKING_TA";
         public const string TopicName_BalanceUpdated = "COR.HESAP_BAKIYESI_DEGISENLER";
     }
 
