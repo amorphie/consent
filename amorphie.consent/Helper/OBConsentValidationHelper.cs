@@ -1667,7 +1667,7 @@ public static class OBConsentValidationHelper
     /// <returns>True if the IBAN is valid; otherwise, false.</returns>
     private static bool IsIbanValid(string iban)
     {
-        return !string.IsNullOrEmpty(iban) && iban.Trim().Length == 26 && iban.All(char.IsDigit);
+        return !string.IsNullOrEmpty(iban) && iban.Trim().Length == 26;
     }
 
     /// <summary>
