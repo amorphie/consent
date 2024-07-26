@@ -225,11 +225,8 @@ public class OBAuthorizationService : IOBAuthorizationService
                                           && consentTypes.Contains(c.ConsentType)
                                           && c.UserTCKN != null && c.UserTCKN.ToString()== userTCKN
                                           && (c.LastValidAccessDate == null
-                                              || (c.LastValidAccessDate != null && c.LastValidAccessDate > today))
-                                          && (c.OBAccountConsentDetails.Any(i => i.UserType == OpenBankingConstants.OHKTur.Bireysel
-                                                  && i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
-                                              || c.OBPaymentConsentDetails.Any(i => i.Consent.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment
-                                                  && i.UserType == OpenBankingConstants.OHKTur.Bireysel)));
+                                              || (c.LastValidAccessDate != null && c.LastValidAccessDate >= today))
+                                    );
 
             result.Data = activeConsent;
         }
