@@ -12,10 +12,9 @@ public interface IAccountClientService
     Task<bool> IsCustomer(string customerId);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Post("/hesaplar/{customerId}?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    [Post("/hesaplar?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
     Task<GetAccountsResponseDto?> GetAccounts([Header("izinTur")] string izinTur,
         [Body] GetByAccountRefRequestDto accountRefs,
-        string customerId,
         int syfKytSayi,
         int syfNo,
         string srlmKrtr,
@@ -26,9 +25,8 @@ public interface IAccountClientService
     Task<GetAccountResponseDto?> GetAccountByHspRef(string customerId, string hspRef);
 
     [Headers("Content-Type: application/json", "CHANNEL:INTERNET", "branch:2000", "user:EBT\\INTERNETUSER")]
-    [Post("/hesaplar/{customerId}/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
+    [Post("/hesaplar/bakiye?syfKytSayi={syfKytSayi}&syfNo={syfNo}&srlmKrtr={srlmKrtr}&srlmYon={srlmYon}")]
     Task<GetBalancesResponseDto?> GetBalances([Body] GetByAccountRefRequestDto accountRefs,
-        string customerId,
         int syfKytSayi,
         int syfNo,
         string srlmKrtr,

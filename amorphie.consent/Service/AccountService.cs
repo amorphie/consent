@@ -91,7 +91,6 @@ public class AccountService : IAccountService
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
                 accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
@@ -149,7 +148,6 @@ public class AccountService : IAccountService
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: OpenBankingConstants.AccountServiceParameters.izinTurTemel,
                 accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
@@ -281,7 +279,6 @@ public class AccountService : IAccountService
             };
             //Get balances of customer from service
             var serviceResponse = await _accountClientService.GetBalances(accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,

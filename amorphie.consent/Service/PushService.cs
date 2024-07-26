@@ -108,7 +108,7 @@ public class PushService : IPushService
                     Template = _configuration["PushTemplateName"] ?? String.Empty,
                     TemplateParams = JsonConvert.SerializeObject(templateParameters),
                     CustomParameters = "",
-                    SaveInbox = false,
+                    SaveInbox = true,
                     Process = new ProcessInfo
                     {
                         Name = "Açık Bankacılık",

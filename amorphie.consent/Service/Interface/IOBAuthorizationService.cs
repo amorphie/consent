@@ -9,6 +9,7 @@ public interface IOBAuthorizationService
     /// <summary>
     /// Get users yetkikullanildi state of account consents
     /// Also Checks consent validity date
+    /// Usertype - Individual
     /// </summary>
     /// <param name="userTckn">Consent owner tckn</param>
     /// <returns>User's account consents</returns>
@@ -17,6 +18,7 @@ public interface IOBAuthorizationService
     /// <summary>
     /// Get users yetkikullanildi state of account consents
     /// Also Checks consent validity date
+    /// Usertype - Institution
     /// </summary>
     /// <param name="customerNumber">Consent customer number</param>
     /// <param name="institutionCustomerNumber">Consent institution customer number</param>
