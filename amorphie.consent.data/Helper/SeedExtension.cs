@@ -1304,5 +1304,33 @@ public static class SeedExtension
             MessageTr = "Kurumsal müşteri yetkisiz işlem. Hata detayı: {0}"
         });
     }
+    public static void SeedOBErrorCodeDetailsPR186(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignaturePsuFraudCheckHeaderInvalid.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "PSU-Fraud-Check header is invalid.",
+            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi gecersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureXJwsSignatureHeaderInvalid.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidSignature",
+            Message = "X-JWS-Signature header is invalid.",
+            MessageTr = "YOS ten gelen istekteki X-JWS-Signature basligi gecersiz."
+        });
+        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        {
+            Id = Guid.NewGuid(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InternalServerErrorBodyEmptyValidateJwt.GetHashCode(),
+            BkmCode = "TR.OHVPS.Server.InternalError",
+            Message = "By validating header jwt property, body not set.",
+            MessageTr = "Istek başlığında bulunda xjwtsignature alanı kontrol edilirken beklenmedik bir durumla karşılaşıldı. Body değeri set edilmemiş."
+        });
+      
+    }
     
 }
