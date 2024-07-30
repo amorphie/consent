@@ -1429,7 +1429,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (getIdempotencyConsentResult.Data != null)
             {//Idempotency occured. Return previous response
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, getIdempotencyConsentResult.Data);
-                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
+                return Results.Content(getIdempotencyConsentResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.Created.GetHashCode());
             }
 
             GetCustomerResponseDto customerResponse = (GetCustomerResponseDto)checkCustomerResult.Data!;
@@ -1484,7 +1484,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             }
 
             OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, hesapBilgisiRizasi);
-            return Results.Content(hesapBilgisiRizasi.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
+            return Results.Content(hesapBilgisiRizasi.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.Created.GetHashCode());
         }
         catch (Exception ex)
         {
