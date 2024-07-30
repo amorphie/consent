@@ -297,6 +297,14 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             result.Message = "Consent type is not valid.";
             return result;
         }
+        var today = DateTime.UtcNow;
+        if (saveConsent.LastValidAccessDate.HasValue
+            && saveConsent.LastValidAccessDate < today)
+        {
+            result.Result = false;
+            result.Message = "LastValidAccessDate is not valid.";
+            return result;
+        }
         return result;
     }
 }
