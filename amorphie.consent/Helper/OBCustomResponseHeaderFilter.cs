@@ -33,7 +33,16 @@ public class OBCustomResponseHeaderFilter : IEndpointFilter
         {
             context.HttpContext.Response.Headers["X-Group-ID"] = traceValue;
         }
-        return await next(context);
+        // Invoke the next filter/middleware in the pipeline
+        var result = await next(context);
+
+        // Ensure the Content-Type header is set to application/json
+        if (!context.HttpContext.Response.Headers.ContainsKey("Content-Type"))
+        {
+            context.HttpContext.Response.Headers["Content-Type"] = "application/json";
+        }
+
+        return result;
     }
 
 }
