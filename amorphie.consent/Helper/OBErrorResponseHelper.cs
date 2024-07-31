@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -15,7 +16,7 @@ public static class OBErrorResponseHelper
         {
             Path = path,
             Id = Guid.NewGuid().ToString(),
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
             HttpCode = (int)httpCode,
             HttpMessage = httpMessage,
             MoreInformation = string.Format(errorCodeDetail.Message, messageParams),

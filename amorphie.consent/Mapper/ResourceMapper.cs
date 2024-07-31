@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.Authorization;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.Event;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -39,6 +40,8 @@ public sealed class ResourceMapper : Profile
         // CreateMap<Token, TokenModel>().ReverseMap();
         CreateMap<Consent, YOSConsentDto>().ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Tokens))
             .ReverseMap();
+        CreateMap<SaveConsentForLoginDto, SaveConsentDto>()
+            .ForMember(dest => dest.ConsentType, opt => opt.Ignore());
         CreateMap<OpenBankingTokenDto, (Token erisimToken, Token yenilemeToken)>()
             .ConstructUsing((src, ctx) =>
             {
