@@ -35,6 +35,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             "/CheckConsent/clientCode={clientCode}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
             CheckConsent);
         routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
+        routeGroupBuilder.MapPost("/Authorize", Authorize);
     }
 
 
@@ -182,20 +183,39 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
 
     /// <summary>
-    ///  If there isn't any in the system, Creates yetkikullanildi state iblogin type of consent with given variables
+    ///  If there isn't any consent in the system,
+    /// Creates yetkikullanildi state iblogin type of consent with given variables
+    /// If there is already consent in system, cancels that consent with cancel detail code:01 YeniRizaTalebiIleIptal and recreate new one.
     /// </summary>
-    /// <param name="saveConsent">Post data</param>
-    /// <param name="context"></param>
-    /// <param name="configuration"></param>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
-    public async Task<IResult> AuthorizeForLogin([FromBody] SaveConsentForLoginDto saveConsent,
+    public async Task<IResult> AuthorizeForLogin([FromBody] SaveConsentForLoginDto saveConsentForLogin,
+        [FromServices] ConsentDbContext context,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IMapper mapper,
+        HttpContext httpContext)
+    {
+        var saveConsentDto = mapper.Map<SaveConsentDto>(saveConsentForLogin);
+        saveConsentDto.ConsentType = ConsentConstants.ConsentType.IBLogin;
+        return await Authorize(saveConsentDto, context, configuration, httpContext);
+    }
+    
+    /// <summary>
+    ///  If there isn't any consent in the system,
+    /// Creates yetkikullanildi state of given type of consent with given variables
+    /// If there is already consent in system, cancels that consent with cancel detail code:01 YeniRizaTalebiIleIptal and recreate new one.
+    /// </summary>
+    public async Task<IResult> Authorize([FromBody] SaveConsentDto saveConsent,
         [FromServices] ConsentDbContext context,
         [FromServices] IConfiguration configuration,
         HttpContext httpContext)
     {
         try
         {
+            var checkDataResult = IsDataValidToAuthorize(saveConsent);
+            if (!checkDataResult.Result)
+            {
+                return Results.BadRequest(checkDataResult.Message);
+            }
+
             var today = DateTime.UtcNow;
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
@@ -203,7 +223,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                     && c.RoleId == saveConsent.RoleId
                     && c.ScopeTCKN == saveConsent.ScopeTCKN
                     && c.UserTCKN == saveConsent.UserTCKN
-                    && c.ConsentType == ConsentConstants.ConsentType.IBLogin)
+                    && c.ConsentType == saveConsent.ConsentType)
                 .ToListAsync();
 
             //Valid date ended consents
@@ -225,8 +245,8 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
             var toBeCancelledConsents =
                 consents.Where(c => c.State != OpenBankingConstants.RizaDurumu.YetkiSonlandirildi
-                && c.State != OpenBankingConstants.RizaDurumu.YetkiIptal)
-                .ToList();
+                                    && c.State != OpenBankingConstants.RizaDurumu.YetkiIptal)
+                    .ToList();
             if (toBeCancelledConsents.Any())
             {
                 //End consents
@@ -239,13 +259,13 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
                 }).ToList();
                 context.Consents.UpdateRange(toBeCancelledConsents);
             }
-            
+
             //Create desired consent
             var consent = new Consent
             {
                 ScopeTCKN = saveConsent.ScopeTCKN,
                 UserTCKN = saveConsent.UserTCKN,
-                ConsentType = ConsentConstants.ConsentType.IBLogin,
+                ConsentType = saveConsent.ConsentType,
                 RoleId = saveConsent.RoleId,
                 ClientCode = saveConsent.ClientCode,
                 State = OpenBankingConstants.RizaDurumu.YetkiKullanildi,
@@ -263,5 +283,28 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         {
             return Results.Problem($"An error occurred: {ex.Message}");
         }
+    }
+    
+    private ApiResult IsDataValidToAuthorize(SaveConsentDto saveConsent)
+    {
+        ApiResult result = new();
+
+        //Check consent type
+        if (string.IsNullOrEmpty(saveConsent.ConsentType)
+            || !ConstantHelper.GetConsentTypeList().Contains(saveConsent.ConsentType))
+        {
+            result.Result = false;
+            result.Message = "Consent type is not valid.";
+            return result;
+        }
+        var today = DateTime.UtcNow;
+        if (saveConsent.LastValidAccessDate.HasValue
+            && saveConsent.LastValidAccessDate < today)
+        {
+            result.Result = false;
+            result.Message = "LastValidAccessDate is not valid.";
+            return result;
+        }
+        return result;
     }
 }

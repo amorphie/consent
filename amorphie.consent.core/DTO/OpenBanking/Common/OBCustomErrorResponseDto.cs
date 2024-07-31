@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json.Serialization;
 
@@ -8,7 +9,8 @@ public class OBCustomErrorResponseDto
     public OBCustomErrorResponseDto()
     {
         Id = Guid.NewGuid().ToString();
-        Timestamp = DateTime.UtcNow;
+        Timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture);
+
     }
     public OBCustomErrorResponseDto(HttpStatusCode httpCode, string httpMessage, string path) : this()
     {
@@ -18,7 +20,7 @@ public class OBCustomErrorResponseDto
     }
     public string Path { get; set; } = string.Empty;
     public string Id { get; set; }
-    public DateTime Timestamp { get; set; }
+    public string Timestamp { get; set; }
     public int HttpCode { get; set; }
     public string HttpMessage { get; set; } = string.Empty;
     public string MoreInformation { get; set; } = string.Empty;
