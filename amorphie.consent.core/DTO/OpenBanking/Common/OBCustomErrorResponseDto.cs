@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace amorphie.consent.core.DTO.OpenBanking;
 
@@ -18,27 +19,50 @@ public class OBCustomErrorResponseDto
         HttpMessage = httpMessage;
         Path = path;
     }
+    [JsonProperty("path")]
     public string Path { get; set; } = string.Empty;
-    public string Id { get; set; }
-    public string Timestamp { get; set; }
-    public int HttpCode { get; set; }
-    public string HttpMessage { get; set; } = string.Empty;
-    public string MoreInformation { get; set; } = string.Empty;
-    public string MoreInformationTr { get; set; } = string.Empty;
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<FieldError>? FieldErrors { get; set; }
-    public string ErrorCode { get; set; } = string.Empty;
 
+    [JsonProperty("id")]
+    public string Id { get; set; }
+
+    [JsonProperty("timestamp")]
+    public string Timestamp { get; set; }
+
+    [JsonProperty("httpCode")]
+    public int HttpCode { get; set; }
+
+    [JsonProperty("httpMessage")]
+    public string HttpMessage { get; set; } = string.Empty;
+
+    [JsonProperty("moreInformation")]
+    public string MoreInformation { get; set; } = string.Empty;
+
+    [JsonProperty("moreInformationTr")]
+    public string MoreInformationTr { get; set; } = string.Empty;
+
+    [JsonProperty("fieldErrors", NullValueHandling = NullValueHandling.Ignore)]
+    public List<FieldError>? FieldErrors { get; set; }
+
+    [JsonProperty("errorCode")]
+    public string ErrorCode { get; set; } = string.Empty;
 
 }
 
 public class FieldError
 {
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonProperty("objectName", NullValueHandling = NullValueHandling.Ignore)]
     public string? ObjectName { get; set; }
+
+    [JsonProperty("field")]
     public string Field { get; set; } = string.Empty;
+
+    [JsonProperty("messageTr")]
     public string MessageTr { get; set; } = string.Empty;
+
+    [JsonProperty("message")]
     public string Message { get; set; } = string.Empty;
+
+    [JsonProperty("code")]
     public string Code { get; set; } = string.Empty;
 }
 
