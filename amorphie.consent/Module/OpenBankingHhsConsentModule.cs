@@ -1319,7 +1319,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         try
         {
             //Get entity from db
-            var entity = await context.Consents
+            var entity = await context.Consents.Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == cancelData.ConsentId);
             if (entity == null)
             {
