@@ -2932,7 +2932,7 @@ public static class OBConsentValidationHelper
             {
                 //property  is invalid
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
                     invalidErrorCode);
                 return result;
             }
@@ -2941,7 +2941,7 @@ public static class OBConsentValidationHelper
         {
             //property is missing
             result.Result = false;
-            result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+            result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
                 missingErrorCode);
             return result;
         }
@@ -2966,7 +2966,7 @@ public static class OBConsentValidationHelper
             {
                 //property  is invalid
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
                     invalidErrorCode);
                 return result;
             }
@@ -2997,7 +2997,7 @@ public static class OBConsentValidationHelper
             {
                 //property  is invalid
                 result.Result = false;
-                result.Data = OBErrorResponseHelper.GetForbiddenError(context, errorCodeDetails,
+                result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
                     invalidErrorCode);
                 return result;
             }
