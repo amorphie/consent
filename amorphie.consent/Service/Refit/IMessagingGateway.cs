@@ -6,7 +6,7 @@ using Refit;
 public interface IMessagingGateway
 {
     [Post("/api/v2/Messaging/push-notification/templated")]
-    Task<SendPushDto> SendPush([Body] SendPushDto sendPush);
+    Task<SendPushResponseDto> SendPush([Body] SendPushDto sendPush);
 
     [Post("/api/v2/Messaging/sms/message")]
     Task<SmsResponseDto> SendSms(SmsRequestDto request);

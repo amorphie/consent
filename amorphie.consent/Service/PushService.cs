@@ -54,13 +54,13 @@ public class PushService : IPushService
                 result.Result = false;
                 return result;
             }
-            
+
             //Check phone number On user or Burgan User
             PhoneNumberDto phoneNumber = (PhoneNumberDto)getCustomerInfoResult.Data;
             GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
-            bool isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios; 
+            bool isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
             bool.TryParse(_configuration["TargetURLs:SetTargetUrlByOs"], out bool setTargetUrlByOs);
-            
+
             if (phoneNumber.isOn == "X") //OnUser
             {
                 if (!setTargetUrlByOs)
@@ -90,7 +90,7 @@ public class PushService : IPushService
                 {
                     targetUrl = String.Format(_configuration["TargetURLs:BurganMobileTargetUrlAndroid"] ?? String.Empty, consentId);
                 }
-                
+
             }
 
             templateParameters["targetUrl"] = targetUrl;
@@ -117,7 +117,15 @@ public class PushService : IPushService
                         Identity = "Kimlik"
                     }
                 };
-                await _postPushService.SendPush(sendPush);
+                var pushResponse = await _postPushService.SendPush(sendPush);
+                result.Result = pushResponse.Status == "Success";
+                result.Message = pushResponse.StatusMessage;
+                result.Data = pushResponse;
+                if (!result.Result)
+                {
+                    _logger.LogError($"Error in Push Service : {result.Data}");
+                    return result;
+                }
             }
             else
             {

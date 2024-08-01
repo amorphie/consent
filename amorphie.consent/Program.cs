@@ -19,6 +19,8 @@ using System.Security.Cryptography.X509Certificates;
 using amorphie.core.Extension;
 using amorphie.consent.Helper;
 using amorphie.core.Middleware.Logging;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,10 +103,11 @@ builder.Services
         c.BaseAddress = new Uri(builder.Configuration["ServiceURLs:BkmUrl"] ??
                                 throw new ArgumentNullException("Parameter is not suplied.", "BKMCLient"));
     })
-    .ConfigurePrimaryHttpMessageHandler(() => {
-          var handler = new HttpClientHandler();
-                        handler.ClientCertificates.Add(certificate);
-                        return handler;
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        handler.ClientCertificates.Add(certificate);
+        return handler;
     })
     .AddHttpMessageHandler<LoggingHandler>()
     .AddPolicyHandler(retryPolicy);
@@ -164,7 +167,18 @@ if (!app.Environment.IsDevelopment())
     app.UseAllElasticApm(app.Configuration);
 }
 app.UseLoggingHandlerMiddlewares();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status == HealthStatus.Healthy ? "UP" : "DOWN"
+        };
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+    }
+});
 app.UseCloudEvents();
 app.UseRouting();
 app.UseEndpoints(endpoints =>
