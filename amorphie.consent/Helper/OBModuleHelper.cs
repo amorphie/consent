@@ -197,71 +197,72 @@ public static class OBModuleHelper
     /// In any other cases, set token login url
     /// </summary>
     /// <returns>Hhsforwardingaddress</returns>
-    public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, KimlikDto kmlk,
+    public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, string? customerCitizenshipNumber,
         string consentId, ITagService tagService, IDeviceRecord deviceRecordService)
     {
         //Set token login url
         string forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentId);
-        if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
-        {//Tckn consent
-            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);//Get customer phonenumber
-            if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //Error in service
+        if (customerCitizenshipNumber is null)
+        {
+            return forwardingAddress;
+        }
+        var getCustomerInfoResult = await tagService.GetCustomer(customerCitizenshipNumber); //Get customer phonenumber
+        if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //Error in service
+        {
+            return forwardingAddress;
+        }
+
+        //Check phone number On user or Burgan User
+        PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
+        if (phoneNumber != null) //Phone number is taken
+        {
+            //Check if url will be set by operations system
+            bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
+            bool isIos = false;
+            if (setUrlByOs) //Set url by operating system
             {
-                return forwardingAddress;
-            }
-
-            //Check phone number On user or Burgan User
-            PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
-            if (phoneNumber != null)//Phone number is taken
-            {
-                //Check if url will be set by operations system
-                bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
-                bool isIos = false;
-                if (setUrlByOs)//Set url by operating system
+                //Get user operating system information
+                var deviceRecordData = await deviceRecordService.GetDeviceRecord(customerCitizenshipNumber);
+                if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
                 {
-                    //Get user operating system information
-                    var deviceRecordData = await deviceRecordService.GetDeviceRecord(kmlk.kmlkVrs);
-                    if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
-                    {
-                        setUrlByOs = false;
-                    }
-                    else
-                    {
-                        GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
-                        isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
-                    }
-                }
-
-
-                if (phoneNumber.isOn == "X")//OnUser
-                {
-                    if (setUrlByOs)
-                    {
-                        forwardingAddress = isIos
-                            ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
-                            : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
-                    }
-                    else
-                    {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
-                    }
+                    setUrlByOs = false;
                 }
                 else
                 {
-                    if (setUrlByOs)
-                    {
-                        forwardingAddress = isIos
-                            ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
-                            : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
-                    }
-                    else
-                    {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty, consentId);
-                    }
-
+                    GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
+                    isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
                 }
-                return forwardingAddress;
             }
+            if (phoneNumber.isOn == "X") //OnUser
+            {
+                if (setUrlByOs)
+                {
+                    forwardingAddress = isIos
+                        ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
+                        : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
+                }
+                else
+                {
+                    forwardingAddress =
+                        string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
+                }
+            }
+            else
+            {
+                if (setUrlByOs)
+                {
+                    forwardingAddress = isIos
+                        ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
+                        : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
+                }
+                else
+                {
+                    forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty,
+                        consentId);
+                }
+            }
+
+            return forwardingAddress;
         }
 
         return forwardingAddress;
