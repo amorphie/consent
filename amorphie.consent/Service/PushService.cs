@@ -94,11 +94,7 @@ public class PushService : IPushService
             }
 
             templateParameters["targetUrl"] = targetUrl;
-            var checkDeviceRecordData = _configuration["CheckDeviceRecordData"];
-            if (checkDeviceRecordData != null)
-            {
-                deviceRecordData.Result = true;
-            }
+
             if (deviceRecordData.Result)
             {
                 var sendPush = new SendPushDto
@@ -118,14 +114,8 @@ public class PushService : IPushService
                     }
                 };
                 var pushResponse = await _postPushService.SendPush(sendPush);
-                result.Result = pushResponse.Status == "Success";
-                result.Message = pushResponse.StatusMessage;
-                result.Data = pushResponse;
-                if (!result.Result)
-                {
-                    _logger.LogError($"Error in Push Service : {result.Data}");
-                    return result;
-                }
+                _logger.LogWarning($"Push Service Response: {pushResponse}");
+
             }
             else
             {
