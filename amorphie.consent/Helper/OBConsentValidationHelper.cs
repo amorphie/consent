@@ -3232,8 +3232,10 @@ public static class OBConsentValidationHelper
             if (verificationUserResultData.VerificationUserResult.isCustomerErrorField.HasValue 
                 && verificationUserResultData.VerificationUserResult.isCustomerErrorField.Value)
             {//Show error to user
+                //Get cancel detail code
+                var cancelDetailCode = ConstantHelper.GetCancelDetailCodeByVeriParkErrorCode(verificationUserResultData.VerificationUserResult
+                    .errorCodeField);
                 //Cancel consent
-                var cancelDetailCode = OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali;
                 await OBModuleHelper.CancelInstitutionConsentUnAuthorized(context,tokenService,eventService,yosInfoService,consent,cancelDetailCode);
                 result.Message = verificationUserResultData.VerificationUserResult.displayMessageField;
                 result.Result = false;

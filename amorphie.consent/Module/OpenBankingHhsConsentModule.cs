@@ -1318,6 +1318,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
     {
         try
         {
+            await ProcessConsentToCancelOrEnd(cancelData.ConsentId, context,tokenService);
             //Get entity from db
             var entity = await context.Consents.Include(c => c.OBAccountConsentDetails)
                 .FirstOrDefaultAsync(c => c.Id == cancelData.ConsentId);
@@ -3370,9 +3371,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
        string tckn,
        [FromServices] ConsentDbContext context,
        [FromServices] IOpenBankingIntegrationService openBankingIntegrationService,
-       [FromServices] ICustomerService customerService
+       [FromServices] ICustomerService customerService,
+       [FromServices] ITokenService tokenService,
+       [FromServices] IOBEventService eventService,
+       [FromServices] IYosInfoService yosInfoService
        )
     {
+        await ProcessConsentToCancelOrEnd(consentId, context,tokenService);
         List<string> consentTypes = new List<string>()
         {
             ConsentConstants.ConsentType.OpenBankingAccount,
@@ -3401,6 +3406,13 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             //State not valid to check
             return Results.BadRequest($"State not valid.{consent.State}");
         }
+        //Check consent tckn and processing user
+        if (consent.UserTCKN != null 
+            && tckn != consent.UserTCKN.ToString())
+        {
+            return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
+        }
+        
         //Check if institution consent
         if (consent.OBAccountConsentDetails.Any(i => i.UserType == OpenBankingConstants.OHKTur.Kurumsal
                                                      && i.Consent.ConsentType ==
@@ -3412,13 +3424,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             return Results.Ok();
         }
         
-        //Check consent tckn and processing user
-        if (consent.UserTCKN != null 
-            && tckn != consent.UserTCKN.ToString())
-        {
-            return Results.Problem($"Consent tckn not match with given tckn. Consent tckn:{consent.UserTCKN}");
-        }
-
+        
         //Validate institution consent from veripark service
         var result = await openBankingIntegrationService.VerificationUser(consent);
         if (result.Result == false
@@ -3437,14 +3443,19 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         if (verificationUserResultData.VerificationUserResult.isCustomerErrorField.HasValue
             && verificationUserResultData.VerificationUserResult.isCustomerErrorField.Value)
         {
-            //TODO:Kurumsal Cancel consent
+            //Get cancel detail code
+            var cancelDetailCode = ConstantHelper.GetCancelDetailCodeByVeriParkErrorCode(verificationUserResultData.VerificationUserResult
+                .errorCodeField);
+            //Cancel consent
+            await OBModuleHelper.CancelInstitutionConsentUnAuthorized(context,tokenService,eventService,yosInfoService,consent,cancelDetailCode);
+            result.Message = verificationUserResultData.VerificationUserResult.displayMessageField;
             //Show error to user
             return Results.BadRequest(verificationUserResultData.VerificationUserResult.displayMessageField);
         }
         else
         {
             //Show generic error
-            return Results.Problem("Service error occured in checking authorization.");
+            return Results.Problem("UnAuthorized user.");
         }
 
     }
