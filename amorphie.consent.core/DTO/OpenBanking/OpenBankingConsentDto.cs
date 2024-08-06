@@ -10,7 +10,7 @@ public class OpenBankingConsentDto : DtoBase
     public string ConsentType { get; set; }
     public string AdditionalData { get; set; }
     public string UserTCKN { get; set; }
-    public long? ScopeTCKN { get; set; }
+    public string? Scope { get; set; }
     public string? Variant { get; set; }
     public DateTime StateModifiedAt { get; set; }
     public string? StateCancelDetailCode { get; set; }

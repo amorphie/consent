@@ -418,5 +418,12 @@ public static class OpenBankingConstants
     {
         public const string ApplicationJson = "application/json";
     }
+    
+    public static readonly Dictionary<string, string> VeriParkErrorCodes = new Dictionary<string, string>
+    {
+        { "CorporateAuthorizationOpenBankingError", RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali },
+        { "UserRoleOpenBankingError", RizaIptalDetayKodu.GKDIptali_HesapYetkiSorunu },
+        { "UnauthorizedAccountOpenBankingError", RizaIptalDetayKodu.GKDIptali_HesapYetkiSorunu }
+    };
 
 }

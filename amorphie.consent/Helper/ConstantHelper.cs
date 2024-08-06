@@ -272,6 +272,15 @@ public static class ConstantHelper
     {
         return typeof(ConsentConstants.ConsentType).GetAllPublicConstantValues<string>();
     }
+    
+    public static string GetCancelDetailCodeByVeriParkErrorCode(string errorCode)
+    { 
+        if (OpenBankingConstants.VeriParkErrorCodes.TryGetValue(errorCode, out var detail))
+        {
+            return detail;
+        }
+        return OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_Diger;
+    }
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)
     {

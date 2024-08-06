@@ -399,8 +399,6 @@ public static class OBModuleHelper
             result.Message = "Consent state not valid to be cancelled.";
             return result;
         }
-
-        //TODO:EKip iptal detay kodu uygun bir kod ile set edilmeli. OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_OHKHHSKontrolleriniAsamadi
         return await CancelConsent(context, tokenService, eventService, yosInfoService, entity,cancelDetailCode);
     }
     
