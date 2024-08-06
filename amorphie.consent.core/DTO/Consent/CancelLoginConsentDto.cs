@@ -9,5 +9,5 @@ public class CancelLoginConsentDto
     [Required]
     public long UserTCKN { get; set; }
     [Required]
-    public long ScopeTCKN { get; set; }
+    public string Scope { get; set; }
 }

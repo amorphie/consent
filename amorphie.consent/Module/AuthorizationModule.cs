@@ -29,10 +29,10 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         base.AddRoutes(routeGroupBuilder);
         routeGroupBuilder.MapGet("/CheckOBAuthorization/rizaNo={rizaNo}&userTCKN={userTCKN}", CheckOBAuthorization);
         routeGroupBuilder.MapGet(
-            "/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
+            "/CheckAuthorizationForLogin/clientCode={clientCode}&roleId={roleId}&userTCKN={userTCKN}&scope={scope}",
             CheckAuthorizationForLogin);
         routeGroupBuilder.MapGet(
-            "/CheckConsent/clientCode={clientCode}&userTCKN={userTCKN}&scopeTCKN={scopeTCKN}",
+            "/CheckConsent/clientCode={clientCode}&userTCKN={userTCKN}&scope={scope}",
             CheckConsent);
         routeGroupBuilder.MapPost("/AuthorizeForLogin", AuthorizeForLogin);
         routeGroupBuilder.MapPost("/Authorize", Authorize);
@@ -94,7 +94,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
     /// <param name="clientCode">Client Code</param>
     /// <param name="roleId">Role Id</param>
     /// <param name="userTCKN">Users Identity Number</param>
-    /// <param name="scopeTCKN">Scope Identity Number. Same with usertckn in most cases</param>
+    /// <param name="scope">Scope Identity Number. Same with usertckn in most cases</param>
     /// <param name="context">Context instance object</param>
     /// <param name="contractService">Contract service object</param>
     /// <param name="mapper">Mapper object</param>
@@ -105,7 +105,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
         string clientCode,
         Guid roleId,
         long userTCKN,
-        long scopeTCKN,
+        string scope,
         [FromServices] ConsentDbContext context,
         [FromServices] IConfiguration configuration,
         HttpContext httpContext)
@@ -117,7 +117,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == clientCode
                     && c.RoleId == roleId
-                    && c.ScopeTCKN == scopeTCKN
+                    && c.Scope == scope
                     && c.UserTCKN == userTCKN
                     && c.ConsentType == ConsentConstants.ConsentType.IBLogin
                     && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
@@ -142,13 +142,13 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
 
     /// <summary>
     /// Check any yetkikullanildi state of valid consent in system
-    /// Checks clientCode,userTckn,scopeTckn
+    /// Checks clientCode,userTckn,scope
     /// </summary>
     /// <returns>Is any yetkikuıllanildi state of valid consent in system</returns>
     public async Task<IResult> CheckConsent(
         string clientCode,
         long userTCKN,
-        long scopeTCKN,
+        string scope,
         [FromServices] ConsentDbContext context,
         [FromServices] IConfiguration configuration,
         HttpContext httpContext)
@@ -159,7 +159,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             //Filter consent according to parameters
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == clientCode
-                    && c.ScopeTCKN == scopeTCKN
+                    && c.Scope == scope
                     && c.UserTCKN == userTCKN
                     && c.State == OpenBankingConstants.RizaDurumu.YetkiKullanildi
                     && (c.LastValidAccessDate == null
@@ -221,7 +221,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             var consents = await context.Consents.AsNoTracking().Where(c =>
                     c.ClientCode == saveConsent.ClientCode
                     && c.RoleId == saveConsent.RoleId
-                    && c.ScopeTCKN == saveConsent.ScopeTCKN
+                    && c.Scope == saveConsent.Scope
                     && c.UserTCKN == saveConsent.UserTCKN
                     && c.ConsentType == saveConsent.ConsentType)
                 .ToListAsync();
@@ -263,7 +263,7 @@ public class AuthorizationModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbCo
             //Create desired consent
             var consent = new Consent
             {
-                ScopeTCKN = saveConsent.ScopeTCKN,
+                Scope = saveConsent.Scope,
                 UserTCKN = saveConsent.UserTCKN,
                 ConsentType = saveConsent.ConsentType,
                 RoleId = saveConsent.RoleId,
