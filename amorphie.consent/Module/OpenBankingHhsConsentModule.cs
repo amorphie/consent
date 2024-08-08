@@ -222,7 +222,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 //Data not valid
-                return Results.Content(headerValidation.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var validationResponse = (OBCustomErrorResponseDto?)headerValidation.Data;
+                return Results.Content(headerValidation.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
 
             var checkInstitutionConsentResult = await OBConsentValidationHelper.CheckInstitutionConsent
@@ -760,7 +761,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //Missing header fields
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidation.Data);
                 //Data not valid
-                return Results.Content(headerValidation.Data.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var validationResponse = (OBCustomErrorResponseDto?)headerValidation.Data;
+                return Results.Content(headerValidation.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
 
             //Check consent
@@ -1400,7 +1402,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
                 //Data not valid
-                return Results.Content(checkValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var validationResponse = (OBCustomErrorResponseDto?)checkValidationResult.Data;
+                return Results.Content(checkValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
 
             //Check customer
@@ -1720,8 +1723,9 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, dataValidationResult.Data);
                 //Data not valid
+                var validationResponse = (OBCustomErrorResponseDto?)dataValidationResult.Data;
                 httpContext.Response.ContentType = OpenBankingConstants.ContentTypes.ApplicationJson;
-                return Results.Content(dataValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(dataValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
 
             GetCustomerResponseDto? customerResponse = null;
@@ -1863,7 +1867,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 //validation error in header fields
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, headerValidationResult.Data);
                 //Data not valid
-                return Results.Content(headerValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var validationResponse = (OBCustomErrorResponseDto?)headerValidationResult.Data;
+                return Results.Content(headerValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
             
             //Check Idempotency
