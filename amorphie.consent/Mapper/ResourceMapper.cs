@@ -34,7 +34,7 @@ public sealed class ResourceMapper : Profile
             .ForMember(dest => dest.CustomerNumber, opt => opt.MapFrom<CustomerNumberResolverPayment>())
             .ForMember(dest => dest.InstitutionCustomerNumber,
                 opt => opt.MapFrom<InstitutionCustomerNumberResolverPayment>());
-        ;
+        CreateMap<OBAccountConsentDetail, OBAccountConsentDetailDto>();
         CreateMap<Token, TokenDto>().ReverseMap();
         CreateMap<Consent, YOSConsentDto>().ReverseMap();
         // CreateMap<Token, TokenModel>().ReverseMap();

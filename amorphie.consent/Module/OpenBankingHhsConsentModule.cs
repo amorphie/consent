@@ -13,11 +13,9 @@ using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.Helper;
-using amorphie.consent.Service;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Dapr;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace amorphie.consent.Module;
@@ -90,6 +88,30 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
 
 
     #region HHS
+    
+    protected override async ValueTask<IResult> GetMethod(
+        [FromServices] ConsentDbContext context,
+        [FromServices] IMapper mapper,
+        [FromRoute(Name = "id")] Guid id,
+        HttpContext httpContext,
+        CancellationToken token)
+    {
+        try
+        {
+            //Get entity from db
+            var entity = await context.Consents
+                .Include(c => c.OBAccountConsentDetails)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken: token);
+            var consent = mapper.Map<OpenBankingConsentDto>(entity);
+            return Results.Ok(consent);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem($"An error occurred: {ex.Message}");
+        }
+    }
+
 
     /// <summary>
     /// Get users account consents from all yos

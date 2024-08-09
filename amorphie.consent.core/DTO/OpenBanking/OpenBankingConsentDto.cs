@@ -1,3 +1,5 @@
+using amorphie.consent.core.DTO.OpenBanking.HHS;
+using amorphie.consent.core.Model;
 using amorphie.core.Base;
 
 namespace amorphie.consent.core.DTO.OpenBanking;
@@ -15,4 +17,5 @@ public class OpenBankingConsentDto : DtoBase
     public DateTime StateModifiedAt { get; set; }
     public string? StateCancelDetailCode { get; set; }
     public List<TokenDto>? Token { get; set; }
+    public virtual ICollection<OBAccountConsentDetailDto> OBAccountConsentDetails { get; set; }
 }
