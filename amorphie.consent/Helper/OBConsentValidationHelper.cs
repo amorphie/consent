@@ -1045,7 +1045,7 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName);
         }
 
-        if (!string.IsNullOrEmpty(kkod.aksTur) && !ConstantHelper.GetKolasTurList().Contains(kkod.aksTur))
+        if (!string.IsNullOrEmpty(kkod.aksTur) && !ConstantHelper.GetKareKodAksTurList().Contains(kkod.aksTur))
         {
             //aksTur value is not valid
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
