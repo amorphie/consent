@@ -1406,7 +1406,7 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                 var nullError = OBErrorResponseHelper.GetBadRequestError(httpContext, _errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidContent);
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, nullError);
                 httpContext.Response.ContentType = "application/json";
-                return Results.Content(nullError.ToJsonString(), "application/json", statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(nullError.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
             }
             var header = OBModuleHelper.GetHeader(httpContext);
             //Check if post data is valid to process.
