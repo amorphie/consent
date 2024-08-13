@@ -397,7 +397,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
                     hspRef, _errorCodeDetails); //Get data from service
             if (!accountApiResult.Result)
             {
-                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var getResponse = (OBCustomErrorResponseDto?)accountApiResult.Data;
+                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: getResponse?.HttpCode);
             }
 
             return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
@@ -567,7 +568,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!accountApiResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
-                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var getResponse = (OBCustomErrorResponseDto?)accountApiResult.Data;
+                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: getResponse?.HttpCode);
             }
 
             return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
@@ -656,7 +658,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             if (!accountApiResult.Result)
             {
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
-                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var getResponse = (OBCustomErrorResponseDto?)accountApiResult.Data;
+                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: getResponse?.HttpCode);
             }
             return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
         }
@@ -745,7 +748,8 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
             {
                 //Error in service
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, accountApiResult.Data);
-                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                var getResponse = (OBCustomErrorResponseDto?)accountApiResult.Data;
+                return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: getResponse?.HttpCode);
             }
 
             return Results.Content(accountApiResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.OK.GetHashCode());
