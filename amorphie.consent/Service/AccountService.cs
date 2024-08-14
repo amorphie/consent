@@ -235,14 +235,14 @@ public class AccountService : IAccountService
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
+            var permissions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
             };
             //Get account consent from database
             var getConsentResult =
                 await _authorizationService.GetAccountConsent(userTckn: userTCKN, consentId:consentId, yosCode: yosCode,
-                    permissions: permisssions);
+                    permissions: null);
             var checkConsentResult = CheckAccountConsent(getConsentResult, httpContext, errorCodeDetails);
             if (!checkConsentResult.Result)//Consent in db is not valid
             {
@@ -251,8 +251,14 @@ public class AccountService : IAccountService
             }
             
             var activeConsent = (Consent)getConsentResult.Data!;
+            if (!activeConsent.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+            {//Consent permissions not valid to get response
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetBalance);
+                return result;
+            }
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault()!;
-
             // Build account service parameters
             var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
                 syfKytSayi,

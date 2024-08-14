@@ -2299,7 +2299,7 @@ public static class OBConsentValidationHelper
                 {
                     result.Result = false;
                     result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff);
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBireyselDateDiff);
                     return result;
                 }
             }
@@ -2309,7 +2309,7 @@ public static class OBConsentValidationHelper
                 {
                     result.Result = false;
                     result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                        OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff);
+                        OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKurumsalDateDiff);
                     return result;
                 }
             }
@@ -2321,7 +2321,7 @@ public static class OBConsentValidationHelper
         {
             result.Result = false;
             result.Data = OBErrorResponseHelper.GetBadRequestError(context, errorCodeDetails,
-                OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff);
+                OBErrorCodeConstants.ErrorCodesEnum.InvalidContentSystemStartedDateDiff);
             return result;
         }
 

@@ -119,22 +119,26 @@ public class OBAuthorizationService : IOBAuthorizationService
     }
 
 
-    public async Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions)
+    public async Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string>? permissions)
     {
         ApiResult result = new();
         try
         {
-            var activeConsent = (await _context.Consents
+            var query =  _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                 && c.Variant == yosCode
                                 && c.Id.ToString() == consentId
                                 && c.UserTCKN != null
-                                && c.UserTCKN.ToString() == userTckn)
-                    .ToListAsync())
-                ?.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
-                .FirstOrDefault();
+                                && c.UserTCKN.ToString() == userTckn);
+            // If permissions is not null, apply the additional filtering
+            if (permissions != null)
+            {
+                query = query.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)));
+            }
+            // Execute the query and take the first matching result
+            var activeConsent = await query.FirstOrDefaultAsync();
             result.Data = activeConsent;
         }
         catch (Exception e)
