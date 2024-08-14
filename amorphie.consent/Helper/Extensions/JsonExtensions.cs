@@ -8,7 +8,11 @@ public static class JsonExtensions
     {
         if (obj is not null)
         {
-             return JsonConvert.SerializeObject(obj, Formatting.None);
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore // This will remove null properties
+            };
+             return JsonConvert.SerializeObject(obj, Formatting.None,settings);
         }
         return string.Empty;
 
