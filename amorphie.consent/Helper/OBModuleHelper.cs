@@ -158,7 +158,11 @@ public static class OBModuleHelper
     {
         // Initialize a SHA256 hash object.
         using SHA256 sha256Hash = SHA256.Create();
-        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
+        var settings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore // This will remove null properties
+        };
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body,settings)));
         return Convert.ToHexString(bytes);
     }
 
