@@ -124,21 +124,22 @@ public class OBAuthorizationService : IOBAuthorizationService
         ApiResult result = new();
         try
         {
-            var query =  _context.Consents
+            var query =  await _context.Consents
                     .Include(c => c.OBAccountConsentDetails)
                     .AsNoTracking()
                     .Where(c => c.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount
                                 && c.Variant == yosCode
                                 && c.Id.ToString() == consentId
                                 && c.UserTCKN != null
-                                && c.UserTCKN.ToString() == userTckn);
+                                && c.UserTCKN.ToString() == userTckn)
+                    .ToListAsync();
             // If permissions is not null, apply the additional filtering
             if (permissions != null)
             {
-                query = query.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)));
+                query = query.Where(c => c.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains))).ToList();
             }
             // Execute the query and take the first matching result
-            var activeConsent = await query.FirstOrDefaultAsync();
+            var activeConsent = query.FirstOrDefault();
             result.Data = activeConsent;
         }
         catch (Exception e)
