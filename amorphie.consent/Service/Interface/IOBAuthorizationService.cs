@@ -43,7 +43,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="permissions">Required Permissions</param>
     /// <returns>User's account consent</returns>
-    public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions);
+    public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string>? permissions);
 
     /// <summary>
     /// Get User's account consent of given account ref by consent id, tckn, yoscode

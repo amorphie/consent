@@ -557,7 +557,7 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatBireyselDateDiff.GetHashCode(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBireyselDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
@@ -565,7 +565,7 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatKurumsalDateDiff.GetHashCode(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKurumsalDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
@@ -573,7 +573,7 @@ public static class SeedExtension
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatSystemStartedDateDiff.GetHashCode(),
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentSystemStartedDateDiff.GetHashCode(),
             BkmCode = "TR.OHVPS.Resource.InvalidFormat",
             Message = "For system enquiry, last 24 hours can be enquirable.",
             MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
@@ -1335,93 +1335,117 @@ public static class SeedExtension
     
     public static void SeedUpdateOBErrorCodeDetails(this ModelBuilder modelBuilder)
     {
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is missing.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag eksik."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is missing.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag eksik."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag hatalı."
+        // });
+        //  modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is missing.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag eksik."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request BlacklistFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki BlacklistFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request UnsafeAccountFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki UnsafeAccountFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request AnomalyFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki AnomalyFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Resource.InvalidFormat",
+        //     Message = "PSU-Fraud-Check header in the TPP request MalwareFlag is wrong.",
+        //     MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki MalwareFlag hatalı."
+        // });
+        // modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
+        // {
+        //     Id = Guid.NewGuid(),
+        //     InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerPnoLength.GetHashCode(),
+        //     BkmCode = "TR.OHVPS.Field.Invalid",
+        //     Message = "size must be between 7-9",
+        //     MessageTr = "boyut '7' ile  '9' arasında olmalı"
+        // });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagMissingFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is missing.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag eksik."
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBireyselDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
+            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureFirstLoginFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request FirstLoginFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki FirstLoginFlag hatalı."
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKurumsalDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
+            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
         });
         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
         {
             Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagMissingFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is missing.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag eksik."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureDeviceFirstLoginFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request DeviceFirstLoginFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki DeviceFirstLoginFlag hatalı."
-        });
-         modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagMissingFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is missing.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag eksik."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureLastPasswordChangeFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request LastPasswordChangeFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki LastPasswordChangeFlag hatalı."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureBlacklistFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request BlacklistFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki BlacklistFlag hatalı."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureUnsafeAccountFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request UnsafeAccountFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki UnsafeAccountFlag hatalı."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureAnomalyFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request AnomalyFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki AnomalyFlag hatalı."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidSignatureMalwareFlagFraud.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidFormat",
-            Message = "PSU-Fraud-Check header in the TPP request MalwareFlag is wrong.",
-            MessageTr = "YOS ten gelen istekteki PSU-Fraud-Check basligi içerisindeki MalwareFlag hatalı."
-        });
-        modelBuilder.Entity<OBErrorCodeDetail>().HasData(new OBErrorCodeDetail
-        {
-            Id = Guid.NewGuid(),
-            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOhkTanimDegerPnoLength.GetHashCode(),
-            BkmCode = "TR.OHVPS.Field.Invalid",
-            Message = "size must be between 7-9",
-            MessageTr = "boyut '7' ile  '9' arasında olmalı"
+            InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentSystemStartedDateDiff.GetHashCode(),
+            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            Message = "For system enquiry, last 24 hours can be enquirable.",
+            MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
         });
     }
     
