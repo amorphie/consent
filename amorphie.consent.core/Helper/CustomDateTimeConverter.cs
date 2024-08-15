@@ -8,12 +8,33 @@ public class CustomDateTimeConverter : IsoDateTimeConverter
     {
         DateTimeFormat = "yyyy-MM-dd'T'HH:mm:sszzz";
     }
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
+        if (value == null)
+        {
+            writer.WriteNull();
+            return;
+        }
         if (value is DateTime dateTime)
         {
-            // Convert UTC time to local time (assumed to be the server's local timezone)
-            var localDateTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, TimeZoneInfo.Local);
+            DateTime localDateTime;
+           // Check the DateTimeKind and convert accordingly
+            if (dateTime.Kind == DateTimeKind.Utc)
+            {
+                // Convert UTC to local time
+                localDateTime = TimeZoneInfo.ConvertTimeFromUtc(dateTime, TimeZoneInfo.Local);
+            }
+            else if (dateTime.Kind == DateTimeKind.Local)
+            {
+                // No conversion needed, already local time
+                localDateTime = dateTime;
+            }
+            else
+            {
+                // Unspecified kind - assume UTC and convert
+                localDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), TimeZoneInfo.Local);
+            }
+
             writer.WriteValue(localDateTime.ToString(DateTimeFormat));
         }
         else
