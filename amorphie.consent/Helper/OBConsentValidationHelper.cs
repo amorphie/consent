@@ -1135,7 +1135,7 @@ public static class OBConsentValidationHelper
                 objectName: objectName);
     }
 
-    public static ApiResult CheckGonderen(GonderenHesapDto gonderen,
+    public static ApiResult CheckGonderen(GonderenHesapDto? gonderen,
         HttpContext context,
         List<OBErrorCodeDetail> errorCodeDetails,
         string objectName)
@@ -1148,7 +1148,7 @@ public static class OBConsentValidationHelper
         result.Data = errorResponse;
 
         //Check odmBsltma gon - Required
-        ValidateGonUnv(gonderen.unv, errorCodeDetails, errorResponse, objectName);
+        ValidateGonUnv(gonderen?.unv, errorCodeDetails, errorResponse, objectName);
         if (errorResponse.FieldErrors.Any())
         {
             result.Result = false;
@@ -1158,8 +1158,21 @@ public static class OBConsentValidationHelper
 
         return result;
     }
+    
+    public static ApiResult CheckGonderen(KimlikDto kmlk, GonderenHesapDto? gonderen,
+        HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails,
+        string objectName)
+    {
+        ApiResult result = new();
+        if (IsOneTimePayment(kmlk.kmlkVrs, kmlk.kmlkTur))
+        {//One time payment, no need to check gonderen
+            return result;
+        }
+        return CheckGonderen(gonderen, context, errorCodeDetails, objectName);
+    }
 
-    public static void ValidateGonUnv(string? gonUnv, List<OBErrorCodeDetail> errorCodeDetails,
+    private static void ValidateGonUnv(string? gonUnv, List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
         if (string.IsNullOrEmpty(gonUnv))
@@ -1402,7 +1415,6 @@ public static class OBConsentValidationHelper
         OBCustomErrorResponseDto errorResponse, string propertyName, OBErrorCodeConstants.ErrorCodesEnum errorCode,
         string objectName)
     {
-        //TODO:Özlem burada hesapbilgisi rızası kalmış bunu kaldır.
         errorResponse.FieldErrors?.Add(OBErrorResponseHelper.GetFieldErrorObject_DefaultInvalidField(errorCodeDetails,
             propertyName, errorCode, objectName));
     }
