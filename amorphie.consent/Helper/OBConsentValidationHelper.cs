@@ -823,6 +823,18 @@ public static class OBConsentValidationHelper
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlc,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcRequiredIfNotKolas, objectName: objectName);
             result.Result = false;
+            return result;
+        }
+
+        if (odmBsltm.alc.kolas is null)
+        {
+            ValidateAlici(odmBsltm.alc, errorCodeDetails, errorResponse, objectName);
+            if (errorResponse.FieldErrors.Any())
+            {
+                result.Result = false;
+                result.Data = errorResponse;
+                return result;
+            }
         }
 
         ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName); //Check kolas
@@ -868,7 +880,7 @@ public static class OBConsentValidationHelper
         result.Data = errorResponse;
 
 
-        ValidateAlici(odmBsltm, errorCodeDetails, errorResponse, objectName); //Check odmBsltma Alıcı
+        ValidateAlici(odmBsltm.alc, errorCodeDetails, errorResponse, objectName); //Check odmBsltma Alıcı
         ValidateKolas(odmBsltm.alc.kolas, errorCodeDetails, errorResponse, objectName); //Check kolas
 
         if (errorResponse.FieldErrors.Any())
@@ -899,37 +911,54 @@ public static class OBConsentValidationHelper
 
         return result;
     }
-
-    public static void ValidateAlici(OdemeBaslatmaDto odmBsltm, List<OBErrorCodeDetail> errorCodeDetails,
+    
+    public static void ValidateAlici(AliciHesapRequestDto alc, List<OBErrorCodeDetail> errorCodeDetails,
         OBCustomErrorResponseDto errorResponse, string objectName)
     {
-        if (string.IsNullOrEmpty(odmBsltm.alc.unv))
+        ValidateAliciUnv(alc.unv, errorCodeDetails, errorResponse, objectName);
+        ValidateAliciHspNo(alc.hspNo, errorCodeDetails, errorResponse, objectName);
+    }
+
+    public static void ValidateAlici(AliciHesapDto alc, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        ValidateAliciUnv(alc.unv, errorCodeDetails, errorResponse, objectName);
+        ValidateAliciHspNo(alc.hspNo, errorCodeDetails, errorResponse, objectName);
+    }
+    
+    private static void ValidateAliciUnv(string unv, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(unv))
         {
-            //odmBsltm.alc.unv must be set
+            // odmBsltm.alc.unv must be set
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmAlcUnv,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
         }
 
-        if (!string.IsNullOrEmpty(odmBsltm.alc.unv)
-            && (odmBsltm.alc.unv.Length < 3
-                || odmBsltm.alc.unv.Length > 140)) //Check alc.unv length
+        if (!string.IsNullOrEmpty(unv)
+            && (unv.Length < 3 || unv.Length > 140)) // Check alc.unv length
         {
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlcUnv,
                 OBErrorCodeConstants.ErrorCodesEnum.InvalidFieldOdmBsltmAlcUnvLength, objectName: objectName);
         }
+    }
 
-        if (string.IsNullOrEmpty(odmBsltm.alc.hspNo))
+    private static void ValidateAliciHspNo(string hspNo, List<OBErrorCodeDetail> errorCodeDetails,
+        OBCustomErrorResponseDto errorResponse, string objectName)
+    {
+        if (string.IsNullOrEmpty(hspNo))
         {
-            //odmBsltm.alc.hspNo must be set
+            // odmBsltm.alc.hspNo must be set
             AddFieldError_DefaultInvalidField(errorCodeDetails: errorCodeDetails, errorResponse,
                 propertyName: OBErrorCodeConstants.FieldNames.OdmBsltmAlcHspNo,
                 errorCode: OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull, objectName: objectName);
         }
 
-        if (!string.IsNullOrEmpty(odmBsltm.alc.hspNo)
-            && odmBsltm.alc.hspNo.Length != 26) //Check alc.hspNo length
+        if (!string.IsNullOrEmpty(hspNo)
+            && hspNo.Length != 26) // Check alc.hspNo length
         {
             AddFieldError_DefaultInvalidField(errorCodeDetails, errorResponse,
                 OBErrorCodeConstants.FieldNames.OdmBsltmAlcHspNo,

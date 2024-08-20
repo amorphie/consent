@@ -2330,11 +2330,11 @@ public class OpenBankingHHSConsentModule : BaseBBTRoute<OpenBankingConsentDto, C
         }
         
         //Check odmBsltma gonHesap 
-        result = OBConsentValidationHelper.CheckGonderen(rizaIstegi.odmBsltm.kmlk, rizaIstegi.odmBsltm.gon, httpContext, _errorCodeDetails, objectName: objectName);
-        if (!result.Result)
-        {
-            return result;
-        }
+        // result = OBConsentValidationHelper.CheckGonderen(rizaIstegi.odmBsltm.kmlk, rizaIstegi.odmBsltm.gon, httpContext, _errorCodeDetails, objectName: objectName);
+        // if (!result.Result)
+        // {
+        //     return result;
+        // }
 
         //Check odmBsltm  Kimlik field validities
         result = OBConsentValidationHelper.CheckKmlkData(rizaIstegi.odmBsltm.kmlk, httpContext, _errorCodeDetails, objectName: objectName, checkOneTimePayment: true);
