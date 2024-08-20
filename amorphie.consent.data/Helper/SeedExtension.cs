@@ -1427,7 +1427,7 @@ public static class SeedExtension
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentBireyselDateDiff.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
         });
@@ -1435,7 +1435,7 @@ public static class SeedExtension
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentKurumsalDateDiff.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
             Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
             MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
         });
@@ -1443,7 +1443,7 @@ public static class SeedExtension
         {
             Id = Guid.NewGuid(),
             InternalCode = OBErrorCodeConstants.ErrorCodesEnum.InvalidContentSystemStartedDateDiff.GetHashCode(),
-            BkmCode = "TR.OHVPS.Resource.InvalidContent",
+            BkmCode = "TR.OHVPS.Business.InvalidContent",
             Message = "For system enquiry, last 24 hours can be enquirable.",
             MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
         });
