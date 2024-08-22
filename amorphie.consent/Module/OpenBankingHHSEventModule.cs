@@ -247,8 +247,9 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             if (!checkValidationResult.Result)
             {
                 //Data not valid
+                var validationResponse = (OBCustomErrorResponseDto?)checkValidationResult.Data;
                 OBModuleHelper.SetXJwsSignatureHeader(httpContext, configuration, checkValidationResult.Data);
-                return Results.Content(checkValidationResult.Data.ToJsonString(),OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: HttpStatusCode.BadRequest.GetHashCode());
+                return Results.Content(checkValidationResult.Data.ToJsonString(), OpenBankingConstants.ContentTypes.ApplicationJson, statusCode: validationResponse?.HttpCode);
             }
             
             //Generate entity object
@@ -424,7 +425,7 @@ public class OpenBankingHHSEventModule : BaseBBTRoute<OlayAbonelikDto, OBEventSu
             context.OBEventSubscriptions.Update(entity);
             await context.SaveChangesAsync();
 
-            return Results.Ok();
+            return Results.NoContent();
         }
         catch (Exception ex)
         {
