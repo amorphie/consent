@@ -16,16 +16,19 @@ public class BKMService : IBKMService
 {
     private readonly IBKMClientService _bkmClientService;
     private readonly IMapper _mapper;
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration _configuration; 
+    private readonly ILogger<IBKMService> _logger;
 
 
     public BKMService(IBKMClientService bkmClientService,
     IMapper mapper,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    ILogger<IBKMService> logger)
     {
         _bkmClientService = bkmClientService;
         _mapper = mapper;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<ApiResult> GetHhs(string hhsKod)
@@ -40,7 +43,6 @@ public class BKMService : IBKMService
             string authorizationValue = $"Bearer {tokenServiceResponse.Data}";
 
             var httpResponse = await _bkmClientService.GetHhs(authorizationValue, hhsKod);
-
             if (!httpResponse.IsSuccessStatusCode)
             {
                 apiResult.Result = false;
@@ -183,12 +185,12 @@ public class BKMService : IBKMService
             else
             {//Error in service
                 result.Result = false;
-                result.Message = await httpResponse.Content.ReadAsStringAsync();
                 return result;
             }
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in BKM GetToken");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -217,12 +219,12 @@ public class BKMService : IBKMService
             if (!httpResponse.IsSuccessStatusCode)
             {
                 result.Result = false;
-                result.Message = await httpResponse.Content.ReadAsStringAsync();
             }
             result.Data = httpResponse.StatusCode.GetHashCode();
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in SendEventToYos");
             result.Result = false;
             result.Message = e.Message;
         }

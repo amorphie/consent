@@ -34,12 +34,10 @@ public interface IYosInfoService
     /// Check yos by code, if has desired role
     /// </summary>
     /// <param name="yosCode">Yos Code</param>
-    /// <param name="abonelikTipleri">Wanted subscription types</param>
-    /// <param name="eventTypeSourceTypeRelations">Information Object</param>
-    /// <returns>Any yos having desired role by yoscode</returns>
+    /// <param name="eventTypeSourceTypeRelationYosRole">Required yos role</param>
+    /// <returns>If yos has desired role</returns>
     public Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
-        List<AbonelikTipleriDto> abonelikTipleri,
-        List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations);
+        string eventTypeSourceTypeRelationYosRole);
 
 
     /// <summary>
@@ -59,6 +57,15 @@ public interface IYosInfoService
     /// <param name="sourceType">Source Type</param>
     /// <returns>If YOS has subscription for given event type and source type</returns>
     public Task<ApiResult> IsYosSubscsribed(string yosKod, string eventType, string sourceType);
+
+    /// <summary>
+    /// Check if yos has desired address by given authorization type
+    /// </summary>
+    /// <param name="yosKod">Yos to be checked</param>
+    /// <param name="authType">Authorization type (Yonlendirmeli or Ayrik)</param>
+    /// <param name="address">Adddress</param>
+    /// <returns>if yos has desired address by given authorization type</returns>
+    public Task<ApiResult> IsYosAddressCorrect(string yosCode, string authType, string address);
 
     /// <summary>
     /// Get yos from bkm service by yoscode

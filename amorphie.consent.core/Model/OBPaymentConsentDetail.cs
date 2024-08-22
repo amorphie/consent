@@ -10,6 +10,8 @@ public class OBPaymentConsentDetail : EntityBase
     public string? IdentityData { get; set; }
     public string? InstitutionIdentityType { get; set; }
     public string? InstitutionIdentityData { get; set; }
+    public string? CustomerNumber { get; set; }
+    public string? InstitutionCustomerNumber { get; set; }
     public string UserType { get; set; }= String.Empty;
 
     public string HhsCode { get; set; }= String.Empty;
@@ -27,8 +29,8 @@ public class OBPaymentConsentDetail : EntityBase
     public string? SenderAccountNumber { get; set; }
     public string? SenderAccountReference { get; set; }
 
-    public string ReceiverTitle { get; set; }= String.Empty;
-    public string ReceiverAccountNumber { get; set; }= String.Empty;
+    public string? ReceiverTitle { get; set; }
+    public string? ReceiverAccountNumber { get; set; }
     public string? KolasType { get; set; }
     public string? KolasValue { get; set; }
     public long? KolasRefNum { get; set; }

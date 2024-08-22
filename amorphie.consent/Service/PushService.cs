@@ -31,14 +31,14 @@ public class PushService : IPushService
         _logger = logger;
     }
 
-    public async Task<ApiResult> OpenBankingSendPush(KimlikDto data, Guid consentId)
+    public async Task<ApiResult> OpenBankingSendPush(string userTckn, Guid consentId)
     {
         ApiResult result = new();
         try
         {
             string targetUrl;
             var templateParameters = new Dictionary<string, object>();
-            var getCustomerInfoResult = await _tagService.GetCustomer(data.kmlkVrs);
+            var getCustomerInfoResult = await _tagService.GetCustomer(userTckn);
 
             if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //error from service
             {
@@ -47,20 +47,20 @@ public class PushService : IPushService
                 return result;
             }
 
-            var deviceRecordData = await _deviceRecord.GetDeviceRecord(data.kmlkVrs);
+            var deviceRecordData = await _deviceRecord.GetDeviceRecord(userTckn);
             if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
             {
                 _logger.LogError("Error in deviceRecord.GetDeviceRecord");
                 result.Result = false;
                 return result;
             }
-            
+
             //Check phone number On user or Burgan User
             PhoneNumberDto phoneNumber = (PhoneNumberDto)getCustomerInfoResult.Data;
             GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
-            bool isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios; 
+            bool isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
             bool.TryParse(_configuration["TargetURLs:SetTargetUrlByOs"], out bool setTargetUrlByOs);
-            
+
             if (phoneNumber.isOn == "X") //OnUser
             {
                 if (!setTargetUrlByOs)
@@ -90,25 +90,21 @@ public class PushService : IPushService
                 {
                     targetUrl = String.Format(_configuration["TargetURLs:BurganMobileTargetUrlAndroid"] ?? String.Empty, consentId);
                 }
-                
+
             }
 
             templateParameters["targetUrl"] = targetUrl;
-            var checkDeviceRecordData = _configuration["CheckDeviceRecordData"];
-            if (checkDeviceRecordData != null)
-            {
-                deviceRecordData.Result = true;
-            }
+
             if (deviceRecordData.Result)
             {
                 var sendPush = new SendPushDto
                 {
                     Sender = "AutoDetect",
-                    CitizenshipNo = data.kmlkVrs,
+                    CitizenshipNo = userTckn,
                     Template = _configuration["PushTemplateName"] ?? String.Empty,
                     TemplateParams = JsonConvert.SerializeObject(templateParameters),
                     CustomParameters = "",
-                    SaveInbox = false,
+                    SaveInbox = true,
                     Process = new ProcessInfo
                     {
                         Name = "Açık Bankacılık",
@@ -117,7 +113,9 @@ public class PushService : IPushService
                         Identity = "Kimlik"
                     }
                 };
-                await _postPushService.SendPush(sendPush);
+                var pushResponse = await _postPushService.SendPush(sendPush);
+                _logger.LogWarning($"Push Service Response: {pushResponse}");
+
             }
             else
             {

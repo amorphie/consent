@@ -7,6 +7,8 @@ using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.DTO.Tag;
 using amorphie.consent.core.DTO.Token;
 using amorphie.consent.core.Enum;
+using amorphie.consent.core.Model;
+using amorphie.consent.data;
 using amorphie.consent.Service.Interface;
 using amorphie.consent.Service.Refit;
 using Jose;
@@ -69,50 +71,14 @@ public static class OBModuleHelper
         {
             header.PSUFraudCheck = traceValue;
         }
+        if (httpContext.Request.Headers.TryGetValue("PSU-Session-ID", out traceValue))
+        {
+            header.PSUSessionId = traceValue;
+        }
 
         return header;
     }
 
-
-    /// <summary>
-    /// Checks if header is valid by controlling;
-    /// PSU Initiated value is in predefined values
-    /// Required fields are checked
-    /// XASPSPCode is equal with BurganBank hhscode
-    /// </summary>
-    /// <param name="header">Data to be checked</param>
-    /// <param name="configuration">Configuration instance</param>
-    /// <param name="yosInfoService">YosInfoService object</param>
-    /// <returns>If header is valid</returns>
-    public static async Task<bool> IsHeaderValidForEvents(RequestHeaderDto header,
-        IConfiguration configuration,
-        IYosInfoService yosInfoService)
-    {
-        if (string.IsNullOrEmpty(header.XASPSPCode)
-            || string.IsNullOrEmpty(header.XRequestID)
-            || string.IsNullOrEmpty(header.XTPPCode))
-        {
-            return false;
-        }
-
-        if (configuration["HHSCode"] != header.XASPSPCode)
-        {
-            //XASPSPCode value should be BurganBanks hhscode value
-            return false;
-        }
-
-        //Check setted yos value
-        var yosCheckResult = await yosInfoService.IsYosInApplication(header.XTPPCode);
-        if (yosCheckResult.Result == false
-            || yosCheckResult.Data == null
-            || (bool)yosCheckResult.Data == false)
-        {
-            //No yos data in the system
-            return false;
-        }
-
-        return true;
-    }
 
     /// <summary>
     /// Set X-JWS-Signature header property
@@ -192,7 +158,11 @@ public static class OBModuleHelper
     {
         // Initialize a SHA256 hash object.
         using SHA256 sha256Hash = SHA256.Create();
-        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body)));
+        var settings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore // This will remove null properties
+        };
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(body,settings)));
         return Convert.ToHexString(bytes);
     }
 
@@ -210,7 +180,7 @@ public static class OBModuleHelper
         return Convert.ToHexString(bytes);
     }
 
-   
+
     /// <summary>
     /// Generates sha256 hash of body and xrequestId
     /// </summary>
@@ -231,71 +201,72 @@ public static class OBModuleHelper
     /// In any other cases, set token login url
     /// </summary>
     /// <returns>Hhsforwardingaddress</returns>
-    public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, KimlikDto kmlk,
+    public static async Task<string> GetHhsForwardingAddressAsync(IConfiguration configuration, string? customerCitizenshipNumber,
         string consentId, ITagService tagService, IDeviceRecord deviceRecordService)
     {
         //Set token login url
         string forwardingAddress = string.Format(configuration["HHSForwardingAddress"] ?? string.Empty, consentId);
-        if (kmlk.kmlkTur == OpenBankingConstants.KimlikTur.TCKN)
-        {//Tckn consent
-            var getCustomerInfoResult = await tagService.GetCustomer(kmlk.kmlkVrs);//Get customer phonenumber
-            if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //Error in service
+        if (customerCitizenshipNumber is null)
+        {
+            return forwardingAddress;
+        }
+        var getCustomerInfoResult = await tagService.GetCustomer(customerCitizenshipNumber); //Get customer phonenumber
+        if (!getCustomerInfoResult.Result || getCustomerInfoResult.Data == null) //Error in service
+        {
+            return forwardingAddress;
+        }
+
+        //Check phone number On user or Burgan User
+        PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
+        if (phoneNumber != null) //Phone number is taken
+        {
+            //Check if url will be set by operations system
+            bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
+            bool isIos = false;
+            if (setUrlByOs) //Set url by operating system
             {
-                return forwardingAddress;
-            }
-
-            //Check phone number On user or Burgan User
-            PhoneNumberDto? phoneNumber = (PhoneNumberDto?)getCustomerInfoResult.Data;
-            if (phoneNumber != null)//Phone number is taken
-            {
-                //Check if url will be set by operations system
-                bool.TryParse(configuration["TargetURLs:SetTargetUrlByOs"], out bool setUrlByOs);
-                bool isIos = false;
-                if (setUrlByOs)//Set url by operating system
+                //Get user operating system information
+                var deviceRecordData = await deviceRecordService.GetDeviceRecord(customerCitizenshipNumber);
+                if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
                 {
-                    //Get user operating system information
-                    var deviceRecordData = await deviceRecordService.GetDeviceRecord(kmlk.kmlkVrs);
-                    if (!deviceRecordData.Result || deviceRecordData.Data == null) //error from service
-                    {
-                        setUrlByOs = false;
-                    }
-                    else
-                    {
-                        GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
-                        isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
-                    }
-                }
-
-
-                if (phoneNumber.isOn == "X")//OnUser
-                {
-                    if (setUrlByOs)
-                    {
-                        forwardingAddress = isIos
-                            ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
-                            : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
-                    }
-                    else
-                    {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
-                    }
+                    setUrlByOs = false;
                 }
                 else
                 {
-                    if (setUrlByOs)
-                    {
-                        forwardingAddress = isIos
-                            ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
-                            : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
-                    }
-                    else
-                    {
-                        forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty, consentId);
-                    }
-
+                    GetDeviceRecordResponseDto deviceRecordResponse = (GetDeviceRecordResponseDto)deviceRecordData.Data;
+                    isIos = deviceRecordResponse.os == OpenBankingConstants.OsType.Ios;
                 }
-                return forwardingAddress;
             }
+            if (phoneNumber.isOn == "X") //OnUser
+            {
+                if (setUrlByOs)
+                {
+                    forwardingAddress = isIos
+                        ? string.Format(configuration["HHSForwardingAddress:OnIOS"] ?? string.Empty, consentId)
+                        : string.Format(configuration["HHSForwardingAddress:OnAndroid"] ?? string.Empty, consentId);
+                }
+                else
+                {
+                    forwardingAddress =
+                        string.Format(configuration["HHSForwardingAddress:On"] ?? string.Empty, consentId);
+                }
+            }
+            else
+            {
+                if (setUrlByOs)
+                {
+                    forwardingAddress = isIos
+                        ? string.Format(configuration["HHSForwardingAddress:BurganIOS"] ?? string.Empty, consentId)
+                        : string.Format(configuration["HHSForwardingAddress:BurganAndroid"] ?? string.Empty, consentId);
+                }
+                else
+                {
+                    forwardingAddress = string.Format(configuration["HHSForwardingAddress:Burgan"] ?? string.Empty,
+                        consentId);
+                }
+            }
+
+            return forwardingAddress;
         }
 
         return forwardingAddress;
@@ -368,7 +339,192 @@ public static class OBModuleHelper
         }
         return result;
     }
+    
+    /// <summary>
+    /// Set header x-total-count and link properties
+    /// </summary>
+    /// <param name="basePath"></param>
+    /// <param name="httpContext"></param>
+    /// <param name="totalCount"></param>
+    /// <param name="syfKytSayi"></param>
+    /// <param name="syfNo"></param>
+    public static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
+    {
+        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
+        
+        // Calculate last page number
+        int lastPageNumber = totalCount > 0 ? (totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0)) : 1;
 
+        // Ensure first and last links are correctly set even when totalCount is 0
+        // Construct the Link header value with conditional inclusion of "first" and "last"
+        var links = new List<string>
+        {
+            $"</{basePath}&syfNo=1>; rel=\"first\"",
+            $"</{basePath}&syfNo={lastPageNumber}>; rel=\"last\""
+        };
+        // Include "prev" and "next" links based on current page number
+        if (totalCount > 0)
+        {
+            if (syfNo > 1)
+            {
+                links.Add($"</{basePath}&syfNo={syfNo - 1}>; rel=\"prev\"");
+            }
+
+            if (syfNo < lastPageNumber)
+            {
+                links.Add($"</{basePath}&syfNo={syfNo + 1}>; rel=\"next\"");
+            }
+        }
+        // Join the links with commas and set the header
+        httpContext.Response.Headers["Link"] = string.Join(", ", links);
+    }
+    
+   
+    /// <summary>
+    /// Cancels institution ohk type consent
+    /// </summary>
+    /// <returns>Cancel process result</returns>
+    public static async Task<ApiResult> CancelInstitutionConsentUnAuthorized(ConsentDbContext context, ITokenService tokenService,
+        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode)
+
+    {
+        ApiResult result = new();
+        //State list can be cancelled from login
+        var canBeCancelledStates = new List<string>()
+        {
+            OpenBankingConstants.RizaDurumu.YetkiBekleniyor,
+            OpenBankingConstants.RizaDurumu.Yetkilendirildi,
+            OpenBankingConstants.RizaDurumu.YetkiKullanildi
+        };
+       
+        if (!canBeCancelledStates.Contains(entity.State))
+        {
+            result.Result = false;
+            result.Message = "Consent state not valid to be cancelled.";
+            return result;
+        }
+        return await CancelConsent(context, tokenService, eventService, yosInfoService, entity,cancelDetailCode);
+    }
+    
+    /// <summary>
+    /// Cancel consent generic method to cancel consent without any control.
+    /// Checks consent type and cancels according to consent type
+    /// </summary>
+    /// <returns></returns>
+    public static async Task<ApiResult> CancelConsent(ConsentDbContext context, ITokenService tokenService,
+        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode )
+    {
+        ApiResult result = new();
+        if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingAccount)
+        {
+            //Account consent
+            //Update consent rıza bilgileri properties
+            await  CancelAccountConsent(context, tokenService, eventService: eventService, yosInfoService, entity,
+                cancelDetailCode);
+        }
+        else if (entity.ConsentType == ConsentConstants.ConsentType.OpenBankingPayment)
+        {
+            //Payment consent
+            //Update consent rıza bilgileri properties
+            await  CancelPaymentConsent(context, tokenService, entity,
+                cancelDetailCode);
+        }
+        else
+        {
+            //Not related type
+            result.Result = false;
+            result.Message = "Consent type not valid";
+        }
+        return result;
+    }
+
+
+
+    /// <summary>
+    /// Cancels account consent.
+    /// Updates additionaldata, consent state, send to account serive clms.
+    /// If there is token, revokes the token
+    /// If event subscription, send event to yos
+    /// </summary>
+    public static async Task CancelAccountConsent(ConsentDbContext context, ITokenService tokenService,
+        IOBEventService eventService, IYosInfoService yosInfoService, Consent entity, string cancelDetailCode )
+    {
+       var currentState = entity.State;//current consent state
+        //Update consent rıza bilgileri properties
+        var additionalData = JsonSerializer.Deserialize<HesapBilgisiRizasiHHSDto>(entity!.AdditionalData);
+        additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+        additionalData.rzBlg.rizaIptDtyKod = cancelDetailCode;
+        additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+        entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+        entity.ModifiedAt = DateTime.UtcNow;
+        entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+        entity.StateModifiedAt = DateTime.UtcNow;
+        entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+        //Update consent detail to send consent information to account service.
+        var consentDetail = entity.OBAccountConsentDetails.FirstOrDefault();
+        if (consentDetail is not null)
+        {
+            consentDetail.SendToServiceTryCount = 0;
+            consentDetail.SendToServiceDeliveryStatus = OpenBankingConstants.RecordDeliveryStatus.Processing;
+            context.OBAccountConsentDetails.Update(consentDetail);
+        }
+
+        context.Consents.Update(entity);
+        await context.SaveChangesAsync();
+
+        if (currentState == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+        {
+            //Revoke token
+            await tokenService.RevokeConsentToken(entity.Id);
+        }
+        
+        //If YOS has subscription, Do event process
+        ApiResult yosHasSubscription = await yosInfoService.IsYosSubscsribed(entity.Variant!,
+            OpenBankingConstants.OlayTip.KaynakGuncellendi, OpenBankingConstants.KaynakTip.HesapBilgisiRizasi);
+        if (yosHasSubscription.Result
+            && yosHasSubscription.Data != null
+            && (bool)yosHasSubscription.Data)
+        {
+
+            //Send event to yos
+            await eventService.DoEventProcess(entity.Id.ToString(),
+                additionalData.katilimciBlg,
+                eventType: OpenBankingConstants.OlayTip.KaynakGuncellendi,
+                sourceType: OpenBankingConstants.KaynakTip.HesapBilgisiRizasi,
+                sourceNumber: entity.Id.ToString());
+        }
+    }
+
+    
+    /// <summary>
+    /// Cancels payment consent.
+    /// Updates additionaldata, consent state
+    /// </summary>
+      public static async Task CancelPaymentConsent(ConsentDbContext context, ITokenService tokenService,
+          Consent entity, string cancelDetailCode )
+    {
+       var currentState = entity.State;//current consent state
+        //Update consent rıza bilgileri properties
+        var additionalData = JsonSerializer.Deserialize<OdemeEmriRizasiWithMsrfTtrHHSDto>(entity.AdditionalData);
+        additionalData!.rzBlg.rizaDrm = OpenBankingConstants.RizaDurumu.YetkiIptal;
+        additionalData.rzBlg.rizaIptDtyKod = cancelDetailCode;
+        additionalData.rzBlg.gnclZmn = DateTime.UtcNow;
+        entity.AdditionalData = JsonSerializer.Serialize(additionalData);
+        entity.ModifiedAt = DateTime.UtcNow;
+        entity.State = OpenBankingConstants.RizaDurumu.YetkiIptal;
+        entity.StateModifiedAt = DateTime.UtcNow;
+        entity.StateCancelDetailCode = additionalData.rzBlg.rizaIptDtyKod;
+        context.Consents.Update(entity);
+        await context.SaveChangesAsync();
+
+        if (currentState == OpenBankingConstants.RizaDurumu.YetkiKullanildi)
+        {
+            //Revoke token
+            await tokenService.RevokeConsentToken(entity.Id);
+        }
+    }
+
+  
 
 
 }

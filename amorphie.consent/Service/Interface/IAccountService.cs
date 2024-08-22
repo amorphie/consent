@@ -1,4 +1,6 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
+using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Model;
 
 namespace amorphie.consent.Service.Interface;
@@ -66,6 +68,14 @@ public interface IAccountService
         string consentId,
         string instantBalanceNotificationPermission,
         string sharePermission);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="ayrikGkd"></param>
+    /// <param name="errorCodeDetails"></param>
+    /// <returns></returns>
+    public Task<ApiResult> GetUniqueCustomer(AyrikGkdDto ayrikGkd,List<OBErrorCodeDetail> errorCodeDetails);
 
 
 }

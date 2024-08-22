@@ -375,7 +375,7 @@ public static class OpenBankingConstants
     public static class KafkaInformation
     {
         public const string KafkaName = "openbanking-kafka";
-        public const string TopicName_PaymentStatusUpdated = "EFT.SGOD_MASTER_OPENBANKING";
+        public const string TopicName_PaymentStatusUpdated = "EFT.SGOD_MASTER_OPENBANKING_TA";
         public const string TopicName_BalanceUpdated = "COR.HESAP_BAKIYESI_DEGISENLER";
     }
 
@@ -413,5 +413,17 @@ public static class OpenBankingConstants
         public const int Android = 1;
         public const int Ios = 2;
     }
+    
+    public static class ContentTypes
+    {
+        public const string ApplicationJson = "application/json";
+    }
+    
+    public static readonly Dictionary<string, string> VeriParkErrorCodes = new Dictionary<string, string>
+    {
+        { "CorporateAuthorizationOpenBankingError", RizaIptalDetayKodu.GKDIptali_HHSAcikBankacilikKanaliIslemeKapali },
+        { "UserRoleOpenBankingError", RizaIptalDetayKodu.GKDIptali_HesapYetkiSorunu },
+        { "UnauthorizedAccountOpenBankingError", RizaIptalDetayKodu.GKDIptali_HesapYetkiSorunu }
+    };
 
 }

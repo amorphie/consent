@@ -1,4 +1,5 @@
 using amorphie.consent.core.DTO;
+using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
 using amorphie.consent.core.Enum;
 using amorphie.consent.core.Model;
@@ -16,16 +17,19 @@ public class AccountService : IAccountService
     private readonly IOBAuthorizationService _authorizationService;
     private readonly ConsentDbContext _context;
     private readonly IMapper _mapper;
+    private readonly ILogger<IBKMService> _logger;
 
     public AccountService(IAccountClientService accountClientService,
         IOBAuthorizationService authorizationService,
         ConsentDbContext context,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<IBKMService> logger)
     {
         _accountClientService = accountClientService;
         _authorizationService = authorizationService;
         _context = context;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<ApiResult> GetAuthorizedAccounts(HttpContext httpContext, string userTCKN, string consentId, string yosCode,List<OBErrorCodeDetail> errorCodeDetails, int? syfKytSayi, int? syfNo,
@@ -87,7 +91,6 @@ public class AccountService : IAccountService
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: permissionType,
                 accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
@@ -97,6 +100,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccounts {serviceResponse.error}");
                 return result;
             }
         
@@ -112,6 +116,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccounts");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -143,7 +148,6 @@ public class AccountService : IAccountService
             //Get accounts of customer from service
             var serviceResponse = await _accountClientService.GetAccounts(izinTur: OpenBankingConstants.AccountServiceParameters.izinTurTemel,
                 accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
@@ -153,6 +157,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccountsForUI {serviceResponse.error}");
                 return result;
             }
             
@@ -161,6 +166,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccountsForUI");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -202,6 +208,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedAccountByHspRef {serviceResponse.error}");
                 return result;
             }
 
@@ -215,6 +222,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedAccountByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -227,14 +235,14 @@ public class AccountService : IAccountService
         ApiResult result = new();
         try
         {
-            var permisssions = new List<string>()
+            var permissions = new List<string>()
             {
                 OpenBankingConstants.IzinTur.BakiyeBilgisi
             };
             //Get account consent from database
             var getConsentResult =
                 await _authorizationService.GetAccountConsent(userTckn: userTCKN, consentId:consentId, yosCode: yosCode,
-                    permissions: permisssions);
+                    permissions: null);
             var checkConsentResult = CheckAccountConsent(getConsentResult, httpContext, errorCodeDetails);
             if (!checkConsentResult.Result)//Consent in db is not valid
             {
@@ -243,8 +251,14 @@ public class AccountService : IAccountService
             }
             
             var activeConsent = (Consent)getConsentResult.Data!;
+            if (!activeConsent.OBAccountConsentDetails.Any(a => permissions.Any(a.PermissionTypes.Contains)))
+            {//Consent permissions not valid to get response
+                result.Result = false;
+                result.Data = OBErrorResponseHelper.GetForbiddenError(httpContext, errorCodeDetails,
+                    OBErrorCodeConstants.ErrorCodesEnum.InvalidPermissionGetBalance);
+                return result;
+            }
             var consentDetail = activeConsent.OBAccountConsentDetails.FirstOrDefault()!;
-
             // Build account service parameters
             var (resolvedSyfKytSayi, resolvedSyfNo, resolvedSrlmKrtr, resolvedSrlmYon) = GetDefaultAccountServiceParameters(
                 syfKytSayi,
@@ -271,7 +285,6 @@ public class AccountService : IAccountService
             };
             //Get balances of customer from service
             var serviceResponse = await _accountClientService.GetBalances(accountRefs: requestObject,
-                customerId: userTCKN,
                 syfKytSayi: resolvedSyfKytSayi,
                 syfNo: resolvedSyfNo,
                 srlmKrtr: resolvedSrlmKrtr,
@@ -281,6 +294,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedBalances {serviceResponse.error}");
                 return result;
             }
             List<BakiyeBilgileriDto>? balances = serviceResponse?.data?.bakiyeBilgileri;
@@ -290,6 +304,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedBalances");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -331,12 +346,14 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetAuthorizedBalanceByHspRef {serviceResponse.error}");
                 return result;
             }
             result.Data = serviceResponse?.data;
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetAuthorizedBalanceByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -432,6 +449,7 @@ public class AccountService : IAccountService
             {
                 result.Result = false;
                 result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetTransactionsByHspRef {serviceResponse.error}");
                 return result;
             }
             result.Data =_mapper.Map<IslemBilgileriDto>(serviceResponse?.data);
@@ -441,6 +459,7 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in GetTransactionsByHspRef");
             result.Result = false;
             result.Message = e.Message;
         }
@@ -462,12 +481,45 @@ public class AccountService : IAccountService
         }
         catch (Exception e)
         {
+            _logger.LogError(e, "Error in SendConsentToAccountService");
             result.Result = false;
             result.Message = e.Message;
         }
 
         return result;
     }
+
+    public async Task<ApiResult> GetUniqueCustomer(AyrikGkdDto ayrikGkd,
+        List<OBErrorCodeDetail> errorCodeDetails)
+    {
+        ApiResult result = new();
+        try
+        {
+            CustomerScanRequestDto requestObj = new CustomerScanRequestDto()
+            {
+                ohkTanimDeger = ayrikGkd.ohkTanimDeger,
+                ohkTanimTip = ayrikGkd.ohkTanimTip
+            };
+            //Send account consent details to account service
+            var serviceResponse = await _accountClientService.GetUniqueCustomer(requestObj);
+            if (serviceResponse.error != null)//Error in service
+            {
+                result.Result = false;
+                result.Data = serviceResponse.error;
+                _logger.LogError( $"Error in GetUniqueCustomer {serviceResponse.error}");
+                return result;
+            }
+            result.Data = serviceResponse;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error in GetUniqueCustomer");
+            result.Result = false;
+            result.Message = e.Message;
+        }
+        return result;
+    }
+    
 
 
     private (int syfKytSayi, int syfNo, string srlmKrtr, string srlmYon) GetDefaultAccountServiceParameters(
@@ -512,7 +564,7 @@ public class AccountService : IAccountService
         string srlmKrtr, string srlmYon)
     {
         string basePath = $"ohvps/hbh/s1.1/hesaplar?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
     /// <summary>
@@ -528,7 +580,7 @@ public class AccountService : IAccountService
         string srlmKrtr, string srlmYon)
     {
         string basePath = $"ohvps/hbh/s1.1/bakiye?srlmKrtr={srlmKrtr}&srlmYon={srlmYon}&syfKytSayi={syfKytSayi}";
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
     /// <summary>
@@ -538,36 +590,10 @@ public class AccountService : IAccountService
     {
         string basePath = GetTransactionBaseUrl(hspRef, hesapIslemBslTrh, hesapIslemBtsTrh, srlmKrtr, srlmYon,
             minIslTtr, mksIslTtr, brcAlc);
-        SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
+        OBModuleHelper.SetHeaderLink(basePath, httpContext, totalCount, syfKytSayi, syfNo);
     }
 
-    /// <summary>
-    /// Set header x-total-count and link properties
-    /// </summary>
-    /// <param name="basePath"></param>
-    /// <param name="httpContext"></param>
-    /// <param name="totalCount"></param>
-    /// <param name="syfKytSayi"></param>
-    /// <param name="syfNo"></param>
-    private static void SetHeaderLink(string basePath, HttpContext httpContext, int totalCount, int syfKytSayi, int syfNo)
-    {
-        httpContext.Response.Headers["x-total-count"] = totalCount.ToString();
-        if (totalCount == 0)
-        {//No record
-            return;
-        }
-
-        int lastPageNumber = totalCount / syfKytSayi + (totalCount % syfKytSayi > 0 ? 1 : 0);//Calculte lastpage number
-        // Construct the Link header value with conditional inclusion of "first" and "last" cases
-        string linkHeaderValue = string.Join(", ",
-            (syfNo != 1) ? $"</{basePath}&syfNo=1>;rel=\"first\"" : null,
-            (syfNo > 1) ? $"</{basePath}&syfNo={syfNo - 1}>;rel=\"prev\"" : null,
-            (syfNo < lastPageNumber) ? $"</{basePath}&syfNo={syfNo + 1}>;rel=\"next\"" : null,
-            (syfNo != lastPageNumber) ? $"</{basePath}&syfNo={lastPageNumber}>;rel=\"last\"" : null);
-
-        linkHeaderValue = linkHeaderValue.Replace(", ", "").Replace("\r", "").Replace("\n", "");
-        httpContext.Response.Headers["Link"] = linkHeaderValue;
-    }
+   
 
     /// <summary>
     /// Generates transaction call base url according to query paramaters

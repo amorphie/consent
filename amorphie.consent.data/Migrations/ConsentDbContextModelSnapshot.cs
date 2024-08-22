@@ -69,11 +69,11 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("RoleId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Scope")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("ScopeId")
                         .HasColumnType("uuid");
-
-                    b.Property<long?>("ScopeTCKN")
-                        .HasColumnType("bigint");
 
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
@@ -146,6 +146,9 @@ namespace amorphie.consent.data.Migrations
                     b.Property<Guid?>("CreatedByBehalfOf")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CustomerNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("DiscreteGKDDefinitionType")
                         .HasColumnType("text");
 
@@ -168,6 +171,9 @@ namespace amorphie.consent.data.Migrations
 
                     b.Property<string>("IdentityType")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionCustomerNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("InstitutionIdentityData")
@@ -258,6 +264,32 @@ namespace amorphie.consent.data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OBErrorCodeDetails");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("ac9ba63b-ad41-4377-a731-ee5d87dd32d7"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 112,
+                            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 month.",
+                            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark bireysel ÖHK’lar için en fazla 1 ay olabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("53c0a141-4e45-422e-a2d3-63e01a9c6937"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 113,
+                            Message = "hesapIslemBtsTrh hesapIslemBslTrh difference can be maximum 1 week.",
+                            MessageTr = "hesapIslemBslTrh ve hesapIslemBtsTrh arası fark kurumsal ÖHK’lar için en fazla 1 hafta olabilir."
+                        },
+                        new
+                        {
+                            Id = new Guid("4ce229a2-e288-4d54-bb9a-45ef0ca6cd07"),
+                            BkmCode = "TR.OHVPS.Business.InvalidContent",
+                            InternalCode = 114,
+                            Message = "For system enquiry, last 24 hours can be enquirable.",
+                            MessageTr = "sistemsel yapılan sorgulamalarda hem bireysel, hem de kurumsal ÖHK’lar için;son 24 saat sorgulanabilir."
+                        });
                 });
 
             modelBuilder.Entity("amorphie.consent.core.Model.OBEvent", b =>
@@ -602,6 +634,9 @@ namespace amorphie.consent.data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("CustomerNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("DiscreteGKDDefinitionType")
                         .HasColumnType("text");
 
@@ -628,6 +663,9 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("IdentityType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionCustomerNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("InstitutionIdentityData")
@@ -685,11 +723,9 @@ namespace amorphie.consent.data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ReceiverAccountNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ReceiverTitle")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ReferenceInformation")
