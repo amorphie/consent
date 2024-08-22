@@ -94,34 +94,26 @@ public class YosInfoService : IYosInfoService
     }
 
     public async Task<ApiResult> CheckIfYosHasDesiredRole(string yosCode,
-        List<AbonelikTipleriDto> abonelikTipleri,
-        List<OBEventTypeSourceTypeRelation> eventTypeSourceTypeRelations)
+        string eventTypeSourceTypeRelationYosRole)
     {
         ApiResult result = new();
         try
         {
-            //Get yos role of desired abonelik tipleri
-            var selectedYosRoles = eventTypeSourceTypeRelations.Where(r =>
-                    abonelikTipleri.Any(a => a.olayTipi == r.EventType && a.kaynakTipi == r.SourceType))
-                .Select(r => r.YOSRole)
-                .Distinct();
-
-            //Set yosRole list
-            List<string> toBeCheckedRoles = new List<string>();
-            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH))
+            //Set yosRole 
+            string requiredYosRole = String.Empty;
+            if (eventTypeSourceTypeRelationYosRole == OpenBankingConstants.EventTypeSourceTypeRelationYosRole.HBH)
             {
-                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.HBHS);
+                requiredYosRole = OpenBankingConstants.BKMServiceRole.HBHS;
             }
-
-            if (selectedYosRoles.Contains(OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH))
+            if (eventTypeSourceTypeRelationYosRole == OpenBankingConstants.EventTypeSourceTypeRelationYosRole.OBH)
             {
-                toBeCheckedRoles.Add(OpenBankingConstants.BKMServiceRole.OBHS);
+                requiredYosRole = OpenBankingConstants.BKMServiceRole.OBHS;
             }
 
             //Check yos in database if has specified roles
             var isAnyYosWithRole = await _context.OBYosInfos
                 .AsNoTracking()
-                .AnyAsync(y => y.Roller.Any(r => toBeCheckedRoles.Contains(r))
+                .AnyAsync(y => y.Roller.Any(r => r == requiredYosRole)
                                && y.Kod == yosCode);
             result.Data = isAnyYosWithRole;
         }
@@ -173,6 +165,7 @@ public class YosInfoService : IYosInfoService
             bool isSubscriped = await _context.OBEventSubscriptions.AsNoTracking().AnyAsync(s =>
                 s.ModuleName == OpenBankingConstants.ModuleName.HHS
                 && s.YOSCode == yosKod
+                && s.IsActive
                 && s.OBEventSubscriptionTypes.Any(t =>
                     t.SourceType == sourceType
                     && t.EventType == eventType));
@@ -182,6 +175,33 @@ public class YosInfoService : IYosInfoService
                 result.Data = false;
                 return result;
             }
+        }
+        catch (Exception e)
+        {
+            result.Result = false;
+            result.Message = e.Message;
+        }
+
+        return result;
+    }
+    
+    public async Task<ApiResult> IsYosAddressCorrect(string yosCode, string authType, string address)
+    {
+        ApiResult result = new();
+        try
+        {
+            bool isAddressCorrect = false;
+           //Get yos
+            var yos = await _context.OBYosInfos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(y => y.Kod == yosCode);
+            if (yos != null)
+            {
+                //Check if yos address contains desired address
+                isAddressCorrect = _mapper.Map<OBYosInfoDto>(yos)?.adresler.Any(a => a.yetYntm == authType
+                    && a.adresDetaylari.Any(d => address.StartsWith(d.tmlAdr))) ?? false;
+            }
+            result.Data = isAddressCorrect;
         }
         catch (Exception e)
         {

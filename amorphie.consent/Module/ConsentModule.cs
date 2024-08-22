@@ -131,7 +131,7 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
                     && c.ConsentType == ConsentConstants.ConsentType.IBLogin
                     && c.ClientCode == cancelData.ClientCode
                     && c.UserTCKN == cancelData.UserTCKN
-                    && c.ScopeTCKN == cancelData.ScopeTCKN)
+                    && c.Scope == cancelData.Scope)
                 .ToListAsync();
 
             //Update consents
@@ -203,11 +203,18 @@ public class ConsentModule : BaseBBTRoute<ConsentDto, Consent, ConsentDbContext>
             result.Message = "Client code parameter is required.";
             return result;
         }
-        //check tckn
-        if (cancelData.UserTCKN <= 0 || cancelData.ScopeTCKN <= 0)
+        //check scope
+        if (string.IsNullOrEmpty(cancelData.Scope))
         {
             result.Result = false;
-            result.Message = "usertckn, scope tckn not valid. Can not be zero or negative.";
+            result.Message = "Scope parameter is required.";
+            return result;
+        }
+        //check tckn
+        if (cancelData.UserTCKN <= 0)
+        {
+            result.Result = false;
+            result.Message = "usertckn not valid. Can not be zero or negative.";
             return result;
         }
 

@@ -35,14 +35,6 @@ public static class ConstantHelper
         };
     }
 
-    /// <summary>
-    /// Get authorized account consent status 
-    /// </summary>
-    /// <returns>Authorized account consent status</returns>
-    public static string GetAuthorizedConsentStatusForAccount()
-    {
-        return OpenBankingConstants.RizaDurumu.YetkiKullanildi;
-    }
 
     /// <summary>
     /// Get authorized payment consent status list 
@@ -142,6 +134,8 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.KolasTur).GetAllPublicConstantValues<string>();
     }
+    
+
 
     /// <summary>
     /// Get KareKodAksTur class items as string list
@@ -169,6 +163,15 @@ public static class ConstantHelper
     public static List<string> GetOdemeKaynakList()
     {
         return typeof(OpenBankingConstants.OdemeKaynak).GetAllPublicConstantValues<string>();
+    }
+    
+    /// <summary>
+    /// Get OdemeDurumu constants values list
+    /// </summary>
+    /// <returns>OdemeDurumu constants values list</returns>
+    public static List<string> GetOdemeDurumuList()
+    {
+        return typeof(OpenBankingConstants.OdemeDurumu).GetAllPublicConstantValues<string>();
     }
 
     /// <summary>
@@ -260,19 +263,23 @@ public static class ConstantHelper
     {
         return typeof(OpenBankingConstants.RizaIptalDetayKodu).GetAllPublicConstantValues<string>();
     }
-
+    
     /// <summary>
-    /// Checks amount data pattern
+    /// Get ConsentType class items as string list
     /// </summary>
-    /// <param name="ttr">MksIslTtr data</param>
-    /// <returns>Is amount pattern is valid </returns>
-    public static bool IsValidAmount(string ttr)
+    /// <returns>GKDTur values list</returns>
+    public static List<string> GetConsentTypeList()
     {
-        // Define the regular expression pattern
-        string pattern = OpenBankingConstants.RegexPatterns.amount;
-
-        // Check if the input matches the pattern
-        return Regex.IsMatch(ttr, pattern);
+        return typeof(ConsentConstants.ConsentType).GetAllPublicConstantValues<string>();
+    }
+    
+    public static string GetCancelDetailCodeByVeriParkErrorCode(string errorCode)
+    { 
+        if (OpenBankingConstants.VeriParkErrorCodes.TryGetValue(errorCode, out var detail))
+        {
+            return detail;
+        }
+        return OpenBankingConstants.RizaIptalDetayKodu.GKDIptali_Diger;
     }
 
     public static List<T> GetAllPublicConstantValues<T>(this Type type)

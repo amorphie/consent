@@ -13,7 +13,7 @@ public class ConsentDto : DtoBase
     public Guid? RoleId { get; set; }
     public string ClientCode { get; set; }
     public long? UserTCKN { get; set; }
-    public long? ScopeTCKN { get; set; }
+    public string? Scope { get; set; }
     public string? Variant { get; set; }
     public string Description { get; set; }
     public string State { get; set; }

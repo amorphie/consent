@@ -13,6 +13,7 @@ public static class ConsentConstants
         public const string OpenBankingYOSAccount = "OB_YOSAccount";
         public const string OpenBankingYOSPayment = "OB_YOSPayment";
         public const string IBLogin = "IB_Login";
+        public const string IBIVR = "IB_IVR";
 
     }
 }

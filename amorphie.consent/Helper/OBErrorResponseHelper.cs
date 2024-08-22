@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using amorphie.consent.core.DTO.OpenBanking;
 using amorphie.consent.core.DTO.OpenBanking.HHS;
@@ -9,17 +10,17 @@ namespace amorphie.consent.Helper;
 public static class OBErrorResponseHelper
 {
     public static OBCustomErrorResponseDto BuildErrorResponse(HttpStatusCode httpCode, string httpMessage, string path,
-        OBErrorCodeDetail errorCodeDetail, List<FieldError>? fieldErrors = null)
+        OBErrorCodeDetail errorCodeDetail, List<FieldError>? fieldErrors = null, params object[] messageParams)
     {
         return new OBCustomErrorResponseDto
         {
             Path = path,
             Id = Guid.NewGuid().ToString(),
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
             HttpCode = (int)httpCode,
             HttpMessage = httpMessage,
-            MoreInformation = errorCodeDetail.Message,
-            MoreInformationTr = errorCodeDetail.MessageTr,
+            MoreInformation = string.Format(errorCodeDetail.Message, messageParams),
+            MoreInformationTr = string.Format(errorCodeDetail.MessageTr, messageParams),
             ErrorCode = errorCodeDetail.BkmCode,
             FieldErrors = fieldErrors,
         };
@@ -84,15 +85,16 @@ public static class OBErrorResponseHelper
     /// <param name="context">HttpContext</param>
     /// <param name="errorCodeDetails">All error code constant data</param>
     /// <param name="errorCode">To be created error internal code</param>
+    /// <param name="messageParams">Parameters if any to format message</param>
     /// <returns>OBCustomErrorResponseDto type of object</returns>
     public static OBCustomErrorResponseDto GetForbiddenError(HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode)
+        List<OBErrorCodeDetail> errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum errorCode, params object[] messageParams)
     {
         //Get errorCode detail
         var errorCodeDetail = GetErrorCodeDetail_DefaultInternalServer(errorCodeDetails, errorCode);
         //Generate customerrorresponse of forbidden
         return BuildErrorResponse(HttpStatusCode.Forbidden,
-            OBErrorCodeConstants.HttpMessage.Forbidden, context.Request.Path, errorCodeDetail);
+            OBErrorCodeConstants.HttpMessage.Forbidden, context.Request.Path, errorCodeDetail,messageParams:messageParams);
     }
 
     /// <summary>
@@ -150,8 +152,8 @@ public static class OBErrorResponseHelper
     }
 
 
-    public static bool PrepareAndCheckHeaderInvalidFormatProperties(RequestHeaderDto header, HttpContext context,
-        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse)
+    public static bool PrepareAndCheckHeaderInvalidFormatPropertiesHeader(RequestHeaderDto header, HttpContext context,
+        List<OBErrorCodeDetail> errorCodeDetails, out OBCustomErrorResponseDto errorResponse, bool isEventHeader = false)
     {
         //Get 400 error response
         errorResponse = GetBadRequestError(context, errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.InvalidFormatValidationError);
@@ -161,16 +163,19 @@ public static class OBErrorResponseHelper
         var errorCodeDetail = GetErrorCodeDetail_DefaultInvalidField(errorCodeDetails, OBErrorCodeConstants.ErrorCodesEnum.FieldCanNotBeNull);
 
         // Check each header property and add errors if necessary
-        CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
-            errorCodeDetail, errorResponse);
-        CheckInvalidFormatProperty_String(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
-            errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XASPSPCode, OBErrorCodeConstants.FieldNames.HeaderXaspspCode,
             errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XRequestID, OBErrorCodeConstants.FieldNames.HeaderXRequestId,
             errorCodeDetail, errorResponse);
         CheckInvalidFormatProperty_String(header.XTPPCode, OBErrorCodeConstants.FieldNames.HeaderXtppCode,
             errorCodeDetail, errorResponse);
+        if (!isEventHeader)
+        {//Should not be set in event services
+            CheckInvalidFormatProperty_String(header.PSUInitiated, OBErrorCodeConstants.FieldNames.HeaderPsuInitiated,
+                errorCodeDetail, errorResponse);
+            CheckInvalidFormatProperty_String(header.XGroupID, OBErrorCodeConstants.FieldNames.HeaderXGroupId,
+                errorCodeDetail, errorResponse);
+        }
 
         // Return false if any errors were added, indicating an issue with the header
         return !errorResponse.FieldErrors.Any();
@@ -189,11 +194,11 @@ public static class OBErrorResponseHelper
     }
 
     public static void CheckInvalidFormatProperty_Object(Object? objectValue, string propertyName,
-        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse)
+        OBErrorCodeDetail errorCodeDetail, OBCustomErrorResponseDto errorResponse, string objectName = null)
     {
         if (objectValue is null)
         {
-            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail));
+            errorResponse.FieldErrors?.Add(GetFieldErrorObject(propertyName, errorCodeDetail,objectName:objectName));
         }
     }
 

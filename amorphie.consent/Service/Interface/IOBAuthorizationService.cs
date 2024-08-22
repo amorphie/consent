@@ -9,10 +9,21 @@ public interface IOBAuthorizationService
     /// <summary>
     /// Get users yetkikullanildi state of account consents
     /// Also Checks consent validity date
+    /// Usertype - Individual
     /// </summary>
     /// <param name="userTckn">Consent owner tckn</param>
     /// <returns>User's account consents</returns>
     public Task<ApiResult> GetAuthUsedAccountConsentsOfUser(string userTckn);
+
+    /// <summary>
+    /// Get users yetkikullanildi state of account consents
+    /// Also Checks consent validity date
+    /// Usertype - Institution
+    /// </summary>
+    /// <param name="customerNumber">Consent customer number</param>
+    /// <param name="institutionCustomerNumber">Consent institution customer number</param>
+    /// <returns>User's account consents</returns>
+    public Task<ApiResult> GetAuthUsedAccountConsentsOfInstitutionUser(string customerNumber, string institutionCustomerNumber);
 
     /// <summary>
     /// Get yetki kullanıldı state of account consent by given id and permission.
@@ -32,7 +43,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="permissions">Required Permissions</param>
     /// <returns>User's account consent</returns>
-    public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string> permissions);
+    public Task<ApiResult> GetAccountConsent(string consentId, string userTckn, string yosCode, List<string>? permissions);
 
     /// <summary>
     /// Get User's account consent of given account ref by consent id, tckn, yoscode
@@ -42,7 +53,7 @@ public interface IOBAuthorizationService
     /// <param name="yosCode">Yos Code - Bank Code</param>
     /// <param name="accountRef">Account ref</param>
     /// <returns>User's account consent</returns>
-    public Task<ApiResult> GetAccountConsentByAccountRef(string consentId,string userTckn, string yosCode,string accountRef);
+    public Task<ApiResult> GetAccountConsentByAccountRef(string consentId, string userTckn, string yosCode, string accountRef);
 
     /// <summary>
     /// Get user consent by checking id, consentType
@@ -62,8 +73,14 @@ public interface IOBAuthorizationService
     /// </summary>
     /// <param name="identity">Identity object in account consent</param>
     /// <param name="yosCode">Yos code</param>
+    /// <param name="userTckn">Processing user tckn</param>
+    /// <param name="customerNumber">Processing user Customer Number</param>
+    /// <param name="institutionCustomerNumber">Processing user institution customer number</param>
     /// <returns>Get active account consents response</returns>
-    public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode);
+    public Task<ApiResult> GetActiveAccountConsentsOfUser(KimlikDto identity, string yosCode, 
+        long? userTckn,
+    string? customerNumber, 
+    string? institutionCustomerNumber);
 
     /// <summary>
     /// Getting consent data by checking checksum value in database of account/payment consents
